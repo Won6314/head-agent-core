@@ -8,6 +8,8 @@ Projects add their own repository boundaries, domain policy, context, specialist
 
 ```text
 head/HEAD_CORE.md
+agents/developer/DEVELOPER_CORE.md
+agents/validator/VALIDATOR_CORE.md
 skills/agent-reply/SKILL.md
 skills/delegate-task/SKILL.md
 skills/delegate-task/workflow/delegate-task.md
@@ -50,3 +52,5 @@ Add this OpenCode instruction before the local project instructions:
 ```
 
 Project-local same-name skill copies must be absent or they may shadow the user-level canon.
+
+Developer and validator agent directories use the same native pattern: a role-specific `.claude/rules/*-core.md` symlink for Claude and the corresponding shared file in local OpenCode `instructions`.
