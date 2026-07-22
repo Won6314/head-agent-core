@@ -77,7 +77,17 @@ HEAD
    └─ Agents
 ```
 
-## Navigate
+## Entry Paths
+
+Choose the path that matches your purpose:
+
+| Path | Start here | Use it for |
+| --- | --- | --- |
+| Learn | [Learn HEAD](learn/README.md) | The narrative course: why the model exists, how it evolved, and how its reasoning fits together. |
+| Teach | [Teach HEAD](teaching/README.md) | Deliverable 20-, 60-, and 120-minute routes, canonical diagrams, and discussion prompts. |
+| Reference | [Shared Core](head/README.md) | Current shared contracts and implementation-oriented architecture pages. |
+
+## Reference
 
 | Layer | Purpose |
 | --- | --- |
