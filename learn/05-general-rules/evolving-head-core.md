@@ -37,6 +37,6 @@ A shorter Core is not automatically better. It is better only when the removed t
 
 Keep the shared foundation small enough to remain portable, and put specificity where its condition and owner are visible.
 
-Previous: [Preserving Agent Autonomy](preserving-agent-autonomy.md) | Next: [Learn HEAD](../README.md)
+Previous: [Preserving Agent Autonomy](preserving-agent-autonomy.md) | Back to: [General Rules](README.md) | Next: [Canon](../06-canon/README.md)
 
 Source class: shared Core repository evolution; current shared Core and planning Skills.

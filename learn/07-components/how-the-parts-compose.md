@@ -12,7 +12,7 @@ Consider a community group that asks for a public workshop guide. The request fi
 
 1. **Core:** HEAD keeps ownership of the full outcome and separates user decisions from ordinary planning.
 2. **Project context:** HEAD uses the project's index to locate the current approved accessibility guidance and venue brief, then retrieves only those relevant sources.
-3. **Runtime canon:** the work agreement records the goal, scope, success conditions, decisions, open assumptions, and next action so it can survive interruption.
+3. **Runtime canon:** the work agreement records the goal, scope, success conditions, decisions, unverified assumptions, and next action so it can survive interruption.
 4. **Skill:** a matching writing or review procedure provides the conditional method and evidence expectations.
 5. **MCP:** when a runtime operation is needed, HEAD calls the appropriate interface, whose contract enforces its allowed boundary.
 6. **Agent:** HEAD assigns one bounded result, such as checking the guide against the retrieved requirements, with the required evidence and explicit authority limit.
@@ -25,10 +25,11 @@ flowchart TD
     P[Project context and retrieved evidence] --> H
     R[Run canon] --> H
     H --> S[Load matching Skill]
-    S --> M[Call MCP when needed]
+    H --> M[Call MCP when needed]
     H --> A[Assign bounded Agent outcome]
-    M --> A
-    A --> E[Result and direct evidence]
+    S -. procedure guides .-> H
+    M --> E[Result and direct evidence]
+    A --> E
     E --> H
     H --> I[Verify, integrate, update canon]
     I --> N{Complete?}

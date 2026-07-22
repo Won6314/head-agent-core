@@ -23,7 +23,7 @@ This small contract is deliberate. It makes recovery inputs inspectable: HEAD ca
 
 ## Why Fallback Selection Does Not Replace Agreement
 
-An inferred active run, a recent-run guess, a snapshot, or a fallback candidate may be useful information in a human-led investigation. None proves that it is the user-approved agreement for the session now being recovered. Choosing one automatically can introduce an incorrect work model precisely when recovery needs a reliable one.
+An inferred active run, a recent-run guess, a snapshot, or a fallback candidate may be useful information in a human-led investigation. None proves that it is the user-HEAD agreement for the session now being recovered. Choosing one automatically can introduce an incorrect work model precisely when recovery needs a reliable one.
 
 The same applies to progress and history. They may describe activity, but they cannot establish the scope, success conditions, user decisions, current position, unknowns, and exact next action that the agreement must retain.
 

@@ -8,7 +8,7 @@ Understand why portable Core guidance favors compact, generative principles whil
 
 ## Core Claim
 
-A denial list grows by naming past mistakes. A generative rule gives an owner a way to reason about new situations while preserving an explicit authority boundary.
+A deny list grows by naming past mistakes. A generative rule gives an owner a way to reason about new situations while preserving an explicit authority boundary.
 
 ```mermaid
 flowchart LR

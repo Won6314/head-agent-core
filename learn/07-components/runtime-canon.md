@@ -19,7 +19,7 @@ flowchart LR
     T[Runtime task state] -. evidence, not authority .-> H
 ```
 
-Runtime state can still be useful. It may describe a running task, a handoff, or historical activity. Its usefulness does not make it authoritative over the user-approved agreement. The same is true of an Agent report: it is evidence for HEAD to verify, not a change to the work's scope.
+Runtime state can still be useful. It may describe a running task, a handoff, or historical activity. Its usefulness does not make it authoritative over the user-HEAD agreement. The same is true of an Agent report: it is evidence for HEAD to verify, not a change to the work's scope.
 
 ## Relationship To Other Components
 

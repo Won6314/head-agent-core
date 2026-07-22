@@ -13,14 +13,15 @@ The loop is not a ritual. HEAD adds structure when coordination, uncertainty, or
 ```mermaid
 flowchart LR
     U[User direction] --> H[HEAD models work]
+    K[Run canon] --> H
     H --> C[Compose context]
     C --> O[Bounded outcome]
     O --> W[One owner acts]
     W --> V[Direct verification]
     V --> I[HEAD integrates]
     I --> R[Verified result]
-    R -. interruption .-> K[Run canon]
-    K --> H
+    I -. update durable state .-> K
+    X[Interruption] --> K
 ```
 
 ## Chapter Map
