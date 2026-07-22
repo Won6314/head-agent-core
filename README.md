@@ -1,56 +1,51 @@
 # HEAD Agent Core
 
-Canonical, project-independent operating policy and workflow skills for the HEAD-agent system.
+HEAD Agent Core is the project-independent layer of a HEAD system. It separates portable reasoning and execution infrastructure from the facts, policies, integrations, and specialists owned by an individual project.
 
-Projects add their own repository boundaries, domain policy, context, specialist skills, MCP capabilities, credentials, and session state. Shared files must not contain project names, project paths, product facts, or project-specific worker routing.
+This repository explains why each layer exists and links to its canonical implementation. It does not copy or publish a project's internal context.
 
-## Shared Surface
+## Architecture
 
 ```text
-head/HEAD_CORE.md
-agents/developer/DEVELOPER_CORE.md
-agents/validator/VALIDATOR_CORE.md
-skills/agent-reply/SKILL.md
-skills/delegate-task/SKILL.md
-skills/delegate-task/workflow/delegate-task.md
-skills/restore-session/SKILL.md
-skills/start-work/SKILL.md
+HEAD
+├─ Shared
+│  ├─ Core
+│  ├─ MCP
+│  │  └─ agent-task
+│  ├─ Skills
+│  │  ├─ agent-reply
+│  │  ├─ browser-query
+│  │  ├─ delegate-task
+│  │  ├─ restore-session
+│  │  ├─ start-dev-work
+│  │  └─ start-work
+│  └─ Agents
+│     ├─ Developer Core
+│     └─ Validator Core
+└─ Project Layer
+   ├─ Core
+   ├─ Additional Context
+   ├─ MCP
+   ├─ Skills
+   └─ Agents
 ```
 
-## Extension Rule
+## Navigate
 
-Remove the project name. If purpose, authority boundary, inputs, and success criteria remain the same, the element is shared. Otherwise it belongs in the project overlay.
+| Layer | Purpose |
+| --- | --- |
+| [Shared Core](head/README.md) | Stable HEAD ownership, reasoning, and context principles. |
+| [Shared MCP](mcp/README.md) | Project-independent callable coordination interfaces. |
+| [Shared Skills](skills/README.md) | Procedures that remain valid across projects. |
+| [Shared Agents](agents/README.md) | Reusable worker roles and authority boundaries. |
+| [Project Layer](projects/README.md) | Extension points for project-owned rules, knowledge, integrations, and specialists. |
 
-Same-name skill inheritance is not used. Add small project preconditions through project instructions and use a distinct project skill when the workflow meaning changes.
+## Reading Model
 
-## Update Contract
+Every level in this repository is a page. Category pages explain why the category exists and how it is separated from neighboring layers. Item pages explain the item's architectural role, delivery model, ownership boundary, and canonical source.
 
-Projects tracking `main` receive shared changes on their next fresh runtime after this checkout is updated. Existing processes are not assumed to hot-reload startup instructions or skills.
+The documentation deliberately avoids duplicating instruction bodies or project context. Follow the canonical-source links only when the current task requires implementation detail.
 
-## Native Installation
+## Shared Or Project-Owned
 
-Claude loads the HEAD core through a project HEAD rules symlink. OpenCode loads the same file through its `instructions` list. Claude and OpenCode discover shared skills through user-level skill symlinks.
-
-```bash
-ln -s "$HOME/.local/share/head-agent-core/head/HEAD_CORE.md" \
-  "<HEAD_ROOT>/.claude/rules/head-core.md"
-
-ln -s "$HOME/.local/share/head-agent-core/skills/agent-reply" \
-  "$HOME/.claude/skills/agent-reply"
-ln -s "$HOME/.local/share/head-agent-core/skills/delegate-task" \
-  "$HOME/.claude/skills/delegate-task"
-ln -s "$HOME/.local/share/head-agent-core/skills/restore-session" \
-  "$HOME/.claude/skills/restore-session"
-ln -s "$HOME/.local/share/head-agent-core/skills/start-work" \
-  "$HOME/.claude/skills/start-work"
-```
-
-Add this OpenCode instruction before the local project instructions:
-
-```json
-"~/.local/share/head-agent-core/head/HEAD_CORE.md"
-```
-
-Project-local same-name skill copies must be absent or they may shadow the user-level canon.
-
-Developer and validator agent directories use the same native pattern: a role-specific `.claude/rules/*-core.md` symlink for Claude and the corresponding shared file in local OpenCode `instructions`.
+An element is shared when its purpose, authority boundary, inputs, and success criteria remain valid after removing project names, paths, domain facts, credentials, and specialist routing. Everything else belongs to the project layer.
