@@ -42,12 +42,9 @@ The system rests on four claims:
 - `06` [Canon: Preserving The Work Agreement](06-canon/README.md)
 - `07` [Components: The Parts Of A Controlled System](07-components/README.md)
 - `08` [Operation: From Request To Verified Result](08-operation/README.md)
-
-### Planned
-
-- `09` Decisions: rejected alternatives and trade-offs
-- `10` Evolution: what evidence changed
-- `11` Adoption: when and how to use the model
+- `09` [Decisions: Rejected Alternatives And Trade-Offs](09-decisions/README.md)
+- `10` [Evolution: What Evidence Changed](10-evolution/README.md)
+- `11` [Adoption: Use Only What The Work Needs](11-adoption/README.md)
 
 ## Two Documentation Paths
 

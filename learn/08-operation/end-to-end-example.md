@@ -50,6 +50,6 @@ If work stops after design verification, a new session reads the run canon, sees
 
 The same loop protects a mixed product, design, implementation, and operational outcome: user direction remains stable; HEAD models and integrates; each owner delivers a bounded, evidenced result; verification precedes downstream expansion.
 
-Previous: [Recovery](recovery.md) | Back to: [Operation](README.md) | Next: Decisions (planned Chapter 09)
+Previous: [Recovery](recovery.md) | Back to: [Operation](README.md) | Next: [Decisions](../09-decisions/README.md)
 
 Source class: synthetic example; current shared principles; operational observation.
