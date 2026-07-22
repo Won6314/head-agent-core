@@ -32,6 +32,6 @@ HEAD는 작업을 더 검사 가능하고 복구 가능하게 할 수 있지만,
 
 HEAD의 가치는 인간 책임을 대체하는 자동화가 아니라 불확실성 아래에서의 규율 있는 조정입니다.
 
-이전: [보안 및 공개 경계](security-and-publication-boundaries.md) | 다음: [도입](README.md), [Learn](../../../learn/README.md) (영문), 또는 [HEAD Agent Core 루트](../../../README.md) (영문)로 돌아가기.
+이전: [보안 및 공개 경계](security-and-publication-boundaries.md) | 다음: [HEAD 교육](../../teaching/README.md). 또는 [도입](README.md)이나 [HEAD Agent Core 루트](../../../README.md) (영문)로 돌아가기.
 
 출처 분류: 현재 공유 원칙; 현재 공개 참조 계약; 운영 관찰; 관련 이론.
