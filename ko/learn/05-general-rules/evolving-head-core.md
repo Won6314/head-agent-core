@@ -37,6 +37,6 @@ flowchart LR
 
 공유 기반은 이식 가능하게 남을 만큼 작게 유지하고, 구체성은 조건과 소유자가 보이는 곳에 둔다.
 
-이전: [에이전트 자율성 보존](preserving-agent-autonomy.md) | 돌아가기: [일반 규칙](README.md) | 다음: [정본 (영문)](../../../learn/06-canon/README.md)
+이전: [에이전트 자율성 보존](preserving-agent-autonomy.md) | 돌아가기: [일반 규칙](README.md) | 다음: [정본](../06-canon/README.md)
 
 출처 분류: 공유 Core 저장소 발전; 현재 공유 Core와 계획 Skills.
