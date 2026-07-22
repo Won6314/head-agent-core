@@ -1,74 +1,37 @@
 ---
 name: start-work
-description: Create a durable WorkUnit when evidence, coordination, recovery, or handoff must survive multiple steps or compaction.
-argument-hint: "[work name]"
+description: Start non-trivial general work by creating a durable run canon, composing relevant context, and detailing the current coherent outcome before execution.
 ---
 
 # Start Work
 
-Use a WorkUnit only when it materially improves durable evidence, coordination, recovery, or handoff. Handle small, clear, immediately verifiable work directly.
+Start from the outcome, not from a document template.
 
-## Location
+## Build The Work Model
+
+1. State the intended result and the current state that matters to it.
+2. Identify the parts, relationships, and order that make the result coherent.
+3. Use the representation natural to the work: investigation coverage, decision structure, production flow, operating state, or another form that fits the outcome.
+4. Resolve facts that can change the work model from the canonical sources indexed by the project.
+
+## Compose Context
+
+After the task is clear, search `agent-task_list_tips` once with a semantic query derived from the current goal. If the project exposes a past-run query, search for directly related runs as well. Carry forward only information that changes the current interpretation, decision, or result; reference the source instead of copying its full history.
+
+## Create The Run
+
+Use the project's run entry point to create the current working canon at:
 
 ```text
-<HEAD_ROOT>/sessions/{session}/work/{work_id}/
-  meta.json
-  run.md
-  provenance.jsonl
-  evidence/
-  scratch/
-  final/
+sessions/{session}/run.md
 ```
 
-Use the current project's established `work_id` generator and active-work mechanism. Do not change an existing ID contract merely for formatting consistency.
+The run is the user-HEAD agreement for the whole outcome. Choose a structure natural to the work rather than following a fixed template, but include the original requirements and agreed decisions, complete intended result and scope, success conditions, work relationships and order, completed and remaining work, current situation, unverified assumptions, exact next action, and evidence locations.
 
-## Metadata
+Every run contains a work checklist. After the user and HEAD agree on the run, do not rewrite its requirements, scope, success conditions, or overall work model unless the user changes them. Update only checklists and current-situation fields as execution advances.
 
-`meta.json` is the machine-readable contract and records at least:
+One coherent outcome uses `run.md` alone. When work is divided into slices, keep a separate checklist for every slice in `run.md` and give each slice brief under `sessions/{session}/slices/` its own checklist. Slice documents may detail execution but cannot narrow or replace the parent run.
 
-```json
-{
-  "work_id": "<project-valid work ID>",
-  "session": "<session>",
-  "title": "<title>",
-  "status": "active",
-  "internal_artifacts": [],
-  "external_artifacts": [],
-  "code_refs": []
-}
-```
+## Execute
 
-## Run Record
-
-```markdown
-# <title>
-상태: planning | running | done | blocked
-시작: YYYY-MM-DD
-
-## 목적
-<why, with evidence>
-
-## 접근
-<steps, success criteria, impact, rollback>
-
-## 실행 기록
-### Step 1: <title>
-- 실행:
-- 출력:
-- 관찰:
-
-## 결론
-<the result and material evidence>
-
-## 후속
-- <next use or 없음>
-```
-
-## Rules
-
-1. Fill purpose and approach before non-trivial execution.
-2. Record only evidence and state needed for judgment, recovery, or handoff.
-3. HEAD owns the canonical WorkUnit even when workers execute bounded steps.
-4. Active pointers and provenance tracking assist recovery; they are not approval or completion gates.
-5. On completion, update `run.md` and `meta.json.status`, record completed history, and clear the matching active pointer.
-6. On interruption, set `blocked` and record the exact reason and next authority or evidence needed.
+Begin from the current coherent outcome. Mark checklist progress and keep the current situation exact. Do not declare the run complete until its required checklist and success conditions are satisfied.
