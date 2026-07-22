@@ -40,11 +40,11 @@ The system rests on four claims:
 - `04` [Context: A Governed Working Set](04-context/README.md)
 - `05` [General Rules: Principles Instead Of An Endless Deny List](05-general-rules/README.md)
 - `06` [Canon: Preserving The Work Agreement](06-canon/README.md)
+- `07` [Components: The Parts Of A Controlled System](07-components/README.md)
+- `08` [Operation: From Request To Verified Result](08-operation/README.md)
 
 ### Planned
 
-- `07` Components: Core, project context, MCP, Skills, Agents, and runtime
-- `08` Operation: from a user request to a verified result
 - `09` Decisions: rejected alternatives and trade-offs
 - `10` Evolution: what evidence changed
 - `11` Adoption: when and how to use the model

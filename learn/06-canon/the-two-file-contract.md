@@ -39,6 +39,6 @@ Fixed paths do not make all recovery automatic. HEAD still follows the run's che
 
 Simple recovery is not less careful: it preserves the authority boundary by refusing to guess which derivative record should stand in for the agreement.
 
-Previous: [The Failed Recovery Story](the-failed-recovery-story.md) | Back to: [Canon](README.md)
+Previous: [The Failed Recovery Story](the-failed-recovery-story.md) | Back to: [Canon](README.md) | Next: [Components](../07-components/README.md)
 
 Source class: current shared runtime contract; operational observation.
