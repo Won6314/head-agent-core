@@ -87,7 +87,7 @@ Selective context is not an excuse to keep workers ignorant or manipulate their 
 
 The question is not "How much context can the model hold?" It is "Which authoritative information must this owner see at this decision boundary, and what can remain retrievable by reference?"
 
-Next course chapter: Ownership, User, HEAD, and bounded Agents. That chapter is planned in the next documentation slice.
+Next course chapter: [Ownership: User, HEAD, and Bounded Agents](../03-ownership/README.md).
 
 Return to [Learn HEAD](../README.md).
 

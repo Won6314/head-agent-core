@@ -34,20 +34,20 @@ The system rests on four claims:
 
 ### Available
 
-1. [Origin: How The System Grew](01-origin/README.md)
-2. [The LLM Problem Model](02-llm-problem/README.md)
+- `01` [Origin: How The System Grew](01-origin/README.md)
+- `02` [The LLM Problem Model](02-llm-problem/README.md)
+- `03` [Ownership: User, HEAD, and Bounded Agents](03-ownership/README.md)
+- `05` [General Rules: Principles Instead Of An Endless Deny List](05-general-rules/README.md)
 
 ### Planned
 
-3. Ownership: User, HEAD, and bounded Agents
-4. Context: always loaded, indexed, and retrieved
-5. General Rules: principles instead of an endless deny list
-6. Canon: fixing the problem and goal across compaction
-7. Components: Core, project context, MCP, Skills, Agents, and runtime
-8. Operation: from a user request to a verified result
-9. Decisions: rejected alternatives and trade-offs
-10. Evolution: what evidence changed
-11. Adoption: when and how to use the model
+- `04` Context: always loaded, indexed, and retrieved
+- `06` Canon: fixing the problem and goal across compaction
+- `07` Components: Core, project context, MCP, Skills, Agents, and runtime
+- `08` Operation: from a user request to a verified result
+- `09` Decisions: rejected alternatives and trade-offs
+- `10` Evolution: what evidence changed
+- `11` Adoption: when and how to use the model
 
 ## Two Documentation Paths
 
