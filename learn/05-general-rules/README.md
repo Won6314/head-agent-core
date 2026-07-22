@@ -31,6 +31,6 @@ flowchart LR
 
 This chapter describes a design shift supported by current shared Core and planning practices. It does not reproduce instruction bodies or claim that a small set of principles automatically resolves every edge case. Project policy, safety boundaries, and detailed procedures remain explicit where they are needed.
 
-Previous: [Ownership](../03-ownership/README.md) | Next: [Why Deny Lists Grow Forever](why-deny-lists-grow-forever.md)
+Previous: [Context](../04-context/README.md) | Next: [Why Deny Lists Grow Forever](why-deny-lists-grow-forever.md)
 
 Source class: current shared Core and planning Skills; repository evolution.

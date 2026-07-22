@@ -1,6 +1,6 @@
 # 오류는 하류에서 누적된다
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 과정 (영문)](../../../learn/README.md) / [LLM 문제 모델](README.md) / 오류는 하류에서 누적된다
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [LLM 문제 모델](README.md) / 오류는 하류에서 누적된다
 
 ## 학습 목표
 

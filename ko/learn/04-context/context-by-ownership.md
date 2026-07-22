@@ -1,6 +1,6 @@
 # 소유권에 따른 컨텍스트
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 과정 (영문)](../../../learn/README.md) / [컨텍스트](README.md) / 소유권에 따른 컨텍스트
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [컨텍스트](README.md) / 소유권에 따른 컨텍스트
 
 ## 학습 목표
 

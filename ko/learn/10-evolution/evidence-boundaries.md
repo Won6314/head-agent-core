@@ -1,6 +1,6 @@
 # 근거의 경계
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / [진화](README.md) / 근거의 경계
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [진화](README.md) / 근거의 경계
 
 ## 핵심 주장
 

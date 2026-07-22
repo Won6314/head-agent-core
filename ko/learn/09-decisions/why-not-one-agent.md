@@ -1,6 +1,6 @@
 # 왜 하나의 에이전트가 아닌가?
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / [결정](README.md) / 왜 하나의 에이전트가 아닌가?
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [결정](README.md) / 왜 하나의 에이전트가 아닌가?
 
 ## 문제
 

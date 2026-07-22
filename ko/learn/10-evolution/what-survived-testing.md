@@ -1,6 +1,6 @@
 # 테스트를 통과해 남은 것
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / [진화](README.md) / 테스트를 통과해 남은 것
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [진화](README.md) / 테스트를 통과해 남은 것
 
 ## 핵심 주장
 

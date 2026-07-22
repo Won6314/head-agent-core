@@ -1,6 +1,6 @@
 # 타임라인
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / [진화](README.md) / 타임라인
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [진화](README.md) / 타임라인
 
 ## 핵심 주장
 

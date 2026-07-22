@@ -1,6 +1,6 @@
 # 문제와 목표 고정하기
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 (영문)](../../../learn/README.md) / [정본](README.md) / 문제와 목표 고정하기
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [정본](README.md) / 문제와 목표 고정하기
 
 ## 학습 목표
 

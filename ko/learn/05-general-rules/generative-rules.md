@@ -1,6 +1,6 @@
 # 생성적 규칙
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 과정 (영문)](../../../learn/README.md) / [일반 규칙](README.md) / 생성적 규칙
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [일반 규칙](README.md) / 생성적 규칙
 
 ## 학습 목표
 

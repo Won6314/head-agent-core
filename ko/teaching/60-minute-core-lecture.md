@@ -1,6 +1,6 @@
 # 60분 핵심 강의
 
-[HEAD Agent Core (영문)](../../README.md) / [교육](README.md) / 60분 핵심 강의
+[HEAD Agent Core](../README.md) / [교육](README.md) / 60분 핵심 강의
 
 ## 결과
 
@@ -15,7 +15,7 @@
 
 | 시간 | 구간 | 핵심 요점 | 출처 |
 | --- | --- | --- | --- |
-| 0-5분 | 설정 | HEAD는 자율 스웜이 아니라 통제된 확장을 위한 오너십 모델이다. | [과정 논지 (영문)](../../learn/README.md#course-thesis) |
+| 0-5분 | 설정 | HEAD는 자율 스웜이 아니라 통제된 확장을 위한 오너십 모델이다. | [과정 논지](../learn/README.md#과정-논지) |
 | 5-12분 | 기원 | 아키텍처는 관찰된 실패를 거치며 진화했으며, 현재 형태가 필연적이었던 것은 아니다. | [기원](../learn/01-origin/README.md) 및 [진화 타임라인](../learn/01-origin/evolution-timeline.md) |
 | 12-22분 | 문제 모델 | 검증되지 않은 생성 결과물은 누락과 추측을 이후 단계에서 누적시킬 수 있다. | [한 단계 확장](../learn/02-llm-problem/the-one-step-expansion-rule.md) 및 [통제된 확장 루프](diagrams.md#통제된-확장-루프) |
 | 22-32분 | 오너십 | 사용자는 중요한 방향을, HEAD는 전체 결과의 계획과 통합을, 에이전트는 경계가 정해진 로컬 실행을 책임진다. | [의사결정 권한](../learn/03-ownership/decision-rights.md) 및 [사용자는 HEAD하고만 대화한다](../learn/03-ownership/user-talks-only-to-head.md) |

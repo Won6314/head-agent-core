@@ -1,6 +1,6 @@
 # 구성 요소: 통제된 시스템의 부분들
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 (영문)](../../../learn/README.md) / 구성 요소
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / 구성 요소
 
 ## 학습 목표
 

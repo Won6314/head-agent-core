@@ -1,6 +1,6 @@
 # 실패한 복구 이야기
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 (영문)](../../../learn/README.md) / [정본](README.md) / 실패한 복구 이야기
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [정본](README.md) / 실패한 복구 이야기
 
 ## 학습 목표
 

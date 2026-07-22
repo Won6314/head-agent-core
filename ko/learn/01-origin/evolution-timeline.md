@@ -1,6 +1,6 @@
 # 진화 연표
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 과정 (영문)](../../../learn/README.md) / [기원](README.md) / 진화 연표
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [기원](README.md) / 진화 연표
 
 ## 학습 목표
 

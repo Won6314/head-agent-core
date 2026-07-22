@@ -1,6 +1,6 @@
 # 복잡성 이후의 단순화
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / [진화](README.md) / 복잡성 이후의 단순화
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [진화](README.md) / 복잡성 이후의 단순화
 
 ## 핵심 주장
 

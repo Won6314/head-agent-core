@@ -1,6 +1,6 @@
 # 부분들이 조합되는 방식
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 (영문)](../../../learn/README.md) / [구성 요소](README.md) / 부분들이 조합되는 방식
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [구성 요소](README.md) / 부분들이 조합되는 방식
 
 ## 학습 목표
 
@@ -53,7 +53,7 @@ flowchart TD
 
 ## 참조 경로
 
-[아키텍처 개요 (영문)](../../../README.md)로 돌아가 [공유 Core (영문)](../../../head/README.md), [프로젝트 계층 (영문)](../../../projects/README.md), [공유 MCP (영문)](../../../mcp/README.md), [공유 Skills (영문)](../../../skills/README.md), [공유 Agents (영문)](../../../agents/README.md), [세션 정본 (영문)](../../../projects/context/session-canon.md)으로 연결된 링크를 따르세요.
+[아키텍처 개요](../../README.md)로 돌아가 [공유 Core (영문)](../../../head/README.md), [프로젝트 계층 (영문)](../../../projects/README.md), [공유 MCP (영문)](../../../mcp/README.md), [공유 Skills (영문)](../../../skills/README.md), [공유 Agents (영문)](../../../agents/README.md), [세션 정본 (영문)](../../../projects/context/session-canon.md)으로 연결된 링크를 따르세요.
 
 ## 요점
 

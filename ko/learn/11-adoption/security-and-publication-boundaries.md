@@ -1,6 +1,6 @@
 # 보안 및 공개 경계
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / [도입](README.md) / 보안 및 공개 경계
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [도입](README.md) / 보안 및 공개 경계
 
 ## 학습 목표
 

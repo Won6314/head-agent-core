@@ -1,6 +1,6 @@
 # 높음, 중간, 낮음의 추상화 수준
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 과정 (영문)](../../../learn/README.md) / [소유권](README.md) / 높음, 중간, 낮음의 추상화 수준
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [소유권](README.md) / 높음, 중간, 낮음의 추상화 수준
 
 ## 학습 목표
 

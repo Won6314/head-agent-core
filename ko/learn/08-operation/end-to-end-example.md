@@ -1,6 +1,6 @@
 # 엔드 투 엔드 예시: 도서관 키오스크 파일럿
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 (영문)](../../../learn/README.md) / [운영](README.md) / 엔드 투 엔드 예시
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [운영](README.md) / 엔드 투 엔드 예시
 
 ## 학습 목표
 

@@ -1,6 +1,6 @@
 # Core: 이식 가능한 원칙, 항상 존재함
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 (영문)](../../../learn/README.md) / [구성 요소](README.md) / Core
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [구성 요소](README.md) / Core
 
 ## 학습 목표
 

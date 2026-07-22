@@ -1,6 +1,6 @@
 # 소규모 작업과 오래 유지되는 작업
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 (영문)](../../../learn/README.md) / [운영](README.md) / 소규모 작업과 오래 유지되는 작업
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [운영](README.md) / 소규모 작업과 오래 유지되는 작업
 
 ## 학습 목표
 

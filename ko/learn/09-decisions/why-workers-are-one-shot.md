@@ -1,6 +1,6 @@
 # 왜 워커는 일회성인가
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / [결정](README.md) / 왜 워커는 일회성인가
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [결정](README.md) / 왜 워커는 일회성인가
 
 ## 문제
 

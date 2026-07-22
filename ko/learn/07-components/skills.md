@@ -1,6 +1,6 @@
 # Skills: 결정 시점에 로드되는 절차
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 (영문)](../../../learn/README.md) / [구성 요소](README.md) / Skills
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [구성 요소](README.md) / Skills
 
 ## 학습 목표
 

@@ -1,6 +1,6 @@
 # 공유 컨텍스트와 프로젝트 컨텍스트
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 과정 (영문)](../../../learn/README.md) / [컨텍스트](README.md) / 공유 컨텍스트와 프로젝트 컨텍스트
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [컨텍스트](README.md) / 공유 컨텍스트와 프로젝트 컨텍스트
 
 ## 학습 목표
 

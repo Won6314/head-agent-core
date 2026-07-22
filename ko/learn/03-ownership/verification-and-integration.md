@@ -1,6 +1,6 @@
 # 검증과 통합
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 과정 (영문)](../../../learn/README.md) / [소유권](README.md) / 검증과 통합
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [소유권](README.md) / 검증과 통합
 
 ## 학습 목표
 

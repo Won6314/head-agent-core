@@ -1,6 +1,6 @@
 # 최소 도입
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / [도입](README.md) / 최소 도입
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [도입](README.md) / 최소 도입
 
 ## 학습 목표
 

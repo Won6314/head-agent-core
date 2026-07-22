@@ -1,6 +1,6 @@
 # 진화: 근거가 무엇을 바꾸었는가
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / 진화
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / 진화
 
 ## 학습 목표
 

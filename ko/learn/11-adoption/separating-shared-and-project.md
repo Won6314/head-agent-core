@@ -1,6 +1,6 @@
 # 공유 계층과 프로젝트 계층 분리
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / [도입](README.md) / 공유 계층과 프로젝트 계층 분리
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [도입](README.md) / 공유 계층과 프로젝트 계층 분리
 
 ## 학습 목표
 

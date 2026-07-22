@@ -1,6 +1,6 @@
 # 왜 런이며 런타임 상태가 아닌가?
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / [결정](README.md) / 왜 런이며 런타임 상태가 아닌가?
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [결정](README.md) / 왜 런이며 런타임 상태가 아닌가?
 
 ## 문제
 
@@ -40,6 +40,6 @@
 
 작업 합의는 모델이 관리하는 상태 밖에서 정본으로 유지하세요. 런타임 기록은 컨텍스트를 찾는 데만 쓰고 목표를 조용히 다시 쓰는 데 쓰지 마세요.
 
-이전: [왜 컨텍스트 덤프가 아니라 참조인가?](why-references-not-context-dumps.md) | 다음: [왜 거부 목록이 아니라 일반 원칙인가?](why-general-rules-not-deny-lists.md)
+이전: [왜 컨텍스트 덤프가 아니라 참조인가?](why-references-not-context-dumps.md) | 다음: [왜 금지 목록이 아니라 일반 원칙인가?](why-general-rules-not-deny-lists.md)
 
 출처 분류: 복구 진화의 역사적 기록; 운영 관찰; 현재 런 정본 계약; 사후적 이론.

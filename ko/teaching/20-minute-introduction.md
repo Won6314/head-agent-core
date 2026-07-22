@@ -1,6 +1,6 @@
 # 20분 소개
 
-[HEAD Agent Core (영문)](../../README.md) / [교육](README.md) / 20분 소개
+[HEAD Agent Core](../README.md) / [교육](README.md) / 20분 소개
 
 ## 결과
 

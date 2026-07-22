@@ -1,6 +1,6 @@
 # 프로젝트 컨텍스트: 로컬 사실과 검색 경로
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 (영문)](../../../learn/README.md) / [구성 요소](README.md) / 프로젝트 컨텍스트
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [구성 요소](README.md) / 프로젝트 컨텍스트
 
 ## 학습 목표
 

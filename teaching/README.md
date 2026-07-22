@@ -1,6 +1,6 @@
 # Teach HEAD
 
-[HEAD Agent Core](../README.md) / Teach
+[HEAD Agent Core](../README.md) / Teach | [한국어](../ko/teaching/README.md)
 
 These routes turn the learning course into deliverable sessions for mixed technical audiences: developers, product managers, designers, and AI operators. They teach the same controlled-expansion thesis without replacing the course or the current implementation reference.
 

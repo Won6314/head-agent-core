@@ -1,6 +1,6 @@
 # 경계가 정해진 결과 구성
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 (영문)](../../../learn/README.md) / [운영](README.md) / 경계가 정해진 결과 구성
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [운영](README.md) / 경계가 정해진 결과 구성
 
 ## 학습 목표
 

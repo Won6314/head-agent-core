@@ -1,6 +1,6 @@
 # 컨텍스트 조합
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 (영문)](../../../learn/README.md) / [운영](README.md) / 컨텍스트 조합
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [운영](README.md) / 컨텍스트 조합
 
 ## 학습 목표
 

@@ -1,6 +1,6 @@
 # MCP: 호출 가능한 인터페이스와 강제된 경계
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 (영문)](../../../learn/README.md) / [구성 요소](README.md) / MCP
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [구성 요소](README.md) / MCP
 
 ## 학습 목표
 

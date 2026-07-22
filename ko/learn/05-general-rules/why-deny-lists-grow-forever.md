@@ -1,6 +1,6 @@
 # 금지 목록이 끝없이 늘어나는 이유
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 과정 (영문)](../../../learn/README.md) / [일반 규칙](README.md) / 금지 목록이 끝없이 늘어나는 이유
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [일반 규칙](README.md) / 금지 목록이 끝없이 늘어나는 이유
 
 ## 학습 목표
 

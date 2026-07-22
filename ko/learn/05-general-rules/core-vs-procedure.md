@@ -1,6 +1,6 @@
 # Core와 절차
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 과정 (영문)](../../../learn/README.md) / [일반 규칙](README.md) / Core와 절차
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [일반 규칙](README.md) / Core와 절차
 
 ## 학습 목표
 

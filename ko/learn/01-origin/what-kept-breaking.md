@@ -1,6 +1,6 @@
 # 계속해서 무엇이 고장 났는가
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 과정 (영문)](../../../learn/README.md) / [기원](README.md) / 계속해서 무엇이 고장 났는가
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [기원](README.md) / 계속해서 무엇이 고장 났는가
 
 ## 학습 목표
 

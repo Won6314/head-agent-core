@@ -1,6 +1,6 @@
 # 왜 단계 목록이 아니라 결과인가?
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / [결정](README.md) / 왜 단계 목록이 아니라 결과인가?
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [결정](README.md) / 왜 단계 목록이 아니라 결과인가?
 
 ## 문제
 

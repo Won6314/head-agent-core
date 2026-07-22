@@ -1,6 +1,6 @@
 # Learn HEAD
 
-[HEAD Agent Core](../README.md) / Learn
+[HEAD Agent Core](../README.md) / Learn | [한국어](../ko/learn/README.md)
 
 This course explains why HEAD Agent Core exists, how its design changed through operational failure, and how its parts compose into a controlled way of working with LLMs.
 

@@ -1,6 +1,6 @@
 # 120분 워크숍
 
-[HEAD Agent Core (영문)](../../README.md) / [교육](README.md) / 120분 워크숍
+[HEAD Agent Core](../README.md) / [교육](README.md) / 120분 워크숍
 
 ## 결과
 
@@ -16,14 +16,14 @@
 
 | 시간 | 활동 | 산출물 | 범위 |
 | --- | --- | --- | --- |
-| 0-10분 | 논지와 근거 레이블 설정 | 통제된 확장의 공통 정의와 `Historical record(역사적 기록)`, `Operational observation(운영 관찰)`, `Generalized failure(일반화된 실패)`, `Related theory(관련 이론)`의 차이. | [과정 논지 (영문)](../../learn/README.md#course-thesis), [근거 레이블 (영문)](../../learn/README.md#evidence-labels) |
+| 0-10분 | 논지와 근거 레이블 설정 | 통제된 확장의 공통 정의와 `Historical record(역사적 기록)`, `Operational observation(운영 관찰)`, `Generalized failure(일반화된 실패)`, `Related theory(관련 이론)`의 차이. | [과정 논지](../learn/README.md#과정-논지), [근거 레이블](../learn/README.md#근거-레이블) |
 | 10-25분 | 문제 매핑 | 검증되지 않은 확장이 추측을 누적시킬 수 있는 위치를 식별하고 근거 게이트를 둔다. | [한 단계 확장](../learn/02-llm-problem/the-one-step-expansion-rule.md), [검증](../learn/08-operation/verification.md), [통제된 확장 루프](diagrams.md#통제된-확장-루프) |
 | 25-40분 | 의사결정 권한 배정 | 사용자의 중요한 선택, HEAD의 계획 및 통합, 에이전트의 로컬 방법을 분리한다. | [의사결정 권한](../learn/03-ownership/decision-rights.md), [의사결정 권한 에스컬레이션](diagrams.md#의사결정-권한-에스컬레이션) |
 | 40-55분 | 컨텍스트 구성 | 프로젝트 소유의 권위 있는 정보, HEAD가 전체 결과를 판단하는 데 필요한 것, 가장 작은 완전한 워커 브리프를 나열한다. | [오너십별 컨텍스트](../learn/04-context/context-by-ownership.md), [컨텍스트 다이어그램](diagrams.md#오너십별-컨텍스트) |
 | 55-65분 | 휴식 | 산출물 없음. | |
 | 65-80분 | 합의 보존 | 세션 정체성, 전체 런 합의, 하위 검색 기록을 분리하고, 런의 문제, 목표, 범위, 성공 조건, 결정, 가정, 현재 위치, 다음 행동, 근거 위치를 작성한다. | [컨텍스트와 런](../learn/06-canon/context-and-run.md), [취약한 진행 상황과 이력](../learn/06-canon/fragile-progress-and-history.md), [오래 유지되는 작업 합의](diagrams.md#오래-유지되는-작업-합의) |
 | 80-95분 | 시스템 구성 | 지금 Core, 프로젝트 컨텍스트, 런타임 정본, Skill, MCP, 에이전트 중 무엇이 필요한지 결정한다. | [구성 요소가 함께 작동하는 방식](../learn/07-components/how-the-parts-compose.md) |
-| 95-105분 | 대안 검토 | 스웜, 컨텍스트 덤프, 거부 목록 확장, 요약을 정본으로 사용하는 방식을 그룹 모델과 비교하고 한계를 말한다. | [생성 규칙](../learn/05-general-rules/generative-rules.md), [결정](../learn/09-decisions/README.md), [복잡성 이후의 단순화](../learn/10-evolution/simplification-after-complexity.md) |
+| 95-105분 | 대안 검토 | 스웜, 컨텍스트 덤프, 금지 목록 확장, 요약을 정본으로 사용하는 방식을 그룹 모델과 비교하고 한계를 말한다. | [생성 규칙](../learn/05-general-rules/generative-rules.md), [결정](../learn/09-decisions/README.md), [복잡성 이후의 단순화](../learn/10-evolution/simplification-after-complexity.md) |
 | 105-115분 | 도입 수준 선택 | 의식을 더하지 않으면서 결과를 보호하는 가장 작은 구성을 말한다. | [최소 도입](../learn/11-adoption/minimal-adoption.md), [한계](../learn/11-adoption/limitations.md) |
 | 115-120분 | 공유 및 마무리 | 그룹별로 보존할 경계 하나, 근거 게이트 하나, 경계가 정해진 다음 결과 하나. | [전체 그룹 마무리](discussion-questions.md#전체-그룹-마무리) |
 

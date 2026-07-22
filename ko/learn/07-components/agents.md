@@ -1,6 +1,6 @@
 # Agents: 경계가 정해진 결과의 재사용 가능한 소유자
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 (영문)](../../../learn/README.md) / [구성 요소](README.md) / Agents
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [구성 요소](README.md) / Agents
 
 ## 학습 목표
 

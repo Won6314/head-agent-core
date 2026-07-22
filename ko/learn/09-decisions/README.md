@@ -1,6 +1,6 @@
 # 결정: 기각한 대안과 트레이드오프
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / 결정
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / 결정
 
 ## 학습 목표
 
@@ -27,7 +27,7 @@ flowchart LR
 4. [왜 단계 목록이 아니라 결과인가?](why-outcomes-not-step-lists.md)
 5. [왜 컨텍스트 덤프가 아니라 참조인가?](why-references-not-context-dumps.md)
 6. [왜 런이며 런타임 상태가 아닌가?](why-runs-not-runtime-state.md)
-7. [왜 거부 목록이 아니라 일반 원칙인가?](why-general-rules-not-deny-lists.md)
+7. [왜 금지 목록이 아니라 일반 원칙인가?](why-general-rules-not-deny-lists.md)
 8. [왜 검증은 분리되는가](why-verification-is-separate.md)
 
 ## 이 챕터를 읽는 법

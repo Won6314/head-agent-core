@@ -1,5 +1,7 @@
 # HEAD Agent Core
 
+[한국어](ko/README.md)
+
 HEAD Agent Core is the project-independent layer of a HEAD system. It separates portable reasoning and execution infrastructure from the facts, policies, integrations, and specialists owned by an individual project.
 
 This repository explains why each layer exists and links to its canonical implementation. It does not copy or publish a project's internal context.

@@ -1,6 +1,6 @@
 # 일반 규칙: 끝없는 금지 목록 대신 원칙
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 과정 (영문)](../../../learn/README.md) / 일반 규칙
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / 일반 규칙
 
 ## 학습 목표
 
@@ -31,6 +31,6 @@ flowchart LR
 
 이 장은 현재 공유 Core 및 계획 실무가 뒷받침하는 설계 전환을 설명한다. 지시문 본문을 재현하거나 작은 원칙 집합이 모든 예외 사례를 자동으로 해결한다고 주장하지 않는다. 프로젝트 정책, 안전 경계, 상세 절차는 필요한 곳에서 명시적으로 남는다.
 
-이전: [소유권](../03-ownership/README.md) | 다음: [금지 목록이 끝없이 늘어나는 이유](why-deny-lists-grow-forever.md)
+이전: [컨텍스트](../04-context/README.md) | 다음: [금지 목록이 끝없이 늘어나는 이유](why-deny-lists-grow-forever.md)
 
 출처 분류: 현재 공유 Core와 계획 Skills; 저장소 발전.

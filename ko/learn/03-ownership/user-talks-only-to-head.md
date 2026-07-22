@@ -1,6 +1,6 @@
 # 사용자는 HEAD하고만 대화한다
 
-[HEAD Agent Core (영문)](../../../README.md) / [학습 과정 (영문)](../../../learn/README.md) / [소유권](README.md) / 사용자는 HEAD하고만 대화한다
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [소유권](README.md) / 사용자는 HEAD하고만 대화한다
 
 ## 학습 목표
 

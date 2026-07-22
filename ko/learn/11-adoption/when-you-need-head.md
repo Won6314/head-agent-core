@@ -1,6 +1,6 @@
 # HEAD가 필요한 때
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / [도입](README.md) / HEAD가 필요한 때
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [도입](README.md) / HEAD가 필요한 때
 
 ## 학습 목표
 

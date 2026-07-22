@@ -1,6 +1,6 @@
 # 왜 검증은 분리되는가
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / [결정](README.md) / 왜 검증은 분리되는가
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [결정](README.md) / 왜 검증은 분리되는가
 
 ## 문제
 
@@ -43,6 +43,6 @@ flowchart LR
 
 실행 근거는 자동 완료가 아니라 판단의 입력으로 취급하세요. 결과를 이후에 신뢰하기 전에 합의된 목표에 비춰 검증하세요.
 
-이전: [왜 거부 목록이 아니라 일반 원칙인가?](why-general-rules-not-deny-lists.md) | 다음 챕터: [진화](../10-evolution/README.md)
+이전: [왜 금지 목록이 아니라 일반 원칙인가?](why-general-rules-not-deny-lists.md) | 다음 챕터: [진화](../10-evolution/README.md)
 
 출처 분류: 보관된 검증 설계의 역사적 기록; 운영 관찰; 현재 완료 원칙; 사후적 이론.

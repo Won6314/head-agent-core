@@ -1,6 +1,6 @@
 # 도입: 작업에 필요한 것만 사용하기
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / 도입
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / 도입
 
 ## 학습 목표
 
@@ -40,6 +40,6 @@ flowchart LR
 
 이전: [진화: 근거가 무엇을 바꾸었는가](../10-evolution/README.md) | 다음: [HEAD가 필요한 때](when-you-need-head.md)
 
-챕터를 나갈 때는 [Learn](../../../learn/README.md) (영문) 또는 [HEAD Agent Core 루트](../../../README.md) (영문)로 돌아가세요. 현재 구현 계약은 [Shared Core](../../../head/README.md) (영문), [Shared Skills](../../../skills/README.md) (영문), [Shared MCP](../../../mcp/README.md) (영문), [Shared Agents](../../../agents/README.md) (영문), [Project Layer](../../../projects/README.md) (영문) 참조를 사용하세요.
+챕터를 나갈 때는 [학습](../README.md) 또는 [HEAD Agent Core 루트](../../README.md)로 돌아가세요. 현재 구현 계약은 [Shared Core](../../../head/README.md) (영문), [Shared Skills](../../../skills/README.md) (영문), [Shared MCP](../../../mcp/README.md) (영문), [Shared Agents](../../../agents/README.md) (영문), [Project Layer](../../../projects/README.md) (영문) 참조를 사용하세요.
 
 출처 분류: 현재 공유 원칙; 현재 공개 참조 계약; 운영 관찰.

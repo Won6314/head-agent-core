@@ -1,6 +1,6 @@
 # 흔한 안티패턴
 
-[HEAD Agent Core](../../../README.md) (영문) / [Learn](../../../learn/README.md) (영문) / [도입](README.md) / 흔한 안티패턴
+[HEAD Agent Core](../../README.md) / [학습](../README.md) / [도입](README.md) / 흔한 안티패턴
 
 ## 학습 목표
 
