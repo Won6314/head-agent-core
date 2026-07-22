@@ -37,6 +37,6 @@ Independent review is not mandatory ceremony. It is useful when correlated reaso
 
 Trust should move upward only with evidence: local evidence for the result, integration evidence for the outcome, and user direction for material choices.
 
-Previous: [Bounded Agent Ownership](bounded-agent-ownership.md) | Next: [General Rules](../05-general-rules/README.md)
+Previous: [Bounded Agent Ownership](bounded-agent-ownership.md) | Next: [Context](../04-context/README.md)
 
 Source class: current completion and delegation contracts; retrospective design-theory interpretation.

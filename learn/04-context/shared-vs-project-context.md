@@ -31,7 +31,7 @@ Shared does not mean more authoritative than project policy. The layers answer d
 
 ## Takeaway
 
-Share methods that survive removal of local facts; keep local facts, policies, and capabilities with the project that owns them.
+Share principles that survive removal of local facts; keep local facts, policies, and capabilities with the project that owns them.
 
 Previous: [Index, Not Payload](index-not-payload.md) | Next: [Context For HEAD](context-for-head.md)
 

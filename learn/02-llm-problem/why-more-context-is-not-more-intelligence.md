@@ -38,9 +38,9 @@ quadrantChart
     x-axis Low relevance --> High relevance
     y-axis Low authority --> High authority
     quadrant-1 Use now
-    quadrant-2 Verify before use
+    quadrant-2 Keep retrievable
     quadrant-3 Exclude
-    quadrant-4 Supporting context
+    quadrant-4 Verify before use
 ```
 
 The diagram is incomplete without timing and ownership, but it makes the first point visible: volume is not the selection rule.
@@ -91,4 +91,4 @@ Next course chapter: [Ownership: User, HEAD, and Bounded Agents](../03-ownership
 
 Return to [Learn HEAD](../README.md).
 
-Source class: current context architecture and operational observations. External long-context research will be added during the English evidence pass.
+Source class: current context architecture and operational observations.

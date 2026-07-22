@@ -64,11 +64,11 @@ That is why HEAD invests more attention at decision boundaries than at every loc
 
 The User-HEAD-Agent hierarchy limits how far an unchecked conclusion can travel:
 
-| Layer | Can decide | Must not silently decide |
+| Layer | Owns | Delegates or escalates |
 | --- | --- | --- |
-| User | Material direction, policy, risk, and final priorities | Local implementation details that have one reasonable answer |
-| HEAD | Work model, context selection, sequencing, integration | New material direction not granted by the user |
-| Worker | Local execution choices inside one outcome | Parent scope, policy, or the meaning of success |
+| User | Material direction, policy, risk, and final priorities | Ordinarily delegates planning and local execution choices to HEAD |
+| HEAD | Work model, context selection, sequencing, integration | Escalates new material direction to the user |
+| Worker | Local execution choices inside one outcome | Returns parent-scope, policy, or success-definition questions to HEAD |
 
 If a worker discovers evidence that challenges the parent framing, the correct action is not to hide the conflict or invent policy. It returns the evidence so HEAD can update the work model or request a user decision.
 
