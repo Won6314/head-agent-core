@@ -1,6 +1,6 @@
 ---
 name: restore-session
-description: List and safely restore a validated HEAD Claude/OpenCode session into a fresh Herdr pane.
+description: List and safely restore a validated HEAD OpenCode session into a fresh Herdr pane.
 ---
 
 # Restore Session
@@ -16,12 +16,12 @@ The project's `scripts/resume-session.sh` is the canonical restore engine. This 
 "<PROJECT_ROOT>/scripts/resume-session.sh" --list
 ```
 
-3. Show exact session name, state, update time, valid restore candidates, and live status. Ask the user to select the session and runtime when not already explicit.
+3. Show exact session name, state, update time, valid OpenCode restore candidate, and live status. Ask the user to select the session when not already explicit.
 4. Do not guess a fuzzy name or restore ID. Do not bypass invalid, duplicate, or collision warnings.
 5. Verify a non-destructive plan:
 
 ```bash
-"<PROJECT_ROOT>/scripts/resume-session.sh" "<SESSION_NAME>" --runtime "<claude|opencode>" --dry-run
+"<PROJECT_ROOT>/scripts/resume-session.sh" "<SESSION_NAME>" --runtime opencode --dry-run
 ```
 
 6. If the plan exactly matches the user's selection, run the same command without `--dry-run`.
