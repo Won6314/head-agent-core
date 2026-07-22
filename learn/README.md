@@ -37,12 +37,12 @@ The system rests on four claims:
 - `01` [Origin: How The System Grew](01-origin/README.md)
 - `02` [The LLM Problem Model](02-llm-problem/README.md)
 - `03` [Ownership: User, HEAD, and Bounded Agents](03-ownership/README.md)
+- `04` [Context: A Governed Working Set](04-context/README.md)
 - `05` [General Rules: Principles Instead Of An Endless Deny List](05-general-rules/README.md)
+- `06` [Canon: Preserving The Work Agreement](06-canon/README.md)
 
 ### Planned
 
-- `04` Context: always loaded, indexed, and retrieved
-- `06` Canon: fixing the problem and goal across compaction
 - `07` Components: Core, project context, MCP, Skills, Agents, and runtime
 - `08` Operation: from a user request to a verified result
 - `09` Decisions: rejected alternatives and trade-offs
