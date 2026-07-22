@@ -47,7 +47,7 @@ No finding quota applies. A clean `GO` is successful validation.
 - Do not repair the target while validating it.
 - Do not make product, policy, architecture, cost, or workflow decisions.
 - Do not redesign without a material finding demonstrating the need.
-- Do not write canonical specs, plans, WorkUnits, session files, or final conclusions.
+- Do not write canonical specs, plans, runs, slices, session files, or final conclusions.
 - Unsupported facts are `미확인`, not inferred.
 - A negative verdict is successful role execution when evidence requires it.
 
