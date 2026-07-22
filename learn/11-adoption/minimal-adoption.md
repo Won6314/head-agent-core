@@ -11,7 +11,7 @@ Start with the smallest composition that preserves the needed ownership boundary
 The minimum viable model has a shared reasoning layer, a project-owned layer, and a human-owned direction. Add a session canon for durable work and a worker path only for a genuinely bounded outcome.
 
 ```text
-Human: fixes goal and material choices
+User: fixes goal and material choices
         |
         v
 Shared Core: portable ownership and reasoning principles

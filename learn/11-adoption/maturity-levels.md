@@ -22,16 +22,14 @@ Maturity is the ability to preserve correct ownership and evidence at the comple
 
 ```mermaid
 flowchart TD
-    A[Direct HEAD] --> B{Durability needed?}
-    B -- yes --> C[Durable run]
-    B -- no --> D[Verify result]
-    C --> E{Separate coherent outcome?}
-    E -- yes --> F[Bounded worker]
-    E -- no --> D
-    F --> G{Second judgment material?}
-    G -- yes --> H[Independent review]
-    G -- no --> D
-    H --> D
+    H[Direct HEAD baseline]
+    H -. durability needed .-> R[Durable run]
+    H -. coherent separate outcome .-> W[Bounded worker]
+    H -. second judgment material .-> V[Independent review]
+    H -. enforced or repeated interface needed .-> I[Optional integration]
+    R -. can combine .-> W
+    R -. can combine .-> V
+    W -. can combine .-> V
 ```
 
 ## Design Response

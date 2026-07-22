@@ -59,7 +59,7 @@ These hypotheses were not rejected because their mechanisms are always useless. 
 
 **Historical record.** The failure analysis proposed a multi-record repaired contract at the time. That was an intermediate historical response, not the current design. Later evidence and current runtime documentation reduced recovery to fixed canonical records, with no inferred replacement when one is absent.
 
-**Current decision.** Recovery starts from the durable user-coordinator agreement, not the most convenient available runtime state.
+**Current decision.** Recovery starts from the durable user-HEAD agreement, not the most convenient available runtime state.
 
 ## Common Misunderstanding
 

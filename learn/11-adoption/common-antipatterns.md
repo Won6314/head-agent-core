@@ -8,7 +8,7 @@ Recognize additions that appear organized but weaken ownership, evidence, or ada
 
 ## Core Claim
 
-Most adoption failures come from treating mechanism as authority: process replaces judgment, context replaces evidence, or a worker result replaces the human-HEAD agreement.
+Most adoption failures come from treating mechanism as authority: process replaces judgment, context replaces evidence, or a worker result replaces the user-HEAD agreement.
 
 | Antipattern | Why it fails | Better response |
 | --- | --- | --- |

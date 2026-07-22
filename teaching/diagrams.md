@@ -11,9 +11,12 @@ flowchart LR
     U[User direction] --> H[HEAD work model]
     H --> D{Material choice missing?}
     D -->|yes| U
-    D -->|no| A[Bounded Agent outcome]
+    D -->|no| Q{Separate owner useful?}
+    Q -->|yes| A[Bounded Agent outcome]
+    Q -->|no| W[HEAD direct outcome]
     A --> E{Direct evidence passes?}
-    E -->|no| A
+    W --> E
+    E -->|no| H
     E -->|yes| I[HEAD verifies and integrates]
     I --> N{Expand further?}
     N -->|yes| H
@@ -70,7 +73,7 @@ flowchart TD
     P[Progress and history\nretrieval only, not authority] -. supports .-> H
 ```
 
-Use this to distinguish the two recovery authorities from subordinate retrieval records. Session identity preserves the stable topic and constraints; the full run preserves the user-HEAD work agreement and recovery state. Progress and history can support retrieval but cannot override either authority.
+Use this to distinguish the two canonical recovery records from subordinate retrieval records. Session identity preserves the stable topic and constraints; the full run preserves the user-HEAD work agreement and recovery state. Progress and history can support retrieval but cannot replace either record or override the agreement.
 
 Learning sources: [Context And Run](../learn/06-canon/context-and-run.md), [Fixing The Problem And Goal](../learn/06-canon/fixing-the-problem-and-goal.md), [Fragile Progress And History](../learn/06-canon/fragile-progress-and-history.md).
 
@@ -85,9 +88,11 @@ flowchart TD
     H --> S[Load matching Skill when needed]
     H --> M[Call MCP when needed]
     H --> A[Assign bounded Agent outcome when needed]
-    S --> A
-    M --> A
-    A --> E[Result and direct evidence]
+    H --> D[Work directly when appropriate]
+    S -. procedure guides .-> H
+    M --> E[Result and direct evidence]
+    A --> E
+    D --> E
     E --> H
     H --> I[Verify, integrate, update canon]
 ```

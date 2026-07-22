@@ -12,18 +12,18 @@ HEAD is a way to preserve ownership, evidence, and continuity as work becomes ha
 
 ```mermaid
 flowchart LR
-    U[Human direction] --> H[HEAD owns the whole outcome]
+    U[User direction] --> H[HEAD owns the whole outcome]
     H --> D[Direct work]
-    H -. when useful .-> R[Durable run canon]
+    R[Durable run canon] -. preserves agreement .-> H
     H -. when useful .-> W[One bounded worker]
     H -. when consequential .-> V[Independent review]
-    H -. when justified .-> I[Project integration]
+    H -. when justified .-> I[Callable project integration]
     D --> E[Observed result]
-    R --> E
     W --> E
-    V --> E
     I --> E
     E --> H
+    V --> H
+    H --> O[Verified outcome]
 ```
 
 ## Chapter Map

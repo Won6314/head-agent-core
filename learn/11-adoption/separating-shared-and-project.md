@@ -16,7 +16,7 @@ Shared guidance states how HEAD reasons and composes work. The project layer sta
 | Shared skills, MCPs, and Agents | Reusable procedure, callable contract, or role boundary | Project routing, local approvals, specialist facts, or private integrations |
 | Project Core and index | Local authority, constraints, canonical sources, and retrieval routes | A rewritten universal Core |
 | Project extensions | Domain workflows, integrations, overlays, and specialists | Unrelated shared behavior |
-| Human | Material direction and final choices about product, policy, architecture, cost, risk, and workflow | Routine execution detail that has been safely delegated |
+| User | Material direction and final choices about product, policy, architecture, cost, risk, and workflow | Routine execution detail that has been safely delegated |
 
 ## Publication Boundary
 

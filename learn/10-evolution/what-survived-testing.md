@@ -8,13 +8,15 @@ Simplification retained controls that continue to connect an action to observabl
 
 ```mermaid
 flowchart LR
-    U[User direction] --> H[Accountable coordinator]
-    H --> C[Explicit work agreement]
+    U[User direction and material decisions] --> H[HEAD]
+    C[Explicit work agreement] --> H
     H --> B[Bounded outcome]
     B --> W[One owner]
     W --> E[Direct evidence]
     E --> H
-    H --> D[User decision gate]
+    H --> D{Material user decision needed?}
+    D -->|yes| U
+    D -->|no| O[Verified conclusion]
 ```
 
 ## Code-External Evidence

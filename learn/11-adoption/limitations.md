@@ -18,7 +18,7 @@ HEAD can make work more inspectable and recoverable; it cannot guarantee truth, 
 | Tool availability does not ensure appropriate use | A callable capability may be ignored, misused, unavailable, or insufficient for the real-world condition. |
 | Canon preserves agreement, not reality | A durable record helps prevent scope drift but must not be mistaken for fresh external evidence. |
 | Independent review is bounded | A reviewer can miss errors, share the same blind spots, or lack the evidence needed to challenge a result. |
-| Human direction remains necessary | Material choices about product, policy, architecture, cost, risk, workflow, and public communication cannot be delegated away by process design. |
+| User direction remains necessary | Material choices about product, policy, architecture, cost, risk, workflow, and public communication cannot be delegated away by process design. |
 
 ## Design Response
 

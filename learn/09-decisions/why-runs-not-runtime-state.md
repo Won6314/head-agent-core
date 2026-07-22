@@ -23,10 +23,9 @@ Treat current task markers, snapshots, generated summaries, and live worker stat
 For durable work, preserve a stable run as the user-HEAD agreement: purpose, scope, success conditions, decisions, structure, current situation, next result, evidence locations, and checklist. Keep session identity separate. Treat generated progress and history as fragile retrieval aids. Recovery starts from the fixed canonical records and explicitly retrieves supporting slices or evidence only when needed.
 
 ```text
-User agreement -> durable run -> recovery and continuation
-                     ^                  |
-                     |                  v
-              verified updates     fragile runtime records
+User-HEAD agreement -> durable run -> recovery and continuation
+Verified updates -> durable run
+Fragile runtime records -> retrieval only, never authority
 ```
 
 ## Related Theory
