@@ -10,14 +10,7 @@ Assemble the smallest authoritative working set that can change the current resu
 
 Context is selected by authority, relevance, timing, and ownership. An index can direct retrieval without becoming a payload dump; each owner receives only the information needed to make its decisions.
 
-```mermaid
-flowchart LR
-    P[Portable principles] --> H[HEAD]
-    X[Project rules and index] --> H
-    R[Run canon] --> H
-    H --> E[Retrieve relevant evidence]
-    E --> B[Bounded owner brief]
-```
+![HEAD context composition: portable principles, project rules, and the run canon inform HEAD, which retrieves relevant evidence for a bounded owner brief.](../../assets/diagrams/head-context.svg)
 
 ## Design Response
 

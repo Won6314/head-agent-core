@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">How HEAD builds context</title>
+  <desc id="desc">Small stable authorities, including session canon when durable work needs it, inform HEAD. HEAD retrieves authoritative evidence and procedures on demand, composes a whole-outcome working context, and sends one Agent only the smallest complete brief for its bounded result.</desc>
+  <defs>
+    <linearGradient id="contextFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f766e"/>
+      <stop offset="1" stop-color="#115e59"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#0f172a" flood-opacity="0.11"/>
+    </filter>
+    <marker id="arrowSlate" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 z" fill="#475569"/>
+    </marker>
+    <marker id="arrowTeal" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L12,6 L0,12 z" fill="#0f766e"/>
+    </marker>
+    <style>
+      .title { font: 700 42px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .eyebrow { font: 700 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: 2px; fill: #0f766e; }
+      .column { font: 700 17px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
+      .card-title { font: 700 21px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #0f172a; }
+      .body { font: 400 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; }
+      .small { font: 600 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+      .head-title { font: 750 36px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #ffffff; }
+      .head-body { font: 400 17px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #ccfbf1; }
+      .head-chip { font: 650 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #ccfbf1; }
+      .brief-title { font: 700 25px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #0f172a; }
+      .brief-item { font: 600 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
+      .label { font: 650 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" rx="36" fill="#f8fafc"/>
+  <path d="M0 0H1600V10H0z" fill="#0f766e"/>
+
+  <text x="72" y="78" class="eyebrow">CONTEXT IS A GOVERNED WORKING SET</text>
+  <text x="72" y="132" class="title">How HEAD builds context</text>
+  <text x="72" y="171" class="subtitle">Keep stable authority small. Retrieve detail when it can change the outcome. Narrow again for each Agent.</text>
+
+  <text x="72" y="225" class="column">STABLE AUTHORITIES</text>
+  <text x="606" y="225" class="column">COMPOSED BY HEAD</text>
+  <text x="1174" y="225" class="column">RETRIEVED ON DEMAND</text>
+
+  <g filter="url(#shadow)">
+    <rect x="72" y="252" width="390" height="112" rx="24" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+    <rect x="72" y="252" width="10" height="112" rx="5" fill="#4f46e5"/>
+    <text x="110" y="294" class="card-title">Shared principles</text>
+    <text x="110" y="325" class="body">Portable ownership and reasoning rules</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="72" y="388" width="390" height="112" rx="24" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+    <rect x="72" y="388" width="10" height="112" rx="5" fill="#16a34a"/>
+    <text x="110" y="430" class="card-title">Project Core and index</text>
+    <text x="110" y="461" class="body">Local rules plus routes to authority</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="72" y="524" width="390" height="128" rx="24" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+    <rect x="72" y="524" width="10" height="128" rx="5" fill="#ea580c"/>
+    <text x="110" y="566" class="card-title">Durable-work canon</text>
+    <text x="110" y="597" class="body">context.md and run.md</text>
+    <text x="110" y="625" class="body">when continuity matters</text>
+  </g>
+
+  <path d="M462 308H572" fill="none" stroke="#475569" stroke-width="3" marker-end="url(#arrowSlate)"/>
+  <path d="M462 444H572" fill="none" stroke="#475569" stroke-width="3" marker-end="url(#arrowSlate)"/>
+  <path d="M462 588H572" fill="none" stroke="#475569" stroke-width="3" marker-end="url(#arrowSlate)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="590" y="252" width="438" height="400" rx="34" fill="url(#contextFill)"/>
+    <rect x="626" y="286" width="151" height="32" rx="16" fill="#134e4a" stroke="#2dd4bf"/>
+    <text x="701" y="308" text-anchor="middle" class="head-chip">WORKING CONTEXT</text>
+    <text x="626" y="373" class="head-title">HEAD sees enough</text>
+    <text x="626" y="415" class="head-title">to judge the whole.</text>
+    <text x="626" y="465" class="head-body">Current state, intended result, relationships,</text>
+    <text x="626" y="494" class="head-body">locked decisions, assumptions, and evidence.</text>
+
+    <path d="M626 540H992" stroke="#5eead4" stroke-opacity="0.5"/>
+    <text x="626" y="580" class="head-body">Authority before volume</text>
+    <text x="626" y="610" class="head-body">Relevance before history</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1148" y="252" width="380" height="112" rx="24" fill="#ecfeff" stroke="#a5f3fc" stroke-width="2"/>
+    <text x="1184" y="294" class="card-title">Canonical evidence</text>
+    <text x="1184" y="325" class="body">Code, documents, data, observed behavior</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1148" y="388" width="380" height="112" rx="24" fill="#ecfeff" stroke="#a5f3fc" stroke-width="2"/>
+    <text x="1184" y="430" class="card-title">Procedure or capability</text>
+    <text x="1184" y="461" class="body">A Skill loads or an MCP is called when relevant</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1148" y="524" width="380" height="128" rx="24" fill="#ecfeff" stroke="#a5f3fc" stroke-width="2"/>
+    <text x="1184" y="566" class="card-title">Project detail</text>
+    <text x="1184" y="597" class="body">The specific facts and implementation</text>
+    <text x="1184" y="625" class="body">needed for this outcome, not every outcome</text>
+  </g>
+
+  <path d="M1148 308H1058" fill="none" stroke="#0f766e" stroke-width="3" marker-end="url(#arrowTeal)"/>
+  <path d="M1148 444H1058" fill="none" stroke="#0f766e" stroke-width="3" marker-end="url(#arrowTeal)"/>
+  <path d="M1148 588H1058" fill="none" stroke="#0f766e" stroke-width="3" marker-end="url(#arrowTeal)"/>
+  <g>
+    <rect x="72" y="712" width="390" height="126" rx="24" fill="#fff1f2" stroke="#fecdd3" stroke-width="2" stroke-dasharray="8 7"/>
+    <text x="108" y="752" class="card-title" fill="#9f1239">Not a context dump</text>
+    <text x="108" y="783" class="body">No copied history, stale summaries,</text>
+    <text x="108" y="811" class="body">or every available project file.</text>
+  </g>
+
+  <path d="M809 652V692" fill="none" stroke="#475569" stroke-width="3" marker-end="url(#arrowSlate)"/>
+  <text x="830" y="683" class="label">narrow by ownership</text>
+
+  <g filter="url(#shadow)">
+    <rect x="590" y="708" width="938" height="130" rx="28" fill="#ffffff" stroke="#99f6e4" stroke-width="3"/>
+    <text x="628" y="754" class="brief-title">One Agent gets the smallest complete brief</text>
+    <rect x="628" y="782" width="114" height="34" rx="17" fill="#f0fdfa"/>
+    <text x="685" y="804" text-anchor="middle" class="brief-item">PURPOSE</text>
+    <rect x="754" y="782" width="160" height="34" rx="17" fill="#f0fdfa"/>
+    <text x="834" y="804" text-anchor="middle" class="brief-item">LOCKED DECISIONS</text>
+    <rect x="926" y="782" width="116" height="34" rx="17" fill="#f0fdfa"/>
+    <text x="984" y="804" text-anchor="middle" class="brief-item">EVIDENCE</text>
+    <rect x="1054" y="782" width="122" height="34" rx="17" fill="#f0fdfa"/>
+    <text x="1115" y="804" text-anchor="middle" class="brief-item">BOUNDARY</text>
+    <rect x="1188" y="782" width="302" height="34" rx="17" fill="#f0fdfa"/>
+    <text x="1339" y="804" text-anchor="middle" class="brief-item">OBSERVABLE COMPLETION</text>
+  </g>
+</svg>

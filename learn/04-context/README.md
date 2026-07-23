@@ -10,14 +10,11 @@ Understand context as information selected for a specific owner and outcome, not
 
 Context quality depends on four questions: is the information authoritative, relevant now, available at the right time, and owned by the right layer? More material cannot repair a missing answer to those questions.
 
-```mermaid
-flowchart TD
-    S[Shared principles] --> H[HEAD working set]
-    P[Project index and rules] --> H
-    C[Current work agreement] --> H
-    H --> R[Retrieve authoritative evidence when needed]
-    H --> W[Bounded context for one worker]
-```
+This is the design center of HEAD Agent Core. Ownership identifies who needs to decide. An index locates authority. Canon preserves what must not drift. Skills time the arrival of procedures. Agent briefs narrow the whole-outcome working set for one bounded owner. Each mechanism controls which context is present, when, and for whom.
+
+If indiscriminate volume worked, the system could provide every document and ask the model to read. The architecture exists because adding material without governing authority, relevance, timing, and ownership makes context noisier rather than more intelligent.
+
+![HEAD context composition: shared principles, project rules, and the current agreement inform HEAD, which retrieves evidence and prepares a bounded worker brief.](../../assets/diagrams/head-context.svg)
 
 ## Chapter Map
 

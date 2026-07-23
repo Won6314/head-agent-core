@@ -20,17 +20,7 @@ Maturity is the ability to preserve correct ownership and evidence at the comple
 
 ## Relationship Model
 
-```mermaid
-flowchart TD
-    H[Direct HEAD baseline]
-    H -. durability needed .-> R[Durable run]
-    H -. coherent separate outcome .-> W[Bounded worker]
-    H -. second judgment material .-> V[Independent review]
-    H -. enforced or repeated interface needed .-> I[Optional integration]
-    R -. can combine .-> W
-    R -. can combine .-> V
-    W -. can combine .-> V
-```
+![Adoption capability choices: start with direct HEAD work and add durable runs, bounded workers, independent review, or optional integrations only for demonstrated needs.](../../assets/diagrams/adoption-capability-choices.svg)
 
 ## Design Response
 

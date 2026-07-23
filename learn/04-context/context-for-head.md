@@ -10,14 +10,7 @@ Identify the context HEAD needs to judge, plan, dispatch, and integrate the whol
 
 HEAD owns understanding, execution strategy, context composition, integration, and conclusion. Its working set therefore needs the user's direction, applicable boundaries, current work agreement, dependency picture, and routes to relevant evidence. It does not need every project document at once.
 
-```mermaid
-flowchart TD
-    U[User direction and decisions] --> H[HEAD work model]
-    B[Applicable boundaries] --> H
-    R[Run canon and current position] --> H
-    I[Index and retrieved evidence] --> H
-    H --> D[Dispatch, verify, integrate]
-```
+![HEAD context composition: user direction, boundaries, run canon, and retrieved evidence inform HEAD's dispatch, verification, and integration.](../../assets/diagrams/head-context.svg)
 
 ## Design Response
 

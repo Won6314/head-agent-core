@@ -4,7 +4,7 @@
 
 ## Outcome
 
-Participants can explain why unchecked LLM expansion is risky, assign a decision to the User, HEAD, or a bounded Agent, and name the evidence needed before work expands further.
+Participants can explain why context composition governs reliable LLM work, why unchecked expansion is risky, how to assign a decision to the User, HEAD, or a bounded Agent, and what evidence is needed before work expands further.
 
 ## Preparation
 
@@ -15,7 +15,7 @@ Participants can explain why unchecked LLM expansion is risky, assign a decision
 
 | Time | Activity | Teaching focus | Source |
 | --- | --- | --- | --- |
-| 0-2 min | Frame the problem | An output can sound complete while carrying an omission or guess downstream. | [One-Step Expansion](../learn/02-llm-problem/the-one-step-expansion-rule.md) |
+| 0-2 min | Frame the context problem | An LLM acts from assembled context; an output can sound complete while carrying an omission or guess downstream. | [Context](../learn/04-context/README.md) and [One-Step Expansion](../learn/02-llm-problem/the-one-step-expansion-rule.md) |
 | 2-6 min | Explain controlled expansion | One coherent expansion becomes trusted input only after an evidence gate. | [Controlled expansion loop](diagrams.md#controlled-expansion-loop) and [Verification Before Expansion](../learn/02-llm-problem/verification-before-expansion.md) |
 | 6-10 min | Assign ownership | User: direction and material choices; HEAD: planning and integration; Agent: local method within a locked boundary. | [Decision Rights](../learn/03-ownership/decision-rights.md) |
 | 10-15 min | Pair exercise | For a generic generated plan, identify one assumption, its proper owner, and evidence that could check it. | [Match Evidence To The Claim](../learn/02-llm-problem/verification-before-expansion.md#match-evidence-to-the-claim) |
@@ -25,6 +25,8 @@ Participants can explain why unchecked LLM expansion is risky, assign a decision
 Total: 20 minutes.
 
 ## Facilitation Notes
+
+Open with the operational claim: "For project work, context is the system." Clarify immediately that this does not mean maximum context. Ask who owns the next decision, which source is authoritative, what is relevant now, and when that information should enter the working set.
 
 Use a neutral example such as "an assistant drafts a public workshop guide." Do not ask whether the model is generally intelligent or unreliable. Ask instead: "What claim would this output make authoritative next, and what could directly check that claim?"
 
@@ -37,4 +39,4 @@ If a participant proposes that the Agent should decide a material direction, ret
 
 ## Close
 
-The model is not a swarm pattern or a requirement for ceremony. It is a way to keep direction, ownership, evidence, and the next expansion visible. Continue with the [60-minute core lecture](60-minute-core-lecture.md) when participants need the context and canon model behind the loop.
+The model is not a swarm pattern or a requirement for ceremony. Its roles, canon, procedures, and bounded briefs exist to keep the right context, direction, ownership, evidence, and next expansion visible. Continue with the [60-minute core lecture](60-minute-core-lecture.md) when participants need the context and canon model behind the loop.

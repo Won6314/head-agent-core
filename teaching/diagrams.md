@@ -59,19 +59,7 @@ Learning sources: [Context By Ownership](../learn/04-context/context-by-ownershi
 
 ## Durable Work Agreement
 
-```mermaid
-flowchart TD
-    U[User-fixed direction] --> C[Session identity]
-    U --> R[Full run agreement]
-    R --> B[Problem, goal, scope, and success]
-    R --> D[Decisions, checklist, and assumptions]
-    R --> N[Current position, next action, and evidence]
-    C --> H[HEAD resumes the whole outcome]
-    B --> H
-    D --> H
-    N --> H
-    P[Progress and history\nretrieval only, not authority] -. supports .-> H
-```
+![Durable work agreement: session identity and the full run preserve the user-HEAD agreement, while progress and history remain retrieval-only records.](../assets/diagrams/durable-work-agreement.svg)
 
 Use this to distinguish the two canonical recovery records from subordinate retrieval records. Session identity preserves the stable topic and constraints; the full run preserves the user-HEAD work agreement and recovery state. Progress and history can support retrieval but cannot replace either record or override the agreement.
 

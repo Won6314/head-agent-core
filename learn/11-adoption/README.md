@@ -10,21 +10,7 @@ Decide whether the HEAD model fits a piece of work, adopt its smallest useful fo
 
 HEAD is a way to preserve ownership, evidence, and continuity as work becomes harder to hold in one conversation. It is not a required ceremony, an autonomous organization, or a guarantee of correct judgment.
 
-```mermaid
-flowchart LR
-    U[User direction] --> H[HEAD owns the whole outcome]
-    H --> D[Direct work]
-    R[Durable run canon] -. preserves agreement .-> H
-    H -. when useful .-> W[One bounded worker]
-    H -. when consequential .-> V[Independent review]
-    H -. when justified .-> I[Callable project integration]
-    D --> E[Observed result]
-    W --> E
-    I --> E
-    E --> H
-    V --> H
-    H --> O[Verified outcome]
-```
+![Adoption capability choices: HEAD can work directly and add a durable run, bounded worker, independent review, or callable integration only when the work justifies it.](../../assets/diagrams/adoption-capability-choices.svg)
 
 ## Chapter Map
 

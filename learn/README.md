@@ -6,7 +6,22 @@ This course explains why HEAD Agent Core exists, how its design changed through 
 
 It is written for developers, product managers, designers, and AI operators who need to coordinate work that is too long, consequential, or context-heavy for a single unstructured conversation.
 
+## Choose A Depth
+
+This is a course, not a prerequisite checklist. Use the route that matches your current question:
+
+| Need | Route |
+| --- | --- |
+| A quick mental model | Use the [20-Minute Introduction](../teaching/20-minute-introduction.md). |
+| The core operating model | Read `02` LLM Problem, `03` Ownership, `04` Context, `06` Canon, then `08` Operation. |
+| The complete design story | Read all 11 chapters in order, including history, rejected alternatives, evolution, and adoption limits. |
+| Exact current contracts | Leave the course and use the [implementation reference](../head/README.md). |
+
 ## Course Thesis
+
+The whole course can be read as one design question: **how should context be assembled for the owner making the next decision?** Roles, Core principles, project indexes, Skills, MCP contracts, bounded Agent briefs, and runtime canon are not separate inventions. They are different answers to that context-control problem.
+
+Context control does not mean supplying the most material. It means making the right authority available to the right owner at the right time, while keeping irrelevant history and accidental assumptions out.
 
 HEAD is not an attempt to make an autonomous swarm. It is an ownership model for controlled expansion:
 
@@ -30,9 +45,7 @@ The system rests on four claims:
 3. The user's problem, goal, scope, and success conditions must remain canonical outside lossy model summaries.
 4. Portable behavior should come from generative principles; detailed procedures and project facts should load only when they are relevant.
 
-## Reading Order
-
-### Available
+## Full Course
 
 - `01` [Origin: How The System Grew](01-origin/README.md)
 - `02` [The LLM Problem Model](02-llm-problem/README.md)

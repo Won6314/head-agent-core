@@ -10,18 +10,7 @@ Identify what each architectural layer owns, when it becomes available, and why 
 
 HEAD is not one large prompt. It is a composition of small layers with different owners and delivery times. The separation keeps portable reasoning stable, local knowledge private, and execution accountable.
 
-```mermaid
-flowchart TD
-    C[Portable Core\nownership and reasoning] --> H[HEAD]
-    P[Project context\nrules, index, evidence routes] --> H
-    R[Run canon\ncurrent agreement] --> H
-    H --> E[Retrieve relevant evidence]
-    H --> M[MCP\ncall an interface]
-    H --> S[Skill\nload a procedure]
-    H --> A[Agent\nassign a bounded outcome]
-    A --> V[Evidence for verification]
-    V --> H
-```
+![Component composition: Core, project context, and run canon inform HEAD, which retrieves evidence, uses Skills and MCPs, and assigns bounded Agent outcomes for verification.](../../assets/diagrams/component-composition.svg)
 
 ## Chapter Map
 

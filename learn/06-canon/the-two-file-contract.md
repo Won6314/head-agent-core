@@ -10,14 +10,7 @@ Understand why recovery reads two fixed files in order and intentionally avoids 
 
 At recovery, the runtime reads the session's fixed context file and fixed run file, in that order. If either is missing, it is omitted quietly. No substitute is selected.
 
-```mermaid
-flowchart LR
-    C[Fixed session context] --> H[Recovery context]
-    R[Fixed full run] --> H
-    P[Progress and history] -. not injected .-> H
-    S[Snapshots] -. not injected .-> H
-    I[Inferred active or recent run] -. not selected .-> H
-```
+![Durable work agreement: session identity and the full run preserve the user-HEAD agreement, while progress and history remain retrieval-only records.](../../assets/diagrams/durable-work-agreement.svg)
 
 This small contract is deliberate. It makes recovery inputs inspectable: HEAD can know which durable sources were present rather than reasoning from a hidden selection process.
 
