@@ -1,10 +1,8 @@
-## Compact Instructions
+## Persistence Checkpoint
 
-`context.md` and `run.md` are reloaded from their fixed session paths after compaction. They remain authoritative over this summary. Do not use the summary to change the agreed scope or completion criteria in `run.md`.
+Produce a machine payload for the session files. This is not a continuation summary and must not tell the next model what local action to execute.
 
-The JSON below updates only the fragile `progress.md` and `history.md` records. Those records are not recovery prompt inputs.
-
-The compact summary MUST end with exactly one fenced `json` block using this schema:
+Output exactly one fenced `json` block and no other text:
 
 ```json
 {
@@ -18,4 +16,12 @@ The compact summary MUST end with exactly one fenced `json` block using this sch
 }
 ```
 
-Preserve material decisions, observed outputs, modified paths, run and slice references, and the exact next action. Reference the run canon instead of restating it. Keep strings valid JSON. Compact does not automatically persist lessons.
+Rules:
+
+- Write valid JSON strings and keep the payload concise.
+- Record verified result changes, not the conversation, compaction, persistence process, or tool narration.
+- `progress.md` and `history.md` are fragile retrieval records, not authority and not future prompt inputs.
+- Do not output `Objective`, `Important Details`, `Work State`, `Next Move`, `Relevant Files`, or prose outside the JSON block.
+- Do not preserve worker IDs, validator IDs, hashes, node IDs, commands, errors, or file lists unless one value is indispensable to recover unfinished work.
+- Do not turn the most recent blocker into the session goal. Describe its place in the full run and its reproducible checkpoint.
+- A history entry records a completed outcome only. Do not append planning, pending work, or repeated prior history.
