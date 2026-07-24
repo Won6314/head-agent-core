@@ -88,8 +88,8 @@ PY
 [ -n "$RUNTIME" ] || RUNTIME="claude"
 
 case "$RUNTIME" in
-  claude) SESSION_ID="$CLAUDE_ID"; COMMAND=(claude --resume "$CLAUDE_ID" --dangerously-skip-permissions) ;;
-  opencode) SESSION_ID="$OPENCODE_ID"; COMMAND=(opencode -s "$OPENCODE_ID") ;;
+  claude) SESSION_ID="$CLAUDE_ID"; AGENT_ARGS=(--resume "$CLAUDE_ID" --dangerously-skip-permissions) ;;
+  opencode) SESSION_ID="$OPENCODE_ID"; AGENT_ARGS=(-s "$OPENCODE_ID") ;;
   *) echo "Invalid runtime: $RUNTIME" >&2; exit 1 ;;
 esac
 [ -n "$SESSION_ID" ] || { echo "No $RUNTIME restore ID for '$SESSION_NAME'." >&2; exit 1; }
@@ -111,4 +111,8 @@ if [ -z "$TAB_ID" ]; then
 fi
 [ -n "$TAB_ID" ] || { echo "Could not resolve a unique Herdr tab for '$SESSION_NAME'." >&2; exit 1; }
 
-exec "$HERDR_BIN" agent start "head-$SESSION_NAME" --cwd "$HEAD_DIR" --workspace "$HERDR_WORKSPACE_ID" --tab "$TAB_ID" --focus -- "${COMMAND[@]}"
+SNAPSHOT=$("$HERDR_BIN" api snapshot)
+PANE_ID=$(printf '%s' "$SNAPSHOT" | python3 -c 'import json,sys; d=json.load(sys.stdin); s=d.get("result",{}).get("snapshot") or d.get("snapshot") or {}; w,t=sys.argv[1:]; panes=[p for p in s.get("panes",[]) if p.get("workspace_id")==w and p.get("tab_id")==t]; print((panes[0].get("pane_id") or panes[0].get("id")) if len(panes)==1 else "")' "$HERDR_WORKSPACE_ID" "$TAB_ID")
+[ -n "$PANE_ID" ] || { echo "Could not resolve the single Herdr pane for '$SESSION_NAME'." >&2; exit 1; }
+
+exec "$HERDR_BIN" agent start "head-$SESSION_NAME" --kind "$RUNTIME" --pane "$PANE_ID" -- "${AGENT_ARGS[@]}"

@@ -233,7 +233,7 @@ export function buildHeadPrompt({ sessionID = "", agent = "head", includeBaseFil
   return { prompt, metadata };
 }
 
-const LEGACY_CONFIG_MESSAGE = "Legacy runtime config emission is retired. Use runtime/config/bin/render-config.mjs with a mandatory profile instead.";
+const LEGACY_CONFIG_MESSAGE = "Runtime configuration emission is unavailable from this shared core.";
 /** Retained only as an import-compatible fail-closed sentinel; it never emits config. */
 export function buildRuntimeConfig() { throw new Error(LEGACY_CONFIG_MESSAGE); }
 export function logKeywordPrompt(record, root) { logJsonl("keyword-hints", { ts: new Date().toISOString(), ...record }, root); }

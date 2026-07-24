@@ -182,10 +182,13 @@ PY
   fi
 
   if [ -n "$SUMMARY" ]; then
-    echo "$SUMMARY" | python3 "$PROJECT_ROOT/.claude/hooks/compact-session-update.py" \
+    if echo "$SUMMARY" | python3 "$PROJECT_ROOT/.claude/hooks/compact-session-update.py" \
       --project-root "$PROJECT_ROOT" \
-      --session "$SESSION_NAME"
-    echo "[$(date '+%H:%M:%S')] compact summary persisted: session=$SESSION_NAME chars=${#SUMMARY}" >> "$LOG_FILE"
+      --session "$SESSION_NAME"; then
+      echo "[$(date '+%H:%M:%S')] compact summary persisted: session=$SESSION_NAME chars=${#SUMMARY}" >> "$LOG_FILE"
+    else
+      echo "[$(date '+%H:%M:%S')] compact summary persistence failed: session=$SESSION_NAME" >> "$LOG_FILE"
+    fi
   else
     echo "[$(date '+%H:%M:%S')] compact summary not found after transcript watch: $TRANSCRIPT_PATH" >> "$LOG_FILE"
   fi
