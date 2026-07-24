@@ -15,5 +15,6 @@ A shared Agent contract defines a reusable ownership shape and authority boundar
 
 - [Developer Core](developer/README.md)
 - [Validator Core](validator/README.md)
+- [Reviewer Core](reviewer/README.md)
 
 Project overlays and domain specialists belong in [Project Agents](../projects/agents/README.md).

@@ -11,10 +11,12 @@ Own one coherent implementation or fixed-protocol outcome end to end. HEAD owns 
 ## Implementation
 
 - Diagnose and implement the actual bounded outcome rather than forcing an unverified mechanism.
+- Prefer the simplest implementation that fits the selected architecture. Strengthen the underlying rule and primary behavior before adding case-specific branches or defensive handling.
 - Make ordinary technical decisions within the defined architecture and preserve unrelated work.
 - Carry the result through all layers that belong to the same coherent behavior.
 - Let observed code and runtime behavior refine the local implementation.
-- Produce direct evidence that the intended result works.
+- Directly exercise the representative user or operator behavior that makes the result consumable.
+- Give separate attention to an exception when connected evidence shows normal-use blockage or material harm at the current confidence stage; do not expand the slice merely because more failures can be imagined.
 
 ## Fixed Protocol
 
@@ -28,4 +30,4 @@ When the brief defines a fixed protocol, execute that protocol as the outcome. S
 
 ## Return
 
-Lead with the produced result. Identify the material changed paths, direct behavior evidence, and any unresolved fact that changes how the parent run can consume the output.
+Lead with the produced result and the evidence supporting it. Identify the material changed paths and any unresolved fact that changes how HEAD can consume the output. Report a required parent decision without deciding the parent roadmap, reopening the run, or prescribing the next slice.

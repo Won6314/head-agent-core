@@ -9,10 +9,27 @@ Start from the outcome, not from a document template.
 
 ## Build The Work Model
 
-1. State the intended result and the current state that matters to it.
-2. Identify the parts, relationships, and order that make the result coherent.
-3. Use the representation natural to the work: investigation coverage, decision structure, production flow, operating state, or another form that fits the outcome.
+1. State the user-visible or operational result, the current state that matters, and the working assets worth preserving.
+2. Identify the parts, relationships, dependencies, and consumable outcomes that make the result coherent.
+3. Use the representation natural to the work: investigation coverage, decision structure, production flow, operating state, construction map, or another form that fits the outcome.
 4. Resolve facts that can change the work model from the canonical sources indexed by the project.
+
+## Make Decisions Before Execution Detail
+
+When a material choice exists, compare genuinely different paths at the depth needed for a decision. Include the smallest viable path when one exists: preserving the current state, operational handling, configuration, boundary adaptation, or a limited change may be a real contender.
+
+HEAD creates the option set. The user confirms that the options and decision framing represent the choice before an optional reviewer evaluates them. Reviewer evaluation is useful when separate judgment can materially change a consequential decision; it does not replace HEAD's option generation or the user-HEAD decision.
+
+Keep options comparable but intentionally incomplete. Select one direction before elaborating its execution model.
+
+## Divide The Work
+
+Map the whole result at a useful level, then divide it into coherent outcomes that increase the target artifact or unlock another outcome's consumption.
+
+- Keep together work that one owner can carry end to end and prove through one connected result.
+- Separate outcomes when they have a real dependency, distinct ownership or mutation boundary, or an uncertainty that must become concrete before later work can be shaped.
+- Establish the overall order first. Detail the current outcome to execution depth and refine later outcomes as their inputs become real.
+- Start outcomes together only when their inputs, ownership, shared boundaries, and output contracts are concrete enough to compose without one outcome redesigning another.
 
 ## Compose Context
 
@@ -26,11 +43,13 @@ Use the project's run entry point to create the current working canon at:
 sessions/{session}/run.md
 ```
 
-The run is the user-HEAD agreement for the whole outcome. Choose a structure natural to the work rather than following a fixed template, but include the original requirements and agreed decisions, complete intended result and scope, success conditions, work relationships and order, completed and remaining work, current situation, unverified assumptions, exact next action, and evidence locations.
+The run is the user-HEAD agreement for the whole outcome. Choose a structure natural to the work rather than following a fixed template. Preserve the problem and intended result, material boundaries and decisions, coherent outcome map, current position, and the evidence by which HEAD can integrate the result.
 
 Every run contains a work checklist. After the user and HEAD agree on the run, do not rewrite its requirements, scope, success conditions, or overall work model unless the user changes them. Update only checklists and current-situation fields as execution advances.
 
-One coherent outcome uses `run.md` alone. When work is divided into slices, keep a separate checklist for every slice in `run.md` and give each slice brief under `sessions/{session}/slices/` its own checklist. Slice documents may detail execution but cannot narrow or replace the parent run.
+One coherent outcome uses `run.md` alone. When work is divided into slices, keep a separate checklist for every slice in `run.md` and give each slice brief under `sessions/{session}/slices/` its own checklist. A slice is the HEAD-worker contract: HEAD authors its upper outcome, boundaries, starting evidence, and consumable result; the owner holds subordinate execution judgment. A slice may detail execution but cannot narrow or replace the parent run.
+
+Express confidence in terms natural to the work. Identify the representative behavior or artifact that supports completion and the current risks that could block real execution or cause material harm. Treat broader hardening as separate work when the current outcome does not depend on it.
 
 ## Execute
 
