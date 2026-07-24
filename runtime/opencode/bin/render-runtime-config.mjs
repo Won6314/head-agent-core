@@ -45,6 +45,8 @@ function logJsonl(name, record, root) {
   try {
     const dir = path.join(state, "logs");
     fs.mkdirSync(dir, { recursive: true });
+    const stateDescriptor = fs.openSync(state, "r");
+    try { fs.fsyncSync(stateDescriptor); } finally { fs.closeSync(stateDescriptor); }
     fs.appendFileSync(path.join(dir, `${name}.jsonl`), `${JSON.stringify(record)}\n`);
   } catch {}
 }
@@ -72,15 +74,143 @@ export function loadSessionRecord(sessionID, root) {
   if (!state) return null;
   try { return JSON.parse(fs.readFileSync(path.join(state, "sessions", `${sessionID}.json`), "utf8")); } catch { return null; }
 }
-export function saveSessionRecord(sessionID, record, root) {
-  if (!/^ses_[A-Za-z0-9]+$/.test(String(sessionID || ""))) return;
-  const state = headStateDir(root);
-  if (!state) return;
+function syncDirectory(directory) {
+  const descriptor = fs.openSync(directory, "r");
+  try { fs.fsyncSync(descriptor); } finally { fs.closeSync(descriptor); }
+}
+
+function ensureDurableDirectory(directory) {
+  fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+  // mkdir -p may have created several entries.  Sync every directory on this
+  // path so a successful state write is not stranded behind an undurable one.
+  const directories = [];
+  for (let current = path.resolve(directory); ; current = path.dirname(current)) {
+    directories.push(current);
+    if (path.dirname(current) === current) break;
+  }
+  for (const current of directories) syncDirectory(current);
+}
+
+function assertRegularFile(file, description) {
+  const metadata = fs.lstatSync(file);
+  if (!metadata.isFile() || metadata.isSymbolicLink()) throw new Error(`${description} is not a regular file`);
+  return metadata;
+}
+
+function writeSessionRecord(target, current, patch) {
+  const dir = path.dirname(target);
+  let temporary = "";
   try {
-    const dir = path.join(state, "sessions");
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, `${sessionID}.json`), JSON.stringify({ ...(loadSessionRecord(sessionID, root) || {}), ...record }, null, 2) + "\n");
-  } catch {}
+    temporary = path.join(dir, `.${path.basename(target)}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`);
+    const descriptor = fs.openSync(temporary, "wx", 0o600);
+    try { fs.writeFileSync(descriptor, JSON.stringify({ ...current, ...patch }, null, 2) + "\n", "utf8"); fs.fsyncSync(descriptor); } finally { fs.closeSync(descriptor); }
+    fs.renameSync(temporary, target);
+    temporary = "";
+    syncDirectory(dir);
+  } finally { if (temporary) { try { fs.unlinkSync(temporary); } catch {} } }
+}
+
+function sleep(milliseconds) { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds); }
+function linuxIncarnation(pid) {
+  try {
+    const bootID = fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim();
+    // comm may contain spaces/parentheses; everything after the final ')' is
+    // the stable stat field sequence, whose field 22 is starttime.
+    const statText = fs.readFileSync(`/proc/${pid}/stat`, "utf8");
+    const fields = statText.slice(statText.lastIndexOf(")") + 2).trim().split(/\s+/);
+    const startTime = fields[19];
+    return bootID && startTime ? { bootID, startTime } : null;
+  } catch { return null; }
+}
+export function processIncarnation(pid = process.pid) {
+  const linux = linuxIncarnation(pid);
+  return linux ? { pid, ...linux } : { pid };
+}
+export function processOwnerIsLive(owner) {
+  const pid = Number(owner?.pid);
+  if (!Number.isSafeInteger(pid) || pid <= 0) return false;
+  try { process.kill(pid, 0); } catch (error) { return error?.code === "EPERM"; }
+  // Linux identifies process incarnations. A missing current /proc identity
+  // means it died between kill and read; a legacy portable record remains
+  // conservatively live while its PID exists.
+  if (!owner?.bootID || !owner?.startTime) return true;
+  const current = linuxIncarnation(pid);
+  return Boolean(current && current.bootID === owner.bootID && current.startTime === owner.startTime);
+}
+
+function acquireSessionLock(dir, sessionID, timeoutMs = 10_000) {
+  const lock = path.join(dir, `.${sessionID}.lock`);
+  const deadline = Date.now() + timeoutMs;
+  while (true) {
+    try {
+      const descriptor = fs.openSync(lock, "wx", 0o600);
+      try { fs.writeFileSync(descriptor, JSON.stringify({ ...processIncarnation(), createdAt: Date.now() }) + "\n"); fs.fsyncSync(descriptor); }
+      catch (error) { try { fs.closeSync(descriptor); } finally { try { fs.unlinkSync(lock); } catch {} } throw error; }
+      syncDirectory(dir);
+      return { descriptor, lock };
+    } catch (error) {
+      if (error?.code !== "EEXIST") throw error;
+      let metadata, owner;
+      try {
+        metadata = assertRegularFile(lock, "session lock");
+        owner = JSON.parse(fs.readFileSync(lock, "utf8"));
+      } catch (readError) {
+        if (Date.now() >= deadline) throw new Error(`session lock contention for ${sessionID}: ${readError.message}`);
+        sleep(10); continue;
+      }
+      // An old lock is reclaimable only when its recorded owner is no longer
+      // live. Age alone must never evict a slow but live runtime process.
+      if (!processOwnerIsLive(owner)) {
+        try {
+          const latest = assertRegularFile(lock, "session lock");
+          if (latest.ino === metadata.ino && latest.dev === metadata.dev) {
+            fs.unlinkSync(lock);
+            syncDirectory(dir);
+          }
+        } catch (reclaimError) { if (reclaimError?.code !== "ENOENT") throw reclaimError; }
+      }
+      if (Date.now() >= deadline) throw new Error(`session lock contention for ${sessionID}`);
+      sleep(10);
+    }
+  }
+}
+
+/** Execute one lock-protected read/compare/update and atomic durable write. */
+function updateSessionRecord(sessionID, root, updater) {
+  if (!/^ses_[A-Za-z0-9]+$/.test(String(sessionID || ""))) throw new Error("invalid session ID");
+  const state = headStateDir(root);
+  if (!state) throw new Error("project state directory is unavailable");
+  const dir = path.join(state, "sessions");
+  const target = path.join(dir, `${sessionID}.json`);
+  ensureDurableDirectory(dir);
+  const lock = acquireSessionLock(dir, sessionID);
+  try {
+    let previous = {};
+    if (fs.existsSync(target)) {
+      assertRegularFile(target, "existing session record");
+      previous = JSON.parse(fs.readFileSync(target, "utf8"));
+      if (!previous || typeof previous !== "object" || Array.isArray(previous)) throw new Error("existing session record is not an object");
+    }
+    const patch = updater(previous);
+    if (patch === null || patch === undefined) return null;
+    if (!patch || typeof patch !== "object" || Array.isArray(patch)) throw new Error("session record update is not an object");
+    const next = { ...previous, ...patch };
+    writeSessionRecord(target, previous, patch);
+    return next;
+  } finally {
+    fs.closeSync(lock.descriptor);
+    try { fs.unlinkSync(lock.lock); } finally { syncDirectory(dir); }
+  }
+}
+
+export function saveSessionRecord(sessionID, record, root) {
+  const result = updateSessionRecord(sessionID, root, () => record);
+  if (result === null) throw new Error("session save was unexpectedly rejected");
+}
+
+/** Execute a strict session-record compare/update while holding a short-lived lock. */
+export function mutateSessionRecord(sessionID, root, mutator) {
+  return updateSessionRecord(sessionID, root, mutator);
 }
 
 function section(title, filePath, body) { return body.trim() ? [`# Loaded File: ${filePath || title}`, "", body.trim(), ""].join("\n") : ""; }
@@ -103,11 +233,16 @@ export function buildHeadPrompt({ sessionID = "", agent = "head", includeBaseFil
   return { prompt, metadata };
 }
 
-export function buildRuntimeConfig() { return { $schema: "https://opencode.ai/config.json", instructions: ["~/.local/share/head-agent-core/head/HEAD_CORE.md", "CLAUDE.md", "HEAD_CONTEXT.md"], skills: { paths: ["~/.local/share/head-agent-core/skills", ".claude/skills"] }, plugin: ["./save-opencode-session-id.js", "./opencode/plugins/context-layers.mjs", "./opencode/plugins/compact-recovery.mjs"], permission: "allow" }; }
+const LEGACY_CONFIG_MESSAGE = "Legacy runtime config emission is retired. Use runtime/config/bin/render-config.mjs with a mandatory profile instead.";
+/** Retained only as an import-compatible fail-closed sentinel; it never emits config. */
+export function buildRuntimeConfig() { throw new Error(LEGACY_CONFIG_MESSAGE); }
 export function logKeywordPrompt(record, root) { logJsonl("keyword-hints", { ts: new Date().toISOString(), ...record }, root); }
 function isMainModule() {
   if (!process.argv[1]) return false;
   try { return fs.realpathSync(process.argv[1]) === fs.realpathSync(THIS_FILE); } catch { return false; }
 }
 
-if (isMainModule()) process.stdout.write(JSON.stringify(process.argv.includes("--location-json") ? detectHerdrLocation() : { config: buildRuntimeConfig(), prompt: buildHeadPrompt({ includeBaseFiles: true }) }, null, 2));
+if (isMainModule()) {
+  if (process.argv.includes("--location-json")) process.stdout.write(JSON.stringify(detectHerdrLocation(), null, 2));
+  else { process.stderr.write(`${LEGACY_CONFIG_MESSAGE}\n`); process.exitCode = 1; }
+}

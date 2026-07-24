@@ -3,62 +3,101 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, test } from "node:test";
-import CompactRecoveryPlugin from "../plugins/compact-recovery.mjs";
-import ContextLayersPlugin from "../plugins/context-layers.mjs";
-import { compactProjection, CompactRecovery } from "../plugins/compact-recovery-core.mjs";
-import { createContextLayers } from "../plugins/context-layers-core.mjs";
+import { CompactRecovery, compactProjection } from "../plugins/compact-recovery-core.mjs";
+import { consumeCompactionSystemTransform } from "../plugins/compaction-phase.mjs";
 
 const roots = [];
-afterEach(() => {
-  for (const root of roots.splice(0)) fs.rmSync(root, { recursive: true, force: true });
-});
+afterEach(() => { for (const root of roots.splice(0)) fs.rmSync(root, { recursive: true, force: true }); });
 
-function project() {
+function project(sessionID = "ses_Mapped123") {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "head-core-compact-"));
   roots.push(root);
-  fs.mkdirSync(path.join(root, ".claude", "agents", "head"), { recursive: true });
+  fs.mkdirSync(path.join(root, ".claude", "agents", "head", "sessions", "active"), { recursive: true });
+  fs.mkdirSync(path.join(root, ".claude", "agents", "head", "opencode", "state", "sessions"), { recursive: true });
   fs.writeFileSync(path.join(root, "CLAUDE.md"), "workspace\n");
   fs.writeFileSync(path.join(root, ".claude", "agents", "head", "CLAUDE.md"), "head\n");
+  fs.writeFileSync(path.join(root, ".claude", "agents", "head", "opencode", "state", "sessions", `${sessionID}.json`), JSON.stringify({ sessionName: "active" }));
   return root;
 }
 
-test("OpenCode entrypoints expose only V1 server plugins", () => {
-  assert.equal(CompactRecoveryPlugin.id, "head-core-compact-recovery");
-  assert.equal(CompactRecoveryPlugin.server, CompactRecovery);
-  assert.equal(ContextLayersPlugin.id, "head-core-context-layers");
+function messages(sessionID) {
+  return [{
+    info: { id: "work", sessionID, role: "user", model: { providerID: "openai", modelID: "test" } },
+    parts: [{ type: "text", text: "work" }],
+  }];
+}
+
+test("mapped checkpoint compacts once and enables native continue once", async () => {
+  const sessionID = "ses_Mapped123", root = project(sessionID);
+  const calls = [];
+  const hooks = await CompactRecovery({ root, client: { session: {
+    messages: async () => ({ data: messages(sessionID) }),
+    summarize: async (request) => { calls.push(request); return { data: true }; },
+  } } });
+
+  assert.match(await hooks.tool.checkpoint_compact.execute({}, { sessionID }), /queued/);
+  await hooks.event({ event: { type: "session.idle", properties: { sessionID } } });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].body.auto, true);
+
+  const first = { enabled: false };
+  await hooks["experimental.compaction.autocontinue"]({ sessionID }, first);
+  assert.equal(first.enabled, true);
+  const second = { enabled: true };
+  await hooks["experimental.compaction.autocontinue"]({ sessionID }, second);
+  assert.equal(second.enabled, false);
 });
 
-test("compaction replaces default instructions and suppresses canonical context for that request", async () => {
-  const root = project();
-  const recovery = await CompactRecovery({ root });
-  const layers = createContextLayers({ root, buildPrompt: () => ({ prompt: "canonical context" }) });
-  const compacting = { context: ["default compact prompt"] };
-
-  await recovery["experimental.session.compacting"]({ sessionID: "ses_Compact123" }, compacting);
-  const during = { system: [] };
-  await layers["experimental.chat.system.transform"]({ sessionID: "ses_Compact123" }, during);
-
-  assert.deepEqual(compacting.context, []);
-  assert.match(compacting.prompt, /Persistence Checkpoint/);
-  assert.doesNotMatch(compacting.prompt, /default compact prompt|canonical context/);
-  assert.deepEqual(during.system, []);
-
-  const after = { system: [] };
-  await layers["experimental.chat.system.transform"]({ sessionID: "ses_Compact123" }, after);
-  assert.deepEqual(after.system, ["canonical context"]);
+test("unmapped session is not compacted", async () => {
+  const root = project(), hooks = await CompactRecovery({ root });
+  assert.match(await hooks.tool.checkpoint_compact.execute({}, { sessionID: "ses_Unmapped123" }), /No mapped HEAD pane\/session/);
 });
 
-test("future turns exclude compact artifacts and wait for a real user turn", async () => {
-  const messages = [
-    { info: { id: "normal-user", role: "user" }, parts: [{ type: "text", text: "work" }] },
-    { info: { id: "compact-user", role: "user" }, parts: [{ type: "compaction" }] },
-    { info: { id: "compact-assistant", role: "assistant", summary: true, mode: "compaction" }, parts: [{ type: "text", text: "checkpoint" }] },
-    { info: { id: "continue-user", role: "user" }, parts: [{ type: "text", text: "continue", metadata: { compaction_continue: true } }] },
-  ];
-  assert.deepEqual(compactProjection(messages).map((message) => message.info.id), ["normal-user"]);
-
-  const recovery = await CompactRecovery({ root: project() });
+test("failed compaction does not inject continue", async () => {
+  const sessionID = "ses_Failed123", root = project(sessionID);
+  const hooks = await CompactRecovery({ root, client: { session: {
+    messages: async () => ({ data: messages(sessionID) }),
+    summarize: async () => { throw new Error("failed"); },
+  } } });
+  await hooks.tool.checkpoint_compact.execute({}, { sessionID });
+  await hooks.event({ event: { type: "session.idle", properties: { sessionID } } });
   const output = { enabled: true };
-  await recovery["experimental.compaction.autocontinue"]({}, output);
+  await hooks["experimental.compaction.autocontinue"]({ sessionID }, output);
   assert.equal(output.enabled, false);
+});
+
+test("compaction context is suppressed without a persistence payload prompt", async () => {
+  const sessionID = "ses_Context123", root = project(sessionID), hooks = await CompactRecovery({ root });
+  const output = { context: ["default"] };
+  await hooks["experimental.session.compacting"]({ sessionID }, output);
+  assert.deepEqual(output, { context: [] });
+});
+
+test("compaction completion clears suppression even if the session mapping disappears", async () => {
+  const sessionID = "ses_UnmappedCompletion123", root = project(sessionID), hooks = await CompactRecovery({ root });
+  await hooks["experimental.session.compacting"]({ sessionID }, { context: ["default"] });
+  fs.unlinkSync(path.join(root, ".claude", "agents", "head", "opencode", "state", "sessions", `${sessionID}.json`));
+  await hooks.event({ event: { type: "session.compacted", properties: { sessionID } } });
+  assert.equal(consumeCompactionSystemTransform(sessionID), false);
+});
+
+test("native synthetic continuation is model-facing exactly lowercase continue", () => {
+  const synthetic = {
+    info: { id: "continue", role: "user" },
+    parts: [{ type: "text", text: "Continue if you have next steps.", synthetic: true, metadata: { compaction_continue: true } }],
+  };
+  const projected = compactProjection([
+    { info: { id: "compact", role: "user" }, parts: [{ type: "compaction", auto: true }] },
+    synthetic,
+  ]);
+  assert.equal(projected.length, 1);
+  assert.equal(projected[0].parts[0].text, "continue");
+});
+
+test("synthetic continuation is removed after its assistant response", () => {
+  const projected = compactProjection([
+    { info: { id: "continue", role: "user" }, parts: [{ type: "text", text: "continue", synthetic: true, metadata: { compaction_continue: true } }] },
+    { info: { id: "answer", role: "assistant" }, parts: [{ type: "text", text: "done" }] },
+  ]);
+  assert.deepEqual(projected.map((message) => message.info.id), ["answer"]);
 });

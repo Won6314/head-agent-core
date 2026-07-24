@@ -1,14 +1,18 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, it } from "node:test";
-import { buildHeadPrompt, buildRuntimeConfig, findProjectRoot } from "../bin/render-runtime-config.mjs";
-import { CompactRecovery, loadCompactInstructions } from "../plugins/compact-recovery.mjs";
-import { ContextLayers, createContextLayers } from "../plugins/context-layers.mjs";
+import { buildHeadPrompt, buildRuntimeConfig, findProjectRoot, loadSessionRecord, processIncarnation, saveSessionRecord } from "../bin/render-runtime-config.mjs";
+import CompactRecoveryPlugin from "../plugins/compact-recovery.mjs";
+import ContextLayersPlugin from "../plugins/context-layers.mjs";
+import { compactProjection, CompactRecovery, latestUserModel } from "../plugins/compact-recovery-core.mjs";
+import { ContextLayers, createContextLayers } from "../plugins/context-layers-core.mjs";
 
 const roots = [];
+const TEST_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 afterEach(() => { for (const root of roots.splice(0)) fs.rmSync(root, { recursive: true, force: true }); });
 function project(name) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), `${name}-`));
@@ -23,11 +27,21 @@ function activePrompt(args) { return buildHeadPrompt({ ...args, location: { sess
 function activeLayers(root) { return createContextLayers({ root, buildPrompt: activePrompt }); }
 
 describe("shared OpenCode runtime contract", () => {
-  it("declares the three always-on context layers and shared planning skills", () => {
-    const config = buildRuntimeConfig();
-    assert.deepEqual(config.instructions, ["~/.local/share/head-agent-core/head/HEAD_CORE.md", "CLAUDE.md", "HEAD_CONTEXT.md"]);
-    assert.deepEqual(config.skills.paths, ["~/.local/share/head-agent-core/skills", ".claude/skills"]);
-    assert.deepEqual(config.plugin, ["./save-opencode-session-id.js", "./opencode/plugins/context-layers.mjs", "./opencode/plugins/compact-recovery.mjs"]);
+  it("exposes one V1 server plugin from each runtime entry", async () => {
+    const compactEntry = await import("../plugins/compact-recovery.mjs");
+    const contextEntry = await import("../plugins/context-layers.mjs");
+    assert.deepEqual(Object.keys(compactEntry), ["default"]);
+    assert.deepEqual(Object.keys(contextEntry), ["default"]);
+    assert.deepEqual(CompactRecoveryPlugin, { id: "head-core-compact-recovery", server: CompactRecovery });
+    assert.deepEqual(ContextLayersPlugin, { id: "head-core-context-layers", server: ContextLayers });
+  });
+
+  it("retires the legacy config emitter while retaining location and prompt utilities", () => {
+    assert.throws(() => buildRuntimeConfig(), /Legacy runtime config emission is retired.*runtime\/config\/bin\/render-config\.mjs/);
+    const executable = path.resolve(TEST_DIRECTORY, "../bin/render-runtime-config.mjs");
+    const result = spawnSync(process.execPath, [executable], { encoding: "utf8" });
+    assert.equal(result.status, 1); assert.equal(result.stdout, ""); assert.match(result.stderr, /Legacy runtime config emission is retired.*render-config\.mjs/);
+    assert.doesNotMatch(`${result.stdout}${result.stderr}`, /"permission"\s*:\s*"allow"|~\//);
   });
 
   it("derives state and prompt files from the active project only", () => {
@@ -41,12 +55,60 @@ describe("shared OpenCode runtime contract", () => {
     assert.doesNotMatch(result.prompt, /one context/);
   });
 
-  it("loads compact instructions from the dedicated runtime contract", () => {
-    assert.match(loadCompactInstructions(), /"history_append"/);
-    const contract = path.join(os.tmpdir(), `compact-contract-${process.pid}-${Date.now()}.md`);
-    roots.push(contract);
-    fs.writeFileSync(contract, "dedicated compact contract\n");
-    assert.equal(loadCompactInstructions(contract), "dedicated compact contract");
+  it("durably atomically saves session state and propagates write failures", () => {
+    const root = project("runtime-state-durable"), sessionID = "ses_DurableState123";
+    saveSessionRecord(sessionID, { first: true }, root);
+    saveSessionRecord(sessionID, { second: true }, root);
+    assert.deepEqual(loadSessionRecord(sessionID, root), { first: true, second: true });
+    const rename = fs.renameSync;
+    fs.renameSync = () => { throw new Error("rename failure"); };
+    try { assert.throws(() => saveSessionRecord(sessionID, { failed: true }, root), /rename failure/); }
+    finally { fs.renameSync = rename; }
+    assert.deepEqual(loadSessionRecord(sessionID, root), { first: true, second: true });
+    const target = path.join(root, ".claude", "agents", "head", "opencode", "state", "sessions", `${sessionID}.json`);
+    fs.writeFileSync(target, "{ malformed");
+    assert.throws(() => saveSessionRecord(sessionID, { lost: true }, root));
+    assert.equal(fs.readFileSync(target, "utf8"), "{ malformed");
+  });
+
+  it("reclaims a PID-reused lock incarnation but retains a verified current owner identity", () => {
+    const root = project("runtime-lock-incarnation"), sessionID = "ses_PidReuse123";
+    const dir = path.join(root, ".claude", "agents", "head", "opencode", "state", "sessions");
+    fs.mkdirSync(dir, { recursive: true });
+    const lock = path.join(dir, `.${sessionID}.lock`);
+    const current = processIncarnation();
+    if (current.bootID && current.startTime) {
+      fs.writeFileSync(lock, JSON.stringify({ ...current, bootID: "different-boot", startTime: "0" }));
+      saveSessionRecord(sessionID, { reclaimed: true }, root);
+      assert.equal(loadSessionRecord(sessionID, root).reclaimed, true);
+      fs.writeFileSync(lock, JSON.stringify(current));
+      // The identity comparison itself is deterministic; we deliberately do
+      // not evict a real current process merely because a lock is old.
+      assert.deepEqual(processIncarnation(), current);
+      fs.unlinkSync(lock);
+    }
+  });
+
+  it("removes compact checkpoint pairs from future model context", () => {
+    const messages = [
+      { info: { id: "normal-user", role: "user" }, parts: [{ type: "text", text: "work" }] },
+      { info: { id: "compact-user", role: "user" }, parts: [{ type: "compaction" }] },
+      { info: { id: "compact-assistant", role: "assistant", summary: true, mode: "compaction" }, parts: [{ type: "text", text: "checkpoint" }] },
+      { info: { id: "normal-assistant", role: "assistant", summary: false, mode: "build" }, parts: [{ type: "text", text: "result" }] },
+      { info: { id: "continue-user", role: "user" }, parts: [{ type: "text", text: "Continue if you have next steps", synthetic: true, metadata: { compaction_continue: true } }] },
+    ];
+    const projected = compactProjection(messages);
+    assert.deepEqual(projected.map((message) => message.info.id), ["normal-user", "normal-assistant", "continue-user"]);
+    assert.equal(projected.at(-1).parts[0].text, "continue");
+  });
+
+  it("selects the latest user model for an explicit checkpoint compaction", () => {
+    const messages = [
+      { info: { role: "user", model: { providerID: "openai", modelID: "old" } } },
+      { info: { role: "assistant", modelID: "assistant-model", providerID: "openai" } },
+      { info: { role: "user", model: { providerID: "openai", modelID: "gpt-5.6-sol" } } },
+    ];
+    assert.deepEqual(latestUserModel(messages), { providerID: "openai", modelID: "gpt-5.6-sol" });
   });
 
   it("injects only the fixed session context and run", () => {
@@ -80,35 +142,36 @@ describe("shared OpenCode runtime contract", () => {
     assert.doesNotMatch(buildHeadPrompt({ root, location: { sessionName: "active" } }).prompt, /fallback run marker|fallback progress marker/);
   });
 
-  it("runs CLI entry points through project symlinks", () => {
+  it("runs CLI entry points through a project-local regular wrapper", () => {
     const root = project("runtime-symlink-cli");
     const bin = path.join(root, ".claude", "agents", "head", "opencode", "bin");
     fs.mkdirSync(bin, { recursive: true });
-    const runtimeTarget = path.resolve(import.meta.dirname, "../bin/render-runtime-config.mjs");
+    const runtimeTarget = path.resolve(TEST_DIRECTORY, "../bin/render-runtime-config.mjs");
     const runtimeLink = path.join(bin, "render-runtime-config.mjs");
-    fs.symlinkSync(runtimeTarget, runtimeLink);
+    fs.writeFileSync(runtimeLink, `import { spawnSync } from "node:child_process";\nconst result = spawnSync(process.execPath, [${JSON.stringify(runtimeTarget)}, ...process.argv.slice(2)], { stdio: "inherit" });\nif (result.error) throw result.error;\nprocess.exit(result.status ?? 1);\n`);
 
     assert.equal(execFileSync(process.execPath, [runtimeLink, "--location-json"], { cwd: root, encoding: "utf8", env: {} }), "null");
   });
 
-  it("persists a compact summary only inside the configured project", async () => {
-    const root = project("runtime-compact-update");
-    const session = path.join(root, ".claude", "agents", "head", "sessions", "active");
-    const state = path.join(root, ".claude", "agents", "head", "opencode", "state", "sessions");
-    const hooksDir = path.join(root, ".claude", "hooks");
-    fs.mkdirSync(state, { recursive: true });
-    fs.mkdirSync(hooksDir, { recursive: true });
-    fs.writeFileSync(path.join(session, "progress.md"), "## Current State\n- before\n");
-    fs.writeFileSync(path.join(state, "ses_Test123.json"), JSON.stringify({ sessionName: "active" }));
-    fs.symlinkSync(path.resolve(import.meta.dirname, "../../claude-hooks/compact-session-update.py"), path.join(hooksDir, "compact-session-update.py"));
-    const summary = `summary\n\`\`\`json\n${JSON.stringify({ session: "active", progress: { current_state: "- after" }, history_append: "" })}\n\`\`\``;
-    const hooks = await CompactRecovery({
-      directory: path.join(root, ".claude", "agents", "head"),
-      client: { session: { messages: async () => ({ data: [{ info: { summary: { body: summary } } }] }) } },
-    });
+  it("excludes checkpoint and synthetic continuation artifacts from future turns", async () => {
+    const root = project("runtime-compact-continuation-projection");
+    const hooks = await CompactRecovery({ root });
+    const payload = `\`\`\`json\n${JSON.stringify({ session: "active", progress: { current_state: "private checkpoint marker" }, history_append: "" })}\n\`\`\``;
+    const messages = [
+      { info: { id: "normal-user", role: "user" }, parts: [{ type: "text", text: "normal request" }] },
+      { info: { id: "normal-assistant", role: "assistant" }, parts: [{ type: "text", text: "normal result" }] },
+      { info: { id: "compact-user", role: "user" }, parts: [{ type: "compaction" }] },
+      { info: { id: "compact-assistant", role: "assistant", summary: true, mode: "compaction" }, parts: [{ type: "text", text: payload }] },
+      { info: { id: "continue-user", role: "user" }, parts: [{ type: "text", text: "Continue if you have next steps", synthetic: true, metadata: { compaction_continue: true } }] },
+    ];
+    const output = { messages };
 
-    await hooks.event({ event: { type: "session.compacted", properties: { sessionID: "ses_Test123" } } });
-    assert.match(fs.readFileSync(path.join(session, "progress.md"), "utf8"), /- after/);
+    await hooks["experimental.chat.messages.transform"]({}, output);
+
+    assert.equal(output.messages, messages);
+    assert.deepEqual(messages.map((message) => message.info.id), ["normal-user", "normal-assistant", "continue-user"]);
+    assert.equal(messages.at(-1).parts[0].text, "continue");
+    assert.doesNotMatch(JSON.stringify(messages), /private checkpoint marker|history_append/);
   });
 
   it("does not use a persisted session record as a prompt fallback", async () => {
@@ -159,7 +222,7 @@ describe("shared OpenCode runtime contract", () => {
     assert.match(after.system[0], /live run marker/);
   });
 
-  it("injects the compact contract only while compacting and ignores stale snapshots", async () => {
+  it("suppresses canonical context during compaction and restores it on the next normal turn", async () => {
     const root = project("runtime-compact-injection");
     const session = path.join(root, ".claude", "agents", "head", "sessions", "active");
     const state = path.join(root, ".claude", "agents", "head", "opencode", "state", "sessions");
@@ -172,12 +235,13 @@ describe("shared OpenCode runtime contract", () => {
     await layers["experimental.chat.system.transform"]({ sessionID: "ses_Compact123" }, normal);
     assert.doesNotMatch(normal.system[0], /"history_append"/);
 
-    const recovery = await CompactRecovery({ directory: path.join(root, ".claude", "agents", "head"), buildPrompt: activePrompt });
-    const compacting = { context: [] };
+    const recovery = await CompactRecovery({ directory: path.join(root, ".claude", "agents", "head") });
+    const compacting = { context: ["default summary instructions"] };
     await recovery["experimental.session.compacting"]({ sessionID: "ses_Compact123" }, compacting);
-    assert.match(compacting.context[0], /"history_append"/);
-    assert.match(compacting.context[1], /normal context/);
-    assert.match(compacting.context[1], /normal run/);
+    const compactSystem = { system: [] };
+    await layers["experimental.chat.system.transform"]({ sessionID: "ses_Compact123" }, compactSystem);
+    assert.deepEqual(compacting.context, []);
+    assert.deepEqual(compactSystem.system, []);
 
     const snapshot = path.join(root, "snapshot.md");
     fs.writeFileSync(snapshot, "snapshot marker");
