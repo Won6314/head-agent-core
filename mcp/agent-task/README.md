@@ -1,23 +1,7 @@
 # agent-task
 
-[HEAD Agent Core](../../README.md) / [Shared MCP](../README.md) / agent-task
+`runtime-context.mjs` resolves a bound project and supplies request-scoped paths. `host-service.mjs` executes task operations under the active authority generation. `candidate-handler.mjs` adapts MCP calls to the service.
 
-| Property | Value |
-| --- | --- |
-| Scope | Shared |
-| Delivery | Tool schemas available at runtime; operations are on demand |
-| Status | Shared architecture target |
+## Host composition
 
-## Why It Is Shared
-
-Delegating a coherent outcome, requesting independent review, controlling a worker, and retrieving reusable task guidance are HEAD coordination concerns rather than product-domain concerns. The MCP contract can therefore remain stable while each project registers its own specialist agents and routing policy.
-
-## Boundary
-
-`agent-task` owns the coordination interface. It does not own a project's product decisions, canonical context, specialist definitions, model policy, or approval rules. Those remain project extensions supplied to the shared service.
-
-## Relationship
-
-The [delegate-task skill](../../skills/delegate-task/README.md) defines the reasoning procedure for shaping delegation. `agent-task` provides the callable mechanism that executes it.
-
-The service currently remains outside this repository while its packaging is migrated to the shared layer. This page records the intended ownership boundary without copying the project implementation.
+Register projects through the host administration interface, inject the project overlay resolver and launcher into `HostAgentTaskService`, and route `/agent-task` calls through the shared transport. Calls derive caller identity and storage paths from host state; request arguments do not supply them.

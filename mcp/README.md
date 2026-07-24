@@ -1,20 +1,13 @@
-# Shared MCP
+# MCP services
 
-[HEAD Agent Core](../README.md) / Shared MCP
+Host-coordinated MCP interfaces for task execution and agent communication.
 
-| Property | Value |
-| --- | --- |
-| Scope | Shared |
-| Delivery | Interface available at runtime; calls are on demand |
+## Composition
 
-## Why It Exists
+Create one host composition with `mcp/host-coordination/composition.mjs`, inject the Herdr, policy, launcher, role, target, and delivery adapters, then expose the transport's `/agent-task` and `/agent-comm` paths. Use `stdio-bridge.mjs` from an agent runtime when a local stdio connection is required.
 
-MCP is the callable interface layer. A shared MCP belongs here when the operation is useful across projects and its contract does not depend on one project's domain model, credentials, or source layout.
+## Interfaces
 
-MCP exposes capabilities. Skills define when and how those capabilities should be used, while Agents own bounded outcomes that may use them.
-
-## Shared MCPs
-
-- [`agent-task`](agent-task/README.md)
-
-Project-owned integrations belong in [Project MCP](../projects/mcp/README.md).
+- [agent-task](agent-task/README.md) creates and controls bounded worker operations.
+- [agent-comm](agent-comm/README.md) delivers role-scoped messages.
+- [host-coordination](host-coordination/README.md) provides the production host process and administration modules.
