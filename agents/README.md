@@ -1,20 +1,9 @@
-# Shared Agents
+# Agents
 
-[HEAD Agent Core](../README.md) / Shared Agents
+Reusable role prompts for bounded work.
 
-| Property | Value |
-| --- | --- |
-| Scope | Shared |
-| Delivery | Registered as reusable roles; invoked on demand |
+Load the selected core prompt with the project's role overlay and local instructions:
 
-## Why They Exist
-
-A shared Agent contract defines a reusable ownership shape and authority boundary. Projects can add local repository rules or domain evidence without redefining the role itself.
-
-## Agents
-
-- [Developer Core](developer/README.md)
-- [Validator Core](validator/README.md)
-- [Reviewer Core](reviewer/README.md)
-
-Project overlays and domain specialists belong in [Project Agents](../projects/agents/README.md).
+- [Developer](developer/README.md)
+- [Validator](validator/README.md)
+- [Reviewer](reviewer/README.md)

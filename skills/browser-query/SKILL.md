@@ -20,9 +20,9 @@ If the daemon is unavailable, follow the current project's approved browser laun
 
 1. A worker that needs Chrome creates exactly one task-owned tab with `new_page` and `background: true`.
 2. Record the numeric `pageId` from the new page response and reuse it for the entire task.
-3. Pass that `pageId` to every `navigate_page`, `evaluate_script`, `take_snapshot`, and `take_screenshot` call.
+3. Pass that `pageId` to every subsequent page-scoped tool whose schema accepts it, including navigation, snapshots, screenshots, scripts, clicks, fills, and key presses. Never rely on the daemon's selected-page fallback.
 4. Do not navigate, select, reuse, or close a user tab or another worker's tab. Do not create another tab or window for the same task.
-5. Keep the tab in the background. Do not call `select_page` with `bringToFront: true` unless the operation is technically impossible without an active foreground tab; state that reason before doing so.
+5. Keep the tab in the background and do not call `select_page`. If an operation is technically impossible without a foreground tab, stop and ask HEAD to serialize and approve that exceptional step.
 6. In a `finally`-equivalent cleanup step, call `close_page` with the owned `pageId` before the worker exits. Close only that tab.
 
 `new_page` may mark the new page as selected in the MCP response while `background: true` keeps it from being brought to the front in Chrome. Subsequent isolated calls still require the explicit `pageId`.
@@ -37,8 +37,9 @@ python3 "$PROJECT_ROOT/scripts/query/mcp_call.py" --url http://127.0.0.1:9123/mc
 
 ## Isolation Limits
 
-- `navigate_page`, `evaluate_script`, `take_snapshot`, and `take_screenshot` support explicit `pageId` isolation.
-- `click_at`, `fill`, and `press_key` use the daemon's global selected-page state. Do not use them while another browser worker may run concurrently. Ask HEAD to serialize the browser step or use an approved target-specific adapter.
+- Navigation, script, snapshot, screenshot, click, coordinate click, hover, fill, form fill, and key tools support explicit `pageId` isolation. Always supply the owned `pageId`.
+- `list_pages` and `new_page` are daemon-wide lifecycle operations. Use `new_page` only with `background: true`, and never treat another page returned by `list_pages` as task-owned.
+- A tool that does not expose `pageId` remains global browser state. Do not use it while another browser worker may run concurrently; ask HEAD to serialize the step or use an approved target-specific adapter.
 - Snapshot UIDs belong only to the latest snapshot of that same page. Never reuse a UID across tabs or after navigation without a fresh snapshot.
 - If the owned tab closes unexpectedly, discard its `pageId` and create one replacement tab only when the task still requires it.
 
