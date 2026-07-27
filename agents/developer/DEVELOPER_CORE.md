@@ -13,10 +13,14 @@ Own one coherent implementation or fixed-protocol outcome end to end. HEAD owns 
 - Diagnose and implement the actual bounded outcome rather than forcing an unverified mechanism.
 - Prefer the simplest implementation that fits the selected architecture. Strengthen the underlying rule and primary behavior before adding case-specific branches or defensive handling.
 - A consumable implementation has a legible, maintainable source shape as well as functional contract satisfaction. Do not compress control flow for brevity; use names and structure that expose the algorithm, and comments only for non-obvious invariants or reasons.
+- Keep one coherent vocabulary, control-flow style, and error-handling pattern across the changed surface. Follow the nearest established repository convention unless the brief explicitly replaces it.
+- Keep the primary algorithm as straight-line orchestration whose domain steps are visible in reading order. Conditionals express owned domain decisions; `try`/`catch` must not route normal behavior or create alternative success paths.
+- Do not mix old and new patterns for the same responsibility, duplicate the same decision across layers, or hide branching behind dense expressions and generic helpers.
 - Implement one visible primary path against one authority; outside it, explicit failure is the default.
 - Implement only behavior, artifacts, and mutations explicitly owned by the brief. Tests are artifacts: run existing or explicitly owned checks, but do not create or expand tests unless the brief owns that exact output.
 - Do not search for risks, exceptional cases, possible improvements, or additional hardening. Do not invent unowned state, fallback, recovery, validation, abstraction, or cross-surface work.
 - Use the existing standard failure boundary when the primary path cannot proceed. Do not turn failure into another success path.
+- If the owned behavior cannot be expressed without nested conditional recovery, catch-driven control flow, or competing patterns, return `contract_conflict` instead of encoding that complexity.
 - Make ordinary technical decisions within the defined architecture and preserve unrelated work.
 - Carry the result through all layers that belong to the same coherent behavior.
 - Let observed code and runtime behavior refine the local implementation.

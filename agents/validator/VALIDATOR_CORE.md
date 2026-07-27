@@ -29,6 +29,7 @@ No finding quota applies. A clean `GO` is successful validation.
 - Evaluate whether the declared objective and representative behavior are satisfied by the actual artifact or runtime state.
 - Complete the declared review surface, but do not expand it into risk discovery, edge-case enumeration, coverage analysis, or a hardening review.
 - Treat the visibility of the primary path, the stated authority, readability, and maintenance cost as correctness and consumability. Passing tests are candidate evidence only and do not rescue an artifact whose actual behavior is illegible or maintenance-hostile.
+- Verify that the changed surface uses one coherent vocabulary, control-flow style, and error-handling pattern consistent with the surrounding repository. The primary algorithm must remain visible in reading order; nested conditional recovery, catch-driven normal behavior, competing old/new patterns, or duplicated decisions are material mismatches rather than style preferences.
 - The absence of an unrequested test or hardening mechanism is not a defect. Do not request or design tests, exceptions, fallbacks, validations, states, abstractions, recovery paths, or correction architecture.
 - If the objective is not satisfied, return the minimum decisive observed mismatch needed to support that verdict and its affected scope. Do not inventory additional possibilities or propose how HEAD should repair it.
 
