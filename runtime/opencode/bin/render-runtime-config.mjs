@@ -223,11 +223,13 @@ export function buildHeadPrompt({ sessionID = "", agent = "head", includeBaseFil
   const sessionDir = shouldInject ? directSessionDir(active, sessionName) : "";
   const contextPath = sessionDir ? path.join(sessionDir, "context.md") : "";
   const runPath = sessionDir ? path.join(sessionDir, "run.md") : "";
+  const progressPath = sessionDir ? path.join(sessionDir, "progress.md") : "";
   const context = safeRead(contextPath);
   const run = safeRead(runPath);
+  const progress = safeRead(progressPath);
   const baseFiles = includeBaseFiles ? [section("CLAUDE.md", path.join(headDir(active), "CLAUDE.md"), safeRead(path.join(headDir(active), "CLAUDE.md"))), section("HEAD_CONTEXT.md", path.join(headDir(active), "HEAD_CONTEXT.md"), safeRead(path.join(headDir(active), "HEAD_CONTEXT.md")))] : [];
-  const prompt = [...baseFiles, shouldInject ? section("Session context.md", contextPath, context) : "", shouldInject ? section("Session run.md", runPath, run) : ""].filter(Boolean).join("\n---\n\n");
-  const metadata = { ts: new Date().toISOString(), sessionID, agent, sessionName, headMode: Boolean(resolvedLocation.sessionName), shouldInject, sessionContextPath: contextPath, sessionContextPresent: Boolean(context), runPath, runPresent: Boolean(run) };
+  const prompt = [...baseFiles, shouldInject ? section("Session context.md", contextPath, context) : "", shouldInject ? section("Session run.md", runPath, run) : "", shouldInject ? section("Session progress.md", progressPath, progress) : ""].filter(Boolean).join("\n---\n\n");
+  const metadata = { ts: new Date().toISOString(), sessionID, agent, sessionName, headMode: Boolean(resolvedLocation.sessionName), shouldInject, sessionContextPath: contextPath, sessionContextPresent: Boolean(context), runPath, runPresent: Boolean(run), progressPath, progressPresent: Boolean(progress) };
   logJsonl("context-layers", metadata, active);
   if (sessionID) saveSessionRecord(sessionID, { ...metadata, injectedOnce: true, lastContextBuiltAt: metadata.ts }, active);
   return { prompt, metadata };

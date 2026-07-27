@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { buildHeadPrompt, detectHerdrLocation, logRuntimeEvent, projectRoot } from "../bin/render-runtime-config.mjs";
 
 const CORE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const CHECKPOINT_HINT_TOKENS = 200_000;
 const COMPACTION_PROMPT = `Output exactly one fenced \`json\` block and no other text:
 
 \`\`\`json
@@ -38,6 +39,21 @@ export function latestUserModel(messages) {
     if (info?.role === "user" && providerID && modelID) return { providerID, modelID };
   }
   return null;
+}
+
+export function assistantTokenTotal(info) {
+  if (info?.role !== "assistant" || Boolean(info.summary) || info.mode === "compaction") return 0;
+  const tokens = info.tokens || {};
+  if (Number.isFinite(tokens.total) && tokens.total > 0) return tokens.total;
+  return Number(tokens.input || 0)
+    + Number(tokens.output || 0)
+    + Number(tokens.reasoning || 0)
+    + Number(tokens.cache?.read || 0)
+    + Number(tokens.cache?.write || 0);
+}
+
+function checkpointHint() {
+  return "Context has crossed the HEAD checkpoint threshold. At the next natural task boundary, leave the active run or slice reproducible and call `checkpoint_compact`. Do not interrupt an atomic action or narrow the full run just to compact.";
 }
 
 function data(result) {
@@ -129,6 +145,8 @@ export const CompactRecovery = async ({ client, root: configuredRoot, directory,
   const compactSystemCalls = new Set();
   const compactSessions = new Map();
   const continuations = new Map();
+  const pendingHints = new Set();
+  const shownHints = new Set();
 
   return {
     tool: {
@@ -143,6 +161,8 @@ export const CompactRecovery = async ({ client, root: configuredRoot, directory,
           if (!location) return "No validated Herdr tab/session is available for compaction.";
           const instruction = normalizeNextInstruction(args?.next_instruction);
           compactSessions.set(sessionID, location.sessionName);
+          pendingHints.delete(sessionID);
+          shownHints.add(sessionID);
           continuations.set(sessionID, {
             instruction,
             requestMessageID: String(context.messageID || ""),
@@ -179,8 +199,13 @@ export const CompactRecovery = async ({ client, root: configuredRoot, directory,
       const location = liveSessionLocation(root, resolveLocation);
       if (!location) return;
       const payload = buildHeadPrompt({ sessionID, agent: "head", root, location }).prompt;
-      if (!payload.trim()) return;
-      output.system.push(payload);
+      if (payload.trim()) output.system.push(payload);
+      if (pendingHints.has(sessionID) && !shownHints.has(sessionID)) {
+        output.system.push(checkpointHint());
+        pendingHints.delete(sessionID);
+        shownHints.add(sessionID);
+        logRuntimeEvent("compact-recovery", { event: "checkpoint_hint_injected", sessionID, threshold: CHECKPOINT_HINT_TOKENS }, root);
+      }
     },
 
     "experimental.session.compacting": async (input, output) => {
@@ -197,16 +222,28 @@ export const CompactRecovery = async ({ client, root: configuredRoot, directory,
       const sessionID = String(input?.sessionID || "");
       const expected = compactSessions.get(sessionID) || "";
       const location = liveSessionLocation(root, resolveLocation);
-      output.enabled = false;
-      if (expected && location?.sessionName === expected && continuations.has(sessionID)) {
+      const hasCheckpointContinuation = Boolean(expected && location?.sessionName === expected && continuations.has(sessionID));
+      output.enabled = !hasCheckpointContinuation;
+      if (hasCheckpointContinuation) {
         logRuntimeEvent("compact-recovery", { event: "checkpoint_native_autocontinue_suppressed", sessionID }, root);
       }
     },
 
     event: async ({ event }) => {
       const sessionID = String(event?.properties?.sessionID || event?.properties?.info?.sessionID || "");
+      if (event.type === "message.updated") {
+        if (!sessionID) return;
+        const tokenTotal = assistantTokenTotal(event.properties?.info);
+        if (tokenTotal >= CHECKPOINT_HINT_TOKENS && !shownHints.has(sessionID)) {
+          pendingHints.add(sessionID);
+          logRuntimeEvent("compact-recovery", { event: "checkpoint_threshold_crossed", sessionID, tokenTotal }, root);
+        }
+        return;
+      }
       if (event.type === "session.compacted") {
         compactSystemCalls.delete(sessionID);
+        pendingHints.delete(sessionID);
+        shownHints.delete(sessionID);
         const sessionName = compactSessions.get(sessionID) || "";
         const location = liveSessionLocation(root, resolveLocation);
         if (!sessionName || location?.sessionName !== sessionName) {

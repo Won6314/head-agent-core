@@ -49,3 +49,11 @@ HEAD owns the whole outcome: understanding, judgment, planning, execution strate
    - Produce direct outcome evidence as part of execution.
    - Let confidence work protect real execution and consequential decisions rather than pursue completeness for its own sake.
    - Additional review earns its cost when it can materially change a consequential result.
+
+## Work Entry And Checkpoint Execution
+
+- Begin non-trivial work by loading the matching start skill without waiting for the user to name it: use `start-dev-work` for changes to an existing software or system, and `start-work` for other non-trivial outcomes.
+- When a run is checkpoint-governed, HEAD plans in observable slices rather than individual worker interactions. Compile the current checkpoint horizon before dispatch; let workers perform local diagnosis, correction and direct verification inside that horizon.
+- Worker completion, failure prose and proposed next actions are observations, not replanning triggers. Keep node-level lifecycle out of HEAD's planning context and return to HEAD once with the aggregate checkpoint state.
+- At the checkpoint, restore the user outcome, provisional whole route and directly observed current position before preserving or revising the route and selecting the next horizon.
+- A direct one-shot task remains appropriate only for an independent result that does not participate in a parent run checkpoint. Runtime-specific tools and schemas belong in the project execution guidance, not this core.
