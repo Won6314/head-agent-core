@@ -17,7 +17,7 @@ A worker brief and its referenced sources make these meanings clear:
 - the behavior, artifact, or state the parent work will consume
 - the direct evidence that makes the result integrable and the material conflicts that return to HEAD
 
-Give the worker the smallest complete context that supports those decisions. Keep broad project history, unrelated failures, and generic process outside the brief. Preserve technical autonomy inside the defined outcome.
+Give the worker the smallest complete context that supports those decisions: its current Slice, relevant `plan.md` section(s), and exact sources or evidence required by that Slice. Do not provide the full plan, transcript, ledger history, or prior worker narrative by default. Keep broad project history, unrelated failures, and generic process outside the brief. Preserve technical autonomy inside the defined outcome.
 
 Delegate the owned result, not a general instruction to improve, harden, test, or make the area robust. The worker may implement the contract-owned primary result, make ordinary local choices inside the selected architecture, run existing or explicitly owned checks, and produce direct evidence. It may not create unowned tests or hardening, expand the mutation surface, invent another authority or recovery path, or turn an observed contradiction into a local repair plan.
 
@@ -40,3 +40,5 @@ When the parent run is marked checkpoint-governed, do not dispatch its slices as
 The delegated owner performs local diagnosis and correction only inside the owned primary result, runs existing or explicitly contracted checks, and produces direct evidence. A directly encountered fact that makes an owned output impossible or unsafe to claim returns as terminal `contract_conflict` with only the blocked output, decisive fact, and evidence references. The worker does not contact HEAD during a checkpoint-governed node, propose additions, request a same-node resume, or create retries, remediation nodes, or parent-plan changes.
 
 HEAD integrates only the aggregate checkpoint and directly observed artifacts, then decides the next horizon from the whole run.
+
+At that checkpoint, add the aggregate reference and necessary direct artifacts to the default recovery context, record observation, decision, and next in the ledger, and replace only the run checklist/current pointer. Do not create a checkpoint summary document by default.

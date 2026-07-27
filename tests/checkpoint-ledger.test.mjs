@@ -23,6 +23,7 @@ function fixture() {
   fs.writeFileSync(path.join(root, ".claude/agents/head/CLAUDE.md"), "head\n");
   fs.writeFileSync(path.join(session, "context.md"), "context\n");
   fs.writeFileSync(path.join(session, "run.md"), "run\n");
+  fs.writeFileSync(path.join(session, "plan.md"), "UNIQUE PLAN MARKER MUST NOT BE IN DEFAULT PROMPT\n");
   fs.writeFileSync(path.join(session, "progress.md"), "UNTRUSTED PROGRESS TEXT\n");
   fs.mkdirSync(path.join(session, "slices"));
   fs.writeFileSync(path.join(session, "slices/current.md"), "current slice\n");
@@ -47,14 +48,18 @@ test("ledger chooses the largest valid checkpoint, appends by next chaining, and
   assert.deepEqual(fs.readFileSync(path.join(state.session, "ledger/0000.json")), before);
 });
 
-test("HEAD prompt projects no progress, a valid exact slice, and rejects missing or outside pointers", (t) => {
+test("HEAD prompt projects default recovery context without plan.md and rejects missing or outside pointers", (t) => {
   const state = fixture();
   t.after(() => fs.rmSync(state.root, { recursive: true, force: true }));
   const ledger = path.join(state.session, "ledger/0000.json");
   const promptFor = () => buildHeadPrompt({ agent: "head", root: state.root, location: { sessionName: "demo" } });
   fs.writeFileSync(ledger, `${JSON.stringify(record(), null, 2)}\n`);
   let projection = promptFor();
+  assert.match(projection.prompt, /context/);
+  assert.match(projection.prompt, /run/);
+  assert.match(projection.prompt, /cp-0000/);
   assert.match(projection.prompt, /current slice/);
+  assert.doesNotMatch(projection.prompt, /UNIQUE PLAN MARKER MUST NOT BE IN DEFAULT PROMPT/);
   assert.doesNotMatch(projection.prompt, /UNTRUSTED PROGRESS TEXT/);
   assert.equal(projection.metadata.slicePointerStatus, "valid");
   fs.writeFileSync(ledger, `${JSON.stringify(record({ next: { output: "finish", slice: "slices/missing.md", wave: "wave-test" } }), null, 2)}\n`);

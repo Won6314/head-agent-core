@@ -37,6 +37,8 @@ Define the primary route and representative result before adding confidence work
 
 After the task is clear, search `agent-task_list_tips` once with a semantic query derived from the current goal. If the project exposes a past-run query, search for directly related runs as well. Carry forward only information that changes the current interpretation, decision, or result; reference the source instead of copying its full history.
 
+For default recovery, compose the shared core, project instructions and HEAD index with the session `context.md`, thin `run.md`, latest valid ledger record, and only that record's explicit current Slice. Read only a relevant `plan.md` section when detailed route, architecture, policy, or rationale can change the current judgment; do not load it automatically. At a checkpoint, add the aggregate reference and necessary direct artifacts, then write observation, decision, and next to the ledger while replacing only the run checklist/current pointer. Do not create a checkpoint summary document by default.
+
 ## Create The Run
 
 Use the project's run entry point to create the current working canon at:
@@ -62,5 +64,7 @@ Begin from the current coherent outcome. Mark checklist progress and keep the cu
 Before dispatch, decide whether this is a checkpoint-governed run. Use checkpoint-governed execution when multiple agent outcomes must compose, execution will continue autonomously or for a long duration, or HEAD must reassess the whole route from aggregate evidence. Record the decision in `run.md`.
 
 For a checkpoint-governed run, compile only the current checkpoint horizon into the project's aggregate/frozen execution entrypoint. Predeclare node ownership, dependencies, outputs, evidence and terminal meaning; keep worker lifecycle out of HEAD's planning context; and return once with aggregate actual state. At that checkpoint HEAD restores the whole outcome and route, updates canon, and dispatches the next prepared horizon unless a user decision is required or the run is complete.
+
+Give each worker its current Slice, only relevant `plan.md` section(s), and exact sources or evidence needed for that Slice, rather than the full plan, transcript, ledger history, or prior worker narrative.
 
 Use a direct quick task only for an independent result that does not participate in a parent checkpoint.

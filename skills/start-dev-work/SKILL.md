@@ -47,6 +47,8 @@ Define the representative user or operator behavior that will show the implement
 
 Create `sessions/{session}/run.md` through the project's run entry point. Its structure is free-form. Keep it as a thin user-HEAD agreement and navigation map: retain the user outcome, material locked boundaries, selected architecture, compact whole-route checklist and dependency order, pointer-sized current position and next result, and success conditions.
 
+Default recovery composes the shared core, project instructions and HEAD index with `context.md`, thin `run.md`, the latest valid ledger record, and only that record's explicit current Slice. Read a relevant `plan.md` section only when detailed route, architecture, policy, or rationale can change the judgment; never inject the plan automatically. At a checkpoint, add the aggregate reference and necessary direct artifacts, then record observation, decision, and next in the ledger and replace only the run checklist/current pointer. Do not create a checkpoint summary document by default.
+
 When detailed authoritative problem models, rationale, architecture, policy or execution guidance would bloat `run.md`, keep it in an optional session `plan.md`. HEAD reads `plan.md` on demand when route or design judgment needs that detail; it is not automatically injected merely for recovery. `plan.md` is not a chronology sink: current position remains in the latest ledger and its current Slice, checkpoint observation and HEAD decision remain in the ledger, and direct proof remains in referenced evidence or runtime artifacts.
 
 Every run contains a work checklist. Once the user and HEAD agree on the run, do not rewrite its requirements, scope, success conditions, or overall model unless the user changes them. At checkpoint completion, update checklist state and replace the current pointer; do not append chronology, worker summaries, test or commit inventories, or repeated evidence narration. Keep the ledger and direct evidence or runtime-artifact references available on demand; legacy checkpoints and notes are retrieval records, not new default outputs.
@@ -69,3 +71,5 @@ For a checkpoint-governed run:
 4. At the aggregate checkpoint, compare actual artifacts and system state with the intended slice state transition, update the canonical run, then compile and dispatch the next horizon unless user authority is required or the run is complete.
 
 Use a direct quick task only for a genuinely independent result that does not need parent-run checkpoint integration. When the project has no aggregate execution runtime, preserve the same boundary manually rather than falling back to worker-by-worker replanning.
+
+For a delegated slice, provide the current Slice, relevant `plan.md` section(s), and exact sources or evidence required by that Slice. Do not provide the full plan, transcript, ledger history, or prior worker narrative by default.

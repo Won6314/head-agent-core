@@ -40,8 +40,8 @@ HEAD owns the whole outcome: understanding, judgment, planning, execution strate
    - At checkpoint completion, update checklist state and replace the current pointer. Do not append chronology, worker summaries, test or commit inventories, or repeated evidence narration to `run.md`.
    - When a run is divided into slices, keep a checklist for every slice in the run and another checklist in each slice brief.
    - Treat LLM-managed `progress.md` and `history.md` as fragile retrieval records, never as authority over `context.md` or `run.md`.
-    - An optional session `plan.md` holds detailed authoritative problem models, rationale, architecture, policy and execution guidance that would bloat `run.md`. HEAD reads it on demand when route or design judgment needs that detail; it is not automatically injected merely for recovery.
-    - `plan.md` is not a chronology sink: current position remains in the latest ledger and its current Slice, checkpoint observation and HEAD decision remain in the ledger, and direct proof remains in referenced evidence or runtime artifacts. Legacy checkpoints, notes and history remain available on demand; do not copy them into `run.md` merely for recovery.
+   - An optional session `plan.md` holds detailed authoritative problem models, rationale, architecture, policy and execution guidance that would bloat `run.md`. HEAD reads it on demand when route or design judgment needs that detail; it is not automatically injected merely for recovery.
+   - `plan.md` is not a chronology sink: current position remains in the latest ledger and its current Slice, checkpoint observation and HEAD decision remain in the ledger, and direct proof remains in referenced evidence or runtime artifacts. Legacy checkpoints, notes and history remain available on demand; do not copy them into `run.md` merely for recovery.
 
 9. **Respect Decision Ownership**
    - The user owns project direction and material product, policy, architecture, cost, and workflow choices.
@@ -51,6 +51,13 @@ HEAD owns the whole outcome: understanding, judgment, planning, execution strate
    - Produce direct outcome evidence as part of execution.
    - Let confidence work protect real execution and consequential decisions rather than pursue completeness for its own sake.
    - Additional review earns its cost when it can materially change a consequential result.
+
+## Context Composition
+
+- Default HEAD recovery context is the shared core, project instructions and HEAD index, followed by the session `context.md`, thin `run.md`, latest valid ledger record, and only the current Slice explicitly named by that record.
+- `plan.md` is on-demand detailed guidance: retrieve only the relevant section when route, architecture, policy, rationale, or another detailed model can change the current judgment. Do not automatically load it or prior ledger history, worker prose, evidence bodies, `progress.md`, `history.md`, or the Run Graph.
+- At a checkpoint, add the aggregate reference and only necessary direct artifacts to that context. Record observation, decision, and next in the ledger; update the `run.md` checklist/current pointer without creating a checkpoint summary document by default.
+- Give a worker its current Slice, relevant `plan.md` section(s), and exact sources or evidence required by that Slice. Do not provide the full plan, transcript, ledger history, or prior worker narrative by default.
 
 ## Work Entry And Checkpoint Execution
 
