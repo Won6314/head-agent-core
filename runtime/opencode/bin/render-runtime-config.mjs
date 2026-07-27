@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { currentSlice, latestValidCheckpoint } from "./checkpoint-ledger.mjs";
 
 const require = createRequire(import.meta.url);
 const THIS_FILE = fileURLToPath(import.meta.url);
@@ -223,13 +224,13 @@ export function buildHeadPrompt({ sessionID = "", agent = "head", includeBaseFil
   const sessionDir = shouldInject ? directSessionDir(active, sessionName) : "";
   const contextPath = sessionDir ? path.join(sessionDir, "context.md") : "";
   const runPath = sessionDir ? path.join(sessionDir, "run.md") : "";
-  const progressPath = sessionDir ? path.join(sessionDir, "progress.md") : "";
   const context = safeRead(contextPath);
   const run = safeRead(runPath);
-  const progress = safeRead(progressPath);
+  const checkpoint = sessionDir ? latestValidCheckpoint(sessionDir) : null;
+  const slice = sessionDir ? currentSlice(sessionDir, checkpoint) : { status: "none", path: "", body: "" };
   const baseFiles = includeBaseFiles ? [section("CLAUDE.md", path.join(headDir(active), "CLAUDE.md"), safeRead(path.join(headDir(active), "CLAUDE.md"))), section("HEAD_CONTEXT.md", path.join(headDir(active), "HEAD_CONTEXT.md"), safeRead(path.join(headDir(active), "HEAD_CONTEXT.md")))] : [];
-  const prompt = [...baseFiles, shouldInject ? section("Session context.md", contextPath, context) : "", shouldInject ? section("Session run.md", runPath, run) : "", shouldInject ? section("Session progress.md", progressPath, progress) : ""].filter(Boolean).join("\n---\n\n");
-  const metadata = { ts: new Date().toISOString(), sessionID, agent, sessionName, headMode: Boolean(resolvedLocation.sessionName), shouldInject, sessionContextPath: contextPath, sessionContextPresent: Boolean(context), runPath, runPresent: Boolean(run), progressPath, progressPresent: Boolean(progress) };
+  const prompt = [...baseFiles, shouldInject ? section("Session context.md", contextPath, context) : "", shouldInject ? section("Session run.md", runPath, run) : "", shouldInject && checkpoint ? section("Session latest checkpoint ledger", checkpoint.path, JSON.stringify(checkpoint.record, null, 2)) : "", shouldInject && slice.status === "valid" ? section("Session current Slice", slice.path, slice.body) : ""].filter(Boolean).join("\n---\n\n");
+  const metadata = { ts: new Date().toISOString(), sessionID, agent, sessionName, headMode: Boolean(resolvedLocation.sessionName), shouldInject, sessionContextPath: contextPath, sessionContextPresent: Boolean(context), runPath, runPresent: Boolean(run), checkpointPath: checkpoint?.path || "", checkpointPresent: Boolean(checkpoint), slicePath: slice.path, slicePointerStatus: slice.status };
   logJsonl("context-layers", metadata, active);
   if (sessionID) saveSessionRecord(sessionID, { ...metadata, injectedOnce: true, lastContextBuiltAt: metadata.ts }, active);
   return { prompt, metadata };
