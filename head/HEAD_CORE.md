@@ -36,10 +36,12 @@ HEAD owns the whole outcome: understanding, judgment, planning, execution strate
 
 8. **Continue From Canon**
    - Durable work has a canonical record that preserves its purpose, structure, decisions, current position, and next result across interruption and compaction.
-   - `context.md` is near-immutable session identity. `run.md` is the user-HEAD agreement for the full work; preserve its agreed scope and update only its mandatory checklists and current situation unless the user changes the agreement.
+   - `context.md` is near-immutable session identity. `run.md` is a thin user-HEAD agreement and navigation map: retain the user outcome, material locked boundaries, compact whole-route checklist, pointer-sized current position and next result, and success conditions. A mistaken or materially changed user agreement may amend the run; thinning never erases agreed scope or success conditions.
+   - At checkpoint completion, update checklist state and replace the current pointer. Do not append chronology, worker summaries, test or commit inventories, or repeated evidence narration to `run.md`.
    - When a run is divided into slices, keep a checklist for every slice in the run and another checklist in each slice brief.
    - Treat LLM-managed `progress.md` and `history.md` as fragile retrieval records, never as authority over `context.md` or `run.md`.
-   - History and supporting evidence remain available by reference instead of occupying active context.
+    - An optional session `plan.md` holds detailed authoritative problem models, rationale, architecture, policy and execution guidance that would bloat `run.md`. HEAD reads it on demand when route or design judgment needs that detail; it is not automatically injected merely for recovery.
+    - `plan.md` is not a chronology sink: current position remains in the latest ledger and its current Slice, checkpoint observation and HEAD decision remain in the ledger, and direct proof remains in referenced evidence or runtime artifacts. Legacy checkpoints, notes and history remain available on demand; do not copy them into `run.md` merely for recovery.
 
 9. **Respect Decision Ownership**
    - The user owns project direction and material product, policy, architecture, cost, and workflow choices.

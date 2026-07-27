@@ -45,17 +45,19 @@ Use the project's run entry point to create the current working canon at:
 sessions/{session}/run.md
 ```
 
-The run is the user-HEAD agreement for the whole outcome. Choose a structure natural to the work rather than following a fixed template. Preserve the problem and intended result, material boundaries and decisions, coherent outcome map, current position, and the evidence by which HEAD can integrate the result.
+The run is a thin user-HEAD agreement and navigation map for the whole outcome. Choose a structure natural to the work rather than following a fixed template. Retain the user outcome, material locked boundaries and decisions, compact whole-route checklist, pointer-sized current position and next result, and success conditions.
 
-Every run contains a work checklist. After the user and HEAD agree on the run, do not rewrite its requirements, scope, success conditions, or overall work model unless the user changes them. Update only checklists and current-situation fields as execution advances.
+When detailed authoritative problem models, rationale, architecture, policy or execution guidance would bloat `run.md`, keep it in an optional session `plan.md`. HEAD reads `plan.md` on demand when route or design judgment needs that detail; it is not automatically injected merely for recovery. `plan.md` is not a chronology sink: current position remains in the latest ledger and its current Slice, checkpoint observation and HEAD decision remain in the ledger, and direct proof remains in referenced evidence or runtime artifacts.
 
-One coherent outcome uses `run.md` alone. When work is divided into slices, keep a separate checklist for every slice in `run.md` and give each slice brief under `sessions/{session}/slices/` its own checklist. A slice is the HEAD-worker contract: HEAD authors its upper outcome, boundaries, starting evidence, and consumable result; the owner holds subordinate execution judgment. A slice may detail execution but cannot narrow or replace the parent run.
+Every run contains a work checklist. After the user and HEAD agree on the run, do not rewrite its requirements, scope, success conditions, or overall work model unless the user changes them. At checkpoint completion, update checklist state and replace the current pointer; do not append chronology, worker summaries, test or commit inventories, or repeated evidence narration. Keep the ledger and direct evidence or runtime-artifact references available on demand; legacy checkpoints and notes are retrieval records, not new default outputs.
+
+One coherent outcome uses `run.md` alone unless its detailed planning guidance belongs in the optional `plan.md`. When work is divided into slices, keep a separate checklist for every slice in `run.md` and give each slice brief under `sessions/{session}/slices/` its own checklist. A slice is the HEAD-worker contract: HEAD authors its upper outcome, boundaries, starting evidence, and consumable result; the owner holds subordinate execution judgment. A slice may detail execution but cannot narrow or replace the parent run.
 
 Express confidence in terms natural to the work and the representative behavior or artifact that supports completion. Do not turn possible risks into an inventory or implicit work. Treat broader hardening as separate work only when HEAD explicitly owns it as part of the user outcome.
 
 ## Execute
 
-Begin from the current coherent outcome. Mark checklist progress and keep the current situation exact. Do not declare the run complete until its required checklist and success conditions are satisfied.
+Begin from the current coherent outcome. Mark checklist progress and keep the current pointer exact. Do not declare the run complete until its required checklist and success conditions are satisfied.
 
 Before dispatch, decide whether this is a checkpoint-governed run. Use checkpoint-governed execution when multiple agent outcomes must compose, execution will continue autonomously or for a long duration, or HEAD must reassess the whole route from aggregate evidence. Record the decision in `run.md`.
 

@@ -45,9 +45,11 @@ Define the representative user or operator behavior that will show the implement
 
 ## Shape The Run
 
-Create `sessions/{session}/run.md` through the project's run entry point. Its structure is free-form. Preserve the user-HEAD outcome and material boundaries, the selected architecture and why it earned its cost, the coherent outcome map and dependency order, the current position, and the evidence by which HEAD can integrate completion.
+Create `sessions/{session}/run.md` through the project's run entry point. Its structure is free-form. Keep it as a thin user-HEAD agreement and navigation map: retain the user outcome, material locked boundaries, selected architecture, compact whole-route checklist and dependency order, pointer-sized current position and next result, and success conditions.
 
-Every run contains a work checklist. Once the user and HEAD agree on the run, do not rewrite its requirements, scope, success conditions, or overall model unless the user changes them. Update only checklists and current-situation fields as implementation advances.
+When detailed authoritative problem models, rationale, architecture, policy or execution guidance would bloat `run.md`, keep it in an optional session `plan.md`. HEAD reads `plan.md` on demand when route or design judgment needs that detail; it is not automatically injected merely for recovery. `plan.md` is not a chronology sink: current position remains in the latest ledger and its current Slice, checkpoint observation and HEAD decision remain in the ledger, and direct proof remains in referenced evidence or runtime artifacts.
+
+Every run contains a work checklist. Once the user and HEAD agree on the run, do not rewrite its requirements, scope, success conditions, or overall model unless the user changes them. At checkpoint completion, update checklist state and replace the current pointer; do not append chronology, worker summaries, test or commit inventories, or repeated evidence narration. Keep the ledger and direct evidence or runtime-artifact references available on demand; legacy checkpoints and notes are retrieval records, not new default outputs.
 
 Define the current slice as one coherent result that a capable developer can own end to end. When slices are used, `run.md` contains a separate checklist for every slice and each slice brief under `sessions/{session}/slices/` contains its own checklist. HEAD authors the slice's upper meaning. The brief and referenced sources make the starting inputs, intended behavior, locked decisions, ownership and mutation boundaries, architectural role, consumable output, direct evidence, and material return conditions clear without prescribing an unverified implementation.
 
