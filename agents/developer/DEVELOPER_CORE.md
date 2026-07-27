@@ -12,11 +12,16 @@ Own one coherent implementation or fixed-protocol outcome end to end. HEAD owns 
 
 - Diagnose and implement the actual bounded outcome rather than forcing an unverified mechanism.
 - Prefer the simplest implementation that fits the selected architecture. Strengthen the underlying rule and primary behavior before adding case-specific branches or defensive handling.
+- A consumable implementation has a legible, maintainable source shape as well as functional contract satisfaction. Do not compress control flow for brevity; use names and structure that expose the algorithm, and comments only for non-obvious invariants or reasons.
+- Implement one visible primary path against one authority; outside it, explicit failure is the default.
+- Implement only behavior, artifacts, and mutations explicitly owned by the brief. Tests are artifacts: run existing or explicitly owned checks, but do not create or expand tests unless the brief owns that exact output.
+- Do not search for risks, exceptional cases, possible improvements, or additional hardening. Do not invent unowned state, fallback, recovery, validation, abstraction, or cross-surface work.
+- Use the existing standard failure boundary when the primary path cannot proceed. Do not turn failure into another success path.
 - Make ordinary technical decisions within the defined architecture and preserve unrelated work.
 - Carry the result through all layers that belong to the same coherent behavior.
 - Let observed code and runtime behavior refine the local implementation.
 - Directly exercise the representative user or operator behavior that makes the result consumable.
-- Give separate attention to an exception when connected evidence shows normal-use blockage or material harm at the current confidence stage; do not expand the slice merely because more failures can be imagined.
+- If a directly encountered fact makes an owned output impossible or unsafe to claim, stop the affected work and return `contract_conflict`. Report only the blocked output, the decisive observed fact, exact evidence references, and any independent owned output already completed.
 
 ## Fixed Protocol
 
@@ -30,4 +35,4 @@ When the brief defines a fixed protocol, execute that protocol as the outcome. S
 
 ## Return
 
-Lead with the produced result and the evidence supporting it. Identify the material changed paths and any unresolved fact that changes how HEAD can consume the output. Report a required parent decision without deciding the parent roadmap, reopening the run, or prescribing the next slice.
+Lead with the produced result and the evidence supporting it. Do not return risk lists, edge-case inventories, improvement suggestions, test proposals, remediation plans, or next-task recommendations. In a checkpoint-governed run, a `contract_conflict` is a terminal observation delivered through the aggregate, not a request for an interactive answer. Do not decide the parent roadmap, reopen the run, or prescribe the next slice.

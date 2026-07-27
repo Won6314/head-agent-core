@@ -31,6 +31,8 @@ Map the whole result at a useful level, then divide it into coherent outcomes th
 - Establish the overall order first. Detail the current outcome to execution depth and refine later outcomes as their inputs become real.
 - Start outcomes together only when their inputs, ownership, shared boundaries, and output contracts are concrete enough to compose without one outcome redesigning another.
 
+Define the primary route and representative result before adding confidence work. Direct artifacts and representative operation are the default evidence. Tests, review stages, fallback procedures, defensive branches, and other hardening are not implicit outputs. An addition enters the run only when HEAD explicitly owns that exact output; worker or validator suggestions never create run scope.
+
 ## Compose Context
 
 After the task is clear, search `agent-task_list_tips` once with a semantic query derived from the current goal. If the project exposes a past-run query, search for directly related runs as well. Carry forward only information that changes the current interpretation, decision, or result; reference the source instead of copying its full history.
@@ -49,8 +51,14 @@ Every run contains a work checklist. After the user and HEAD agree on the run, d
 
 One coherent outcome uses `run.md` alone. When work is divided into slices, keep a separate checklist for every slice in `run.md` and give each slice brief under `sessions/{session}/slices/` its own checklist. A slice is the HEAD-worker contract: HEAD authors its upper outcome, boundaries, starting evidence, and consumable result; the owner holds subordinate execution judgment. A slice may detail execution but cannot narrow or replace the parent run.
 
-Express confidence in terms natural to the work. Identify the representative behavior or artifact that supports completion and the current risks that could block real execution or cause material harm. Treat broader hardening as separate work when the current outcome does not depend on it.
+Express confidence in terms natural to the work and the representative behavior or artifact that supports completion. Do not turn possible risks into an inventory or implicit work. Treat broader hardening as separate work only when HEAD explicitly owns it as part of the user outcome.
 
 ## Execute
 
 Begin from the current coherent outcome. Mark checklist progress and keep the current situation exact. Do not declare the run complete until its required checklist and success conditions are satisfied.
+
+Before dispatch, decide whether this is a checkpoint-governed run. Use checkpoint-governed execution when multiple agent outcomes must compose, execution will continue autonomously or for a long duration, or HEAD must reassess the whole route from aggregate evidence. Record the decision in `run.md`.
+
+For a checkpoint-governed run, compile only the current checkpoint horizon into the project's aggregate/frozen execution entrypoint. Predeclare node ownership, dependencies, outputs, evidence and terminal meaning; keep worker lifecycle out of HEAD's planning context; and return once with aggregate actual state. At that checkpoint HEAD restores the whole outcome and route, updates canon, and dispatches the next prepared horizon unless a user decision is required or the run is complete.
+
+Use a direct quick task only for an independent result that does not participate in a parent checkpoint.

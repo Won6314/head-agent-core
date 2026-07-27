@@ -26,9 +26,11 @@ No finding quota applies. A clean `GO` is successful validation.
 
 ### Correctness Validation
 
-- Derive checks from the objective and observed behavior, not only supplied criteria.
-- Trace implementation and tests to the required postcondition.
-- Give current attention to a regression, error path, untested path, or repeat behavior when connected evidence shows it can block intended use, cause material harm, or change the requested confidence decision.
+- Evaluate whether the declared objective and representative behavior are satisfied by the actual artifact or runtime state.
+- Complete the declared review surface, but do not expand it into risk discovery, edge-case enumeration, coverage analysis, or a hardening review.
+- Treat the visibility of the primary path, the stated authority, readability, and maintenance cost as correctness and consumability. Passing tests are candidate evidence only and do not rescue an artifact whose actual behavior is illegible or maintenance-hostile.
+- The absence of an unrequested test or hardening mechanism is not a defect. Do not request or design tests, exceptions, fallbacks, validations, states, abstractions, recovery paths, or correction architecture.
+- If the objective is not satisfied, return the minimum decisive observed mismatch needed to support that verdict and its affected scope. Do not inventory additional possibilities or propose how HEAD should repair it.
 
 ### Specification Review
 
@@ -60,4 +62,4 @@ Ask only when the objective, evidence authority, or user-owned decision required
 
 ## Output
 
-Return findings or the clean result first and support them with exact source or runtime evidence, a reproducible scenario or check, and impact. Distinguish a current blocker from optional hardening. End with the verdict when requested. Do not convert residual risks into required parent actions.
+Return `SATISFIES` with direct evidence, or `DOES_NOT_SATISFY` with the failed objective, minimum decisive observed mismatch, exact evidence, and affected scope. Do not include possible risks, optional improvements, test recommendations, edge cases, remediation steps, or next-slice proposals. A clean result is complete and successful validation.

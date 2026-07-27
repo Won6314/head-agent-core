@@ -27,6 +27,8 @@ When architecture is a real decision, compare only material contenders at decisi
 
 Choose one implementation shape before producing execution-depth slices. Architecture should be explicit enough to fix responsibilities, interfaces, dependencies, and integration behavior, without prescribing local implementation that target evidence has not established.
 
+Before dividing implementation, identify the single authority for each material fact, the primary algorithm in readable order, the existing standard failure boundary, and the final consumer. Do not design exception matrices, alternative success paths, fallback trees, or test inventories before the primary algorithm is concrete.
+
 ## Divide The Implementation
 
 Divide the selected architecture into coherent results, not arbitrary file lists or frontend/backend/testing buckets.
@@ -39,7 +41,7 @@ Divide the selected architecture into coherent results, not arbitrary file lists
 - Treat slices as parallel-ready when their inputs exist, interface and output contracts are clear, mutation ownership does not conflict, and one slice is unlikely to revise another's architecture.
 - Map later outcomes, but detail them only as their dependencies become concrete.
 
-Define the representative user or operator behavior that will show the implementation works. Give current attention to exceptions connected to normal-use blockage, data or money loss, authorization or security, irreversible effects, or propagated harm. Broader defensive handling and QA belong to a distinct hardening or release stage when they are not necessary for the current result.
+Define the representative user or operator behavior that will show the implementation works. Representative source shape, an actual artifact, and direct execution are the default evidence. The default test budget is existing tests only; a new or expanded test is not implicit evidence and belongs to a slice only when HEAD explicitly names that exact output. Do not pre-design defensive additions around possible failures.
 
 ## Shape The Run
 
@@ -53,4 +55,15 @@ Independent slices may proceed together once their shared contracts exist. A sli
 
 ## Move Into Implementation
 
-Implementation starts from the current slice. HEAD may execute it directly or delegate the brief to one developer. Observed code and runtime behavior update the system model when they reveal a different structure from the initial understanding.
+Implementation starts from the current slice. Observed code and runtime behavior update the system model when they reveal a different structure from the initial understanding.
+
+Before dispatch, decide whether this is a checkpoint-governed run. Use checkpoint-governed execution when the outcome spans multiple dependent or parallel slices, is expected to continue autonomously, or requires HEAD to re-evaluate the whole route from aggregate evidence. Record that decision in `run.md`.
+
+For a checkpoint-governed run:
+
+1. Compile only the current checkpoint horizon into an execution manifest. Declare each node's owner, command, dependencies, owned output, evidence and terminal meaning before launch; do not freeze future horizons whose inputs are not concrete.
+2. Use the project's aggregate/frozen execution entrypoint even when the current horizon has one delegated node. The worker owns local diagnosis and correction only inside the contract-owned primary result and runs existing or explicitly owned checks. Verification does not grant authority to create tests or expand the brief.
+3. Do not inject individual node completion or failure into HEAD planning context and do not create follow-up tasks from worker prose. Return once when all executable nodes are terminal.
+4. At the aggregate checkpoint, compare actual artifacts and system state with the intended slice state transition, update the canonical run, then compile and dispatch the next horizon unless user authority is required or the run is complete.
+
+Use a direct quick task only for a genuinely independent result that does not need parent-run checkpoint integration. When the project has no aggregate execution runtime, preserve the same boundary manually rather than falling back to worker-by-worker replanning.

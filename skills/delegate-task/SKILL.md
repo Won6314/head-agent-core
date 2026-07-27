@@ -19,6 +19,8 @@ A worker brief and its referenced sources make these meanings clear:
 
 Give the worker the smallest complete context that supports those decisions. Keep broad project history, unrelated failures, and generic process outside the brief. Preserve technical autonomy inside the defined outcome.
 
+Delegate the owned result, not a general instruction to improve, harden, test, or make the area robust. The worker may implement the contract-owned primary result, make ordinary local choices inside the selected architecture, run existing or explicitly owned checks, and produce direct evidence. It may not create unowned tests or hardening, expand the mutation surface, invent another authority or recovery path, or turn an observed contradiction into a local repair plan.
+
 For complex work, pass one HEAD-authored slice brief and its exact sources rather than copying the whole parent run into the command. The slice is the HEAD-worker contract: HEAD owns its upper outcome and boundaries; the worker owns local execution judgment. A short command is sufficient when the outcome is already clear without a durable brief.
 
 ## Schedule By Composition
@@ -30,3 +32,11 @@ Prefer one worker for diagnosis, implementation, and direct outcome evidence wit
 ## Integrate
 
 When a worker completes, re-anchor on the parent outcome and slice before reading its result. Treat the return as claims and candidate evidence, not as authority over the next plan. Accept, defer, separate as follow-up, legitimately reopen, or reject each material claim against the parent outcome. Reopen when connected evidence shows a failed intended behavior, material contradiction, changed user requirement, or disproved assumption; otherwise continue from the produced outcome rather than repeating the worker's work or automatically adding validation.
+
+## Checkpoint-Governed Runs
+
+When the parent run is marked checkpoint-governed, do not dispatch its slices as unrelated quick tasks. Compile the current horizon into the project's aggregate/frozen execution manifest, including a one-node horizon when that slice must return through the parent checkpoint.
+
+The delegated owner performs local diagnosis and correction only inside the owned primary result, runs existing or explicitly contracted checks, and produces direct evidence. A directly encountered fact that makes an owned output impossible or unsafe to claim returns as terminal `contract_conflict` with only the blocked output, decisive fact, and evidence references. The worker does not contact HEAD during a checkpoint-governed node, propose additions, request a same-node resume, or create retries, remediation nodes, or parent-plan changes.
+
+HEAD integrates only the aggregate checkpoint and directly observed artifacts, then decides the next horizon from the whole run.
