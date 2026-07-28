@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "release": "base",
+  "packages": [
+    {
+      "name": "core",
+      "paths": [
+        "packages/core/head",
+        "packages/core/theory"
+      ]
+    },
+    {
+      "name": "durable-skills",
+      "paths": [
+        "packages/skills/agent-reply",
+        "packages/skills/delegate-task",
+        "packages/skills/restore-session",
+        "packages/skills/start-dev-work",
+        "packages/skills/start-work"
+      ]
+    },
+    {
+      "name": "agents",
+      "paths": [
+        "packages/agents"
+      ]
+    },
+    {
+      "name": "opencode-runtime",
+      "paths": [
+        "packages/opencode-runtime/runtime"
+      ]
+    },
+    {
+      "name": "coordination",
+      "paths": [
+        "packages/coordination/mcp/agent-task",
+        "packages/coordination/mcp/agent-comm",
+        "packages/coordination/mcp/host-coordination"
+      ]
+    },
+    {
+      "name": "project-init",
+      "paths": [
+        "packages/project-init"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+../../packages/opencode-runtime/runtime/opencode/herdr-runtime.cjs

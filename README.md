@@ -1,10 +1,12 @@
 # HEAD Agent Core
 
-Reusable prompts, procedures, runtime recovery, and host-coordination modules for a HEAD-led agent installation.
+Reusable prompts, procedures, runtime recovery, and host-coordination modules for a HEAD-led agent installation. Canonical distributable source is under `packages/`; legacy component paths remain compatibility links.
 
 ## Install and compose
 
-Keep this repository available to the project that supplies its own `CLAUDE.md`, agent overlays, and host configuration. Load `head/HEAD_CORE.md` for HEAD, select an agent prompt from `agents/`, and load a matching procedure from `skills/` on demand.
+From an extracted generated release, run `./head init <target>` to ensure the user-scoped coordination host, initialize the project, and start its onboarding conversation. OpenCode authentication/model choice, Herdr, and its socket must already exist. The base-release package selection is machine-readable in [release-manifest.json](release-manifest.json).
+
+After the host is healthy, the internal file-only command `head project init <target> [--project-id <id>]` creates and registers a launch-ready generic project without starting onboarding or a live runtime.
 
 ## Runtime operation
 
