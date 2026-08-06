@@ -3,8 +3,13 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { createRequire } from "node:module";
 import { createSessionTransitions } from "../packages/opencode-runtime/runtime/opencode/bin/session-transitions.mjs";
 import { createHerdrRenameAdapter, HeadSessionCore } from "../packages/opencode-runtime/runtime/opencode/plugins/head-session-core.mjs";
+import { detectHerdrLocation } from "../packages/opencode-runtime/runtime/opencode/bin/render-runtime-config.mjs";
+
+const require = createRequire(import.meta.url);
+const { herdrBinary, validateCaller } = require("../packages/opencode-runtime/runtime/opencode/herdr-runtime.cjs");
 
 function ledger(type, slice = "slices/current.md") {
   return { id: "cp-0000", at: "2026-07-27T00:00:00Z", horizon: { slice: null, wave: null }, expected: "test", observed: "test", evidence: [], decision: { type, reason: "test" }, next: { output: "test", slice, wave: null } };
@@ -125,14 +130,43 @@ test("finish accepts the explicit legacy root Run path", (t) => {
   assert.equal(value.transition()({ action: "finish_run", sessionID: "ses_abc", session_handoff: "handoff" }).ok, true);
 });
 
-test("real Herdr rename adapter pins the validated tab and environment", () => {
+test("real Herdr rename adapter pins the validated tab and environment", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "herdr-rename-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const binary = path.join(root, "herdr");
+  fs.writeFileSync(binary, "#!/bin/sh\n", { mode: 0o700 });
   const calls = [];
-  const adapter = createHerdrRenameAdapter({ environment: { HERDR_BIN: "/opt/herdr", HERDR_SOCKET_PATH: "/wrong", HERDR_SESSION_ID: "old" }, execFileSync: (...args) => calls.push(args) });
+  const adapter = createHerdrRenameAdapter({ environment: { HERDR_BIN: binary, HERDR_SOCKET_PATH: "/wrong", HERDR_SESSION_ID: "old" }, execFileSync: (...args) => calls.push(args) });
   adapter.renameTab({ tabId: "tab-1", socket: "/run/herdr.sock" }, "renamed");
-  assert.deepEqual(calls[0][0], "/opt/herdr");
+  assert.deepEqual(calls[0][0], binary);
   assert.deepEqual(calls[0][1], ["tab", "rename", "tab-1", "renamed"]);
   assert.equal(calls[0][2].env.HERDR_SOCKET_PATH, "/run/herdr.sock");
   assert.equal(calls[0][2].env.HERDR_SESSION_ID, undefined);
+});
+
+test("Herdr caller validation derives workspace and tab from a stable socket and pane identity", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "herdr-caller-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const head = path.join(root, ".claude/agents/head");
+  fs.mkdirSync(head, { recursive: true });
+  const snapshot = {
+    panes: [{ pane_id: "pane-1", tab_id: "tab-1", workspace_id: "workspace-1", terminal_id: "terminal-1", cwd: head }],
+    tabs: [{ tab_id: "tab-1", workspace_id: "workspace-1", label: "demo" }],
+  };
+  const caller = validateCaller({ socket: "/run/herdr.sock", paneId: "pane-1" }, { headCwd: head, readSnapshot: () => snapshot });
+  assert.equal(caller.workspaceId, "workspace-1");
+  assert.equal(caller.tabId, "tab-1");
+  assert.equal(validateCaller({ socket: "/run/herdr.sock", paneId: "pane-1", tabId: "wrong" }, { headCwd: head, readSnapshot: () => snapshot }), null);
+});
+
+test("Herdr binary discovery uses explicit capability path then owner user-bin fallback", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "herdr-binary-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const binary = path.join(root, ".local/bin/herdr");
+  fs.mkdirSync(path.dirname(binary), { recursive: true });
+  fs.writeFileSync(binary, "#!/bin/sh\n", { mode: 0o700 });
+  assert.equal(herdrBinary({ HOME: root }), binary);
+  assert.equal(herdrBinary({ HOME: "/missing", HERDR_BIN: binary }), binary);
 });
 
 test("plugin schema exposes only semantic actions and delegates to supplied core", async () => {

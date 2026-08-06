@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { RuntimeContextError } from "../agent-task/runtime-context.mjs";
 
-const PROTOCOL = 17;
+const SUPPORTED_PROTOCOLS = new Set([17, 19]);
 const id = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const session = /^ses_[A-Za-z0-9_-]+$/;
 const fail = (code, message) => { throw new RuntimeContextError(code, message); };
@@ -77,7 +77,7 @@ function unique(values, field) {
 }
 
 function validateSnapshot(value) {
-  if (!value || typeof value !== "object" || value.protocol !== PROTOCOL || !Array.isArray(value.workspaces) || !Array.isArray(value.tabs) || !Array.isArray(value.panes)) {
+  if (!value || typeof value !== "object" || !SUPPORTED_PROTOCOLS.has(value.protocol) || !Array.isArray(value.workspaces) || !Array.isArray(value.tabs) || !Array.isArray(value.panes)) {
     fail("INVALID_HERDR_SNAPSHOT", "A compatible Herdr snapshot protocol with arrays is required.");
   }
   const workspaces = unique(value.workspaces, "workspace_id");

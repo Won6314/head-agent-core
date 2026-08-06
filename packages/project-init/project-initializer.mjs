@@ -5,13 +5,13 @@ import os from "node:os";
 import path from "node:path";
 import { createHostAdmin } from "../coordination/mcp/host-coordination/admin.mjs";
 
-const roles = ["head", "developer", "validator", "reviewer"];
+const roles = ["head", "developer", "coder", "reviewer"];
 const managedFiles = [
   ".claude/head-runtime.json",
   ".claude/head-project.json",
   ".claude/agents/head/opencode.json",
   ".claude/agents/developer/opencode.json",
-  ".claude/agents/validator/opencode.json",
+  ".claude/agents/coder/opencode.json",
   ".claude/agents/reviewer/opencode.json",
   "scripts/resume-session.sh",
 ];
@@ -65,7 +65,7 @@ function config(coreRoot, target, role) {
     plugin: [absolute(coreRoot, "packages/opencode-runtime/runtime/opencode/plugins/head-core-first.mjs"), absolute(coreRoot, "packages/opencode-runtime/runtime/opencode/save-opencode-session-id.js"), absolute(coreRoot, "packages/opencode-runtime/runtime/opencode/plugins/head-session.mjs"), absolute(coreRoot, "packages/opencode-runtime/runtime/opencode/plugins/compact-recovery.mjs")],
     mcp: { "agent-task": mcp("agent-task"), "agent-comm": mcp("agent-comm") },
   };
-  const core = { developer: "DEVELOPER_CORE.md", validator: "VALIDATOR_CORE.md", reviewer: "REVIEWER_CORE.md" }[role];
+  const core = { developer: "DEVELOPER_CORE.md", coder: "CODER_CORE.md", reviewer: "REVIEWER_CORE.md" }[role];
   return { instructions: [absolute(coreRoot, "packages/agents", role, core), absolute(target, ".claude/agents", role, "CLAUDE.md"), absolute(target, ".claude/agents", role, "EXPERTISE.md")], mcp: { "agent-comm": mcp("agent-comm") } };
 }
 function seed(relative) {

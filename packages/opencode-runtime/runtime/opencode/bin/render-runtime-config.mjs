@@ -57,11 +57,15 @@ export function logRuntimeEvent(name, record, root) { logJsonl(name, { ts: new D
 function sharedValidateCaller() {
   try { return require(path.resolve(path.dirname(THIS_FILE), "..", "herdr-runtime.cjs")).validateCaller; } catch { return null; }
 }
+function herdrIdentityWasSupplied(env = process.env) {
+  return ["HERDR_SOCKET_PATH", "HERDR_WORKSPACE_ID", "HERDR_TAB_ID", "HERDR_PANE_ID"]
+    .some((key) => String(env[key] || "").trim());
+}
 export function detectHerdrLocation(env = process.env, validate, root) {
   const active = projectRoot(root);
   if (!active) return null;
   const caller = { socket: String(env.HERDR_SOCKET_PATH || "").trim(), workspaceId: String(env.HERDR_WORKSPACE_ID || "").trim(), tabId: String(env.HERDR_TAB_ID || "").trim(), paneId: String(env.HERDR_PANE_ID || "").trim() };
-  if (!Object.values(caller).every(Boolean)) return null;
+  if (!caller.socket || !caller.paneId) return null;
   const verify = validate || sharedValidateCaller();
   if (typeof verify !== "function") return null;
   let live;
@@ -99,13 +103,13 @@ function assertRegularFile(file, description) {
   return metadata;
 }
 
-function writeSessionRecord(target, current, patch) {
+function writeSessionRecord(target, record) {
   const dir = path.dirname(target);
   let temporary = "";
   try {
     temporary = path.join(dir, `.${path.basename(target)}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`);
     const descriptor = fs.openSync(temporary, "wx", 0o600);
-    try { fs.writeFileSync(descriptor, JSON.stringify({ ...current, ...patch }, null, 2) + "\n", "utf8"); fs.fsyncSync(descriptor); } finally { fs.closeSync(descriptor); }
+    try { fs.writeFileSync(descriptor, JSON.stringify(record, null, 2) + "\n", "utf8"); fs.fsyncSync(descriptor); } finally { fs.closeSync(descriptor); }
     fs.renameSync(temporary, target);
     temporary = "";
     syncDirectory(dir);
@@ -178,7 +182,7 @@ function acquireSessionLock(dir, sessionID, timeoutMs = 10_000) {
 }
 
 /** Execute one lock-protected read/compare/update and atomic durable write. */
-function updateSessionRecord(sessionID, root, updater) {
+function updateSessionRecord(sessionID, root, updater, merge) {
   if (!/^ses_[A-Za-z0-9]+$/.test(String(sessionID || ""))) throw new Error("invalid session ID");
   const state = headStateDir(root);
   if (!state) throw new Error("project state directory is unavailable");
@@ -196,8 +200,8 @@ function updateSessionRecord(sessionID, root, updater) {
     const patch = updater(previous);
     if (patch === null || patch === undefined) return null;
     if (!patch || typeof patch !== "object" || Array.isArray(patch)) throw new Error("session record update is not an object");
-    const next = { ...previous, ...patch };
-    writeSessionRecord(target, previous, patch);
+    const next = merge ? { ...previous, ...patch } : patch;
+    writeSessionRecord(target, next);
     return next;
   } finally {
     fs.closeSync(lock.descriptor);
@@ -206,22 +210,27 @@ function updateSessionRecord(sessionID, root, updater) {
 }
 
 export function saveSessionRecord(sessionID, record, root) {
-  const result = updateSessionRecord(sessionID, root, () => record);
+  const result = updateSessionRecord(sessionID, root, () => record, false);
   if (result === null) throw new Error("session save was unexpectedly rejected");
 }
 
 /** Execute a strict session-record compare/update while holding a short-lived lock. */
 export function mutateSessionRecord(sessionID, root, mutator) {
-  return updateSessionRecord(sessionID, root, mutator);
+  return updateSessionRecord(sessionID, root, mutator, true);
 }
 
 function section(title, filePath, body) { return body.trim() ? [`# Loaded File: ${filePath || title}`, "", body.trim(), ""].join("\n") : ""; }
-export function buildHeadPrompt({ sessionID = "", agent = "head", includeBaseFiles = false, root, location } = {}) {
+export function buildHeadPrompt({ sessionID = "", agent = "head", includeBaseFiles = false, root, location, env = process.env } = {}) {
   const active = projectRoot(root);
   if (!active) return { prompt: "", metadata: { sessionID, agent, shouldInject: false, invalidProjectRoot: true }, tipQuery: "" };
-  const resolvedLocation = location || detectHerdrLocation(process.env, undefined, active) || {};
+  const resolvedLocation = location || detectHerdrLocation(env, undefined, active) || {};
   const sessionRecord = loadSessionRecord(sessionID, active);
-  const recovery = agent === "head" ? projectSessionRecovery({ headDirectory: headDir(active), liveSessionName: resolvedLocation.sessionName, sessionRecord }) : null;
+  const unvalidatedHerdrIdentity = !location && herdrIdentityWasSupplied(env) && !resolvedLocation.sessionName;
+  const recovery = agent === "head" ? projectSessionRecovery({
+    headDirectory: headDir(active),
+    liveSessionName: resolvedLocation.sessionName,
+    sessionRecord: unvalidatedHerdrIdentity ? null : sessionRecord,
+  }) : null;
   const sessionName = recovery?.identity?.sessionName
     || (directSessionDir(active, resolvedLocation.sessionName) ? resolvedLocation.sessionName : "")
     || (directSessionDir(active, sessionRecord?.sessionName) ? sessionRecord.sessionName : "");

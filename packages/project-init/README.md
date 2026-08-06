@@ -1,8 +1,8 @@
 # HEAD host installer and file-only project initializer
 
-From an extracted generated release, run `./head init <target>`. It ensures the user-scoped host, initializes and registers the project through the installed stable command, then starts protected onboarding. It discovers capability-compatible OpenCode and Herdr executables, or accepts `--opencode`, `--herdr`, and `--socket` overrides; it does not configure model, provider, or credentials.
+From an extracted generated release, run `node ./packages/project-init/public-entry.mjs init <target>`. This is the canonical public command: it ensures the user-scoped host, initializes and registers the project through the installed stable command, then starts protected onboarding. It discovers capability-compatible OpenCode and Herdr executables, or accepts `--opencode`, `--herdr`, and `--socket` overrides; it does not configure model, provider, or credentials.
 
-`head install`, `head project init <target> [--project-id <id>]`, and `head onboarding start <target>` remain the installed phase commands.
+`head install`, `head project init <target> [--project-id <id>]`, and `head onboarding start <target>` are installed phase commands used by the canonical public composition. They are not alternate public installation paths.
 
 With a healthy installed host, `head project init <target> [--project-id <id>]` creates and registers a generic, launch-ready project. It writes only generated manifests/configuration and absent project-owned seeds; it does not create a Session, start OpenCode, or alter Herdr.
 

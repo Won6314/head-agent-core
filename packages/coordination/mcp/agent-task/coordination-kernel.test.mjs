@@ -50,7 +50,7 @@ test("registry preserves the six current public schema contracts in canonical or
 });
 
 test("host worker context and bounded policy compose discovery without changing contracts", () => {
-  const context = hostContext(["validator", "developer"]);
+  const context = hostContext(["reviewer", "developer"]);
   const kernel = new CoordinationKernel({ capabilities: capabilities() });
   const tools = kernel.tools(createCoordinationContext({
     projectRoot: context.projectRoot,
@@ -58,7 +58,7 @@ test("host worker context and bounded policy compose discovery without changing 
     policyGuidance: "Use the project review boundary.",
   }));
   const quick = tools[0];
-  assert.deepEqual(quick.inputSchema.properties.agent.enum, ["developer", "validator"]);
+  assert.deepEqual(quick.inputSchema.properties.agent.enum, ["developer", "reviewer"]);
   assert.equal(quick.inputSchema.properties.agent.enum.includes("head"), false);
   assert.match(quick.description, /Project policy: Use the project review boundary\.$/);
   assert.deepEqual(stripDescriptions(semanticSchema(quick)), expectedSchemas.quick_task);

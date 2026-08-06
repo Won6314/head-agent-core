@@ -1,7 +1,11 @@
 import { createSessionTransitions } from "../bin/session-transitions.mjs";
 import childProcess from "node:child_process";
+import { createRequire } from "node:module";
 import { detectHerdrLocation, headDir, loadSessionRecord, mutateSessionRecord, projectRoot } from "../bin/render-runtime-config.mjs";
 import { resolveToolSchema } from "./compact-recovery-core.mjs";
+
+const require = createRequire(import.meta.url);
+const { herdrBinary } = require("../herdr-runtime.cjs");
 
 export function createHerdrRenameAdapter({ execFileSync = childProcess.execFileSync, environment = process.env } = {}) {
   return {
@@ -12,7 +16,7 @@ export function createHerdrRenameAdapter({ execFileSync = childProcess.execFileS
         if (/^HERDR_(?:SESSION|REMOTE)(?:_|$)|^HERDR_SOCKET_PATH$/i.test(key)) delete env[key];
       }
       env.HERDR_SOCKET_PATH = location.socket;
-      execFileSync(environment.HERDR_BIN || "herdr", ["tab", "rename", location.tabId, name], { encoding: "utf8", env });
+      execFileSync(herdrBinary(environment), ["tab", "rename", location.tabId, name], { encoding: "utf8", env });
     },
   };
 }

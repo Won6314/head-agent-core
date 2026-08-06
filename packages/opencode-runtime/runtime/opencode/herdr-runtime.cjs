@@ -2,8 +2,26 @@ const childProcess = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
+function executable(file) {
+  try {
+    const stat = fs.statSync(file);
+    fs.accessSync(file, fs.constants.X_OK);
+    return stat.isFile() ? file : "";
+  } catch { return ""; }
+}
+
+function herdrBinary(env = process.env) {
+  const explicit = String(env.HERDR_BIN || "").trim();
+  if (explicit) return path.isAbsolute(explicit) ? executable(explicit) : explicit;
+  const candidates = [
+    env.XDG_BIN_HOME && path.join(env.XDG_BIN_HOME, "herdr"),
+    env.HOME && path.join(env.HOME, ".local", "bin", "herdr"),
+  ].filter(Boolean);
+  return candidates.map(executable).find(Boolean) || "herdr";
+}
+
 function snapshot(env = process.env) {
-  const result = childProcess.spawnSync("herdr", ["api", "snapshot"], { encoding: "utf8", env });
+  const result = childProcess.spawnSync(herdrBinary(env), ["api", "snapshot"], { encoding: "utf8", env });
   if (result.error || result.status !== 0) return null;
   try {
     const value = JSON.parse(result.stdout);
@@ -21,11 +39,17 @@ function canonical(directory) {
  * is the authority, not a product-local coordination runtime.
  */
 function validateCaller(caller, { headCwd, env = process.env, readSnapshot = snapshot } = {}) {
-  if (!caller || !["socket", "workspaceId", "tabId", "paneId"].every((key) => String(caller[key] || "").trim())) return null;
+  if (!caller || !["socket", "paneId"].every((key) => String(caller[key] || "").trim())) return null;
   const state = readSnapshot(env);
   if (!state || !Array.isArray(state.panes) || !Array.isArray(state.tabs)) return null;
-  const pane = state.panes.filter((item) => item.workspace_id === caller.workspaceId && item.tab_id === caller.tabId && item.pane_id === caller.paneId)[0];
-  const tab = state.tabs.filter((item) => item.workspace_id === caller.workspaceId && item.tab_id === caller.tabId)[0];
+  const panes = state.panes.filter((item) => item.pane_id === caller.paneId
+    && (!caller.workspaceId || item.workspace_id === caller.workspaceId)
+    && (!caller.tabId || item.tab_id === caller.tabId));
+  if (panes.length !== 1) return null;
+  const pane = panes[0];
+  const tabs = state.tabs.filter((item) => item.workspace_id === pane.workspace_id && item.tab_id === pane.tab_id);
+  if (tabs.length !== 1) return null;
+  const tab = tabs[0];
   if (!pane || !tab || !pane.terminal_id || !pane.cwd) return null;
   const cwd = canonical(pane.cwd);
   const expected = headCwd ? canonical(headCwd) : cwd;
@@ -36,4 +60,4 @@ function validateCaller(caller, { headCwd, env = process.env, readSnapshot = sna
   });
 }
 
-module.exports = { snapshot, validateCaller };
+module.exports = { herdrBinary, snapshot, validateCaller };

@@ -6,7 +6,6 @@ import { RuntimeContextError } from "../agent-task/runtime-context.mjs";
 
 const ENV = "/usr/bin/env";
 const PLUGIN_NAME = "herdr-agent-state.js";
-const PLUGIN_HASH = "2c1a0fd9a50728b62618a2a817f42dcb89762f46fccfed07c036fd90c9bad894";
 const SESSION = /^ses_[A-Za-z0-9_-]+$/;
 const fail = (code, message) => { throw new RuntimeContextError(code, message); };
 const owned = (stat) => typeof process.getuid !== "function" || stat.uid === process.getuid();
@@ -123,12 +122,12 @@ export function validateIsolatedOpenCodeInputs({ opencodeBinary, pluginSource, a
   // result exposes or copies credential bytes at this pre-mutation boundary.
   selectedOpenAIAuth(fs.readFileSync(authSource));
   const bytes = fs.readFileSync(pluginSource);
-  if (sha(bytes) !== PLUGIN_HASH || !/(?:version\s*[:=]?\s*9|\bv9\b)/i.test(bytes.toString("utf8", 0, Math.min(bytes.length, 4096)))) fail("INVALID_HERDR_PLUGIN", "Herdr OpenCode plugin version/hash is not pinned.");
+  if (!bytes.length) fail("INVALID_HERDR_PLUGIN", "Herdr OpenCode plugin source is empty.");
   return Object.freeze({ opencodeBinary, pluginSource, authSource });
 }
 
 /** Owner-private HOME/XDG runtime and an `/usr/bin/env -i` launcher resolver. */
-export function createIsolatedOpenCodeRuntime({ stateRoot, opencodeBinary, pluginSource, authSource, fs = fsNative, execFileSync = childProcess.execFileSync, envBinary = ENV, testPluginPin } = {}) {
+export function createIsolatedOpenCodeRuntime({ stateRoot, opencodeBinary, pluginSource, authSource, fs = fsNative, execFileSync = childProcess.execFileSync, envBinary = ENV } = {}) {
   if (![stateRoot, opencodeBinary, pluginSource].every((x) => typeof x === "string" && path.isAbsolute(x))) fail("INVALID_ISOLATED_RUNTIME", "Explicit absolute state, OpenCode, and plugin paths are required.");
   for (const target of [stateRoot, opencodeBinary, pluginSource, envBinary, ...(authSource ? [authSource] : [])]) noSymlinkAncestors(fs, target);
   direct(fs, envBinary, { type: "file", executable: true, ownerOrRoot: true });
@@ -165,12 +164,11 @@ export function createIsolatedOpenCodeRuntime({ stateRoot, opencodeBinary, plugi
     prepare() {
       for (const dir of [runtimeRoot, home, configHome, dataHome, cacheHome, stateHome, tmpdir, opencodeConfigRoot, pluginDir]) mkdirDirect(fs, dir);
       for (const dir of [runtimeRoot, home, configHome, dataHome, cacheHome, stateHome, tmpdir, opencodeConfigRoot, pluginDir]) canonicalUnder(fs, runtimeRoot, dir);
-      const source = direct(fs, pluginSource, { type: "file", mode: 0o644 }); const bytes = fs.readFileSync(source), pin = testPluginPin || { hash: PLUGIN_HASH, version: 9 }; pluginSourceDigest = sha(bytes); pluginSourceMode = 0o644;
-      if (testPluginPin && (!exactObject(testPluginPin) || Object.keys(testPluginPin).sort().join() !== "hash,version" || !/^[0-9a-f]{64}$/.test(testPluginPin.hash) || testPluginPin.version !== 9)) fail("INVALID_TEST_PIN", "Synthetic plugin pins are test-only and exact.");
-      if (sha(bytes) !== pin.hash || !new RegExp(`(?:version\\s*[:=]?\\s*${pin.version}|\\bv${pin.version}\\b)`, "i").test(bytes.toString("utf8", 0, Math.min(bytes.length, 4096)))) fail("INVALID_HERDR_PLUGIN", "Herdr OpenCode plugin version/hash is not pinned.");
+      const source = direct(fs, pluginSource, { type: "file", mode: 0o644 }); const bytes = fs.readFileSync(source); pluginSourceDigest = sha(bytes); pluginSourceMode = 0o644;
+      if (!bytes.length) fail("INVALID_HERDR_PLUGIN", "Herdr OpenCode plugin source is empty.");
       if (fs.readdirSync(pluginDir).some((name) => name !== PLUGIN_NAME)) fail("UNEXPECTED_OPENCODE_PLUGIN", "Isolated plugin directory is not empty/exact.");
       if (!fs.existsSync(pluginPath)) fs.writeFileSync(pluginPath, bytes, { mode: 0o600, flag: "wx" });
-      direct(fs, pluginPath, { type: "file", mode: 0o600 }); if (sha(fs.readFileSync(pluginPath)) !== pin.hash) fail("INVALID_HERDR_PLUGIN", "Staged Herdr plugin differs from its pin.");
+      direct(fs, pluginPath, { type: "file", mode: 0o600 }); if (sha(fs.readFileSync(pluginPath)) !== pluginSourceDigest) fail("INVALID_HERDR_PLUGIN", "Staged Herdr plugin differs from the selected source.");
       prepared = true; return this.paths;
     },
     assignments: launchAssignments,
@@ -197,4 +195,4 @@ export function createIsolatedOpenCodeRuntime({ stateRoot, opencodeBinary, plugi
   });
 }
 
-export const isolatedRuntimePins = Object.freeze({ envBinary: ENV, pluginName: PLUGIN_NAME, pluginHash: PLUGIN_HASH });
+export const isolatedRuntimePolicy = Object.freeze({ envBinary: ENV, pluginName: PLUGIN_NAME, pluginValidation: "owner-regular-source-frozen-per-runtime" });

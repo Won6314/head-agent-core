@@ -20,12 +20,19 @@ function directExecutable(value) {
  * protocol capabilities this package consumes.  Version strings and install
  * prefixes are deliberately not authority.
  */
-export function resolveConfiguredOpenCodeBinary({ executable, execFileSync = childProcess.execFileSync, probe } = {}) {
+export function resolveConfiguredOpenCodeBinary({ executable, execFileSync, spawnSync = childProcess.spawnSync, probe } = {}) {
   if (typeof executable !== "string" || !path.isAbsolute(executable)) fail("INVALID_RUNTIME_BINARY", "A configured absolute OpenCode executable is required.");
   let binary;
   try { binary = fs.realpathSync(executable); } catch { fail("INVALID_RUNTIME_BINARY", "The configured OpenCode executable is unavailable."); }
   directExecutable(binary);
-  const requiredProbe = probe || ((file, args) => execFileSync(file, args, { encoding: "utf8", timeout: 10_000 }));
+  const requiredProbe = probe || (execFileSync
+    ? ((file, args) => execFileSync(file, args, { encoding: "utf8", timeout: 10_000 }))
+    : ((file, args) => {
+      const result = spawnSync(file, args, { encoding: "utf8", timeout: 10_000 });
+      if (result.error) throw result.error;
+      if (result.status !== 0) throw new Error(`OpenCode capability probe failed with status ${result.status}.`);
+      return `${result.stdout || ""}${result.stderr || ""}`;
+    }));
   try {
     for (const args of [["debug", "paths"], ["debug", "config"], ["run", "--help"]]) {
       const result = requiredProbe(binary, args);
@@ -50,7 +57,7 @@ export function createOnePaneWorkerLauncher({ runtime, resolveOpenCodeBinary = r
     const expectedCwd = fs.realpathSync(task.agentDir);
     const binary = directExecutable(resolveOpenCodeBinary(task, execution));
     const continuation = execution.continuation;
-    let argv = [binary, "run", "--format", "json"];
+    let argv = [binary, "run", "--format", "json", "--auto"];
     if (execution.model) argv.push("--model", execution.model);
     if (execution.variant) argv.push("--variant", execution.variant);
     if (continuation?.strategy === "resume" || continuation?.strategy === "fork") {

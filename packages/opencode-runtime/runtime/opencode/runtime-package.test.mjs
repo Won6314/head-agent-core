@@ -41,6 +41,7 @@ test("compatibility renderer loads the packaged Herdr runtime and resolves a dir
     env: {
       ...process.env,
       PATH: `${bin}${path.delimiter}${process.env.PATH || ""}`,
+      HERDR_BIN: herdr,
       HERDR_SOCKET_PATH: path.join(root, "herdr.sock"),
       HERDR_WORKSPACE_ID: "workspace",
       HERDR_TAB_ID: "tab",

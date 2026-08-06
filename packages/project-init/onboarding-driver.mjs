@@ -47,7 +47,8 @@ function ensurePristineSession(head) {
 }
 
 function snapshot(runtime) { const value = runtime.snapshot(); if (!value || !Array.isArray(value.workspaces) || !Array.isArray(value.tabs) || !Array.isArray(value.panes)) throw new Error("Herdr snapshot is incompatible."); return value; }
-function workspaceFor(state, root) { return state.workspaces.filter((item) => item && item.cwd && canonical(item.cwd) === root); }
+function sameRoot(candidate, root) { try { return typeof candidate === "string" && canonical(candidate) === root; } catch { return false; } }
+function workspaceFor(state, root) { return state.workspaces.filter((item) => item && (sameRoot(item.cwd, root) || state.panes.some((pane) => pane.workspace_id === item.workspace_id && sameRoot(pane.cwd, root)))); }
 function onboardingTabs(state, workspaceId) { return state.tabs.filter((item) => item.workspace_id === workspaceId && (item.label ?? item.tab_label) === SESSION_NAME); }
 function paneFor(state, tab, head) {
   const panes = state.panes.filter((item) => item.workspace_id === tab.workspace_id && item.tab_id === tab.tab_id);
@@ -56,6 +57,16 @@ function paneFor(state, tab, head) {
 }
 function agentName(projectId) { return `${projectId}-onboarding`; }
 function liveAgent(pane) { return pane.agent === "opencode" && pane.agent_session?.source === "herdr:opencode" && openCodeSession.test(String(pane.agent_session?.value || "")); }
+function pause(ms) { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); }
+function waitPane(herdr, tab, head, predicate, timeoutMs = 15_000) {
+  const deadline = Date.now() + timeoutMs;
+  do {
+    const pane = paneFor(snapshot(herdr), tab, head);
+    if (predicate(pane)) return pane;
+    pause(100);
+  } while (Date.now() <= deadline);
+  throw new Error("Exact onboarding OpenCode agent was not observed.");
+}
 
 /** Start exactly one protected onboarding conversation from a launch-ready project. */
 export function startOnboarding({ target, env = process.env, runtime } = {}) {
@@ -74,15 +85,21 @@ export function startOnboarding({ target, env = process.env, runtime } = {}) {
   if (!tabs.length) { herdr.invoke(socket, ["tab", "create", "--workspace", workspace.workspace_id, "--cwd", authority.head, "--label", SESSION_NAME, "--no-focus"]); state = snapshot(herdr); tabs = onboardingTabs(state, workspace.workspace_id); }
   if (tabs.length !== 1 || !identifier.test(String(tabs[0].tab_id || ""))) throw new Error("Exact onboarding tab was not observed.");
   let pane = paneFor(state, tabs[0], authority.head);
-  if (pane.agent || pane.agent_session || pane.agent_status) {
-    if (!liveAgent(pane)) throw new Error("Existing onboarding pane is foreign or ambiguous.");
+  if (pane.agent || pane.agent_session || (pane.agent_status && pane.agent_status !== "unknown")) {
+    const reused = liveAgent(pane);
+    if (!liveAgent(pane) && (pane.agent !== "opencode" || pane.agent_session)) throw new Error("Existing onboarding pane is foreign or ambiguous.");
+    if (!liveAgent(pane) && !pane.agent) throw new Error("Existing onboarding pane is foreign or ambiguous.");
+    if (!liveAgent(pane)) {
+      herdr.invokeVoid(socket, ["agent", "prompt", agentName(authority.projectId), ONBOARDING_PROMPT]);
+      pane = waitPane(herdr, tabs[0], authority.head, liveAgent);
+    }
     herdr.invokeVoid(socket, ["tab", "focus", tabs[0].tab_id]);
-    return { status: "onboarding_ready", reused: true, projectId: authority.projectId, projectRoot: authority.root, session: SESSION_NAME, sessionPath: session, workspaceId: workspace.workspace_id, tabId: tabs[0].tab_id, paneId: pane.pane_id, terminalId: pane.terminal_id, agentName: agentName(authority.projectId), openCodeSessionId: pane.agent_session.value, promptSubmitted: true };
+    return { status: "onboarding_ready", reused, projectId: authority.projectId, projectRoot: authority.root, session: SESSION_NAME, sessionPath: session, workspaceId: workspace.workspace_id, tabId: tabs[0].tab_id, paneId: pane.pane_id, terminalId: pane.terminal_id, agentName: agentName(authority.projectId), openCodeSessionId: pane.agent_session.value, promptSubmitted: true };
   }
   herdr.invokeVoid(socket, ["agent", "start", agentName(authority.projectId), "--kind", "opencode", "--pane", pane.pane_id]);
-  state = snapshot(herdr); pane = paneFor(state, tabs[0], authority.head);
-  if (!liveAgent(pane)) throw new Error("Exact onboarding OpenCode agent was not observed.");
+  pane = waitPane(herdr, tabs[0], authority.head, (candidate) => candidate.agent === "opencode");
   herdr.invokeVoid(socket, ["agent", "prompt", agentName(authority.projectId), ONBOARDING_PROMPT]);
+  pane = waitPane(herdr, tabs[0], authority.head, liveAgent);
   herdr.invokeVoid(socket, ["tab", "focus", tabs[0].tab_id]);
   return { status: "onboarding_ready", reused: false, projectId: authority.projectId, projectRoot: authority.root, session: SESSION_NAME, sessionPath: session, workspaceId: workspace.workspace_id, tabId: tabs[0].tab_id, paneId: pane.pane_id, terminalId: pane.terminal_id, agentName: agentName(authority.projectId), openCodeSessionId: pane.agent_session.value, promptSubmitted: true };
 }

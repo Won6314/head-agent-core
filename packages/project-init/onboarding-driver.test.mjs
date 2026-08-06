@@ -28,7 +28,7 @@ function fakeRuntime() {
   const runtime = {
     socket: "/pinned.sock", snapshot: () => structuredClone(state), invoke: (_socket, argv) => {
       calls.push(argv); if (argv[0] === "workspace") { const workspace_id = next("workspace"); state.workspaces.push({ workspace_id, cwd: argv[3] }); return { workspace_id }; }
-      if (argv[0] === "tab") { const tab_id = next("tab"), pane_id = next("pane"), terminal_id = next("terminal"); state.tabs.push({ workspace_id: argv[3], tab_id, label: argv[7] }); state.panes.push({ workspace_id: argv[3], tab_id, pane_id, terminal_id, cwd: argv[5] }); return { tab_id, pane_id, terminal_id }; }
+      if (argv[0] === "tab") { const tab_id = next("tab"), pane_id = next("pane"), terminal_id = next("terminal"); state.tabs.push({ workspace_id: argv[3], tab_id, label: argv[7] }); state.panes.push({ workspace_id: argv[3], tab_id, pane_id, terminal_id, cwd: argv[5], agent_status: "unknown" }); return { tab_id, pane_id, terminal_id }; }
       throw new Error("unexpected invoke");
     },
     invokeVoid: (_socket, argv) => { calls.push(argv); if (argv[0] === "agent" && argv[1] === "start") { const pane = state.panes.find((item) => item.pane_id === argv[argv.length - 1]); pane.agent = "opencode"; pane.agent_session = { source: "herdr:opencode", value: "ses_onboarding" }; } },
@@ -51,6 +51,16 @@ test("pristine partial resumes without rewriting and live onboarding focuses wit
   fs.mkdirSync(path.join(f.target, ".claude/agents/head/sessions/onboarding")); fs.writeFileSync(path.join(f.target, ".claude/agents/head/sessions/onboarding/context.md"), onboardingContract.context); fs.writeFileSync(path.join(f.target, ".claude/agents/head/sessions/onboarding/session-state.json"), `${JSON.stringify({ schema: 1, generation: 0, mode: "session", activeRun: null }, null, 2)}\n`);
   const sessionBefore = files(path.join(f.target, ".claude/agents/head/sessions/onboarding")); startOnboarding({ target: f.target, env: f.env, runtime: fake.runtime }); assert.deepEqual(files(path.join(f.target, ".claude/agents/head/sessions/onboarding")), sessionBefore);
   const count = fake.calls.length, second = startOnboarding({ target: f.target, env: f.env, runtime: fake.runtime }); assert.equal(second.reused, true); assert.deepEqual(fake.calls.slice(count), [["tab", "focus", "tab-2"]]);
+});
+
+test("onboarding identifies a protocol-19 workspace from its root pane when workspace cwd is absent", async (t) => {
+  const f = await fixture(t), fake = fakeRuntime();
+  fake.state.workspaces.push({ workspace_id: "workspace-existing" });
+  fake.state.tabs.push({ workspace_id: "workspace-existing", tab_id: "tab-existing", label: "1" });
+  fake.state.panes.push({ workspace_id: "workspace-existing", tab_id: "tab-existing", pane_id: "pane-existing", terminal_id: "terminal-existing", cwd: f.target });
+  const result = startOnboarding({ target: f.target, env: f.env, runtime: fake.runtime });
+  assert.equal(result.workspaceId, "workspace-existing");
+  assert.equal(fake.calls.some((argv) => argv[0] === "workspace"), false);
 });
 
 test("ambiguous topology and invalid registration fail without changing project authorities", async (t) => {

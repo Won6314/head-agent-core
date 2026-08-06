@@ -14,7 +14,13 @@ python3 "$PROJECT_ROOT/scripts/query/mcp_call.py" --url http://127.0.0.1:19400/m
 python3 "$PROJECT_ROOT/scripts/query/mcp_call.py" --url http://127.0.0.1:19400/mcp --tool list_pages --args '{}'
 ```
 
-If the daemon is unavailable, follow the current project's approved browser launch guidance. Do not create an arbitrary Chrome profile, browser process, or debug port.
+For the NoahChat g2 runtime, if Chrome itself is down, run this exact established launcher. Do not substitute another profile:
+
+```bash
+ssh remote-mac "/usr/bin/osascript -e 'tell application \"Google Chrome\" to quit'; for i in {1..40}; do if ! /usr/bin/pgrep -x 'Google Chrome' >/dev/null; then break; fi; /bin/sleep 0.25; done; /usr/bin/open -na 'Google Chrome' --args --remote-debugging-port=9222 --user-data-dir=/Users/jongyoonwon/.chrome-debug-gaonprime '--profile-directory=Profile 5' --no-first-run --no-default-browser-check"
+```
+
+Then rerun `list_pages`. The approved persistent identity is `/Users/jongyoonwon/.chrome-debug-gaonprime` + `Profile 5` on port `9222`; `~/.chrome-debug-profile` and the ordinary `~/Library/Application Support/Google/Chrome` profiles are not substitutes. Outside NoahChat, follow that project's approved browser launch guidance. Never create an arbitrary profile, browser process, or debug port.
 
 ## Owned Tab Lifecycle
 

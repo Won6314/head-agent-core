@@ -62,8 +62,8 @@ test("worker launcher inherits OpenCode model when policy omits it", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "head-model-")), binary = path.join(root, "opencode"); executable(binary, "exit 0"); const calls = [];
   const task = { workspaceId: "workspace", tabId: "tab", paneId: "pane", terminalId: "terminal", agentDir: root, command: "work" }, pane = { socket: "socket", workspaceId: "workspace", tabId: "tab", paneId: "pane", terminalId: "terminal" };
   const runtime = { invokeVoid: (_socket, argv) => calls.push(argv), snapshot: () => ({ panes: [{ workspace_id: "workspace", tab_id: "tab", pane_id: "pane", terminal_id: "terminal", cwd: root, agent: "opencode", agent_session: { source: "herdr:opencode", value: "ses_model" } }] }) };
-  const launcher = createOnePaneWorkerLauncher({ runtime, resolveOpenCodeBinary: () => binary, timeoutMs: 1 }); launcher({ task, execution: { runtime: "opencode", model: "", variant: "" }, rootPane: pane }); assert.equal(calls[0].includes("--model"), false);
-  const explicit = createOnePaneWorkerLauncher({ runtime, resolveOpenCodeBinary: () => binary, timeoutMs: 1 }); explicit({ task, execution: { runtime: "opencode", model: "provider/model", variant: "" }, rootPane: pane }); assert.deepEqual(calls[1].slice(3, 9), [binary, "run", "--format", "json", "--model", "provider/model"]);
+  const launcher = createOnePaneWorkerLauncher({ runtime, resolveOpenCodeBinary: () => binary, timeoutMs: 1 }); launcher({ task, execution: { runtime: "opencode", model: "", variant: "" }, rootPane: pane }); assert.equal(calls[0].includes("--model"), false); assert.equal(calls[0].includes("--auto"), true);
+  const explicit = createOnePaneWorkerLauncher({ runtime, resolveOpenCodeBinary: () => binary, timeoutMs: 1 }); explicit({ task, execution: { runtime: "opencode", model: "provider/model", variant: "" }, rootPane: pane }); assert.deepEqual(calls[1].slice(3, 10), [binary, "run", "--format", "json", "--auto", "--model", "provider/model"]);
 });
 
 test("installed project init executes recovery and rolls back only its registration", async () => {

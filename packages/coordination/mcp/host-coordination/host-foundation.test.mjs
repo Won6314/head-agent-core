@@ -36,6 +36,7 @@ test("project-only registration derives and fences host authority through both p
   assert.ok(taskInit.result, JSON.stringify(taskInit));
   const taskSession = taskInit.result.sessionId;
   const commInit = await initialize(daemon.transport.comm, head);
+  assert.ok(commInit.result, JSON.stringify(commInit));
   const commSession = commInit.result.sessionId;
   const taskRecord = daemon.transport.task({ jsonrpc: "2.0", id: 2, method: "tools/list" }, { "mcp-session-id": taskSession });
   const commRecord = daemon.transport.comm({ jsonrpc: "2.0", id: 3, method: "tools/list" }, { "mcp-session-id": commSession });
@@ -63,6 +64,8 @@ test("configured realpaths prove OpenCode and Herdr consumed capabilities withou
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "head-runtime-capability-"));
   const supported = path.join(temporary, "custom-runtime"); fs.writeFileSync(supported, "#!/bin/sh\nprintf '{\\\"ok\\\":true}\\n'\n", { mode: 0o700 });
   assert.equal(resolveConfiguredOpenCodeBinary({ executable: supported }), fs.realpathSync(supported));
+  const stderrHelp = path.join(temporary, "stderr-help-runtime"); fs.writeFileSync(stderrHelp, "#!/bin/sh\nif [ \"$1 $2\" = \"run --help\" ]; then printf 'run help\\n' >&2; else printf '{\"ok\":true}\\n'; fi\n", { mode: 0o700 });
+  assert.equal(resolveConfiguredOpenCodeBinary({ executable: stderrHelp }), fs.realpathSync(stderrHelp));
   const incomplete = path.join(temporary, "incomplete-runtime"); fs.writeFileSync(incomplete, "#!/bin/sh\n[ \"$2\" = config ] && exit 1\nprintf '{\\\"ok\\\":true}\\n'\n", { mode: 0o700 });
   assert.throws(() => resolveConfiguredOpenCodeBinary({ executable: incomplete, execFileSync: childProcess.execFileSync }), (error) => error instanceof RuntimeContextError && error.code === "MISSING_RUNTIME_CAPABILITY");
   const socket = path.join(temporary, "configured-herdr.sock"), server = net.createServer(); await new Promise((resolve) => server.listen(socket, resolve));
@@ -70,6 +73,7 @@ test("configured realpaths prove OpenCode and Herdr consumed capabilities withou
   const snapshot = { protocol: 17, version: "any-unpinned-version", workspaces: [{ workspace_id: "workspace" }], tabs: [{ workspace_id: "workspace", tab_id: "tab" }], panes: [{ workspace_id: "workspace", tab_id: "tab", pane_id: "pane", terminal_id: "terminal", cwd: temporary }] };
   const exec = () => JSON.stringify({ result: { snapshot } });
   assert.equal(createRealHerdrCliAdapter({ socketPath: socket, herdrPath: herdr, execFileSync: exec }).socket, fs.realpathSync(socket));
+  assert.equal(createRealHerdrCliAdapter({ socketPath: socket, herdrPath: herdr, execFileSync: () => JSON.stringify({ result: { snapshot: { ...snapshot, protocol: 19 } } }) }).socket, fs.realpathSync(socket));
   assert.throws(() => createRealHerdrCliAdapter({ socketPath: socket, herdrPath: herdr, execFileSync: () => JSON.stringify({ result: { snapshot: { ...snapshot, protocol: 99 } } }) }), (error) => error instanceof RuntimeContextError && error.code === "INVALID_HERDR_SNAPSHOT");
   await new Promise((resolve) => server.close(resolve));
 });

@@ -34,7 +34,7 @@ export class CanonicalQuickLifecycle {
     if (!execution || Object.getPrototypeOf(execution) !== Object.prototype) throw new TypeError("Host execution plan is required.");
     let task = this.store.reserve({ taskId, projectRoot: this.context.projectRoot, generation: this.context.generation, caller: this.context.caller, agent, agentDir, command, execution, status: "reserved", notification: { state: "pending" }, cleanup: { state: "pending" }, createdAt: this.store.clock() });
     try {
-      const provenance = this.effects.launch({ task, context: this.context, workerCommand: `${command}\n\nRuntime handoff: write your role-natural completed result and supporting evidence to this exact regular file before finishing: \`${task.handoffFile}\`.` });
+      const provenance = this.effects.launch({ task, context: this.context, workerCommand: `${command}\n\nRuntime handoff: write your role-natural completed result and supporting evidence to this exact regular file before finishing: ${task.handoffFile}.` });
       if (!provenance || !tupleKeys.every((key) => typeof provenance[key] === "string" && provenance[key]) || !sameTuple(provenance, { ...this.context.caller, ...provenance }) || provenance.workspaceId !== this.context.caller.workspaceId || typeof provenance.runtimeSessionId !== "string" || !provenance.runtimeSessionId) throw new TypeError("Launch did not return exact task provenance.");
       task = this.store.save({ ...task, status: "running", provenance: { ...provenance, agentDir, launchedAt: this.store.clock() } });
       this.start(task.stateFile);

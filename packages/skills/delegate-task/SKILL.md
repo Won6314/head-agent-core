@@ -1,44 +1,61 @@
 ---
 name: delegate-task
-description: Delegate one or more coherent outcomes to worker agents with the smallest complete context needed for independent, composable execution.
+description: Do not use for Session one-shots; load only from start-run or an active Run to select the worker and compile the current owner-specific Run contract.
 ---
 
 # Delegate Task
 
-Delegation transfers subordinate ownership of one result, not the parent work model or a list of disconnected actions.
+Use this procedure from `start-run` for the first Run outcome and after each checkpoint for the next one. One-shot delegation uses `delegate-once`.
 
-## Shape The Outcome
+## Select The Worker
 
-A worker brief and its referenced sources make these meanings clear:
+1. Select the worker before writing the owner-specific Slice or execution contract.
+2. For implementation, select `coder` and load `delegate-coder`.
+3. Otherwise use the selected worker's applicable contract.
 
-- the result to produce and why it matters
-- authoritative starting inputs and locked decisions
-- the worker's ownership boundary and role in the larger structure
-- the behavior, artifact, or state the parent work will consume
-- the direct evidence that makes the result integrable and the material conflicts that return to HEAD
+## Shape The Subordinate Result
 
-Give the worker the smallest complete context that supports those decisions: its current Slice, relevant `plan.md` section(s), and exact sources or evidence required by that Slice. Do not provide the full plan, transcript, ledger history, or prior worker narrative by default. Keep broad project history, unrelated failures, and generic process outside the brief. Preserve technical autonomy inside the defined outcome.
+1. Re-anchor on the whole Run outcome and the current result's role in it.
+2. Define one behavior, artifact, or state the parent can consume directly.
+3. Fix the worker's authority boundary and keep local judgment inside it.
+4. State conflicts that must return to HEAD rather than change the contract.
 
-Delegate the owned result, not a general instruction to improve, harden, test, or make the area robust. The worker may implement the contract-owned primary result, make ordinary local choices inside the selected architecture, run existing or explicitly owned checks, and produce direct evidence. It may not create unowned tests or hardening, expand the mutation surface, invent another authority or recovery path, or turn an observed contradiction into a local repair plan.
+## Compile The Context Packet
 
-For complex work, pass one HEAD-authored slice brief and its exact sources rather than copying the whole parent run into the command. The slice is the HEAD-worker contract: HEAD owns its upper outcome and boundaries; the worker owns local execution judgment. A short command is sufficient when the outcome is already clear without a durable brief.
+Write one owner-specific Slice containing:
 
-## Schedule By Composition
+- the intended result and why it matters
+- authoritative starting inputs and exact sources
+- locked decisions and preservation boundaries
+- the branch's role and interfaces in the larger structure
+- the output or state consumed next
+- representative proof through the intended primary path
+- the material conflict return
 
-Start outcomes together when they have independent ownership, ready inputs, clear shared contracts, compatible outputs, and non-conflicting mutation surfaces. Sequence an outcome when it consumes another outcome's result, may revise the other's architecture, or shares a mutation surface that requires one owner.
+Reference relevant plan sections and direct evidence instead of passing the parent transcript, full Run history, or unrelated context.
 
-Prefer one worker for diagnosis, implementation, and direct outcome evidence within the slice. Use an independent reviewer only when separate judgment can materially change a consequential result.
+## Compose The Schedule
 
-## Integrate
+- Start branches together only when their inputs, interfaces, outputs, ownership, and mutation surfaces are independently ready.
+- Sequence results that consume one another, may revise shared decisions, or share a mutation surface.
+- Keep connected diagnosis, production, correction, and proof with one worker.
+- Use aggregate or frozen execution only when one coordinated checkpoint adds material value.
 
-When a worker completes, re-anchor on the parent outcome and slice before reading its result. Treat the return as claims and candidate evidence, not as authority over the next plan. Accept, defer, separate as follow-up, legitimately reopen, or reject each material claim against the parent outcome. Reopen when connected evidence shows a failed intended behavior, material contradiction, changed user requirement, or disproved assumption; otherwise continue from the produced outcome rather than repeating the worker's work or automatically adding validation.
+## Worker Ownership
 
-## Checkpoint-Governed Runs
+1. The worker owns local execution judgment inside the Slice.
+2. The worker carries the result through production, correction, and one representative input-to-output execution.
+3. An impossible or unsafe contract returns to HEAD with direct evidence.
+4. Correction stays with the same worker while the contract remains valid.
 
-When the parent run is marked checkpoint-governed, do not dispatch its slices as unrelated quick tasks. Compile the current horizon into the project's aggregate/frozen execution manifest, including a one-node horizon when that slice must return through the parent checkpoint.
+## Integrate The Result
 
-The delegated owner performs local diagnosis and correction only inside the owned primary result, runs existing or explicitly contracted checks, and produces direct evidence. A directly encountered fact that makes an owned output impossible or unsafe to claim returns as terminal `contract_conflict` with only the blocked output, decisive fact, and evidence references. The worker does not contact HEAD during a checkpoint-governed node, propose additions, request a same-node resume, or create retries, remediation nodes, or parent-plan changes.
+1. Re-anchor on the Run outcome and Slice before accepting the worker's framing.
+2. Treat the return as artifacts and evidence, not authority over the Run.
+3. Compare the produced result with what the parent consumes.
+4. Accept, correct, defer, separate, reopen, or reject from connected evidence.
+5. Update the Run model before selecting the next outcome.
 
-HEAD integrates only the aggregate checkpoint and directly observed artifacts, then decides the next horizon from the whole run.
+## Checkpoint-Governed Execution
 
-At that checkpoint, add the aggregate reference and necessary direct artifacts to the default recovery context, record observation, decision, and next in the ledger, and replace only the run checklist/current pointer. Do not create a checkpoint summary document by default.
+For aggregate checkpoint governance, include only independent branches, keep branch lifecycle outside HEAD context, return terminal states with direct artifact references, and let HEAD judge the aggregate before choosing the next horizon.

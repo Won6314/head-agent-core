@@ -4,14 +4,9 @@
  * shared HostAgentTaskService boundary.
  */
 export function createCandidateHandler(service) {
-  if (!service || !["create", "interrupt", "continue", "frozenWave"].every((name) => typeof service[name] === "function")) throw new TypeError("A HostAgentTaskService is required.");
+  if (!service || typeof service.create !== "function") throw new TypeError("A HostAgentTaskService is required.");
   return async function handleToolCall(name, args = {}, request) {
     if (name === "quick_task") return service.create(request, { taskId: args.task_id, agent: args.agent, command: args.command, runtime: args.runtime, model: args.model, reviewMode: args.review_mode });
-    if (name === "quick_task_control") {
-      if (args.action === "interrupt") return service.interrupt(request, args.task_id);
-      if (args.action === "continue") return service.continue(request, args.task_id, { taskId: args.new_task_id, command: args.command, strategy: args.strategy });
-    }
-    if (name === "frozen_wave") return service.frozenWave(request, args);
     throw new Error(`Unknown candidate tool: ${name}`);
   };
 }

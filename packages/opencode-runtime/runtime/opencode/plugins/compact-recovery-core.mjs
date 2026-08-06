@@ -1,34 +1,44 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { buildHeadPrompt, detectHerdrLocation, logRuntimeEvent, projectRoot } from "../bin/render-runtime-config.mjs";
+import { buildHeadPrompt, detectHerdrLocation, headDir, logRuntimeEvent, projectRoot } from "../bin/render-runtime-config.mjs";
 
 const CORE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const HEAD_CORE_PATH = fs.existsSync(path.resolve(CORE_ROOT, "head", "HEAD_CORE.md"))
+  ? path.resolve(CORE_ROOT, "head", "HEAD_CORE.md")
+  : path.resolve(CORE_ROOT, "..", "core", "head", "HEAD_CORE.md");
 const CHECKPOINT_HINT_TOKENS = 200_000;
-const COMPACTION_PROMPT = `Output exactly one fenced \`json\` block and no other text:
+const COMPACTION_PROMPT = `Write only the lossy compaction message that will be injected into the compacted conversation for session <active session directory name>.
 
-\`\`\`json
-{
-  "session": "<active session directory name>",
-  "progress": "# Continuity\\n\\n## Current Conversation\\n- <the current conversational meaning and immediate context>\\n\\n## User Intent and Constraints\\n- <current intent and material constraints>\\n\\n## Established Facts and Decisions\\n- <facts or decisions already established>\\n\\n## Active Threads and Unanswered Questions\\n- <unfinished threads or open questions>\\n\\n## Exact Next Handoff\\n1. <the exact next response or action>\\n\\n## References\\n- <only the paths needed to continue>\\n",
-  "history_append": "## YYYY-MM-DD: <completed result title>\\n- <completed result>\\n"
-}
-\`\`\`
+Preserve enough conversational meaning to make the immediate next turn intelligible: the current topic, the user's latest intent, established decisions that are not already obvious from canonical recovery context, unfinished questions, and the immediate continuation. Prefer concise prose over chronology or transcript replay.
 
-Write \`progress\` as a concise rolling continuity document (approximately 800–1,500 tokens). Preserve conversational meaning rather than chronology. It is a lossy retrieval record, not Run authority: do not amend or reproduce Run canon. Do not copy a long transcript or prior history. \`progress\` replaces \`sessions/{session}/progress.md\`. \`history_append\` appends to \`sessions/{session}/history.md\` and is empty when there is no completed result.`;
+This message is non-canonical runtime continuity. It must not create, replace, append, or propose file-backed Session or Run state. Do not emit a persistence payload, JSON envelope, progress.md content, history entry, ledger record, or claim that any canonical file was updated. Canonical Session/Run recovery files loaded separately remain authoritative.`;
 export const DEFAULT_NEXT_INSTRUCTION = "Continue from the exact next action recorded in the active recovery context.";
 
-export function compactPrompt(sessionName) {
-  return `${COMPACTION_PROMPT.replace("<active session directory name>", sessionName)}\n\n`;
+function requiredInstructionFile(filePath, label, filesystem = fs) {
+  let body = "";
+  try { body = filesystem.readFileSync(filePath, "utf8").trim(); } catch {}
+  if (!body) throw new Error(`Compaction requires ${label}: ${filePath}`);
+  return `# Loaded Instruction: ${filePath}\n\n${body}`;
 }
 
-export function persistCompactPayload({ root, sessionName, summary }) {
-  const updater = path.join(CORE_ROOT, "runtime", "claude-hooks", "compact-session-update.py");
-  const result = spawnSync("python3", [updater, "--project-root", root, "--session", sessionName], { input: summary, encoding: "utf8" });
-  if (result.error) throw result.error;
-  if (result.status !== 0) throw new Error(`Compact persistence failed: ${(result.stderr || result.stdout || "unknown updater failure").trim()}`);
+export function compactionInstructionContext(root, { filesystem = fs, headCorePath = HEAD_CORE_PATH } = {}) {
+  const active = projectRoot(root);
+  if (!active) throw new Error("Compaction requires a validated HEAD project root.");
+  return [
+    requiredInstructionFile(headCorePath, "HEAD Core", filesystem),
+    requiredInstructionFile(path.join(active, "CLAUDE.md"), "project CLAUDE.md", filesystem),
+    requiredInstructionFile(path.join(headDir(active), "CLAUDE.md"), "HEAD CLAUDE.md", filesystem),
+  ].join("\n\n---\n\n");
+}
+
+export function compactPrompt(sessionName, instructionContext = "") {
+  const instructions = String(instructionContext || "").trim();
+  const authority = instructions
+    ? `Apply the following canonical HEAD behavior and project instructions while constructing the non-canonical compaction message. Shape the intended current behavior directly; do not replace it with a catalogue of conversation-specific prohibitions or cleanup history.\n\n${instructions}\n\n---\n\n`
+    : "";
+  return `${authority}${COMPACTION_PROMPT.replace("<active session directory name>", sessionName)}\n\n`;
 }
 
 export function latestUserModel(messages) {
@@ -126,17 +136,7 @@ export function compactProjection(messages) {
   });
 }
 
-function compactSummary(messages) {
-  for (let index = messages.length - 1; index >= 0; index--) {
-    const message = messages[index] || {};
-    if (message.info?.role !== "assistant" || (!message.info?.summary && message.info?.mode !== "compaction")) continue;
-    const text = (message.parts || []).filter((part) => typeof part?.text === "string").map((part) => part.text).join("\n");
-    if (text) return text;
-  }
-  return "";
-}
-
-export const CompactRecovery = async ({ client, root: configuredRoot, directory, worktree, persist = persistCompactPayload, detectLocation, schema: providedSchema } = {}) => {
+export const CompactRecovery = async ({ client, root: configuredRoot, directory, worktree, detectLocation, schema: providedSchema } = {}) => {
   const root = projectRoot(configuredRoot || directory || worktree);
   const resolveLocation = detectLocation || (() => detectHerdrLocation(process.env, undefined, root));
   const schema = providedSchema || await resolveToolSchema();
@@ -147,6 +147,7 @@ export const CompactRecovery = async ({ client, root: configuredRoot, directory,
   const continuations = new Map();
   const pendingHints = new Set();
   const shownHints = new Set();
+  const notifiedHints = new Set();
 
   return {
     tool: {
@@ -214,7 +215,7 @@ export const CompactRecovery = async ({ client, root: configuredRoot, directory,
       if (!location) return;
       compactSessions.set(sessionID, location.sessionName);
       compactSystemCalls.add(sessionID);
-      output.prompt = compactPrompt(location.sessionName);
+      output.prompt = compactPrompt(location.sessionName, compactionInstructionContext(root));
       if (Array.isArray(output?.context)) output.context.splice(0, output.context.length);
     },
 
@@ -237,6 +238,22 @@ export const CompactRecovery = async ({ client, root: configuredRoot, directory,
         if (tokenTotal >= CHECKPOINT_HINT_TOKENS && !shownHints.has(sessionID)) {
           pendingHints.add(sessionID);
           logRuntimeEvent("compact-recovery", { event: "checkpoint_threshold_crossed", sessionID, tokenTotal }, root);
+          if (!notifiedHints.has(sessionID)) {
+            notifiedHints.add(sessionID);
+            try {
+              await client.tui.showToast({
+                body: {
+                  title: "HEAD checkpoint ready",
+                  message: "Context crossed 200k tokens. At the next natural boundary, make the active work reproducible and call checkpoint_compact.",
+                  variant: "warning",
+                  duration: 12000,
+                },
+              });
+              logRuntimeEvent("compact-recovery", { event: "checkpoint_toast_shown", sessionID, threshold: CHECKPOINT_HINT_TOKENS }, root);
+            } catch (error) {
+              logRuntimeEvent("compact-recovery", { event: "checkpoint_toast_error", sessionID, error: String(error).slice(0, 300) }, root);
+            }
+          }
         }
         return;
       }
@@ -244,6 +261,7 @@ export const CompactRecovery = async ({ client, root: configuredRoot, directory,
         compactSystemCalls.delete(sessionID);
         pendingHints.delete(sessionID);
         shownHints.delete(sessionID);
+        notifiedHints.delete(sessionID);
         const sessionName = compactSessions.get(sessionID) || "";
         const location = liveSessionLocation(root, resolveLocation);
         if (!sessionName || location?.sessionName !== sessionName) {
@@ -252,13 +270,6 @@ export const CompactRecovery = async ({ client, root: configuredRoot, directory,
           continuations.delete(sessionID);
           compactSessions.delete(sessionID);
           return;
-        }
-        try {
-          const messages = data(await client?.session?.messages?.({ path: { id: sessionID } }));
-          const summary = compactSummary(messages);
-          if (summary) persist({ root, sessionName, summary });
-        } catch (error) {
-          logRuntimeEvent("compact-recovery", { event: "compact_persistence_error", sessionID, error: String(error).slice(0, 300) }, root);
         }
         const continuation = continuations.get(sessionID);
         if (!continuation) return;

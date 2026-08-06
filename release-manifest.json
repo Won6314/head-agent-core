@@ -13,10 +13,13 @@
       "name": "durable-skills",
       "paths": [
         "packages/skills/agent-reply",
+        "packages/skills/delegate-coder",
+        "packages/skills/delegate-developer",
+        "packages/skills/delegate-once",
         "packages/skills/delegate-task",
+        "packages/skills/dev-system-shaping",
         "packages/skills/restore-session",
-        "packages/skills/start-dev-work",
-        "packages/skills/start-work"
+        "packages/skills/start-run"
       ]
     },
     {
