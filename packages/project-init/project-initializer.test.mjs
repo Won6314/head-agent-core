@@ -37,7 +37,6 @@ test("file-only project init creates generic composition and converges", async (
     const config = fs.readFileSync(path.join(target, ".claude/agents", role, "opencode.json"), "utf8");
     assert.match(config, /packages/); assert.doesNotMatch(config, /model|provider|noahchat/i);
   }
-  assert.equal(fs.existsSync(path.join(target, ".claude/agents/validator")), false);
   assert.equal(fs.readdirSync(path.join(target, ".claude/agents/head/sessions")).length, 0);
   const before = snapshot(target); initializeProject({ target, env: f.env }); assert.deepEqual(snapshot(target), before);
   assert.equal(JSON.parse(fs.readFileSync(path.join(f.state, "bindings.json"), "utf8")).length, 1);

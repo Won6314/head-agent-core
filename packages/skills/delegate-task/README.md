@@ -1,3 +1,3 @@
 # delegate-task
 
-Load `SKILL.md` from `start-run` for the current Run result. It selects the worker before writing the owner-specific contract; one-shot delegation uses `delegate-once`.
+Load `SKILL.md` while preparing the first Run result or from migrated execution successor `B` for one exact subordinate-result phase; one-shot Session delegation uses `delegate-once`.

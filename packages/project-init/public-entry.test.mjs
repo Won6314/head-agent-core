@@ -97,7 +97,7 @@ out({});
   assert.ok(taskResponses[1].result, JSON.stringify(taskResponses)); assert.equal(taskResponses[1].result.structuredContent.status, "running"); assert.deepEqual(taskResponses[2].result.tools.map((tool) => tool.name), ["quick_task"]); assert.equal(taskResponses[3].error.data.code, "UNKNOWN_AGENT");
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1_000);
   const taskFile = path.join(env.XDG_STATE_HOME, "head", "projects", "project", "agent-task", "quick-tasks", "proof-task.json");
-  const completedTask = JSON.parse(fs.readFileSync(taskFile, "utf8")); assert.equal(completedTask.status, "completed"); assert.equal(completedTask.cleanup, "closed"); assert.match(fs.readFileSync(completedTask.handoffFile, "utf8"), /completed worker handoff/);
+  const completedTask = JSON.parse(fs.readFileSync(taskFile, "utf8")); assert.equal(completedTask.status, "completed"); assert.equal(completedTask.cleanup, "closed"); assert.equal(completedTask.handoffFile, path.join(env.XDG_STATE_HOME, "head", "projects", "project", "agent-task", "quick-tasks", "results", "proof-task.handoff.md")); assert.equal(path.relative(target, completedTask.handoffFile).startsWith(".."), true); assert.match(fs.readFileSync(completedTask.handoffFile, "utf8"), /completed worker handoff/);
   const commHead = bridge("agent-comm", headCaller, [{ jsonrpc: "2.0", id: 1, method: "initialize" }]);
   const commDeveloper = bridge("agent-comm", { HERDR_WORKSPACE_ID: "workspace1", HERDR_TAB_ID: "developer-tab", HERDR_PANE_ID: "developer-pane" }, [
     { jsonrpc: "2.0", id: 1, method: "initialize" },

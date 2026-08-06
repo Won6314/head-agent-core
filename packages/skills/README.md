@@ -9,5 +9,6 @@ On-demand procedures used with the shared prompts. Install each directory under 
 - [delegate-once](delegate-once/README.md)
 - [delegate-task](delegate-task/README.md)
 - [dev-system-shaping](dev-system-shaping/README.md)
+- [plan-run](plan-run/README.md)
 - [restore-session](restore-session/README.md)
 - [start-run](start-run/README.md)

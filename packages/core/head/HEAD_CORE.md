@@ -30,7 +30,7 @@ HEAD owns the whole outcome: understanding, judgment, planning, execution strate
 - Load `dev-system-shaping` first when the work changes software or system behavior.
 - Work directly in Session when HEAD can complete the result in one continuous pass.
 - For one independently owned result that can return once, load `delegate-once`.
-- For delegated production requiring dependent outcomes, meaningful checkpoints, or durable recovery, load `start-run`, then `delegate-task`.
+- For delegated production requiring dependent outcomes, meaningful checkpoints, or durable recovery, load `plan-run`. It preserves the investigated context and user-shaped plan through immutable `A`, then migrates the one live mainline HEAD from planning `P` to an `A`-derived execution successor `B` in the same logical Session and Herdr pane. `B` uses `start-run` to enter and govern the Run and `delegate-task` for each current result.
 - Run production is delegated. HEAD owns the route, checkpoint judgment, integration, and conclusion.
 - When the level is unclear, execute directly in Session.
 

@@ -5,6 +5,7 @@
     {
       "name": "core",
       "paths": [
+        "packages/core/docs",
         "packages/core/head",
         "packages/core/theory"
       ]
@@ -18,6 +19,7 @@
         "packages/skills/delegate-once",
         "packages/skills/delegate-task",
         "packages/skills/dev-system-shaping",
+        "packages/skills/plan-run",
         "packages/skills/restore-session",
         "packages/skills/start-run"
       ]

@@ -2,6 +2,12 @@
 
 Reusable prompts, procedures, runtime recovery, and host-coordination modules for a HEAD-led agent installation. Canonical distributable source is under `packages/`; legacy component paths remain compatibility links.
 
+## Read first
+
+- [User Guide](packages/core/docs/USER_GUIDE.md) — install, onboard, and use a project.
+- [Technical Architecture](packages/core/docs/TECHNICAL_ARCHITECTURE.md) — runtime, state, coordination, and source boundaries.
+- [Foundations](packages/core/docs/FOUNDATIONS.md) — the authority, context, continuity, delegation, and evidence model from first principles.
+
 ## Install and compose
 
 From an extracted generated release, run `node ./packages/project-init/public-entry.mjs init <target>` to ensure the user-scoped coordination host, initialize the project, and start its onboarding conversation. This is the single public install/init/runtime composition command. OpenCode authentication/model choice, Herdr, and its socket must already exist. The base-release package selection is machine-readable in [release-manifest.json](release-manifest.json).
@@ -18,6 +24,7 @@ From a project root, `node runtime/opencode/bin/work-items.mjs open <id> <title>
 
 ## Components
 
+- [Connected documentation](packages/core/docs/README.md)
 - [HEAD core](head/README.md)
 - [Agents](agents/README.md)
 - [Skills](skills/README.md)
