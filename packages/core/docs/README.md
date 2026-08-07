@@ -4,9 +4,10 @@ HEAD Agent Core is a reusable coordination layer for project-bound AI work. It i
 
 Choose the document that matches your question:
 
-1. [User Guide](USER_GUIDE.md) — install a project, complete onboarding, and understand normal use.
-2. [Technical Architecture](TECHNICAL_ARCHITECTURE.md) — inspect the released components, state boundaries, runtime flows, and current feature map.
-3. [Foundations](FOUNDATIONS.md) — understand the problem the system addresses and why authority, context, canon, delegation, and evidence are separated.
+1. [Simple Theory](../theory/README.md) — understand the context-management idea and the deeper design background.
+2. [User Guide](USER_GUIDE.md) — install a project, complete onboarding, and understand normal use.
+3. [Technical Architecture](TECHNICAL_ARCHITECTURE.md) — inspect the released components, state boundaries, runtime flows, and current feature map.
+4. [Foundations](FOUNDATIONS.md) — understand how authority, context, canon, delegation, and evidence become HEAD design principles.
 
 The shorter component READMEs remain source-adjacent references. The documents here connect those components into one public account of the system.
 

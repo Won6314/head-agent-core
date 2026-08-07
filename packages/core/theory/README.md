@@ -1,13 +1,28 @@
-# Design Background
+# HEAD Core Theory
 
-This path explains the design background of HEAD Agent Core: **how the right authority reaches the right owner at the right time.** It is not setup documentation, an operating procedure, or an implementation reference. It explains why the design draws its boundaries; it does not tell a reader how to configure or run them.
+This path explains why HEAD Agent Core is designed around context control. It is not setup documentation, an operating procedure, or an implementation reference.
 
-## The argument
+## Start with the simple theory
+
+[LLM Context Management](context-management/README.md) ([한국어](context-management/ko/README.md)) presents the shortest complete argument. It follows the context of a working LLM through four stages:
+
+1. load only the instructions needed for the current kind of work;
+2. retrieve only the knowledge and relationships needed to understand the problem;
+3. carry the accepted plan rather than the entire planning process into execution;
+4. continue from observable state and a clean plan baseline rather than accumulating the full execution history.
+
+## Continue with the design background
+
+The following pages add ownership, continuity, evidence, and limits to that context-management model:
 
 1. [Present context and controlled expansion](01-present-context-and-controlled-expansion.md) starts with the immediate problem: a generated result can become an unexamined premise for the next result.
 2. [Ownership and context boundaries](02-ownership-and-context-boundaries.md) asks who can decide what, and why each owner needs deliberately composed rather than maximal context.
 3. [Continuity and canon](03-continuity-and-canon.md) carries that authority problem across interruption, where a useful summary can still lose the target it summarizes.
 4. [Evolution, evidence, and limits](04-evolution-evidence-and-limits.md) closes by treating the response as a revisable operating design with costs, evidence boundaries, and limits.
+
+## Read the extended course
+
+The former bilingual Learn and Teach wiki remains available as [HEAD Core Extended Course v1](../../../deep-dive/head-core-course-v1/README.md). It preserves the longer history, failure stories, rejected alternatives, diagrams, lectures, and workshop material. It is a deep-reading snapshot, not the primary introduction or current implementation authority.
 
 ## Evidence boundaries
 

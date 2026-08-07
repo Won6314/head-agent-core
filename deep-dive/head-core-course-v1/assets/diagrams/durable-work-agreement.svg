@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Durable work agreement</title>
+  <desc id="desc">The user-fixed direction is preserved by two authoritative records. Context.md keeps stable session identity. Run.md keeps the full user-HEAD agreement, including scope, success, decisions, checklist, assumptions, current position, next action, and evidence. Progress and history remain subordinate retrieval records and never override the two-file authority.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.1"/></filter>
+    <marker id="arrow" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L11,5.5 L0,11 z" fill="#334155"/></marker>
+    <style>
+      .title{font:700 42px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#0f172a}.subtitle{font:400 20px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#475569}.eyebrow{font:700 15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:2px;fill:#ea580c}.region{font:700 16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:1px;fill:#9a3412}.card-title{font:700 25px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#0f172a}.body{font:400 16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#64748b}.small-title{font:700 17px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#334155}.small{font:400 14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#64748b}.tag{font:700 12px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:1px}.record{font:700 20px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#0f172a}
+    </style>
+  </defs>
+  <rect width="1600" height="900" rx="36" fill="#f8fafc"/><path d="M0 0H1600V10H0z" fill="#ea580c"/>
+  <text x="64" y="72" class="eyebrow">RECOVERY AUTHORITY, NOT MODEL MEMORY</text>
+  <text x="64" y="124" class="title">Durable work agreement</text>
+  <text x="64" y="163" class="subtitle">The target survives interruption because authority lives outside the lossy summary.</text>
+
+  <path d="M800 284V331" stroke="#334155" stroke-width="3" marker-end="url(#arrow)"/>
+  <g><rect x="500" y="198" width="600" height="86" rx="24" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" filter="url(#shadow)"/><text x="540" y="235" class="card-title">User-fixed direction</text><text x="540" y="263" class="body">problem, goal, material decisions, and what success means</text></g>
+
+  <rect x="116" y="332" width="1368" height="416" rx="32" fill="#fff7ed" stroke="#fdba74" stroke-width="2"/>
+  <text x="152" y="374" class="region">THE TWO-FILE AUTHORITY</text>
+
+  <g><rect x="154" y="402" width="420" height="296" rx="28" fill="#ffffff" stroke="#fed7aa" stroke-width="2" filter="url(#shadow)"/><rect x="186" y="434" width="82" height="28" rx="14" fill="#ffedd5"/><text x="227" y="453" text-anchor="middle" class="tag" fill="#c2410c">STABLE</text><text x="186" y="505" class="record">context.md</text><text x="186" y="546" class="card-title">Session identity</text><text x="186" y="582" class="body">The stable topic and constraints.</text><text x="186" y="612" class="body">Changes only when the session itself changes.</text><path d="M186 646H542" stroke="#fed7aa"/><text x="186" y="675" class="small">Answers: “What work are we in?”</text></g>
+
+  <g><rect x="618" y="382" width="828" height="336" rx="28" fill="#ffffff" stroke="#fdba74" stroke-width="3" filter="url(#shadow)"/><rect x="650" y="414" width="116" height="28" rx="14" fill="#ffedd5"/><text x="708" y="433" text-anchor="middle" class="tag" fill="#c2410c">FULL AGREEMENT</text><text x="650" y="482" class="record">run.md</text><text x="650" y="516" class="body">The complete user–HEAD agreement and recoverable operating position.</text>
+    <rect x="650" y="548" width="238" height="130" rx="20" fill="#fff7ed"/><text x="674" y="582" class="small-title">Fixed destination</text><text x="674" y="612" class="small">problem · goal · scope</text><text x="674" y="640" class="small">success conditions</text>
+    <rect x="912" y="548" width="238" height="130" rx="20" fill="#fff7ed"/><text x="936" y="582" class="small-title">Locked judgment</text><text x="936" y="612" class="small">decisions · checklist</text><text x="936" y="640" class="small">assumptions · relationships</text>
+    <rect x="1174" y="548" width="238" height="130" rx="20" fill="#fff7ed"/><text x="1198" y="582" class="small-title">Exact continuation</text><text x="1198" y="612" class="small">current position · next action</text><text x="1198" y="640" class="small">evidence locations</text>
+  </g>
+
+  <path d="M800 748V780" stroke="#94a3b8" stroke-width="3" stroke-dasharray="8 7"/>
+  <g><rect x="376" y="780" width="848" height="82" rx="24" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8 7"/><text x="408" y="815" class="small-title">Retrieval records, never authority</text><text x="408" y="844" class="body">progress.md · history.md · compact summaries — useful for recall, unable to override context.md or run.md</text></g>
+</svg>
