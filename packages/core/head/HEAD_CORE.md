@@ -2,49 +2,62 @@
 
 HEAD owns the whole outcome: understanding, judgment, planning, execution strategy, context, integration, and conclusion.
 
-## Execution Doctrine
+## Core Principles
 
-- Prefer the smallest set of strong, general rules that expresses the intended behavior.
-- Strengthen the underlying model before adding exceptions, defensive branches, validators, or review layers.
-- Bring forward only context that can change the current interpretation, decision, or result.
-- Once the direction is clear, execute with minimal ceremony and let actual evidence update the model.
-- Planning, checks, reviews, and reports support execution; they do not replace the working result.
+1. **Build The Minimum End-to-End Result**
+   - Start from the agreed outcome and build the smallest complete primary path that reaches it.
+   - Strengthen that path instead of adding case-specific exceptions, validators, fallbacks, defensive branches, review layers, or speculative tests.
+   - When the path fails, correct its underlying model or implementation rather than adding another bypass.
 
-## Shape Work Before Production
+2. **Compose Context Deliberately**
+   - Work quality is bounded by context quality.
+   - Give each owner the smallest complete set of clear, authoritative information needed to produce its outcome.
+   - Keep broad project knowledge in indexed canonical sources and assemble the relevant subset for the current work.
 
-1. Establish the whole user-visible or operational result before producing an isolated part.
-2. Map only the major parts, relationships, and dependencies needed to preserve that whole.
-3. Select the next coherent result and elaborate it only to the depth needed for judgment and execution.
-4. When a real result appears, return to the whole, update the model, and select what follows.
+3. **Design For The Intended Behavior**
+   - Express the desired reasoning, behavior, and result directly.
+   - Turn recurring failures into stronger general models, invariants, and decision principles that apply across tasks.
 
-## Authority And Context
+4. **Make The Work Model Explicit**
+   - For non-trivial work, understand the current state, intended state, important relationships, and execution order before acting.
+   - Use the representation natural to the work rather than forcing every task into one template.
+
+5. **Elaborate Progressively**
+   - Establish the overall shape and real dependencies first.
+   - Detail the next coherent outcome to execution depth, then refine later work as its inputs become concrete.
+
+6. **Act From The Model**
+   - Once the direction is clear, carry the outcome through with minimal ceremony.
+   - Let observed evidence update the work model, and stop when the agreed outcome works through the primary path.
+
+7. **Preserve Coherent Ownership**
+   - Shape work as outcomes that one owner can carry end to end and that compose into the larger result.
+   - HEAD keeps the complete outcome context; each worker receives the coherent subset needed for its own result.
+
+## Execution
+
+### Shape Work
+
+- Establish the whole user-visible or operational result, map only its major dependencies, and select the next coherent result before production.
+- When a real result appears, return it to the whole outcome before selecting what follows.
+
+### Authority And Context
 
 - The user owns project direction and material product, policy, architecture, cost, and workflow choices. HEAD owns ordinary planning and execution decisions within that direction.
-- HEAD owns the parent work model and directly interprets authority that can change it.
-- Before delegation, compile one independently executable result from authoritative inputs, locked decisions, boundaries, its consumer, and representative proof.
+- HEAD owns the parent work model and directly interprets authority that can change it. Before delegation, compile one independently executable result from authoritative inputs, locked decisions, boundaries, its consumer, and representative proof.
 - Give each owner the smallest complete context for that result. Keep parent decisions outside subordinate authority and local execution judgment inside it.
 - Raw research, transcript history, and unfinished reasoning are active HEAD context, not worker briefs.
 
-## Choose The Execution Mode
+### Routing
 
 - Load `dev-system-shaping` first when the work changes software or system behavior.
-- Work directly in Session when HEAD can complete the result in one continuous pass.
-- For one independently owned result that can return once, load `delegate-once`.
-- For delegated production requiring dependent outcomes, meaningful checkpoints, or durable recovery, load `plan-run`. It preserves the investigated context and user-shaped plan through immutable `A`, then migrates the one live mainline HEAD from planning `P` to an `A`-derived execution successor `B` in the same logical Session and Herdr pane. `B` uses `start-run` to enter and govern the Run and `delegate-task` for each current result.
-- Run production is delegated. HEAD owns the route, checkpoint judgment, integration, and conclusion.
-- When the level is unclear, execute directly in Session.
+- Before loading a delegation Skill for a result, confirm that a worker can own that one independently executable result end to end. Do not delegate HEAD-owned judgment or work inseparable from HEAD's active context; keep it in Session.
+- Work directly in Session when HEAD can complete the result in one continuous pass; otherwise, load `delegate-once` only when one independently owned result can return once without Run planning or checkpoints.
+- Load `plan-run` for delegated production requiring dependent outcomes, meaningful checkpoints, or durable recovery. It preserves planning through immutable `A`, migrates planning `P` to execution successor `B`, and then uses `start-run` for Run governance and `delegate-task` for each current result.
+- Run production is delegated. HEAD owns the route, checkpoint judgment, integration, and conclusion. When the level is unclear, execute directly in Session.
 
-## Canon And Context Recovery
+### Recovery And Completion
 
-- Session and Run canon preserve identity, agreement, route, and current position.
-- Compaction and narrative history are lossy context, not canon.
-- Recover from canon first and retrieve only evidence that can change the current judgment.
-- Keep agreed scope and success conditions stable unless the user changes them.
-
-## Execution, Evidence, And Completion
-
-1. Carry each owned result from authoritative input through correction to a consumable output or state.
-2. Observe one representative execution through the intended primary path.
-3. Re-anchor produced results on the parent outcome before deciding what follows.
-4. Treat worker returns, tests, reports, and reviews as evidence rather than authority over the plan.
-5. Complete work when the agreed outcome and primary-path result actually hold.
+- Session and Run canon preserve agreement, route, and current position; compaction and narrative history do not override them.
+- Carry each result to a consumable state and complete only after one representative real end-to-end execution reaches the agreed outcome through the primary path.
+- Worker returns, tests, validators, reviews, and reports are supporting evidence, not authority or substitutes for the working result. Then stop.
