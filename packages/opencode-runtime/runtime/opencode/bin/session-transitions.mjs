@@ -82,12 +82,24 @@ function terminalRun(sessionDir, state) {
   const latest = runDir && latestValidCheckpoint(runDir)?.record;
   return Boolean(latest && latest.decision.type === "DONE" && latest.next.slice === null);
 }
+function userStoppedRun(sessionDir, state) {
+  const runDir = state.activeRun.path === "."
+    ? sessionDir
+    : directChild(path.join(sessionDir, "runs"), state.activeRun.id);
+  const latest = runDir && latestValidCheckpoint(runDir)?.record;
+  return Boolean(
+    latest
+    && latest.decision.type === "USER_DECISION"
+    && latest.decision.status === "STOPPED"
+    && latest.next.slice === null,
+  );
+}
 
 /**
  * Execute one explicit Session transition. Adapters keep Herdr and exact-session
  * binding I/O outside this deterministic filesystem core.
  */
-export function createSessionTransitions({ headDirectory, identity, binding, herdr, writeState = atomicWrite } = {}) {
+export function createSessionTransitions({ headDirectory, identity, binding, writeState = atomicWrite } = {}) {
   const sessionsDir = path.join(headDirectory || "", "sessions");
   const live = () => {
     const value = identity?.live?.();
@@ -100,7 +112,7 @@ export function createSessionTransitions({ headDirectory, identity, binding, her
   };
   const commitState = (sessionDir, state) => writeState(path.join(sessionDir, "session-state.json"), `${JSON.stringify(state, null, 2)}\n`);
 
-  return function transition({ action, sessionID, run_id: runID, session_handoff: handoff, new_name: newName } = {}) {
+  return function transition({ action, sessionID, run_id: runID, session_handoff: handoff } = {}) {
     if (!/^ses_[A-Za-z0-9]+$/.test(String(sessionID || ""))) return fail("OPENCODE_SESSION_ID_REQUIRED");
     const location = live();
     if (!location) return fail("LIVE_HERDR_IDENTITY_REQUIRED");
@@ -137,26 +149,23 @@ export function createSessionTransitions({ headDirectory, identity, binding, her
         }
       }
 
-      if (action === "rename") {
-        if (typeof binding?.write !== "function" || typeof herdr?.renameTab !== "function") return fail("SESSION_RENAME_UNAVAILABLE");
-        if (!SESSION_NAME.test(String(newName || "")) || directChild(sessionsDir, newName)) return fail("SESSION_RENAME_INVALID");
-        const target = path.join(sessionsDir, newName);
-        let folderRenamed = false;
-        let bindingUpdated = false;
-        let tabRenamed = false;
+      if (action === "stop_run") {
+        if (parsed.status !== "run") return fail("STOP_RUN_REQUIRES_RUN_MODE");
+        if (!userStoppedRun(sessionDir, parsed.state)) return fail("RUN_NOT_USER_STOPPED");
+        if (typeof handoff !== "string" || !handoff.trim() || handoff.length > HANDOFF_LIMIT) return fail("STOP_RUN_HANDOFF_INVALID");
+        const progress = path.join(sessionDir, "progress.md");
+        const prior = regularText(progress);
         try {
-          fs.renameSync(sessionDir, target); syncDirectory(sessionsDir); folderRenamed = true;
-          binding.write(sessionID, { ...binding?.read?.(sessionID), sessionName: newName }); bindingUpdated = true;
-          herdr.renameTab(location, newName); tabRenamed = true;
-          return receipt(newName, parsed.state);
+          writeState(progress, handoff);
+          const state = { schema: 1, generation: parsed.state.generation + 1, mode: "session", activeRun: null };
+          commitState(sessionDir, state);
+          return receipt(location.sessionName, state);
         } catch {
-          let restored = true;
-          if (tabRenamed) try { herdr.renameTab({ ...location, sessionName: newName, tabLabel: newName }, location.sessionName); } catch { restored = false; }
-          if (bindingUpdated) try { binding.write(sessionID, binding?.read?.(sessionID) ? { ...binding.read(sessionID), sessionName: location.sessionName } : { sessionName: location.sessionName }); } catch { restored = false; }
-          if (folderRenamed) try { fs.renameSync(target, sessionDir); syncDirectory(sessionsDir); } catch { restored = false; }
-          return restored ? fail("SESSION_RENAME_FAILED") : fail("SESSION_RENAME_CONFLICT");
+          try { writeState(progress, prior); } catch { return fail("STOP_RUN_CONFLICT"); }
+          return fail("STOP_RUN_STATE_COMMIT_FAILED");
         }
       }
+
       return fail("SESSION_ACTION_INVALID");
     } catch { return fail("TRANSITION_FAILED"); }
     finally { releaseLock(lock, sessionsDir); }

@@ -1,3 +1,3 @@
 # plan-run
 
-Load `SKILL.md` when HEAD Core selects a Run. It routes one lineage phase at a time through immutable `A`, then migrates the one live mainline HEAD from planning `P` to execution successor `B`.
+Load `SKILL.md` after HEAD has established and retained the whole-outcome context and selected a Run. It routes exactly one linked procedure under `../../procedures/plan-run/` for the current lineage, result, worker, or Run-lifecycle transition.

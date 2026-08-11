@@ -1,19 +1,35 @@
 ---
 name: delegate-once
-description: Use only when HEAD Core selects the one-shot delegation level; select one worker and prepare one independent quick-task return without Run planning.
+description: >
+  Use after HEAD has directly established and retained the whole-outcome
+  context, when one production result can be represented as a coherent bounded
+  subset and independently implemented, verified, and returned once.
 ---
 
 # Delegate Once
 
-Use this procedure only after HEAD Core selects one independently owned result that can return once without Run planning or checkpoints.
+Use this workflow only after HEAD has directly established and retained the whole-outcome context and selected one independently executable result.
 
-## Route
+## Entry Contract
 
-1. Select the worker before writing the command.
-2. If `developer` owns an implementation result, load `delegate-developer`.
-3. Compile the smallest complete command for the selected worker.
-4. Dispatch only when the worker can own the result and return it once. Otherwise reconsider the execution mode.
+Before delegation, HEAD knows:
 
-## Command Boundary
+1. why the result is needed;
+2. the exact result and its consumer;
+3. the authoritative inputs and locked decisions;
+4. the mutation and preservation boundaries;
+5. the representative proof that will demonstrate the result.
 
-State the result, authoritative inputs, locked decisions, boundaries, consumer, and representative proof. Leave local execution judgment with the worker inside that contract.
+Local source inspection begins only inside this bounded result. Parent understanding, product or policy judgment, and integration decisions remain with HEAD.
+
+## Slice And Dispatch
+
+1. Select the worker that can own the bounded result end to end.
+2. Load only the selected worker branch. For `developer`, read [developer.md](../../procedures/delegate-once/workers/developer.md).
+3. Compile the smallest complete execution context for that worker.
+4. State the result, authoritative inputs, locked decisions, boundaries, consumer, unchanged behavior, and representative proof.
+5. Dispatch only when the worker can implement, correct, verify, and return the result once without Run planning or checkpoints.
+
+## Return And Reintegration
+
+The worker returns artifacts, observed state, direct evidence, and any bounded contract conflict. HEAD inspects the returned result, reintegrates it into the whole-outcome context, and judges completion or the next path.

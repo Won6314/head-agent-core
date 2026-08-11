@@ -138,20 +138,20 @@ Without this distinction, the execution context can gradually revise the plan an
 The following is a conceptual example of applying this theory to HEAD's Save/Load design. The detailed checkpoint contract can still evolve, and this notation does not freeze the current implementation protocol.
 
 - `A`: a judgment baseline with a clean problem understanding and an accepted plan
-- `B`: an execution context that performs the actual work and integrates results
-- `S0`, `Sprev`, `Scur`: observable states of the work
-- Checkpoint: a judgment made in `A` from state changes and evidence
+- `B`: an execution context that dispatches the exact A-selected horizon
+- Frozen Wave aggregate and live artifacts: worker reports and actual execution state supplied as evidence
+- Checkpoint: a canonical judgment made by a fresh review fork from active `A`
 
 ```text
 Execution B
-  ↓ current state Save
-Generate state differences and evidence
+  ↓ exact frozen_wave horizon
+Workers return one aggregate and actual artifact references
   ↓
-Load plan baseline A for review
+Automatically load active plan baseline A for review
   ↓
 Continue | revise | user decision | done | failed
   ↓
-B receives the decision for the next execution
+B executes the exact next horizon selected by A review
 ```
 
 Specific storage formats and checkpoint protocols can vary by implementation. The core of the theory is not keeping the whole execution record as current context, but separating the plan baseline and observable state, then reassembling them when needed.

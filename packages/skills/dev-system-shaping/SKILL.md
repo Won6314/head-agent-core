@@ -1,37 +1,37 @@
 ---
 name: dev-system-shaping
-description: Load before choosing an execution mode when work changes software or system behavior.
+description: >
+  Use when changing software or system behavior requires design judgment.
+  HEAD directly assembles the authoritative whole-outcome context, establishes
+  the current path and smallest implementation shape, then carries connected
+  execution forward or slices one independently executable result.
 ---
 
 # Development System Shaping
 
-Use this guidance when changing software or system behavior. It shapes the change before HEAD chooses an execution mode; it does not start a Run or select a worker.
+Use this workflow when work changes software or system behavior and HEAD needs an implementation-ready whole-outcome context. It shapes the result before execution ownership is selected; it does not start delegation or a Run.
 
-## Establish The Observable System
+## Establish The Whole Outcome
 
-1. State the intended user-visible or operational result.
-2. Trace the current path from authoritative input to the intended consumer.
-3. Resolve facts that can change the model through the project authority and code-discovery paths.
-4. Keep the map bounded to the behavior and dependencies being changed.
+1. State the intended user-visible or operational result and its real consumer.
+2. Read the authoritative sources that can change parent-level understanding.
+3. Trace the current path from authoritative input to the consumed result.
+4. Form the current state, intended state, primary flow, material boundaries, dependencies, and completion condition.
+5. Resolve material product, policy, architecture, cost, and workflow decisions with the user and keep unresolved decisions explicit.
 
-## Map Responsibilities And Flow
+## Shape The Implementation Path
 
-- Assign each material behavior to its responsible component and authority.
-- Map relevant data, control, state, interfaces, configuration, operations, and dependencies.
-- Identify the failure boundary and final consumer.
-- Preserve working behavior and state outside the intended change.
+1. Assign each material behavior to its responsible component and authority.
+2. Map only the data, control, state, interfaces, configuration, operations, and dependencies that can change the result.
+3. Choose the smallest implementation shape that produces the intended result and preserves behavior outside the change.
+4. Keep connected diagnosis, implementation, correction, and representative proof in one outcome.
+5. Divide only independently executable results at boundaries where another owner can return a coherent consumable artifact.
 
-## Choose The Implementation Shape
+## Select Execution Ownership
 
-1. Choose the smallest viable change that produces the result and preserves the working system.
-2. Compare alternatives only when they materially differ in architecture, cost, risk, reversibility, or operational fit.
-3. Fix responsibilities, interfaces, dependencies, mutations, preservation boundaries, and integration behavior.
-4. State the intended behavior in readable execution order without inventing unsupported implementation detail.
+- Continue directly when implementation and proof remain strongly connected to HEAD's active whole-outcome context.
+- Use one-shot delegation when one exact result can be expressed as a complete bounded execution context and returned once.
+- Use a Run when an accepted whole design requires multiple dependent bounded results, meaningful checkpoints, or durable recovery.
+- Complexity, length, or the availability of a worker does not by itself change execution ownership.
 
-## Shape Coherent Implementation Outcomes
-
-1. Divide the shape into outcomes that each produce a consumable behavior, artifact, or state.
-2. Keep connected diagnosis, implementation, correction, and proof in one outcome.
-3. Define interfaces so later outcomes consume artifacts instead of reconstructing reasoning.
-4. Keep later outcomes coarse and elaborate only the current outcome to execution depth.
-5. Return the system path, selected shape, boundaries, dependencies, and representative consumer result to HEAD for execution-mode selection.
+HEAD leaves shaping with the whole-outcome context, the selected implementation shape, and the execution boundary needed for the next action.

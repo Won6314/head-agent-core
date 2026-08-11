@@ -5,9 +5,11 @@ import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import { publicInit } from "./public-entry.mjs";
 
 const host = { status: "installed", release: "release-id", endpoint: "http://127.0.0.1:4444", current: "/installed/current", command: "/bin/head" };
+const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
 test("public init composes project and onboarding through the installed command", () => {
   const calls = [];
@@ -32,7 +34,7 @@ test("public init returns the exact installed resume command after a committed p
 test("public init preserves the complete public invocation for host failure and remaining argv for project failure", () => {
   const argv = ["init", "sample", "--project-id", "sample", "--socket", "/tmp/herdr.sock"];
   const hostFailure = publicInit({ argv, install: () => { throw new Error("host unavailable"); } });
-  assert.deepEqual(hostFailure.resume, { command: "./head", args: argv });
+  assert.deepEqual(hostFailure.resume, { command: process.execPath, args: [path.join(repository, "packages/project-init/public-entry.mjs"), ...argv] });
   const projectFailure = publicInit({ argv, install: () => host, run: () => { throw new Error("project unavailable"); } });
   assert.deepEqual(projectFailure.resume, { command: "/bin/head", args: ["project", "init", path.resolve("sample"), "--project-id", "sample"] });
 });
@@ -48,8 +50,8 @@ test("public init rejects unknown, duplicate, and missing public options before 
 test("the extracted release public command performs one isolated initialization", async (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "head-public-init-"));
   const release = path.join(root, "release"), bin = path.join(root, "bin"), state = path.join(root, "herdr-state.json"), socket = path.join(root, "herdr.sock");
-  const source = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../..");
-  for (const name of ["project-init", "coordination", "opencode-runtime", "core", "agents", "skills"]) fs.cpSync(path.join(source, "packages", name), path.join(release, "packages", name), { recursive: true });
+  const source = repository;
+  for (const name of ["project-init", "coordination", "opencode-runtime", "core", "agents", "skills", "procedures"]) fs.cpSync(path.join(source, "packages", name), path.join(release, "packages", name), { recursive: true });
   fs.copyFileSync(path.join(source, "release-manifest.json"), path.join(release, "release-manifest.json"));
   fs.writeFileSync(path.join(release, "package.json"), "{\"type\":\"module\"}\n");
   fs.mkdirSync(bin); fs.writeFileSync(state, JSON.stringify({ workspaces: [], tabs: [], panes: [], promptCount: 0 }));
@@ -128,8 +130,7 @@ out({});
   const transition = createSessionTransitions({
     headDirectory: path.join(target, ".claude", "agents", "head"),
     identity: { live: () => ({ sessionName: "onboarding", tabLabel: "onboarding" }) },
-    binding: { read: (id) => bindings.get(id), write: (id, record) => bindings.set(id, record) },
-    herdr: { renameTab() {} },
+    binding: { read: (id) => bindings.get(id) },
   });
   assert.deepEqual(transition({ action: "start_run", sessionID: "ses_proof", run_id: "recovery-proof" }), { ok: true, session: "onboarding", mode: "run", activeRun: "recovery-proof", generation: 1 });
   const recovery = buildHeadPrompt({ root: target, sessionID: "ses_proof", location: liveLocation });

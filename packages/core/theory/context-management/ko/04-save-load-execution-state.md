@@ -140,20 +140,20 @@ diff(Sprev, Scur)
 다음은 이 이론을 HEAD의 Save/Load 설계에 적용해 표현한 개념 예시다. 세부 체크포인트 계약은 아직 발전할 수 있으며, 이 표기가 현재 구현 프로토콜을 고정하지는 않는다.
 
 - `A`: 깨끗한 문제 인식과 확정된 계획을 가진 판단 기준
-- `B`: 실제 작업을 수행하고 결과를 통합하는 실행 컨텍스트
-- `S0`, `Sprev`, `Scur`: 작업의 관찰 가능한 상태
-- 체크포인트: `A`에서 상태 변화와 근거를 보고 내리는 판단
+- `B`: A가 확정한 horizon을 정확히 실행하는 컨텍스트
+- Frozen Wave aggregate와 실제 artifact: worker 보고와 현재 실행 상태를 담은 근거
+- 체크포인트: active `A`의 fresh review fork가 내리는 정본 판단
 
 ```text
 실행 B
-  ↓ 현재 상태 Save
-상태 차이와 근거 생성
+  ↓ 정확한 frozen_wave horizon
+worker aggregate와 실제 artifact reference 생성
   ↓
-계획 기준 A를 Load해 검토
+active 계획 기준 A를 자동 Load해 검토
   ↓
 계속 | 수정 | 사용자 결정 | 완료 | 실패
   ↓
-B가 결정을 받아 다음 실행
+B가 A review가 확정한 다음 horizon을 실행
 ```
 
 구체적인 저장 형식과 체크포인트 프로토콜은 구현에 따라 달라질 수 있다. 이론의 핵심은 실행 기록 전체를 현재 컨텍스트로 유지하지 않고, 계획 기준과 관찰 가능한 상태를 분리해 필요할 때 다시 조립한다는 데 있다.

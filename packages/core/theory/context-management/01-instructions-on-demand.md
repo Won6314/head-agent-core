@@ -109,6 +109,8 @@ For example, a request to change software behavior loads instructions that shape
 
 The purpose of this structure is not to hide instructions. It is to make the needed instructions visible more precisely.
 
+See the [HEAD Core instruction routing map](instruction-routing-map.md) for the current file transitions and their conditions.
+
 ## How Far Should Instructions Be Divided?
 
 If every sentence is separated into its own instruction, discovery costs increase instead. The following criteria are useful.

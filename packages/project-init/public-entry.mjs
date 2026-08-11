@@ -51,7 +51,7 @@ export function publicInit({ argv = process.argv.slice(2), env = process.env, re
     host = install({ releaseRoot, opencode: options.opencode, herdr: options.herdr, socket: options.socket, port: options.port == null ? undefined : Number(options.port), env });
     if (host.status !== "installed") fail(host.error || "Host installation did not commit.");
   } catch (error) {
-    return phaseFailure("host", { command: "./head", args: [...argv] }, error);
+    return phaseFailure("host", { command: process.execPath, args: [path.join(releaseRoot, "packages/project-init/public-entry.mjs"), ...argv] }, error);
   }
   let project;
   const projectArgs = ["project", "init", target];

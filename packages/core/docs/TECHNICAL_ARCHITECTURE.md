@@ -11,7 +11,6 @@ The current HEAD system graph identifies the following complete Core-owned opera
 | HF-055 | Install and initialize a HEAD Core project |
 | HF-002 | Recover the current HEAD execution context |
 | HF-003 | Start an accepted non-trivial Run |
-| HF-004 | Rename the current logical Session |
 | HF-005 | Finish a terminal Run |
 | HF-006 | Advance a Run checkpoint |
 | HF-007 | Continue through context compaction |
@@ -137,15 +136,13 @@ Compaction reloads the canonical payload and permits at most one explicit contin
 
 ## Work shaping and execution modes
 
-`HEAD_CORE.md` defines the coordinating behavior. The current procedure stack separates:
+`HEAD_CORE.md` defines the coordinating behavior. The current top-level workflow surface separates:
 
 - `dev-system-shaping`: map software/system behavior before production;
 - `delegate-once`: one independently owned Session result;
-- `plan-run`: preserve planning lineage and migrate an accepted plan into one execution successor;
-- `start-run`: prepare, activate, checkpoint, recover, and finish Run state;
-- `delegate-task`: prepare, schedule, dispatch, and integrate exact Run results.
+- `plan-run`: preserve planning lineage and route accepted production through one execution successor.
 
-These procedures are loaded by phase. They are not all injected into every context.
+Worker, result, lineage, and Run-lifecycle procedures are plain Markdown under `packages/procedures/`. A selected top-level Skill links to exactly the procedure required by current state; these branches are not independently Skill-discovered or injected together.
 
 ## Worker execution
 
@@ -230,5 +227,6 @@ Project-specific systems may add richer task control, aggregate execution, exter
 | Role communication | `packages/coordination/mcp/agent-comm/host-service.mjs` |
 | Host transport and process | `packages/coordination/mcp/host-coordination/` |
 | Worker role contracts | `packages/agents/` |
-| On-demand procedures | `packages/skills/` |
+| Advertised top-level workflows | `packages/skills/` |
+| Condition-selected branch procedures | `packages/procedures/` |
 | Release composition | `release-manifest.json` |

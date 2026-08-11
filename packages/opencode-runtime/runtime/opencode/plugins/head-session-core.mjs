@@ -1,27 +1,8 @@
 import { createSessionTransitions } from "../bin/session-transitions.mjs";
-import childProcess from "node:child_process";
-import { createRequire } from "node:module";
-import { detectHerdrLocation, headDir, loadSessionRecord, mutateSessionRecord, projectRoot } from "../bin/render-runtime-config.mjs";
+import { detectHerdrLocation, headDir, loadSessionRecord, projectRoot } from "../bin/render-runtime-config.mjs";
 import { resolveToolSchema } from "./compact-recovery-core.mjs";
 
-const require = createRequire(import.meta.url);
-const { herdrBinary } = require("../herdr-runtime.cjs");
-
-export function createHerdrRenameAdapter({ execFileSync = childProcess.execFileSync, environment = process.env } = {}) {
-  return {
-    renameTab(location, name) {
-      if (!location?.tabId || !location?.socket) throw new Error("validated Herdr tab identity is required");
-      const env = { ...environment, HERDR_SOCKET_PATH: location.socket };
-      for (const key of Object.keys(env)) {
-        if (/^HERDR_(?:SESSION|REMOTE)(?:_|$)|^HERDR_SOCKET_PATH$/i.test(key)) delete env[key];
-      }
-      env.HERDR_SOCKET_PATH = location.socket;
-      execFileSync(herdrBinary(environment), ["tab", "rename", location.tabId, name], { encoding: "utf8", env });
-    },
-  };
-}
-
-export const HeadSessionCore = async ({ root: configuredRoot, directory, worktree, detectLocation, schema: providedSchema, transition: suppliedTransition, herdr: suppliedHerdr } = {}) => {
+export const HeadSessionCore = async ({ root: configuredRoot, directory, worktree, detectLocation, schema: providedSchema, transition: suppliedTransition } = {}) => {
   const root = projectRoot(configuredRoot || directory || worktree);
   const schema = providedSchema || await resolveToolSchema();
   const transition = suppliedTransition || createSessionTransitions({
@@ -29,17 +10,14 @@ export const HeadSessionCore = async ({ root: configuredRoot, directory, worktre
     identity: { live: () => (detectLocation || (() => detectHerdrLocation(process.env, undefined, root)))() },
     binding: {
       read: (sessionID) => loadSessionRecord(sessionID, root),
-      write: (sessionID, record) => mutateSessionRecord(sessionID, root, () => record),
     },
-    herdr: suppliedHerdr || createHerdrRenameAdapter(),
   });
   return {
     tool: {
       head_session: {
-        description: "Rename the current logical Session, start its prepared Run, or finish its terminal Run.",
-        args: {
-          action: schema.enum(["rename", "start_run", "finish_run"]),
-          new_name: schema.string().optional(),
+          description: "Start the current Session's prepared Run, finish its terminal Run, or stop a user-authorized active Run.",
+          args: {
+          action: schema.enum(["start_run", "finish_run", "stop_run"]),
           run_id: schema.string().optional(),
           session_handoff: schema.string().optional(),
         },
