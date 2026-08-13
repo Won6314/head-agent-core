@@ -9,6 +9,8 @@ Choose the document that matches your question:
 3. [Technical Architecture](TECHNICAL_ARCHITECTURE.md) — inspect the released components, state boundaries, runtime flows, and current feature map.
 4. [Foundations](FOUNDATIONS.md) — understand how authority, context, canon, delegation, and evidence become HEAD design principles.
 
+For a human-readable Korean overview, start with [HEAD Core 한국어 개요](ko/README.md).
+
 The shorter component READMEs remain source-adjacent references. The documents here connect those components into one public account of the system.
 
 ## Documentation authority
