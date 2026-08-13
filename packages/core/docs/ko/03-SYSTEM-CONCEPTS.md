@@ -7,7 +7,7 @@ User
   ↕ 방향, 질문, 중요한 결정
 HEAD
   ├─ Session: 지속되는 작업 관계와 합의
-  │   └─ Run: Plan을 Slice·Horizon·Checkpoint로 진행
+   │   └─ Run: Accepted Plan을 Result·Execution Contract·Checkpoint로 진행
   ├─ Skill ──(필요한 경우)──> Procedure
   │     현재 상황에 맞는 작업 흐름과 조건별 세부 절차
   └─ Agent: 경계가 정해진 결과의 실행 또는 검토
@@ -70,27 +70,25 @@ Run은 단순한 할 일 목록이 아니다. 목표와 경계, 중요한 결정
 
 Run은 여러 의존 결과, 의미 있는 중간 점검 또는 중단 후 복구가 필요할 때 사용한다.
 
-## Plan, Slice, Horizon과 Checkpoint
+## Accepted Plan, Result, Execution Contract와 Checkpoint
 
 Run 안에서는 전체 계획과 현재 실행 단위를 구분한다.
 
-### Plan
+### Accepted Plan Baseline
 
-Plan은 사용자가 받아들인 전체 결과와 중요한 설계 결정이다. 실행 중 무엇이 맞는 결과인지 판단하는 기준이다.
+Planner는 Problem Definition에서 observable Goals/Evidence를 만들고, material alternatives와 사용자 선택을 거쳐 Selected Solution과 consumable Result Graph를 Accepted Plan Baseline으로 보존한다.
 
-### Slice
+### Result와 Execution Contract
 
-Slice는 한 실행 담당자가 독립적으로 완성할 수 있도록 현재 Plan에서 잘라낸 결과다. 필요한 입력, 고정된 결정, 변경 경계, 결과의 사용자와 확인 방법이 함께 정해진다.
-
-Slice는 전체 Plan을 대신하지 않는다. 실행 담당자가 맡은 범위를 분명하게 보여 주는 현재 작업 계약이다.
+Result는 다음 소비자가 독립적으로 사용할 수 있는 경계다. Runner는 선택된 Result마다 authoritative input, output, consumer, mutation/preservation boundary, representative proof를 담은 Execution Contract를 작성한다.
 
 ### Horizon
 
-Horizon은 현재 실행할 준비가 된 하나 이상의 결과 묶음이다. 서로의 결과를 기다리거나 같은 결정을 함께 바꿔야 하는 작업은 같은 시점에 독립 실행하지 않는다.
+Horizon은 현재 실행할 준비가 된 하나 이상의 Result 묶음이다.
 
 ### Checkpoint
 
-Checkpoint는 Horizon의 실제 결과를 Plan에 다시 연결해 판단하는 지점이다. HEAD는 결과를 받아들일지, Plan 의미를 유지한 채 고칠지, 계획 변경이나 사용자 결정이 필요한지, 다음 결과로 진행할지를 정한다.
+Checkpoint는 Worker의 Produced Result와 Worker Report/Evidence를 saved Planner가 Plan에 다시 연결해 판단하는 지점이다. Evidence는 이 판단을 돕고, artifact/Git/log은 필요할 때만 직접 확인한다. `run.json`은 이 흐름의 pointer-only index이며, legacy Run은 자동 마이그레이션하지 않는다.
 
 ## Agent
 

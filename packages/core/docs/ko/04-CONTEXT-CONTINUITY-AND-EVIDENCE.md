@@ -105,9 +105,9 @@ Agent에게 전체 프로젝트 기록을 그대로 넘기지 않는다. HEAD는
 HEAD Core는 중요한 합의를 **Canon**, 즉 대화와 별도로 유지되는 기준 기록으로 보존한다.
 
 - **Session**은 지속되는 사용자–HEAD 작업의 정체성과 합의를 보존한다.
-- **Run**은 합의된 목표, 경계, 실행 경로와 현재 위치를 보존한다.
-- **Checkpoint 기록**은 실행 결과에 대해 받아들인 관찰과 판단을 남긴다.
-- **Slice**는 전체 합의를 바꾸지 않으면서 현재 실행할 결과를 설명한다.
+- **Accepted Plan Baseline**은 Problem Definition부터 Selected Solution과 Result Graph까지의 합의를 보존한다.
+- **Run**은 Runner의 Execution Contract와 Checkpoint를 통해 Result 경로를 보존한다.
+- **Worker Report/Evidence**는 Produced Result의 근거이며 Plan 자체의 권위는 아니다.
 
 Canon은 사실 전체를 저장하는 창고가 아니라, 합의·결정과 현재 위치를 보존하는 권위 있는 기록이다. 단순한 대화 요약과 역할이 다르다.
 
@@ -126,7 +126,7 @@ Canon도 현실 자체는 아니다. 사용자가 잘못된 방향에 동의했�
 기본 순서는 다음과 같다.
 
 1. 어떤 Session과 Run을 이어 가는지 정확히 확인한다.
-2. Canon에서 목표, 고정 결정과 현재 위치를 복구한다.
+2. semantic Run이면 pointer-only `run.json`에서 `run.md`, 최신 Checkpoint와 현재 Execution Contract를 복구한다. legacy Run은 자동 마이그레이션 없이 기존 형식으로 복구한다.
 3. 현재 판단에 필요한 소스와 실행 상태만 다시 조회한다.
 4. 이미 끝난 과정 전체가 아니라 다음 완결된 결과에서 작업을 이어 간다.
 

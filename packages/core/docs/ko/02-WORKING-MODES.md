@@ -87,22 +87,22 @@ Run을 시작하기 전에는 사용자와 중요한 설계 및 방향이 합의
 
 ### Run의 기본 단위
 
-- **Plan**: 사용자가 받아들인 전체 결과와 중요한 결정
-- **Slice**: 현재 한 실행 담당자가 완성할 수 있도록 경계를 정한 결과
-- **Horizon**: Plan을 기준으로 입력·출력·소비자·의존성과 변경 범위를 확인하여 함께 진행해도 안전하다고 정한 하나 이상의 준비된 Slice 묶음. 하나의 Slice만 포함할 수도 있으며 단순한 병렬 작업 묶음은 아니다.
-- **Checkpoint**: 실행과 분리된 점검 HEAD가 실제 결과를 전체 Plan에 다시 연결해 받아들일지, 로컬 수정이 필요한지, Plan 변경이나 사용자 결정이 필요한지, 다음으로 갈지 판단하는 지점
+- **Accepted Plan Baseline**: Problem Definition, Goals/Evidence, 대안과 사용자 선택, Selected Solution, Result Graph를 보존하는 전체 기준
+- **Result**: 다음 소비자가 독립적으로 사용할 수 있는 입력·출력·검증·보존 경계
+- **Execution Contract**: Runner가 실행 전 Result 하나에 대해 고정하는 정확한 작업 계약
+- **Checkpoint**: 저장된 Planner가 Produced Result와 Worker Report/Evidence를 Plan에 다시 연결해 판단하는 지점
 
 ```text
 사용자가 전체 설계에 동의
   → Plan을 실행 기준으로 보존
-  → 현재 안전하게 준비된 Horizon을 선택
-  → Horizon의 각 Slice를 실행
-  → 분리된 Checkpoint에서 실제 결과를 Plan 기준으로 검토
+   → 현재 안전하게 준비된 Result horizon을 선택
+   → Runner가 각 Result의 Execution Contract를 작성하고 실행
+   → 저장된 Planner Checkpoint에서 실제 결과를 Plan 기준으로 검토
   → 다음 결과를 선택하거나 수정·재결정
   → 전체 Plan의 실제 결과가 성립하면 종료
 ```
 
-Run의 실행 담당자는 현재 맡은 Slice를 구현하지만 전체 Plan을 변경하거나, 자기 결과의 수용 여부와 다음 Horizon을 결정하지 않는다. 각 Horizon이 끝나면 활성 Plan에서 분리된 점검 HEAD가 결과를 검토한다.
+`run.json`은 `run.md`, 최신 Checkpoint, 현재 Execution Contract만 가리키는 포인터 파일이다. 복구는 이 포인터를 따른다. 저장된 Planner 검토에는 Plan 파일을 다시 전달하지 않는다. 기존 legacy Run은 자동 마이그레이션 없이 기존 복구 경로로 유지된다.
 
 점검에서는 작업 보고나 테스트 결과만 보는 것이 아니다. 실제 산출물이나 상태에서 최소한의 대표 경로가 성립하고, Plan의 다음 소비자가 그 결과를 사용할 수 있는지 확인한다. 계획된 단계를 모두 수행했다고 자동으로 끝나는 것이 아니라, 점검이 전체 합의 결과와 대표 흐름의 성립을 확인했을 때 Run이 완료된다.
 

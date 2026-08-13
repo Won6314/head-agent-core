@@ -14,6 +14,14 @@ const directDirectory = (directory) => { const stat = fs.lstatSync(directory); i
 const canonical = (file) => fs.realpathSync(file);
 const identifier = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const openCodeSession = /^ses_[A-Za-z0-9_-]+$/;
+const managedRestoreHistory = /^<!-- restore-ids\nclaude: \nopencode: ses_[A-Za-z0-9]+\nlast_runtime: opencode\nupdated_at: (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\n-->\n$/;
+
+function isManagedRestoreHistory(body) {
+  const match = managedRestoreHistory.exec(body);
+  if (!match) return false;
+  const parsed = new Date(match[1]);
+  return Number.isFinite(parsed.valueOf()) && parsed.toISOString().replace(".000Z", "Z") === match[1];
+}
 
 function projectAuthority(target, env) {
   const root = canonical(target);
@@ -40,9 +48,12 @@ function ensurePristineSession(head) {
   if (!fs.existsSync(session)) return bootstrapOnboardingSession({ headDirectory: head, name: SESSION_NAME, context: ONBOARDING_CONTEXT });
   directDirectory(session);
   const entries = fs.readdirSync(session).sort();
-  if (JSON.stringify(entries) !== JSON.stringify(["context.md", "session-state.json"])) throw new Error("Existing onboarding Session is not pristine.");
+  const expected = ["context.md", "session-state.json"];
+  const hasManagedRestoreHistory = JSON.stringify(entries) === JSON.stringify(["context.md", "history.md", "session-state.json"]);
+  if (JSON.stringify(entries) !== JSON.stringify(expected) && !hasManagedRestoreHistory) throw new Error("Existing onboarding Session is not pristine.");
   for (const file of entries) directFile(path.join(session, file));
   if (fs.readFileSync(path.join(session, "context.md"), "utf8") !== ONBOARDING_CONTEXT || fs.readFileSync(path.join(session, "session-state.json"), "utf8") !== SESSION_STATE) throw new Error("Existing onboarding Session has incompatible payload.");
+  if (hasManagedRestoreHistory && !isManagedRestoreHistory(fs.readFileSync(path.join(session, "history.md"), "utf8"))) throw new Error("Existing onboarding Session has incompatible restore history.");
   return session;
 }
 

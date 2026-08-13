@@ -9,11 +9,10 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repository = path.resolve(here, "../../../..");
 const packageRuntime = path.join(repository, "packages", "opencode-runtime", "runtime", "opencode", "herdr-runtime.cjs");
-const compatibilityRuntime = path.join(repository, "runtime", "opencode", "herdr-runtime.cjs");
-const compatibilityRenderer = path.join(repository, "runtime", "opencode", "bin", "render-runtime-config.mjs");
+const packageRenderer = path.join(repository, "packages", "opencode-runtime", "runtime", "opencode", "bin", "render-runtime-config.mjs");
 
-test("compatibility renderer loads the packaged Herdr runtime and resolves a direct HEAD session", () => {
-  assert.equal(fs.realpathSync(compatibilityRuntime), fs.realpathSync(packageRuntime));
+test("packaged renderer loads the packaged Herdr runtime and resolves a direct HEAD session", () => {
+  assert.ok(fs.statSync(packageRuntime).isFile());
 
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "head-runtime-package-"));
   const head = path.join(root, ".claude", "agents", "head");
@@ -34,7 +33,7 @@ test("compatibility renderer loads the packaged Herdr runtime and resolves a dir
   const herdr = path.join(bin, "herdr");
   fs.writeFileSync(herdr, `#!${process.execPath}\nprocess.stdout.write(${JSON.stringify(JSON.stringify(snapshot))});\n`, { mode: 0o700 });
 
-  const source = `import { detectHerdrLocation } from ${JSON.stringify(pathToFileURL(compatibilityRenderer).href)};\nconst value = detectHerdrLocation(process.env, undefined, ${JSON.stringify(root)});\nprocess.stdout.write(JSON.stringify(value));`;
+  const source = `import { detectHerdrLocation } from ${JSON.stringify(pathToFileURL(packageRenderer).href)};\nconst value = detectHerdrLocation(process.env, undefined, ${JSON.stringify(root)});\nprocess.stdout.write(JSON.stringify(value));`;
   const output = childProcess.execFileSync(process.execPath, ["--input-type=module", "--eval", source], {
     encoding: "utf8",
     cwd: root,

@@ -66,9 +66,10 @@ Continuity is an authority problem, not merely a memory problem. Summaries, prog
 HEAD therefore uses canon: durable project records that preserve identity, agreement, route, and current position outside the lossy conversation.
 
 - A **Session** preserves the identity and ongoing agreement of a line of work.
-- A **Run** preserves the goal, boundaries, route, checkpoint decisions, and current coherent result for durable execution.
-- A **ledger** records accepted observations and decisions in sequence.
-- A **Slice** describes the current executable result without replacing the parent agreement.
+- A **Run** preserves an accepted Plan's route through independently consumable Results and checkpoint decisions.
+- An **Accepted Plan Baseline** preserves the Problem Definition, observable Goals/Evidence, selected solution, Result Graph, and material decisions.
+- An **Execution Contract** freezes one Result's authoritative inputs, output, boundary, consumer, and representative proof before a worker starts.
+- A **Checkpoint** records the saved Planner's acceptance decision and next Result.
 
 Recovery starts from canon. Summaries and graph records help locate evidence, but they do not silently redefine the agreed scope.
 
@@ -92,7 +93,7 @@ Different worker roles exist because different results carry different decision 
 
 Plans, tests, reviews, and reports support execution; they do not replace the working result.
 
-For each owned result, HEAD Core prefers connected proof:
+Evidence supports the Planner's Plan-level judgment; it is not a substitute for the result. The Planner inspects produced artifacts first and reads Git or worker logs only when the supplied evidence is insufficient, contradictory, or current state must be confirmed. For each owned result, HEAD Core prefers connected proof:
 
 ```text
 authoritative input

@@ -9,15 +9,15 @@ description: >
 
 # Development System Shaping
 
-Use this workflow when work changes software or system behavior and HEAD needs an implementation-ready whole-outcome context. It shapes the result before execution ownership is selected; it does not start delegation or a Run.
+Use this workflow when work changes software or system behavior and HEAD needs an implementation-ready whole-outcome context. It is the software and system specialization of [outcome-shaping](../outcome-shaping/SKILL.md): apply that method, then add the implementation-path detail below. It does not start delegation or a Run.
 
 ## Establish The Whole Outcome
 
-1. State the intended user-visible or operational result and its real consumer.
+1. Define the current/needed-state problem, intended user-visible or operational result, and real consumer.
 2. Read the authoritative sources that can change parent-level understanding.
 3. Trace the current path from authoritative input to the consumed result.
 4. Form the current state, intended state, primary flow, material boundaries, dependencies, and completion condition.
-5. Resolve material product, policy, architecture, cost, and workflow decisions with the user and keep unresolved decisions explicit.
+5. Compare material solution alternatives, resolve product, policy, architecture, cost, and workflow choices with the user, and record the selected solution.
 
 ## Shape The Implementation Path
 
@@ -34,4 +34,4 @@ Use this workflow when work changes software or system behavior and HEAD needs a
 - Use a Run when an accepted whole design requires multiple dependent bounded results, meaningful checkpoints, or durable recovery.
 - Complexity, length, or the availability of a worker does not by itself change execution ownership.
 
-HEAD leaves shaping with the whole-outcome context, the selected implementation shape, and the execution boundary needed for the next action.
+HEAD leaves shaping with the selected solution's consumer-ready Result Graph, whole-outcome context, selected implementation shape, and execution boundary needed for the next action.

@@ -1,6 +1,6 @@
 # HEAD Agent Core
 
-Reusable prompts, procedures, runtime recovery, and host-coordination modules for a HEAD-led agent installation. Canonical distributable source is under `packages/`; legacy component paths remain compatibility links.
+Reusable prompts, procedures, runtime recovery, and host-coordination modules for a HEAD-led agent installation. Canonical distributable source is under `packages/`.
 
 ## Read first
 
@@ -20,12 +20,13 @@ The public composition command installs the required OpenCode integration. The i
 
 ### Work items
 
-From a project root, `node runtime/opencode/bin/work-items.mjs open <id> <title> [--source <reference>]` creates a durable item. Use `focus <id> <session>` to preserve that session's latest checkpoint return reference, `complete` to return it, and `list` to view the compact portfolio. The project-local wrapper is `.claude/agents/head/opencode/bin/work-items.mjs`.
+From a project root, `node ./packages/opencode-runtime/runtime/opencode/bin/work-items.mjs open <id> <title> [--source <reference>]` creates a durable item. Use `focus <id> <session>` to preserve that session's latest checkpoint return reference, `complete` to return it, and `list` to view the compact portfolio. The project-local wrapper is `.claude/agents/head/opencode/bin/work-items.mjs`.
 
 ## Components
 
 - [Connected documentation](packages/core/docs/README.md)
-- [HEAD core](head/README.md)
-- [Agents](agents/README.md)
-- [Skills](skills/README.md)
-- [MCP services](mcp/README.md)
+- [HEAD core](packages/core/head/README.md)
+- [Agents](packages/agents/README.md)
+- [Skills](packages/skills/README.md)
+- [Procedures](packages/procedures/README.md)
+- [MCP services](packages/coordination/mcp/README.md)

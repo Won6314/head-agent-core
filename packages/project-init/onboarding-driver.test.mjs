@@ -49,8 +49,17 @@ test("onboarding creates one protected session, tab, model-free agent, prompt an
 test("pristine partial resumes without rewriting and live onboarding focuses without another prompt", async (t) => {
   const f = await fixture(t), fake = fakeRuntime();
   fs.mkdirSync(path.join(f.target, ".claude/agents/head/sessions/onboarding")); fs.writeFileSync(path.join(f.target, ".claude/agents/head/sessions/onboarding/context.md"), onboardingContract.context); fs.writeFileSync(path.join(f.target, ".claude/agents/head/sessions/onboarding/session-state.json"), `${JSON.stringify({ schema: 1, generation: 0, mode: "session", activeRun: null }, null, 2)}\n`);
-  const sessionBefore = files(path.join(f.target, ".claude/agents/head/sessions/onboarding")); startOnboarding({ target: f.target, env: f.env, runtime: fake.runtime }); assert.deepEqual(files(path.join(f.target, ".claude/agents/head/sessions/onboarding")), sessionBefore);
-  const count = fake.calls.length, second = startOnboarding({ target: f.target, env: f.env, runtime: fake.runtime }); assert.equal(second.reused, true); assert.deepEqual(fake.calls.slice(count), [["tab", "focus", "tab-2"]]);
+  const beforeStart = files(path.join(f.target, ".claude/agents/head/sessions/onboarding")); startOnboarding({ target: f.target, env: f.env, runtime: fake.runtime }); assert.deepEqual(files(path.join(f.target, ".claude/agents/head/sessions/onboarding")), beforeStart);
+  const history = path.join(f.target, ".claude/agents/head/sessions/onboarding/history.md");
+  fs.writeFileSync(history, "<!-- restore-ids\nclaude: \nopencode: ses_onboarding\nlast_runtime: opencode\nupdated_at: 2026-08-06T00:00:00Z\n-->\n");
+  const sessionBefore = files(path.join(f.target, ".claude/agents/head/sessions/onboarding")); const count = fake.calls.length, second = startOnboarding({ target: f.target, env: f.env, runtime: fake.runtime }); assert.equal(second.reused, true); assert.equal(second.openCodeSessionId, "ses_onboarding"); assert.deepEqual(fake.calls.slice(count), [["tab", "focus", "tab-2"]]); assert.deepEqual(files(path.join(f.target, ".claude/agents/head/sessions/onboarding")), sessionBefore);
+});
+
+test("malformed restore history rejects onboarding reuse before any mutation", async (t) => {
+  const f = await fixture(t), fake = fakeRuntime(), session = path.join(f.target, ".claude/agents/head/sessions/onboarding");
+  fs.mkdirSync(session); fs.writeFileSync(path.join(session, "context.md"), onboardingContract.context); fs.writeFileSync(path.join(session, "session-state.json"), `${JSON.stringify({ schema: 1, generation: 0, mode: "session", activeRun: null }, null, 2)}\n`);
+  fs.writeFileSync(path.join(session, "history.md"), "<!-- restore-ids\nclaude: prose\nopencode: ses_onboarding\nlast_runtime: opencode\nupdated_at: 2026-08-06T00:00:00Z\n-->\n");
+  const before = files(f.target); assert.throws(() => startOnboarding({ target: f.target, env: f.env, runtime: fake.runtime }), /incompatible restore history/); assert.deepEqual(files(f.target), before); assert.deepEqual(fake.calls, []);
 });
 
 test("onboarding identifies a protocol-19 workspace from its root pane when workspace cwd is absent", async (t) => {

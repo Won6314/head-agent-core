@@ -37,6 +37,17 @@ function activeRun({ decision }) {
   return { sessionDirectory, transition };
 }
 
+function semanticRun({ decision = "DONE", status = "" } = {}) {
+  const { sessionDirectory, transition } = activeRun({ decision: checkpoint({ type: "CONTINUE", slice: "slices/02.md" }) });
+  const run = path.join(sessionDirectory, "runs", "active-run");
+  fs.mkdirSync(path.join(run, "checkpoints")); fs.mkdirSync(path.join(run, "execution-contracts"));
+  fs.writeFileSync(path.join(run, "run.md"), "RUN\n");
+  fs.writeFileSync(path.join(run, "checkpoints", "0001.md"), `Decision: ${decision}\n${status ? `Status: ${status}\n` : ""}`);
+  fs.writeFileSync(path.join(run, "execution-contracts", "0001.md"), "CONTRACT\n");
+  fs.writeFileSync(path.join(run, "run.json"), JSON.stringify({ format: "semantic-plan-run", version: 1, runId: "active-run", runIndex: "run.md", latestCheckpoint: "checkpoints/0001.md", currentExecutionContracts: ["execution-contracts/0001.md"] }));
+  return { sessionDirectory, runDirectory: run, transition };
+}
+
 test("stop_run returns a user-authorized stopped Run to Session mode", () => {
   const { sessionDirectory, transition } = activeRun({
     decision: checkpoint({ type: "USER_DECISION", status: "STOPPED", slice: null }),
@@ -73,4 +84,15 @@ test("finish_run retains its terminal DONE transition", () => {
     ok: true, session: "active-session", mode: "session", activeRun: null, generation: 5,
   });
   assert.equal(fs.readFileSync(path.join(sessionDirectory, "progress.md"), "utf8"), "Run finished.");
+});
+
+test("semantic terminal and stop transitions use only the exact latest Checkpoint pointer", () => {
+  const finished = semanticRun();
+  const pointerFile = path.join(finished.runDirectory, "run.json");
+  const terminalPointer = JSON.parse(fs.readFileSync(pointerFile));
+  terminalPointer.currentExecutionContracts = [];
+  fs.writeFileSync(pointerFile, JSON.stringify(terminalPointer));
+  assert.equal(finished.transition({ action: "finish_run", sessionID: "ses_test", session_handoff: "Finished." }).ok, true);
+  const stopped = semanticRun({ decision: "USER_DECISION", status: "STOPPED" });
+  assert.equal(stopped.transition({ action: "stop_run", sessionID: "ses_test", session_handoff: "Stopped." }).ok, true);
 });

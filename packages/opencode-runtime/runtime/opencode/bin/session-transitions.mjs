@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { latestValidCheckpoint } from "./checkpoint-ledger.mjs";
 import { parseSessionState } from "./session-lifecycle.mjs";
+import { resolveSemanticRun, semanticCheckpointDecision } from "./semantic-run.mjs";
 import { processIncarnation, processOwnerIsLive } from "./render-runtime-config.mjs";
 
 const SESSION_NAME = /^[A-Za-z0-9._-]+$/;
@@ -73,20 +74,30 @@ function preparedRun(sessionDir, runID) {
   if (!SESSION_NAME.test(String(runID || ""))) return "";
   const runsDir = path.join(sessionDir, "runs");
   const runDir = directChild(runsDir, runID);
-  return runDir && regularText(path.join(runDir, "run.md")).trim() && latestValidCheckpoint(runDir)?.record.decision.type === "START" ? runDir : "";
+  if (!runDir) return "";
+  const semantic = resolveSemanticRun(runDir, runID);
+  if (semantic.status === "valid") return semanticCheckpointDecision(runDir, runID)?.decision === "START" ? runDir : "";
+  return semantic.status === "absent" && regularText(path.join(runDir, "run.md")).trim() && latestValidCheckpoint(runDir)?.record.decision.type === "START" ? runDir : "";
 }
 function terminalRun(sessionDir, state) {
   const runDir = state.activeRun.path === "."
     ? sessionDir
     : directChild(path.join(sessionDir, "runs"), state.activeRun.id);
-  const latest = runDir && latestValidCheckpoint(runDir)?.record;
+  const semantic = runDir && resolveSemanticRun(runDir, state.activeRun.id);
+  if (semantic?.status === "valid") return ["DONE", "FAILED"].includes(semanticCheckpointDecision(runDir, state.activeRun.id)?.decision);
+  const latest = semantic?.status === "absent" && runDir && latestValidCheckpoint(runDir)?.record;
   return Boolean(latest && latest.decision.type === "DONE" && latest.next.slice === null);
 }
 function userStoppedRun(sessionDir, state) {
   const runDir = state.activeRun.path === "."
     ? sessionDir
     : directChild(path.join(sessionDir, "runs"), state.activeRun.id);
-  const latest = runDir && latestValidCheckpoint(runDir)?.record;
+  const semantic = runDir && resolveSemanticRun(runDir, state.activeRun.id);
+  if (semantic?.status === "valid") {
+    const checkpoint = semanticCheckpointDecision(runDir, state.activeRun.id);
+    return checkpoint?.decision === "USER_DECISION" && checkpoint.status === "STOPPED";
+  }
+  const latest = semantic?.status === "absent" && runDir && latestValidCheckpoint(runDir)?.record;
   return Boolean(
     latest
     && latest.decision.type === "USER_DECISION"

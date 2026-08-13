@@ -16,8 +16,8 @@
         "packages/skills/agent-reply",
         "packages/skills/delegate-once",
         "packages/skills/dev-system-shaping",
-        "packages/skills/plan-run",
-        "packages/skills/restore-session"
+        "packages/skills/outcome-shaping",
+        "packages/skills/plan-run"
       ]
     },
     {

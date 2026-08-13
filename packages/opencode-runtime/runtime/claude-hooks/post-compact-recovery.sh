@@ -1,11 +1,12 @@
 #!/bin/bash
 # Inject fixed HEAD recovery context. Compaction never writes canonical state.
 
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+RUNTIME_DIR=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
 if [ -n "${HEAD_PROJECT_ROOT:-}" ]; then
   PROJECT_ROOT="$HEAD_PROJECT_ROOT"
 else
-  SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-  PROJECT_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
+  PROJECT_ROOT=$(node -e 'const fs=require("fs"),path=require("path");let p=process.cwd();for(;;){if(fs.existsSync(path.join(p,"CLAUDE.md"))&&fs.existsSync(path.join(p,".claude/agents/head/CLAUDE.md"))){process.stdout.write(p);break}const q=path.dirname(p);if(q===p)process.exit(1);p=q}' 2>/dev/null) || exit 0
 fi
 HEAD_ROOT="$PROJECT_ROOT/.claude/agents/head"
 SESSIONS_DIR="$HEAD_ROOT/sessions"
@@ -32,7 +33,7 @@ INPUT=$(cat)
 SOURCE=$(echo "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('source',''))" 2>/dev/null)
 
 # Resolve only this process's validated Herdr pane; never use focused state.
-LOCATION=$(HEAD_PROJECT_ROOT="$PROJECT_ROOT" node "$HEAD_ROOT/opencode/bin/render-runtime-config.mjs" --location-json 2>/dev/null)
+LOCATION=$(HEAD_PROJECT_ROOT="$PROJECT_ROOT" node "$RUNTIME_DIR/opencode/bin/render-runtime-config.mjs" --location-json 2>/dev/null)
 PANE_ID=$(echo "$LOCATION" | jq -r '.paneId // empty')
 SESSION_NAME=$(echo "$LOCATION" | jq -r '.sessionName // empty')
 [ -n "$PANE_ID" ] && [ -n "$SESSION_NAME" ] || exit 0
@@ -58,32 +59,7 @@ if [ "$SOURCE" != "compact" ]; then
   [ -f "$HEAD_CONTEXT" ] && cat "$HEAD_CONTEXT"
 fi
 
-SESSION_CONTEXT_FILE="$SESSION_DIR/context.md"
-SESSION_CONTEXT=""
-if [ -f "$SESSION_CONTEXT_FILE" ]; then
-  SESSION_CONTEXT=$(cat "$SESSION_CONTEXT_FILE" 2>/dev/null)
-fi
-if [ -n "$SESSION_CONTEXT" ]; then
-  echo ""
-  echo "---"
-  echo ""
-  echo "# Current Session: $SESSION_NAME"
-  echo ""
-  echo "$SESSION_CONTEXT"
-fi
-
-RUN_FILE="$SESSION_DIR/run.md"
-RUN_CONTENT=""
-if [ -f "$RUN_FILE" ]; then
-  RUN_CONTENT=$(cat "$RUN_FILE" 2>/dev/null)
-fi
-if [ -n "$RUN_CONTENT" ]; then
-  echo ""
-  echo "---"
-  echo ""
-  echo "# Loaded File: $RUN_FILE"
-  echo ""
-  echo "$RUN_CONTENT"
-fi
+RECOVERY=$(node "$RUNTIME_DIR/opencode/bin/claude-compaction-recovery.mjs" "$PROJECT_ROOT" "$SESSION_NAME" 2>/dev/null)
+[ -n "$RECOVERY" ] && printf '\n---\n\n%s\n' "$RECOVERY"
 
 exit 0

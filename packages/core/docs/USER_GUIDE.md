@@ -90,6 +90,23 @@ Initialization creates the following base shape when the paths are absent:
             └── opencode.json
 ```
 
+## Restore an existing Session
+
+Session restore is an installed operational command rather than a model-discovered Skill. From the project root, list exact restore candidates first:
+
+```bash
+scripts/resume-session.sh --list
+```
+
+After selecting one exact Session name, verify the non-destructive plan and then run the same command without `--dry-run`:
+
+```bash
+scripts/resume-session.sh "<SESSION_NAME>" --runtime opencode --dry-run
+scripts/resume-session.sh "<SESSION_NAME>" --runtime opencode
+```
+
+Do not guess a fuzzy Session name or restore identifier, bypass collision warnings, or reconstruct the Herdr operation manually when the command rejects the restore.
+
 Generated runtime configuration is managed by the initializer. Project prose and local expertise are project-owned: initialization creates seeds only when absent and does not overwrite existing content.
 
 Worker task state, logs, messages, and handoffs belong to the host state outside the project tree.
@@ -118,18 +135,18 @@ HEAD selects the smallest execution shape that preserves the result:
 
 For material product, policy, architecture, cost, publication, or workflow choices, HEAD returns the decision to you. Ordinary implementation and execution choices remain with the owner of the bounded result.
 
-## Sessions and Runs
+## Sessions and semantic Runs
 
 A **Session** preserves the identity and ongoing agreement of a line of work.
 
-A **Run** is used when work needs a durable route and current position. Its canon records the goal and boundaries; its ledger records accepted checkpoint decisions; its current Slice identifies the next coherent result.
+A **Run** is used when an accepted design needs dependent Results, checkpoints, or recovery. The Planner first turns a Problem Definition into observable Goals/Evidence, considers material alternatives with the user, selects a solution, and forms a consumable Result Graph. Result boundaries select the route: direct work remains connected to HEAD, one independently executable Result uses one-shot delegation, and dependent Results use a durable Run.
 
-This separation means a compacted conversation or a worker summary cannot silently redefine the work. On restart, HEAD recovers from project canon first and retrieves only the evidence needed for the current decision.
+For a semantic Run, the Planner owns the Accepted Plan Baseline and checkpoint judgment; the Runner authors the next Execution Contract; a Worker returns a Produced Result and Worker Report/Evidence. `run.json` is only a machine pointer to `run.md`, the latest Checkpoint, and current Contracts. Recovery follows those pointers. A saved Planner reviews through `runPointerFile` without Plan-file delivery. Grandfathered legacy Runs recover through their legacy path and are never automatically migrated.
 
 ## Worker roles
 
-- **Developer** owns one bounded one-shot implementation outcome and its representative proof.
-- **Coder** implements a fully decided Run contract without changing externally observable decisions.
+- **Developer** owns local diagnosis and solution method inside a bounded authoritative-input/output/consumer contract and proves its representative path.
+- **Coder** implements a fully decided Run contract without adding or changing externally observable decisions.
 - **Reviewer** evaluates a consequential decision before implementation and does not own the final direction.
 
 HEAD composes each worker's brief from the intended result, authoritative inputs, locked decisions, boundaries, consumer, and proof. A worker return is evidence for HEAD's integration judgment, not automatic authority over the parent work.

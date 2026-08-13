@@ -111,8 +111,9 @@ out({});
   const beforeRetry = JSON.parse(fs.readFileSync(state));
   const second = childProcess.spawnSync(process.execPath, [publicCommand, "init", target], { env, encoding: "utf8", timeout: 20_000 }); assert.equal(second.status, 0, second.stderr); assert.equal(JSON.parse(second.stdout).converged, true);
   const afterRetry = JSON.parse(fs.readFileSync(state)); assert.equal(afterRetry.workspaces.length, beforeRetry.workspaces.length); assert.equal(afterRetry.tabs.length, beforeRetry.tabs.length); assert.equal(afterRetry.promptCount, beforeRetry.promptCount);
-  const session = path.join(target, ".claude", "agents", "head", "sessions", "onboarding");
-  const run = path.join(session, "runs", "recovery-proof");
+   const session = path.join(target, ".claude", "agents", "head", "sessions", "onboarding");
+   const run = path.join(session, "runs", "recovery-proof");
+   fs.writeFileSync(path.join(session, "progress.md"), "# Recovery progress\n");
   fs.mkdirSync(path.join(run, "ledger"), { recursive: true }); fs.mkdirSync(path.join(run, "slices"));
   fs.writeFileSync(path.join(run, "run.md"), "# Recovery proof Run\n");
   fs.writeFileSync(path.join(run, "slices", "01-recovery-proof.md"), "# Recovery proof Slice\n");
@@ -134,8 +135,9 @@ out({});
   });
   assert.deepEqual(transition({ action: "start_run", sessionID: "ses_proof", run_id: "recovery-proof" }), { ok: true, session: "onboarding", mode: "run", activeRun: "recovery-proof", generation: 1 });
   const recovery = buildHeadPrompt({ root: target, sessionID: "ses_proof", location: liveLocation });
-  assert.equal(recovery.metadata.mode, "run"); assert.match(recovery.prompt, /Recovery proof Run|Recovery proof Slice|cp-0000/);
-  assert.deepEqual(recovery.metadata.loadedPaths, ["context.md", "runs/recovery-proof/run.md", "runs/recovery-proof/ledger/0000.json", "runs/recovery-proof/slices/01-recovery-proof.md"]);
+   assert.equal(recovery.metadata.mode, "run"); assert.match(recovery.prompt, /Recovery proof Run|Recovery progress/);
+   assert.doesNotMatch(recovery.prompt, /Recovery proof Slice|cp-0000/);
+   assert.deepEqual(recovery.metadata.loadedPaths, ["context.md", "runs/recovery-proof/run.md", "progress.md"]);
   const canonicalFiles = [
     path.join(session, "context.md"),
     path.join(session, "session-state.json"),
@@ -146,9 +148,11 @@ out({});
   const canonicalBefore = new Map(canonicalFiles.map((file) => [file, fs.readFileSync(file)]));
   const { CompactRecovery } = await import(path.join(release, "packages", "opencode-runtime", "runtime", "opencode", "plugins", "compact-recovery-core.mjs"));
   const submitted = [];
+  const compactMessages = [{ info: { id: "initial", role: "user", model: { providerID: "openai", modelID: "proof-model" } }, parts: [{ type: "text", text: "start" }] }];
   const client = { session: {
-    messages: async () => ({ data: [{ info: { role: "user", model: { providerID: "openai", modelID: "proof-model" } } }] }),
-    summarize: async () => ({ data: true }),
+    messages: async () => ({ data: compactMessages }),
+    summarize: async () => { compactMessages.push({ info: { id: "cmp_proof", role: "user" }, parts: [{ type: "compaction" }] }, { info: { id: "sum_proof", role: "assistant", parentID: "cmp_proof", mode: "compaction", summary: true, finish: "stop" }, parts: [{ type: "text", messageID: "sum_proof", text: "Resume the recovery proof." }] }); return { data: true }; },
+    status: async () => ({ data: {} }),
     promptAsync: async (request) => { submitted.push(request); return { data: { ok: true } }; },
   } };
   const scalar = { optional() { return this; }, describe() { return this; } };
@@ -157,7 +161,7 @@ out({});
   await compact.event({ event: { type: "session.idle", properties: { sessionID: "ses_proof" } } });
   const compacting = { prompt: "", context: ["native supplemental context"] };
   await compact["experimental.session.compacting"]({ sessionID: "ses_proof" }, compacting);
-  assert.match(compacting.prompt, /non-canonical runtime continuity/);
+  assert.equal(compacting.prompt, "컴팩트 후 다음 실행의 사용자 입력으로 넣을 이어가기 지시문을 작성하라.");
   assert.deepEqual(compacting.context, []);
   const compactionSystem = { system: [] };
   await compact["experimental.chat.system.transform"]({ sessionID: "ses_proof" }, compactionSystem);
@@ -166,10 +170,12 @@ out({});
   await compact["experimental.compaction.autocontinue"]({ sessionID: "ses_proof" }, nativeAutocontinue);
   assert.equal(nativeAutocontinue.enabled, false);
   await compact.event({ event: { type: "session.compacted", properties: { sessionID: "ses_proof" } } });
+  await new Promise((resolve) => setImmediate(resolve));
   assert.deepEqual(submitted, [{ path: { id: "ses_proof" }, body: { parts: [{ type: "text", text: "Resume the recovery proof." }] } }]);
   const recoverySystem = { system: [] };
   await compact["experimental.chat.system.transform"]({ sessionID: "ses_proof" }, recoverySystem);
-  assert.match(recoverySystem.system.join("\n"), /Recovery proof Run|Recovery proof Slice|cp-0000/);
+   assert.match(recoverySystem.system.join("\n"), /Recovery proof Run|Recovery progress/);
+   assert.doesNotMatch(recoverySystem.system.join("\n"), /Recovery proof Slice|cp-0000/);
   await compact.event({ event: { type: "session.compacted", properties: { sessionID: "ses_proof" } } });
   assert.equal(submitted.length, 1);
   await compact.tool.checkpoint_compact.execute({ next_instruction: "This must be superseded." }, { sessionID: "ses_proof", messageID: "request-two" });

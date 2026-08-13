@@ -110,11 +110,11 @@ Project initialization preflights every managed destination before writing, pres
 
 Onboarding creates exactly one `onboarding` Session and one labeled HEAD tab. It uses the user's existing OpenCode authentication and model selection.
 
-## Context composition and canon
+## Context composition and semantic Run canon
 
 Core distinguishes durable authority from transient conversation state.
 
-Typical Session state:
+Semantic Runs use a thin, pointer-only index:
 
 ```text
 .claude/agents/head/sessions/<session>/
@@ -124,13 +124,13 @@ Typical Session state:
 └── runs/
     └── <run>/
         ├── run.md
-        ├── ledger/
-        │   └── <checkpoint>.json
-        └── slices/
-            └── <current-result>.md
+        ├── run.md
+        ├── run.json                 # pointers only
+        ├── checkpoints/<checkpoint>.md
+        └── execution-contracts/<result>.md
 ```
 
-`session-state.json` selects Session mode or one active Run. Recovery fails closed on conflicting identity, invalid pointers, path escape, or malformed canon. Conversation summaries, logs, and history can orient retrieval but do not override Session or Run canon.
+The Planner's Accepted Plan Baseline explains Problem Definition → Goals/Evidence → alternatives and user choice → Selected Solution → Result Graph. The Runner writes an Execution Contract for each selected Result; workers return Produced Results and Worker Report/Evidence; the saved Planner applies a Checkpoint. `run.json` contains no Plan, judgment, evidence body, code snapshot, or change ledger: it points only to `run.md`, latest Checkpoint, and current Contracts. Recovery fails closed on conflicting identity, invalid pointers, path escape, or malformed canon. Legacy Runs remain recoverable through their existing format without automatic migration.
 
 Compaction reloads the canonical payload and permits at most one explicit continuation. A newer real user turn supersedes a queued continuation.
 
@@ -138,11 +138,12 @@ Compaction reloads the canonical payload and permits at most one explicit contin
 
 `HEAD_CORE.md` defines the coordinating behavior. The current top-level workflow surface separates:
 
+- `outcome-shaping`: turn a problem into goals/evidence, a selected solution, and a consumer-ready Result Graph;
 - `dev-system-shaping`: map software/system behavior before production;
 - `delegate-once`: one independently owned Session result;
 - `plan-run`: preserve planning lineage and route accepted production through one execution successor.
 
-Worker, result, lineage, and Run-lifecycle procedures are plain Markdown under `packages/procedures/`. A selected top-level Skill links to exactly the procedure required by current state; these branches are not independently Skill-discovered or injected together.
+Worker, Result, and Run-lifecycle procedures are plain Markdown under `packages/procedures/`. A selected top-level Skill links to exactly the procedure required by current state; these branches are not independently Skill-discovered or injected together.
 
 ## Worker execution
 

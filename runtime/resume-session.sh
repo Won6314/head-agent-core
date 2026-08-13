@@ -1,1 +1,0 @@
-../packages/opencode-runtime/runtime/resume-session.sh

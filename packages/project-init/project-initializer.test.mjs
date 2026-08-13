@@ -40,7 +40,7 @@ test("file-only project init creates generic composition and converges", async (
   const headConfig = JSON.parse(fs.readFileSync(path.join(target, ".claude/agents/head/opencode.json"), "utf8"));
   assert.deepEqual(headConfig.skills.paths, [path.join(f.env.XDG_DATA_HOME, "head/current/packages/skills"), path.join(target, ".claude/skills")]);
   assert.equal(headConfig.skills.paths.some((entry) => entry.includes("packages/procedures")), false);
-  assert.equal(fs.existsSync(path.join(f.release, "packages/procedures/plan-run/run/activate-run.md")), true);
+  assert.equal(fs.existsSync(path.join(f.release, "packages/procedures/plan-run/planning/activate-runner.md")), true);
   assert.equal(fs.readdirSync(path.join(target, ".claude/agents/head/sessions")).length, 0);
   const before = snapshot(target); initializeProject({ target, env: f.env }); assert.deepEqual(snapshot(target), before);
   assert.equal(JSON.parse(fs.readFileSync(path.join(f.state, "bindings.json"), "utf8")).length, 1);
