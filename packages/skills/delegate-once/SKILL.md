@@ -1,7 +1,7 @@
 ---
 name: delegate-once
 description: >
-  One-shot delegation of a bounded result after HEAD holds the whole-outcome context: the entry contract, the worker brief compiled from the worker's starting context, and reintegration of what returns.
+  One-shot delegation of a bounded result. A result is delegable when it can be cut into one piece another owner returns whole — batches, collection, verification, review, anything HEAD would otherwise grind through dozens of shell calls. HEAD keeps the whole-outcome context; the worker gets the entry contract and a brief compiled from its own starting context, and what returns is reintegrated.
 ---
 
 # Delegate Once
