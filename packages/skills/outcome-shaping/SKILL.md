@@ -1,9 +1,7 @@
 ---
 name: outcome-shaping
 description: >
-  Use when HEAD must turn a current/needed-state problem into a selected
-  solution and independently consumable Result Graph before choosing direct
-  work, one-shot delegation, or a durable Run.
+  Turns a current/needed-state problem into a selected solution and an independently consumable Result Graph, before direct work, one-shot delegation, or a durable Run is chosen.
 ---
 
 # Outcome Shaping

@@ -4,6 +4,7 @@ Top-level workflows advertised to HEAD through runtime Skill discovery. Detailed
 
 ## Work routing
 
+- Load `start-job` before starting any work.
 - Use `outcome-shaping` to turn a current/needed-state problem into a selected solution and consumer-ready Result Graph.
 - Use `dev-system-shaping` when software or system behavior requires design judgment; it specializes `outcome-shaping` with the authoritative whole-outcome context and implementation shape.
 - Continue directly when implementation and proof remain connected to HEAD's active whole-outcome context.
@@ -18,5 +19,6 @@ Top-level workflows advertised to HEAD through runtime Skill discovery. Detailed
 - [dev-system-shaping](dev-system-shaping/README.md)
 - [outcome-shaping](outcome-shaping/README.md)
 - [plan-run](plan-run/README.md)
+- [start-job](start-job/README.md)
 
-Session restore remains an installed Core operational command at `scripts/resume-session.sh`; it is not advertised through Skill discovery. Browser workflows belong to projects that own the browser daemon and profile binding.
+Browser workflows belong to projects that own the browser daemon and profile binding.

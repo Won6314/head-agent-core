@@ -1,0 +1,3 @@
+# `_platform`
+
+Install-shaped host daemon, project initialization, and onboarding (`coordination/`, `project-init/`, plus `resume-session.sh` and `bootstrap-onboarding-session.mjs`). Unused in this project as of 2026-09-08 (user decision); excluded from `release-manifest.json`. To revive: `project-init/host-installer.mjs` → `project-init/head.mjs` → `coordination/mcp/host-coordination/daemon-entry.mjs`. Tests: `node --test 'packages/_platform/**/*.test.mjs'` — 2026-09-08: 22 pass / 12 fail; the failures are the install and initializer E2E paths that need this package inside `release-manifest.json`, so they fail by isolation, not by defect.

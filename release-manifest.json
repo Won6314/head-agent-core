@@ -17,7 +17,8 @@
         "packages/skills/delegate-once",
         "packages/skills/dev-system-shaping",
         "packages/skills/outcome-shaping",
-        "packages/skills/plan-run"
+        "packages/skills/plan-run",
+        "packages/skills/start-job"
       ]
     },
     {
@@ -39,17 +40,9 @@
       ]
     },
     {
-      "name": "coordination",
+      "name": "head-runtime",
       "paths": [
-        "packages/coordination/mcp/agent-task",
-        "packages/coordination/mcp/agent-comm",
-        "packages/coordination/mcp/host-coordination"
-      ]
-    },
-    {
-      "name": "project-init",
-      "paths": [
-        "packages/project-init"
+        "packages/head-runtime"
       ]
     }
   ]

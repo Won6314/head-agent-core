@@ -39,6 +39,8 @@ This material applies the same principle in different ways across the four stage
 2. [Bring only the knowledge and relationships that are needed](02-graph-research-context.md).
 3. [Pass along the accepted plan, not the planning process](03-save-load-plan-context.md).
 4. [Continue from the current state, not the execution record](04-save-load-execution-state.md).
+5. [Context Compilation Architecture — 전체 이론 정리](ko/05-context-compilation-architecture.md).
+7. [컨텍스트 일반론 — 무엇이 창 안에서 돕고 무엇이 해치는가](ko/07-context-general-principles.md) (초안 v0).
 
 ## A Context Window Is Not Focus
 

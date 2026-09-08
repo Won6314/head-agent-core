@@ -1,8 +1,7 @@
 ---
 name: plan-run
 description: >
-  Use when an accepted whole design needs dependent bounded Results,
-  checkpoint decisions, or durable Run recovery.
+  Durable Plan and Run work: an Accepted Plan Baseline carried through dependent bounded Results, checkpoint decisions, and Run recovery. Indexes one procedure per condition.
 ---
 
 # Plan Run

@@ -1,10 +1,7 @@
 ---
 name: dev-system-shaping
 description: >
-  Use when changing software or system behavior requires design judgment.
-  HEAD directly assembles the authoritative whole-outcome context, establishes
-  the current path and smallest implementation shape, then carries connected
-  execution forward or slices one independently executable result.
+  The software and system specialization of outcome-shaping: the authoritative whole-outcome context, the current path, and the smallest implementation shape for a behavior change, then connected execution or one sliced result.
 ---
 
 # Development System Shaping

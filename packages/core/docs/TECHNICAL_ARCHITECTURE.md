@@ -2,232 +2,103 @@
 
 ## Scope
 
-HEAD Agent Core is a product-neutral distribution, runtime-composition, continuity, and worker-coordination system. It supplies shared behavior while requiring every live operation to bind to one registered project and one validated caller.
+HEAD Agent Core is the product-neutral skeleton of a HEAD-led agent system. It supplies four things and nothing product-specific:
 
-The current HEAD system graph identifies the following complete Core-owned operational Features:
+1. the coordinating principles a HEAD role always loads;
+2. the advertised work skills and the procedures they select;
+3. the worker role cores;
+4. the runtime meaning that Claude Code and OpenCode share — session recovery, semantic Runs, compaction policy, context composition — with one thin adapter per runtime.
 
-| Feature | Result |
+A project attaches Core by symlinking skills, importing runtime modules, and rendering `HEAD_CORE.md` into its own prompts. Core never reaches into a project by path, and the tree carries no product name, absolute path, or project session path (`packages/core/purity.test.mjs`).
+
+The install-shaped platform (host daemon, project initializer, onboarding) that earlier versions shipped is isolated under `packages/_platform/` and excluded from the release. It is not part of the current architecture.
+
+## Packages and ownership
+
+```text
+packages/
+  core/
+    head/HEAD_CORE.md          always-loaded principles — the only copy
+    head/features/             Core feature catalog (inventory.md, file-roles.md); repo-relative paths only
+    docs/  theory/             this documentation and its background
+  skills/                      start-job · outcome-shaping · dev-system-shaping · delegate-once · plan-run · agent-reply
+  procedures/                  condition-selected branches a skill links to
+  agents/                      coder · developer · reviewer role cores
+  head-runtime/
+    shared/                    runtime-neutral meaning, one module each
+    claude/                    Claude hook adapters
+    opencode/                  OpenCode plugin entrypoints
+  opencode-runtime/            re-export shims at the old paths (no implementation)
+  _platform/                   isolated, not released
+```
+
+Ownership rule: a meaning lives in exactly one place. `shared/` owns what to restore, what to summarize, which decision set a Run uses, and where state lives. Adapters own only the runtime API binding — reading a hook's stdin, registering a plugin event — and call `shared/`. An adapter that carries a policy constant is a defect.
+
+## Shared runtime (`head-runtime/shared/`)
+
+| Module | Meaning |
 |---|---|
-| HF-055 | Install and initialize a HEAD Core project |
-| HF-002 | Recover the current HEAD execution context |
-| HF-003 | Start an accepted non-trivial Run |
-| HF-005 | Finish a terminal Run |
-| HF-006 | Advance a Run checkpoint |
-| HF-007 | Continue through context compaction |
-| HF-008 | Restore a prior HEAD OpenCode session |
-| HF-009 | Dispatch an independently ownable worker task |
-| HF-010 | Integrate a completed worker branch |
-| HF-012 | Answer a worker authority question |
+| `session-lifecycle.mjs` | Session identity, active Job, Run recovery payload (`projectSessionRecovery`), and `parseHistoryEntries` — the single parser for `history.md` checkpoint headings (`## <ISO>` with optional `run:<id>`) |
+| `semantic-run.mjs` | Pointer-only Run reader (`run.json` → `run.md`, latest checkpoint, current contracts) and the checkpoint decision set: `START CONTINUE LOCAL_CORRECTION PLAN_CHANGE_REQUIRED USER_DECISION STOPPED DONE FAILED` |
+| `session-transitions.mjs` | Session ↔ Run mode transitions used by both the OpenCode `head_session` tool and the Claude `head-session` MCP adapter |
+| `checkpoint-ledger.mjs` | Legacy ledger records; reads `REVISE` as `LOCAL_CORRECTION`, writes only the semantic set |
+| `compact-policy.mjs` | Compaction summary policy: pointer-only when no real user turn followed the latest checkpoint, a short factual summary of the checkpoint gap otherwise, one sentence of current work when the checkpoint cannot be resolved; plus the user-turn restoration budget. Runtime-neutral inputs, `{ runtime }` selects the wrapping |
+| `context-composition.mjs` | Base files, the HEAD prompt (`buildHeadPrompt`), the agent state directory (`<agent dir>/state/`), session records, and size-rotated JSONL logs |
+| `work-items.mjs`, `herdr-runtime.cjs` | Durable work items; Herdr caller validation (Herdr is the host adapter, not a product) |
 
-The graph is a retrieval index. The source files linked to each Feature remain authority for current behavior.
+## Runtime adapters
 
-## System planes
+| Concern | Claude (`head-runtime/claude/`) | OpenCode (`head-runtime/opencode/`) |
+|---|---|---|
+| Recovery after start or compaction | `session-recovery.mjs` — CLI the project's SessionStart hook executes | `compact-recovery.mjs` — plugin, same `projectSessionRecovery` |
+| Compaction summary instruction | `compaction-prompt.mjs` — PreCompact hook reading the transcript JSONL | inside `compact-recovery.mjs` |
+| Restoring compacted user turns | `compact-user-turns.mjs` — SessionStart(compact) hook | `compact-recovery.mjs` with `state/compact-spans/` |
+| Session mode tool | project MCP adapter over `session-transitions` | `head-session.mjs` plugin tool `head_session` |
+| Core first in the system prompt | project renders `HEAD_CORE.md` into `--system-prompt-file` | `head-core-first.mjs` moves the Core block first |
+| Restore identity | `upsert-restore-id.py` | `save-session-id.js` |
 
-### 1. Distribution plane
+The project owns the registration: which hook event runs which adapter, which plugin file is listed. Core owns what the adapter does.
 
-`release-manifest.json` defines the selected distributable package paths. A release identity is the SHA-256 digest of the manifest and selected regular files. Tests are excluded from the installed artifact, symlinked release sources are rejected, and installed release files are made read-only.
+## Session canon
 
-The installed layout is user-scoped:
-
-```text
-$XDG_DATA_HOME/head/
-├── releases/<release-id>/
-└── current -> releases/<release-id>/
-
-$XDG_CONFIG_HOME/head/host.json
-$XDG_STATE_HOME/head/
-$XDG_BIN_HOME/head
-```
-
-The stable command points through `current` to the installed `packages/project-init/head.mjs`. Updating Core changes the immutable release target rather than editing installed source in place.
-
-### 2. Host plane
-
-The host installation discovers and canonicalizes OpenCode and Herdr executables, validates the Herdr socket, installs the Herdr OpenCode integration, and starts one loopback coordination daemon.
-
-Supported service descriptors are:
-
-- Linux user systemd: `head-coordination.service`;
-- macOS LaunchAgent: `dev.head.coordination`.
-
-The daemon exposes two MCP paths:
-
-- `/agent-task` for a bounded one-shot worker operation;
-- `/agent-comm` for project-role messaging.
-
-Health requests disclose endpoint identity and schema state but no caller, binding, or secret data.
-
-### 3. Project plane
-
-Project initialization creates only generic composition and absent project-owned seeds. It registers a one-to-one `projectId` and canonical root with the host.
-
-The project owns:
-
-- root and role-specific instructions;
-- `HEAD_CONTEXT.md`, which indexes local canonical sources;
-- local Skills and expertise;
-- Session and Run canon;
-- repository, product, policy, and operational decisions.
-
-The initializer owns:
-
-- `.claude/head-runtime.json`;
-- `.claude/head-project.json` and its managed-file inventory;
-- generated role `opencode.json` files;
-- the generated resume wrapper.
-
-### 4. Live runtime plane
-
-The person owns the main OpenCode process and model authority. Herdr supplies the live workspace, tab, pane, terminal, CWD, and OpenCode session evidence.
-
-On each relevant request, Core:
-
-1. validates the exact live Herdr caller;
-2. resolves the nearest project runtime manifest;
-3. confirms the project registration and authority generation;
-4. loads installed Core before project instructions;
-5. selects Session or Run context from canonical state;
-6. exposes only the project-bound MCP surface.
-
-No runtime request may supply its own project root, state path, caller identity, or authority generation.
-
-## Public initialization flow
-
-`public-entry.mjs init <target>` composes three installed phases:
+Durable authority lives in the agent's session directory; conversation state is transient.
 
 ```text
-public init
-  ├─ host install/converge
-  ├─ project init/register
-  └─ onboarding start/resume
+<agent dir>/sessions/<session>/
+├── context.md                 identity and agreement; edited only on user instruction
+├── progress.md                one-line current position
+├── history.md                 checkpoints, "## <ISO>" or "## <ISO> run:<id>"
+├── session-state.json         mode: session | run
+├── jobs/<id>/job.md           problem · goal · direction (user's words, HEAD's agreed direction)
+└── runs/<id>/
+    ├── run.md                 thin index: outcome, results, boundaries, success, position
+    ├── run.json               pointers only
+    ├── checkpoints/NNNN-*.md
+    └── execution-contracts/NNNN-*.md
 ```
 
-The phase commands are recovery and transaction boundaries, not alternate public installers.
+Recovery fails closed on conflicting identity, invalid pointers, path escape, or malformed canon. Legacy Runs remain recoverable through their existing format.
 
-Host installation preflights paths, executables, socket authority, service support, and release content before committing. If a replacement cannot become healthy, it restores the prior stable command, configuration, service, and release reference.
+Compaction keeps: the canon above (re-read, not summarized), the user's own words from the compacted span, and a pointer or a ≤8-line factual gap summary. Model-authored summaries are never resubmitted as user instructions.
 
-Project initialization preflights every managed destination before writing, preserves existing project-owned prose, verifies generated references and endpoint health, and rolls back only files and directories created by the failed invocation.
+## Work shaping
 
-Onboarding creates exactly one `onboarding` Session and one labeled HEAD tab. It uses the user's existing OpenCode authentication and model selection.
+`HEAD_CORE.md` defines the coordinating behavior. The advertised surface: `start-job` (re-anchor and route) → `outcome-shaping` (problem → selected solution → Result Graph) → `dev-system-shaping` (software/system behavior change) → `delegate-once` (one bounded result, one worker) or `plan-run` (dependent results, checkpoints, recovery). Procedures under `packages/procedures/` are linked from exactly the skill that needs them and are not independently discovered.
 
-## Context composition and semantic Run canon
+## What Core does not contain
 
-Core distinguishes durable authority from transient conversation state.
-
-Semantic Runs use a thin, pointer-only index:
-
-```text
-.claude/agents/head/sessions/<session>/
-├── context.md
-├── progress.md                 # optional bounded continuity
-├── session-state.json
-└── runs/
-    └── <run>/
-        ├── run.md
-        ├── run.md
-        ├── run.json                 # pointers only
-        ├── checkpoints/<checkpoint>.md
-        └── execution-contracts/<result>.md
-```
-
-The Planner's Accepted Plan Baseline explains Problem Definition → Goals/Evidence → alternatives and user choice → Selected Solution → Result Graph. The Runner writes an Execution Contract for each selected Result; workers return Produced Results and Worker Report/Evidence; the saved Planner applies a Checkpoint. `run.json` contains no Plan, judgment, evidence body, code snapshot, or change ledger: it points only to `run.md`, latest Checkpoint, and current Contracts. Recovery fails closed on conflicting identity, invalid pointers, path escape, or malformed canon. Legacy Runs remain recoverable through their existing format without automatic migration.
-
-Compaction reloads the canonical payload and permits at most one explicit continuation. A newer real user turn supersedes a queued continuation.
-
-## Work shaping and execution modes
-
-`HEAD_CORE.md` defines the coordinating behavior. The current top-level workflow surface separates:
-
-- `outcome-shaping`: turn a problem into goals/evidence, a selected solution, and a consumer-ready Result Graph;
-- `dev-system-shaping`: map software/system behavior before production;
-- `delegate-once`: one independently owned Session result;
-- `plan-run`: preserve planning lineage and route accepted production through one execution successor.
-
-Worker, Result, and Run-lifecycle procedures are plain Markdown under `packages/procedures/`. A selected top-level Skill links to exactly the procedure required by current state; these branches are not independently Skill-discovered or injected together.
-
-## Worker execution
-
-The base project provides three reusable roles:
-
-```text
-HEAD
-├── Developer — bounded one-shot implementation
-├── Coder     — fully decided Run implementation
-└── Reviewer  — consequential pre-implementation evaluation
-```
-
-For the released Core one-shot path, `/agent-task` exposes only `quick_task`.
-
-The host service:
-
-1. resolves a direct project-owned worker directory;
-2. derives execution policy from host adapters;
-3. reserves task state, log, result, and delivery paths under host state;
-4. creates one non-focused Herdr tab with one root pane;
-5. launches OpenCode in the worker directory;
-6. captures exact runtime session evidence;
-7. waits asynchronously for terminal state;
-8. validates or normalizes the final handoff;
-9. delivers completion once to the initiating HEAD;
-10. closes only the proven owned task tab.
-
-Host-owned task artifacts are grouped under:
-
-```text
-$XDG_STATE_HOME/head/projects/<project-id>/agent-task/quick-tasks/
-├── <task-id>.json
-├── logs/<task-id>.log
-├── results/<task-id>.handoff.md
-└── deliveries/<task-id>.json
-```
-
-Topology or identity drift fails closed. A cleanup failure is persisted rather than reported as success.
-
-## Agent communication
-
-`/agent-comm` exposes:
-
-- `send_message`;
-- `read_inbox`;
-- `reply_message`.
-
-Initialization records the exact live pane as the role's generation-fenced target. Messages are project-scoped and durable in host state. Authority rotation invalidates stale MCP sessions and targets.
-
-## Authority and safety invariants
-
-The implementation consistently applies these boundaries:
-
-- project IDs and canonical roots are one-to-one;
-- host state must remain outside the project root;
-- project overlays may select workers but cannot choose host state paths;
-- `head` cannot be selected as a worker role;
-- managed paths reject symlink traversal;
-- task and MCP sessions are fenced by live caller and authority generation;
-- exact pane, tab, terminal, CWD, and runtime-session evidence governs cleanup and continuation;
-- public initialization does not copy credentials, history, or product policy;
-- capability does not grant authorization for publication, deployment, payment, or other material external action.
-
-## Current base surface and extensions
-
-The base Core includes the public init path, OpenCode recovery, Session/Run lifecycle, compaction continuity, one-shot worker execution, and role messaging.
-
-Project-specific systems may add richer task control, aggregate execution, external services, product graphs, analytics, browser automation, design tools, or publication workflows. Those extensions are not implied by the base release and remain project-owned unless their complete behavior moves into Core.
+Worker task execution (dispatch, logs, handoffs), messaging between roles, product graphs, external services, browser or design tools, and the generator that turns an agent manifest into runtime configuration are project-owned. The reference project keeps them under `mcp-servers/` and `scripts/`; Core describes the contract in the [User Guide](USER_GUIDE.md).
 
 ## Source map
 
-| Concern | Current source |
+| Concern | Source |
 |---|---|
 | Coordinating principles | `packages/core/head/HEAD_CORE.md` |
-| Design background | `packages/core/theory/` |
-| Public composition | `packages/project-init/public-entry.mjs` |
-| Host installation | `packages/project-init/host-installer.mjs` |
-| Project initialization | `packages/project-init/project-initializer.mjs` |
-| Protected onboarding | `packages/project-init/onboarding-driver.mjs` |
-| Session/Run runtime | `packages/opencode-runtime/runtime/opencode/` |
-| Worker task lifecycle | `packages/coordination/mcp/agent-task/host-service.mjs` |
-| Role communication | `packages/coordination/mcp/agent-comm/host-service.mjs` |
-| Host transport and process | `packages/coordination/mcp/host-coordination/` |
-| Worker role contracts | `packages/agents/` |
-| Advertised top-level workflows | `packages/skills/` |
-| Condition-selected branch procedures | `packages/procedures/` |
+| Core feature catalog | `packages/core/head/features/` |
+| Shared runtime meaning | `packages/head-runtime/shared/` |
+| Claude adapters · OpenCode plugins | `packages/head-runtime/claude/` · `packages/head-runtime/opencode/` |
+| Advertised skills · procedures | `packages/skills/` · `packages/procedures/` |
+| Worker role cores | `packages/agents/` |
 | Release composition | `release-manifest.json` |
+| Purity guard | `packages/core/purity.test.mjs` |
+| Isolated platform | `packages/_platform/README.md` |

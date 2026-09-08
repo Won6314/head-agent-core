@@ -73,6 +73,8 @@ HEAD therefore uses canon: durable project records that preserve identity, agree
 
 Recovery starts from canon. Summaries and graph records help locate evidence, but they do not silently redefine the agreed scope.
 
+Each acceptance judgment is re-derived from canon rather than continued from an accumulated execution context, so a later judgment is not shaped by the work it judges.
+
 Canon is not truth by itself. It can preserve a mistaken agreement and must change when the user changes direction. Its purpose is to keep authority stable enough that correction remains possible.
 
 ## Delegation without authority drift

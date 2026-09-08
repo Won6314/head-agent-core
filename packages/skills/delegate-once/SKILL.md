@@ -1,9 +1,7 @@
 ---
 name: delegate-once
 description: >
-  Use after HEAD has directly established and retained the whole-outcome
-  context, when one production result can be represented as a coherent bounded
-  subset and independently implemented, verified, and returned once.
+  One-shot delegation of a bounded result after HEAD holds the whole-outcome context: the entry contract, the worker brief compiled from the worker's starting context, and reintegration of what returns.
 ---
 
 # Delegate Once

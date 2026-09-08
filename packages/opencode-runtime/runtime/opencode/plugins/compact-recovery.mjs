@@ -1,6 +1,2 @@
-import { CompactRecovery } from "./compact-recovery-core.mjs";
-
-export default Object.freeze({
-  id: "head-core-compact-recovery",
-  server: CompactRecovery,
-});
+// moved to packages/head-runtime/opencode/compact-recovery.mjs
+export { default, CompactRecovery } from "../../../../head-runtime/opencode/compact-recovery.mjs";

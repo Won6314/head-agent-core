@@ -17,7 +17,7 @@
 
 ## 프로젝트 확장
 
-NoahChat 프로젝트의 HEAD 그래프와 제품 그래프는 Core의 보편 기능이 아니라 프로젝트 소유 확장이다. 현재 NoahChat 작업공간에서는 `docs/system/head-core-overview/README.md`에서 두 그래프의 설명을 이어서 읽을 수 있다.
+프로젝트는 자기 그래프 설명을 자기 문서에 둔다.
 
 ## 현재 권위 문서
 

@@ -39,6 +39,8 @@ LLM이 긴 작업을 수행할 때 필요한 컨텍스트는 크게 네 단계�
 2. [필요한 지식과 관계만 가져온다](02-graph-research-context.md).
 3. [계획 과정이 아니라 확정된 계획을 넘긴다](03-save-load-plan-context.md).
 4. [실행 기록이 아니라 현재 상태를 이어간다](04-save-load-execution-state.md).
+5. [Context Compilation Architecture — 전체 이론 정리](05-context-compilation-architecture.md).
+7. [컨텍스트 일반론 — 무엇이 창 안에서 돕고 무엇이 해치는가](07-context-general-principles.md) (초안 v0). 프로젝트 실측 기록은 프로젝트에 있다.
 
 ## Context Window는 집중력과 다르다
 

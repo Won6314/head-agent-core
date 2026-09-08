@@ -1,6 +1,2 @@
-import { HeadSessionCore } from "./head-session-core.mjs";
-
-export default Object.freeze({
-  id: "head-core-session",
-  server: HeadSessionCore,
-});
+// moved to packages/head-runtime/opencode/head-session.mjs
+export { default, HeadSessionCore } from "../../../../head-runtime/opencode/head-session.mjs";

@@ -11,6 +11,14 @@ This path explains why HEAD Agent Core is designed around context control. It is
 3. carry the accepted plan rather than the entire planning process into execution;
 4. continue from observable state and a clean plan baseline rather than accumulating the full execution history.
 
+## Go deeper on how the graph is built
+
+[Bring only the knowledge and relationships that are needed](context-management/02-graph-research-context.md) argues for querying a graph rather than loading documents. It assumes a graph that exists and is roughly correct.
+
+[Constructing a Knowledge Graph](knowledge-graph/README.md) ([한국어](knowledge-graph/ko/README.md)) takes up that assumption. It covers what a graph is the authority for, the two axes along which product knowledge accumulates, the three moments a person must decide, how identifier granularity bounds everything downstream, which edges are found and which are assigned, how to record what is not known, and how the graph changes when the world does.
+
+The two series are peers: one is about consuming a graph, the other about producing one.
+
 ## Continue with the design background
 
 The following pages add ownership, continuity, evidence, and limits to that context-management model:

@@ -192,7 +192,7 @@ Assembly JSON은 실제 작업 컨텍스트 자체라기보다 다음을 선언�
 ```json
 {
   "schemaVersion": "1",
-  "compilerImage": "noahchat-project-model:v12",
+  "compilerImage": "project-model:v12",
   "task": {
     "rawRequest": "사용자 요청 원문",
     "mode": "planning"
@@ -448,7 +448,7 @@ Assembly JSON
 
 ```json
 {
-  "compilerImage": "noahchat:v12",
+  "compilerImage": "project-model:v12",
   "assemblyId": "task-20260812-001",
   "openCodeSessionId": "ses_...",
   "injectedMessageId": "msg_...",

@@ -182,4 +182,6 @@ The reason to use a graph is not that it is always superior in every situation. 
 
 > The result of graph retrieval is not a simple list of documents, but an already compressed relationship map. Reconstructing this map as prose for the question can convey higher-density meaning with fewer tokens.
 
+This page treats the graph as something that already exists. How such a graph is built — what it is the authority for, how finely it can speak, which edges are found rather than assigned, and how it stays current — is taken up in [Constructing a Knowledge Graph](../knowledge-graph/README.md).
+
 The refined research result now becomes input to planning. The next article explains [how to pass only the accepted plan, rather than the whole process that produced it, into execution](03-save-load-plan-context.md).
