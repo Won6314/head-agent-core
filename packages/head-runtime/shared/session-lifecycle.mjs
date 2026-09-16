@@ -117,6 +117,7 @@ function runtimeHeader({ identity, mode, loaded = [], activeRun = "none", diagno
     `mode: ${mode}`,
     `identity_source: ${identity?.source || (identity?.status === "conflict" ? "conflict" : "unresolved")}`,
     "canon_path_rule: resolve paths listed in loaded against logical_session_directory, never against the process working directory",
+    "loaded_rule: context.md and progress.md carry the session's intent, constraints, and cursor, not its working context. Before answering or acting on a request that continues this session, rebuild that context: read the recent history entries (read_history), the job or run canon the cursor names, and the sources the graph selects for the request",
     `loaded: ${loaded.length ? loaded.join(", ") : "none"}`,
     `active_run: ${activeRun}`,
     jobHeaderLine(job),

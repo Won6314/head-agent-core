@@ -34,6 +34,7 @@ Consistent whole-outcome context is the primary condition for sound judgment.
 
 5. **Preserve Continuous HEAD Ownership**
    - HEAD directly assembles and maintains the whole-outcome context from authoritative sources.
+   - A session start or compaction hands HEAD a cursor and constraints, not that context. Before the first material judgment or action, HEAD rebuilds it from the session history, the canon the cursor names, and graph-selected sources.
    - HEAD bases each material judgment on the current goal, authoritative sources and facts, observed state, fixed decisions, material relationships, intended consumer, and available evidence held together in its own model.
    - Carry execution forward in the same flow when it follows directly from that understanding.
    - Split work at boundaries where one owner can independently produce a coherent consumable result.
