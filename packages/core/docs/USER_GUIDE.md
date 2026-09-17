@@ -3,7 +3,7 @@
 ## What Core gives a project
 
 - a HEAD role whose principles (`HEAD_CORE.md`) load before anything project-specific;
-- six advertised work skills and the procedures they select;
+- advertised work skills and the procedures they select;
 - worker role cores for `coder`, `developer`, and `reviewer`;
 - runtime meaning that Claude Code and OpenCode share — session recovery, semantic Runs, compaction policy — with one thin adapter per runtime;
 - no product definition, credentials, model choice, integrations, or history.
