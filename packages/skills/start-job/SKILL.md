@@ -13,7 +13,7 @@ description: >
 A single answer, lookup, or one-place fix is direct work with no file. Any other work follows these steps and writes them, layer by layer and before anything is executed or delegated, to `sessions/<session>/work/<work-label>/decomposition.md`, where the label is the one its checkpoints carry.
 
 1. **Final result.** Write what must exist at the end, who uses it, and how. A product or user-facing result is first formed through `product-planning` (problem → user value → user flow).
-2. **One layer.** Ask of the current item: how does this come out? Write only its direct children, each with what it is made from (actual inputs, by path), what it produces, and how the parent uses it. How a child's own inputs come out is the next layer.
+2. **One layer.** Ask of the current item: how does this come out? Write only its direct children, each with what it is made from, what it produces, and how the parent uses it. How a child's own inputs come out is the next layer.
 3. **Reduce.** Check the layer against the final result: every child needed, nothing missing, the smallest set that makes the parent come out. Record what was cut and why.
 4. **Show, then descend.** Show the user the final result and its first layer before going deeper. Then take each child in turn through steps 2–3. A choice that belongs to the user waits for the user.
 5. **Leaves.** A child stops decomposing when it is either
