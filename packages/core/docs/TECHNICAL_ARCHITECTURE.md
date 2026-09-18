@@ -19,7 +19,6 @@ The install-shaped platform (host daemon, project initializer, onboarding) that 
 packages/
   core/
     head/HEAD_CORE.md          always-loaded principles — the only copy
-    head/features/             Core feature catalog (inventory.md, file-roles.md); repo-relative paths only
     docs/  theory/             this documentation and its background
   skills/                      start-job · product-planning · delegate-once · plan-run · agent-reply
   procedures/                  condition-selected branches a skill links to
@@ -94,7 +93,6 @@ Worker task execution (dispatch, logs, handoffs), messaging between roles, produ
 | Concern | Source |
 |---|---|
 | Coordinating principles | `packages/core/head/HEAD_CORE.md` |
-| Core feature catalog | `packages/core/head/features/` |
 | Shared runtime meaning | `packages/head-runtime/shared/` |
 | Claude adapters · OpenCode plugins | `packages/head-runtime/claude/` · `packages/head-runtime/opencode/` |
 | Advertised skills · procedures | `packages/skills/` · `packages/procedures/` |
