@@ -1,3 +1,3 @@
 # start-job
 
-Load `SKILL.md` before starting any work. The skill body fixes the final result, decomposes it one layer at a time into a recorded `decomposition.md`, and selects execution from the leaves.
+Run `SKILL.md` before proposing or making any solution. The skill reasons problem → goal → what already exists → how it gets solved → the smallest set that produces it, then selects direct work, `delegate-once`, or `plan-run`.

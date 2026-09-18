@@ -15,8 +15,6 @@
       "paths": [
         "packages/skills/agent-reply",
         "packages/skills/delegate-once",
-        "packages/skills/dev-system-shaping",
-        "packages/skills/outcome-shaping",
         "packages/skills/plan-run",
         "packages/skills/start-job"
       ]

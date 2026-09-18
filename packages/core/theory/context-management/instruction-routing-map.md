@@ -23,9 +23,7 @@ Condition-selected procedure surface
 flowchart TD
     R["User request"] --> SJ["start-job/SKILL.md"]
     SJ --> S{"advertised Skill descriptions<br/>and current whole-outcome context"}
-    S -->|"software or system behavior requires design judgment"| DS["dev-system-shaping/SKILL.md"]
     S -->|"context and result are already sufficient"| M{"select execution ownership"}
-    DS --> M
     M -->|"execution remains connected to HEAD context"| DIRECT["Direct HEAD execution"]
     M -->|"one bounded result can return once"| ONCE["delegate-once/SKILL.md"]
     M -->|"accepted whole design needs dependent Results, checkpoints, or recovery"| PLAN["plan-run/SKILL.md"]
@@ -56,7 +54,7 @@ The Accepted Plan Baseline selects Results and checkpoint meaning. The Runner au
 
 | Instruction surface | Role | Selection condition |
 |---|---|---|
-| `packages/skills/start-job/SKILL.md` | Work-start card | Any new work |
+| `packages/skills/start-job/SKILL.md` | Problem → goal → solution | Before proposing or making a solution |
 | `packages/skills/plan-run/SKILL.md` | Route durable Plan production | Dependent Results, checkpoints, or recovery are needed |
 | `packages/procedures/plan-run/planning/` | Planner: preserve Problem Baseline, form Plan Draft and Result Graph, accept Plan Baseline, activate Runner | Current planning transition |
 | `packages/procedures/plan-run/results/` | Runner: select horizon, prepare Execution Contract, dispatch horizon | Selected Result or horizon operation |
@@ -71,4 +69,4 @@ Advertised = genuine top-level Skills
 Conditionally loaded = one Skill body + one exact procedure + only authority/evidence that can change it
 ```
 
-Load `start-job` before any work. Then load the matching work-type skill for that class of work. Always-on Core is not a substitute once work context has grown. Do not re-inject Core into the system prefix.
+Run `start-job` before proposing or making a solution. It selects direct work, `delegate-once`, or `plan-run`. Always-on Core is not a substitute once work context has grown. Do not re-inject Core into the system prefix.

@@ -4,10 +4,8 @@ Top-level workflows advertised to HEAD through runtime Skill discovery. Detailed
 
 ## Work routing
 
-- Load `start-job` before starting any work.
-- Use `outcome-shaping` to turn a current/needed-state problem into a selected solution and consumer-ready Result Graph.
+- Run `start-job` before proposing or making a solution: problem → goal → what already exists → how it gets solved → the smallest set that produces it.
 - Use `product-planning` for the user-facing planning sequence: problem → user value → user flow, before breaking down internal functions or implementation.
-- Use `dev-system-shaping` when software or system behavior requires design judgment; it specializes `outcome-shaping` with the authoritative whole-outcome context and implementation shape.
 - Continue directly when implementation and proof remain connected to HEAD's active whole-outcome context.
 - Use `delegate-once` when HEAD already holds the whole context and one bounded result can independently return once.
 - Use `plan-run` when an accepted whole design requires dependent bounded results, meaningful checkpoints, or durable recovery.
@@ -17,8 +15,6 @@ Top-level workflows advertised to HEAD through runtime Skill discovery. Detailed
 
 - [agent-reply](agent-reply/README.md)
 - [delegate-once](delegate-once/README.md)
-- [dev-system-shaping](dev-system-shaping/README.md)
-- [outcome-shaping](outcome-shaping/README.md)
 - [plan-run](plan-run/README.md)
 - [product-planning](product-planning/SKILL.md)
 - [start-job](start-job/README.md)

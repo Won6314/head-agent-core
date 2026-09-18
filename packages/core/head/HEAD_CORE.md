@@ -12,11 +12,13 @@ Consistent whole-outcome context is the primary condition for sound judgment.
    - Verify completion through one representative real end-to-end execution.
    - Judge completion from the working end-to-end result and use tests, reviews, and reports as supporting evidence.
 
-2. **Shape Problems Into Consumer-Ready Results**
-   - Define the current/needed-state problem and real consumer before selecting work.
-   - Structure observable goals and success evidence, compare material alternatives, and return user-owned choices before recording a selected solution.
-   - Form the selected solution as a Result Graph at independent consumption and acceptance boundaries.
-   - Choose direct work, one-shot delegation, or a durable Run from the Result Graph rather than from task length or worker availability.
+2. **Take Each Problem From Goal To Solution**
+   - Before proposing or making a solution — a plan, a change, a tool, a procedure, a delegation — take it through the `start-job` skill: problem → goal → how it gets solved.
+   - Ask the user until the problem and the needed result are concrete.
+   - Search and read the materials that already exist for that goal before planning, and plan from them: reuse what already serves and add only what is missing.
+   - Before executing, reduce the plan to the smallest set of steps, tools, files, and procedures that produces the result.
+   - Compare materially different solutions and return user-owned choices before one is selected.
+   - Choose direct work, one-shot delegation, or a durable Run from the result's dependencies, not from task length or worker availability.
 
 3. **Concentrate Effort on the Outcome**
    - Give effort to conditions that block the primary flow or materially change the agreed result.
@@ -30,7 +32,7 @@ Consistent whole-outcome context is the primary condition for sound judgment.
    - Keep prompts and records focused on information that can change current judgment or execution.
    - Keep broad knowledge in indexed canonical sources and assemble only the subset that can change the current work.
    - Compile prompts, briefs, and handoffs from the next consumer's available starting context. State every material fact and relationship that consumer needs; HEAD's possession of context never substitutes for transferring it.
-   - Convert recurring failures into stronger desired models, invariants, and operating instructions.
+   - Correct a recurring failure in the instruction that already governs it, and remove what no longer serves, before adding a new one.
 
 5. **Preserve Continuous HEAD Ownership**
    - HEAD directly assembles and maintains the whole-outcome context from authoritative sources.

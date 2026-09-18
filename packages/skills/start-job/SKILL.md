@@ -1,26 +1,25 @@
 ---
 name: start-job
 description: >
-  The start of a work burst. Fixes the final result, decomposes it one layer
-  at a time by asking how each item comes out, reduces every layer to what is
-  needed, and records the trail in one file until each leaf is an executable
-  instruction or waits on a named prior result. Execution follows from the
-  leaves: direct work, delegate-once, or plan-run.
+  Problem → goal → how it gets solved. Run before proposing or making any
+  solution — a plan, a change, a tool, a procedure, a delegation — however
+  small. Grounds each step in what already exists and keeps only what the
+  goal needs; stays short when the problem is plain.
 ---
 
 # Start Job
 
-A single answer, lookup, or one-place fix is direct work with no file. Any other work follows these steps and writes them, layer by layer and before anything is executed or delegated, to `sessions/<session>/work/<work-label>/decomposition.md`, where the label is the one its checkpoints carry.
+Reason from the problem to the next action, one step at a time, and show the steps. A plain problem takes a few lines.
 
-1. **Final result.** Write what must exist at the end, who uses it, and how. A product or user-facing result is first formed through `product-planning` (problem → user value → user flow).
-2. **One layer.** Ask of the current item: how does this come out? Write only its direct children, each with what it is made from, what it produces, and how the parent uses it. How a child's own inputs come out is the next layer.
-3. **Reduce.** Check the layer against the final result: every child needed, nothing missing, the smallest set that makes the parent come out. Record what was cut and why.
-4. **Show, then descend.** Show the user the final result and its first layer before going deeper. Then take each child in turn through steps 2–3. A choice that belongs to the user waits for the user.
-5. **Leaves.** A child stops decomposing when it is either
-   - an instruction HEAD or a worker can follow now to a stated output: inputs by path, output and its location, procedure, acceptance check — the `delegate-once` entry contract. Work repeated over many items is first done on one real item, and that output fixes the shape the rest must follow; or
-   - waiting on a named prior result: record which result, and what it must show before this child is decomposed.
-6. **Execute from the leaves.** A leaf HEAD carries itself is direct work; one leaf another owner returns whole goes through `delegate-once`; dependent leaves carried through checkpoints go through `plan-run`. A returned result is judged against the node it came from, and the file records the judgment.
-
-When work drifts into one item's detail or stalls, go back to the final result and the current layer in the file.
+1. **Problem and goal.** State the problem and the result that would solve it. Ask the user until both are concrete. A user-facing product result is shaped through `product-planning` (problem → user value → user flow). Name the job with a short slug; its first checkpoint carries it as the `work` label.
+2. **What already exists.** Search what already exists for this goal — graph, canon, code, prior work and decisions, existing tools and skills — and read it. For a change to software or a system, trace the current path from its input to where the result is used. Say what was found.
+3. **Reason step by step.** Ask of the goal "how does this get solved?" and answer from what was found. Ask the same of that answer until the next action is plain. Where solutions differ materially in product, policy, architecture, cost, or workflow, lay them out and let the user choose. For example:
+   - Problem: the LLM starts work without looking at existing materials.
+   - Goal: it reads what exists before it plans.
+   - How is that solved? → The instructions it follows must make it look first.
+   - How? → Core's planning item gains a line to search before planning.
+   - Next action: draft that line and show it.
+4. **Keep it small.** Check each step against the goal: it is needed, and nothing simpler already serves — an existing material, a sentence instead of a tool, one direct edit instead of a procedure. Drop the rest and say what was dropped.
+5. **Act.** Show the reasoning and the next action. The next action is direct work, `delegate-once` for one bounded result another owner returns whole, or `plan-run` for dependent results carried across checkpoints.
 
 A worker's `[from <agent> msg:<id>]` question → `agent-reply`.

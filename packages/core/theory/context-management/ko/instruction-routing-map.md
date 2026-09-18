@@ -23,9 +23,7 @@
 flowchart TD
     R["사용자 요청"] --> SJ["start-job/SKILL.md"]
     SJ --> S{"광고된 Skill description<br/>현재 whole-outcome context"}
-    S -->|"software/system 동작 변경에 설계 판단 필요"| DS["dev-system-shaping/SKILL.md"]
     S -->|"context와 결과가 이미 충분함"| M{"실행 ownership 선택"}
-    DS --> M
     M -->|"실행이 HEAD context와 계속 연결됨"| DIRECT["Direct HEAD 실행"]
     M -->|"bounded result 하나가 한 번 반환 가능"| ONCE["delegate-once/SKILL.md"]
     M -->|"accepted whole design에 dependent Result/checkpoint/recovery 필요"| PLAN["plan-run/SKILL.md"]
@@ -56,7 +54,7 @@ Accepted Plan Baseline이 Result와 checkpoint 의미를 선택한다. Runner는
 
 | 지침 표면 | 역할 | 선택 조건 |
 |---|---|---|
-| `packages/skills/start-job/SKILL.md` | 작업 시작 카드 | 새 작업 |
+| `packages/skills/start-job/SKILL.md` | 문제 → 목표 → 해결 | 해결책을 내놓거나 만들기 전 |
 | `packages/skills/plan-run/SKILL.md` | durable Plan production 라우팅 | Dependent Result, checkpoint, recovery가 필요할 때 |
 | `packages/procedures/plan-run/planning/` | Planner: Problem Baseline 보존, Plan Draft/Result Graph 형성, Plan Baseline 승인, Runner 활성화 | 현재 planning 전환 |
 | `packages/procedures/plan-run/results/` | Runner: horizon 선택, Execution Contract 준비, horizon dispatch | 선택된 Result 또는 horizon 동작 |
@@ -71,4 +69,4 @@ Accepted Plan Baseline이 Result와 checkpoint 의미를 선택한다. Runner는
 조건에 따라 읽는 것 = Skill body 하나 + 정확한 procedure 하나 + 해당 동작을 바꿀 authority/evidence만
 ```
 
-어떤 작업이든 시작 전에 `start-job`을 읽는다. 그다음 해당 종류의 work-type Skill을 읽는다. 작업 컨텍스트가 커진 뒤에는 always-on Core가 대체물이 아니다. Core를 system prefix에 다시 넣지 않는다.
+해결책을 내놓거나 만들기 전에 `start-job`을 거친다. start-job이 직접 작업·`delegate-once`·`plan-run`을 고른다. 작업 컨텍스트가 커진 뒤에는 always-on Core가 대체물이 아니다. Core를 system prefix에 다시 넣지 않는다.

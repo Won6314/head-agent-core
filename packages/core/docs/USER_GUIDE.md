@@ -29,7 +29,7 @@ The reference project's generator is `scripts/sync_claude_from_opencode.py`: edi
 
 ## Normal use
 
-Talk to HEAD in terms of outcomes. HEAD loads `start-job` at each work burst and selects the smallest execution shape that preserves the result:
+Talk to HEAD in terms of outcomes. HEAD runs `start-job` before proposing or making a solution and selects the smallest execution shape that preserves the result:
 
 - **direct work** when the result stays connected to HEAD's context;
 - **one bounded worker** (`delegate-once`) when one independent result can return once;

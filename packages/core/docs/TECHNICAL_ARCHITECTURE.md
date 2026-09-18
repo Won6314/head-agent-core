@@ -21,7 +21,7 @@ packages/
     head/HEAD_CORE.md          always-loaded principles — the only copy
     head/features/             Core feature catalog (inventory.md, file-roles.md); repo-relative paths only
     docs/  theory/             this documentation and its background
-  skills/                      start-job · outcome-shaping · dev-system-shaping · delegate-once · plan-run · agent-reply
+  skills/                      start-job · product-planning · delegate-once · plan-run · agent-reply
   procedures/                  condition-selected branches a skill links to
   agents/                      coder · developer · reviewer role cores
   head-runtime/
@@ -83,7 +83,7 @@ Compaction keeps: the canon above (re-read, not summarized), the user's own word
 
 ## Work shaping
 
-`HEAD_CORE.md` defines the coordinating behavior. The advertised surface: `start-job` (re-anchor and route) → `outcome-shaping` (problem → selected solution → Result Graph) → `dev-system-shaping` (software/system behavior change) → `delegate-once` (one bounded result, one worker) or `plan-run` (dependent results, checkpoints, recovery). Procedures under `packages/procedures/` are linked from exactly the skill that needs them and are not independently discovered.
+`HEAD_CORE.md` defines the coordinating behavior. The advertised surface: `start-job` (before proposing or making a solution: problem → goal → what already exists → how it gets solved → the smallest set) → direct work, `delegate-once` (one bounded result, one worker), or `plan-run` (dependent results, checkpoints, recovery). Procedures under `packages/procedures/` are linked from exactly the skill that needs them and are not independently discovered.
 
 ## What Core does not contain
 

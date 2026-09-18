@@ -14,7 +14,7 @@ The product-neutral skeleton for a HEAD-led agent installation: the coordinating
 | Package | Owns |
 |---|---|
 | `packages/core/` | `head/HEAD_CORE.md` (always-loaded principles), `head/features/` (Core feature catalog), `docs/`, `theory/` |
-| `packages/skills/` | Advertised top-level skills: `start-job`, `outcome-shaping`, `dev-system-shaping`, `delegate-once`, `plan-run`, `agent-reply` |
+| `packages/skills/` | Advertised top-level skills: `start-job`, `product-planning`, `delegate-once`, `plan-run`, `agent-reply` |
 | `packages/procedures/` | Condition-selected procedures a skill links to |
 | `packages/agents/` | Worker role cores: `coder`, `developer`, `reviewer` |
 | `packages/head-runtime/` | Runtime meaning shared by both runtimes (`shared/`), plus the thin Claude adapters (`claude/`) and OpenCode plugin entrypoints (`opencode/`) |

@@ -10,7 +10,7 @@
 
 #### HF-003 — Start an accepted non-trivial Run — **Core**
 
-- **defines_behavior:** `packages/core/head/HEAD_CORE.md`; `packages/skills/dev-system-shaping/SKILL.md`; `packages/skills/plan-run/SKILL.md`; `packages/procedures/plan-run/run/initialize-run.md`; `packages/procedures/plan-run/run/activate-run.md`
+- **defines_behavior:** `packages/core/head/HEAD_CORE.md`; `packages/skills/start-job/SKILL.md`; `packages/skills/plan-run/SKILL.md`; `packages/procedures/plan-run/run/initialize-run.md`; `packages/procedures/plan-run/run/activate-run.md`
 - **implements_behavior:** `packages/head-runtime/shared/session-transitions.mjs`; `packages/head-runtime/shared/checkpoint-ledger.mjs`
 - **configures_behavior:** `packages/head-runtime/opencode/head-session.mjs`
 - **provides_context:** `packages/core/docs/TECHNICAL_ARCHITECTURE.md`; `packages/core/docs/FOUNDATIONS.md`
