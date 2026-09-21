@@ -45,11 +45,15 @@ On session start and after compaction both runtimes re-read that canon rather th
 
 ## Worker roles
 
-- **Developer** owns local diagnosis and method inside a bounded input/output/consumer contract and proves its representative path.
-- **Coder** implements a fully decided contract without adding externally observable decisions.
+- **Developer** owns local diagnosis and method inside a bounded input/output/consumer contract, applies the shared development standard, and proves its representative path.
+- **Coder** translates a task-specific `context.md` specification into code. It refuses before implementation when behavior, state, or processing rules are missing or conflicting; general development criteria belong to its specification author.
 - **Reviewer** evaluates a consequential decision before implementation and does not own the direction.
 
 HEAD writes each brief from the worker's starting context — every fact the result needs, the boundary, the consumer, and the proof. A worker's return is evidence for HEAD's integration judgment, not authority over the parent work.
+
+### Development criteria
+
+The canonical [Development Standard](../../agents/DEVELOPMENT_STANDARD.md) is shared by HEAD during software planning, direct implementation, and review, and by developer during implementation. Link it from the project's authority index for those tasks and include it in developer's instruction sources. Do not add its full text to HEAD's always-loaded principles or to coder's instructions. Coder's task-specific `context.md` is a decided specification, not HEAD's session-memory file.
 
 ## What Core does not provide
 

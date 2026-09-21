@@ -2,6 +2,8 @@
 
 Use after `delegate-once` selects `developer` for one bounded implementation result.
 
+HEAD applies the shared [Development Standard](../../../agents/DEVELOPMENT_STANDARD.md) when preparing the result. Supply that standard and the project's adopted conventions to developer, including the selected scope of test creation, modification, and execution in the brief.
+
 ## Contract
 
 HEAD supplies the exact subset of its whole-outcome context needed to execute the result, compiled from the developer's available starting context. Material facts and relationships are stated or supplied through exact readable authority references rather than assumed from HEAD's private context. The developer performs local source inspection, implementation, correction, and proof inside that bounded context.

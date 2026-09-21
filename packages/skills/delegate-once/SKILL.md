@@ -23,7 +23,7 @@ Local source inspection begins only inside this bounded result. Parent understan
 ## Slice And Dispatch
 
 1. Select the worker that can own the bounded result end to end.
-2. Load only the selected worker branch. For `developer`, read [developer.md](../../procedures/delegate-once/workers/developer.md).
+2. Load only the selected worker branch. For `developer`, read [developer.md](../../procedures/delegate-once/workers/developer.md). For `coder`, read [coder.md](../../procedures/plan-run/workers/coder.md) and supply its task-specific `context.md` specification.
 3. Compile the smallest complete execution context from that worker's actual starting context. Spell out material facts and relationships unavailable there; an exact readable authority reference may carry source content, but HEAD's private context cannot.
 4. State the required output, authoritative inputs, locked decisions, consumer, acceptance, mutation and preservation boundaries, and representative proof.
 5. Express boundaries as the behavior and state to preserve. Name a prohibited alternative only when the worker could plausibly choose it and that choice would materially change the result; state the replacement behavior with it.

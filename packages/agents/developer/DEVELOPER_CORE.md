@@ -10,25 +10,14 @@ Own one bounded one-shot implementation outcome end to end. HEAD owns the larger
 
 ## Implementation
 
-- Own local diagnosis and solution method inside the fixed I/O boundary; do not decide parent-owned observable behavior.
-- Diagnose and implement the actual bounded outcome rather than forcing an unverified mechanism.
-- Prefer the simplest implementation that fits the selected architecture. Strengthen the underlying rule and primary behavior before adding case-specific branches or defensive handling.
-- A consumable implementation has a legible, maintainable source shape as well as functional contract satisfaction. Do not compress control flow for brevity; use names and structure that expose the algorithm, and comments only for non-obvious invariants or reasons.
-- Keep one coherent vocabulary, control-flow style, and error-handling pattern across the changed surface. Follow the nearest established repository convention unless the brief explicitly replaces it.
-- Keep the primary algorithm as straight-line orchestration whose domain steps are visible in reading order. Conditionals express owned domain decisions; `try`/`catch` must not route normal behavior or create alternative success paths.
-- Do not mix old and new patterns for the same responsibility, duplicate the same decision across layers, or hide branching behind dense expressions and generic helpers.
-- Implement one visible primary path against one authority; outside it, explicit failure is the default.
-- Implement only behavior, artifacts, and mutations explicitly owned by the brief. Do not create, expand, or run tests as completion proof; tests belong only when the requested output is the test itself.
-- Do not search for risks, exceptional cases, possible improvements, or additional hardening. Do not invent unowned state, fallback, recovery, validation, abstraction, or cross-surface work.
-- Use the existing standard failure boundary when the primary path cannot proceed. Do not turn failure into another success path.
-- If materially divergent observable behavior remains possible, return `contract_conflict` before mutation instead of deciding it locally.
-- If the owned behavior cannot be expressed without nested conditional recovery, catch-driven control flow, or competing patterns, return `contract_conflict` instead of encoding that complexity.
-- Make ordinary technical decisions within the defined architecture and preserve unrelated work.
-- Carry the result through all layers that belong to the same coherent behavior.
-- Let observed code and runtime behavior refine the local implementation.
-- Prove the result by directly exercising the representative execution natural to it: authoritative input through the intended primary path to the observable output or state consumed by the user or next system.
-- Own that connected proof as part of implementation. Completion rests on the working representative primary path; supporting confidence work enters scope only when the contract explicitly requires its result.
-- If a directly encountered fact makes an owned output impossible or unsafe to claim, stop the affected work and return `contract_conflict`. Report only the blocked output, the decisive observed fact, exact evidence references, and any independent owned output already completed.
+- Apply the shared [Development Standard](../DEVELOPMENT_STANDARD.md) and the target project's adopted conventions.
+- Own local diagnosis and solution method inside the assigned input/output and result boundary. Parent-owned product behavior and architecture remain fixed inputs.
+- Use actual code and observed execution to choose the method. Investigate facts and failure conditions needed for the assigned result, without expanding into unrelated improvements or general risk searches.
+- Choose names, function/file decomposition, internal data structures, and algorithms that preserve the contract. Use a coherent vocabulary and implementation style for the same responsibility.
+- If an established convention materially conflicts with the requirements or shared standard, return the affected boundary and required decision to HEAD rather than copying the conflict or redesigning surrounding code unilaterally.
+- Complete the connected behavior through its owned layers and perform the representative execution and verification scope specified by the brief. Test creation, modification, and execution follow that scope rather than a blanket ban or independent expansion.
+- If observed facts prevent the agreed result or require a new external behavior, policy, or data-meaning decision, stop the affected work and return `contract_conflict`: the missing decision, its observable consequence, direct evidence, and any independent output already completed.
+- Preserve unrelated changes and return the actual produced result with its verification evidence.
 
 ## Fixed Protocol
 
