@@ -49,14 +49,15 @@ function writeHistory(session, entries) {
   fs.writeFileSync(path.join(session, "history.md"), body);
 }
 
-test("integrated Session tool flow injects no history body and does not replay generated continuation", async (t) => {
+test("integrated Session tool flow loads the recent history window, no progress.md, and does not replay generated continuation", async (t) => {
   const x = fixture(t);
   writeHistory(x.session, [1, 2, 3, 4].map((n) => ({ at: `2026-09-01T0${n}:00:00Z`, body: `HISTORY-${n}` })));
   fs.writeFileSync(path.join(x.session, "progress.md"), "PROGRESS-4");
   const recovery = projectSessionRecovery({ headDirectory: x.head, liveSessionName: "demo" });
-  assert.match(recovery.prompt, /CONTEXT[\s\S]*PROGRESS-4/);
-  assert.doesNotMatch(recovery.prompt, /HISTORY-1|HISTORY-2|HISTORY-3|HISTORY-4/);
+  assert.match(recovery.prompt, /CONTEXT[\s\S]*HISTORY-1[\s\S]*HISTORY-4/);
+  assert.doesNotMatch(recovery.prompt, /PROGRESS-4/);
   assert.match(recovery.prompt, /history: 4 entries, latest .+ \(read_history\)/);
+  assert.match(recovery.prompt, /loaded_entries: 4 of 4/);
 
   const plugin = await CompactRecovery(x.options);
   const id = "ses_session";
@@ -77,14 +78,14 @@ test("integrated Session tool flow injects no history body and does not replay g
   const system = { system: [core, "project"] };
   await plugin["experimental.chat.system.transform"]({ sessionID: id }, system);
   assert.equal(system.system[0], core);
-  assert.match(system.system[1], /HEAD_RUNTIME_CONTEXT[\s\S]*CONTEXT[\s\S]*PROGRESS-4/);
-  assert.doesNotMatch(system.system[1], /HISTORY-2|HISTORY-3|HISTORY-4/);
+  assert.match(system.system[1], /HEAD_RUNTIME_CONTEXT[\s\S]*CONTEXT[\s\S]*HISTORY-4/);
+  assert.doesNotMatch(system.system[1], /PROGRESS-4/);
   assert.match(system.system[2], new RegExp(USER_TURNS_MARKER));
   assert.match(system.system[2], /initial/);
   assert.match(loadCompactedUserTurns(x.root, id).text, /initial/);
 });
 
-test("integrated Run native flow keeps Run-scoped history and does not dispatch summary text", async (t) => {
+test("integrated native flow ignores a leftover Run state, loads history by label and recency, and does not dispatch summary text", async (t) => {
   const x = fixture(t);
   fs.writeFileSync(path.join(x.session, "session-state.json"), JSON.stringify({ schema: 1, generation: 1, mode: "run", activeRun: { id: "active", path: "runs/active" } }));
   fs.mkdirSync(path.join(x.session, "runs", "active"), { recursive: true });
@@ -96,8 +97,9 @@ test("integrated Run native flow keeps Run-scoped history and does not dispatch 
   ]);
   fs.writeFileSync(path.join(x.session, "progress.md"), "P3");
   const recovery = projectSessionRecovery({ headDirectory: x.head, liveSessionName: "demo" });
-  assert.match(recovery.prompt, /CONTEXT[\s\S]*RUN-MARKER[\s\S]*P3[\s\S]*ACTIVE-ONE[\s\S]*ACTIVE-TWO/);
-  assert.doesNotMatch(recovery.prompt, /SESSION-HISTORY/);
+  assert.match(recovery.prompt, /CONTEXT[\s\S]*SESSION-HISTORY[\s\S]*ACTIVE-ONE[\s\S]*ACTIVE-TWO/);
+  assert.match(recovery.prompt, /work: active \(2 entries\)/);
+  assert.doesNotMatch(recovery.prompt, /P3|RUN-MARKER|active_run|^mode:/m);
 
   x.messages.push({ info: { id: "cmp_native", role: "user" }, parts: [{ type: "compaction" }] }, { info: { id: "sum_native", role: "assistant", parentID: "cmp_native", mode: "compaction", summary: true, finish: "stop" }, parts: [{ type: "text", messageID: "sum_native", text: "NATIVE CONTINUATION" }] });
   const plugin = await CompactRecovery(x.options);
@@ -113,6 +115,7 @@ test("integrated Run native flow keeps Run-scoped history and does not dispatch 
   const core = "# HEAD Core\n";
   const system = { system: [core] };
   await plugin["experimental.chat.system.transform"]({ sessionID: id }, system);
-  assert.match(system.system[1], /RUN-MARKER[\s\S]*ACTIVE-ONE[\s\S]*ACTIVE-TWO/);
+  assert.match(system.system[1], /ACTIVE-ONE[\s\S]*ACTIVE-TWO/);
+  assert.doesNotMatch(system.system[1], /RUN-MARKER/);
   assert.doesNotMatch(system.system.join("\n"), /NATIVE CONTINUATION|EXACT CONTINUATION/);
 });

@@ -118,9 +118,7 @@ out({});
   fs.writeFileSync(path.join(run, "run.md"), "# Recovery proof Run\n");
   fs.writeFileSync(path.join(run, "slices", "01-recovery-proof.md"), "# Recovery proof Slice\n");
   fs.writeFileSync(path.join(run, "ledger", "0000.json"), JSON.stringify({ id: "cp-0000", at: "2026-08-06T00:00:00Z", horizon: { slice: null, wave: null }, expected: "recovery", observed: "prepared", evidence: [], decision: { type: "START", reason: "public proof" }, next: { output: "recover", slice: "slices/01-recovery-proof.md", wave: null } }));
-  const { createSessionTransitions } = await import(path.join(release, "packages", "opencode-runtime", "runtime", "opencode", "bin", "session-transitions.mjs"));
   const { buildHeadPrompt, detectHerdrLocation } = await import(path.join(release, "packages", "opencode-runtime", "runtime", "opencode", "bin", "render-runtime-config.mjs"));
-  const bindings = new Map([["ses_proof", { sessionName: "onboarding" }]]);
   const liveLocation = detectHerdrLocation(
     { HERDR_SOCKET_PATH: socket, HERDR_WORKSPACE_ID: "workspace1", HERDR_TAB_ID: "tab1", HERDR_PANE_ID: "pane1" },
     (caller) => ({ ...caller, terminalId: "terminal1", cwd: path.join(target, ".claude", "agents", "head"), tabLabel: "onboarding" }),
@@ -128,16 +126,10 @@ out({});
   );
   const sessionRecovery = buildHeadPrompt({ root: target, sessionID: "ses_proof", location: liveLocation });
   assert.equal(sessionRecovery.metadata.mode, "session"); assert.match(sessionRecovery.prompt, /New project onboarding/);
-  const transition = createSessionTransitions({
-    headDirectory: path.join(target, ".claude", "agents", "head"),
-    identity: { live: () => ({ sessionName: "onboarding", tabLabel: "onboarding" }) },
-    binding: { read: (id) => bindings.get(id) },
-  });
-  assert.deepEqual(transition({ action: "start_run", sessionID: "ses_proof", run_id: "recovery-proof" }), { ok: true, session: "onboarding", mode: "run", activeRun: "recovery-proof", generation: 1 });
   const recovery = buildHeadPrompt({ root: target, sessionID: "ses_proof", location: liveLocation });
-   assert.equal(recovery.metadata.mode, "run"); assert.match(recovery.prompt, /Recovery proof Run|Recovery progress/);
-   assert.doesNotMatch(recovery.prompt, /Recovery proof Slice|cp-0000/);
-   assert.deepEqual(recovery.metadata.loadedPaths, ["context.md", "runs/recovery-proof/run.md", "progress.md"]);
+   assert.equal(recovery.metadata.mode, "session"); assert.doesNotMatch(recovery.prompt, /Recovery proof Run|Recovery progress|Recovery proof Slice|cp-0000/);
+   assert.ok(!recovery.metadata.loadedPaths.includes("progress.md"));
+   assert.deepEqual(recovery.metadata.loadedPaths.slice(0, 1), ["context.md"]);
   const canonicalFiles = [
     path.join(session, "context.md"),
     path.join(session, "session-state.json"),
@@ -173,7 +165,7 @@ out({});
   assert.deepEqual(submitted, [{ path: { id: "ses_proof" }, body: { parts: [{ type: "text", text: "Resume the recovery proof." }] } }]);
   const recoverySystem = { system: [] };
   await compact["experimental.chat.system.transform"]({ sessionID: "ses_proof" }, recoverySystem);
-   assert.match(recoverySystem.system.join("\n"), /Recovery proof Run|Recovery progress/);
+   assert.doesNotMatch(recoverySystem.system.join("\n"), /Recovery proof Run|Recovery progress/);
    assert.doesNotMatch(recoverySystem.system.join("\n"), /Recovery proof Slice|cp-0000/);
   await compact.event({ event: { type: "session.compacted", properties: { sessionID: "ses_proof" } } });
   assert.equal(submitted.length, 1);

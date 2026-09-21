@@ -3,125 +3,129 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { projectSessionRecovery } from "./session-lifecycle.mjs";
+import { parseHistoryEntries, projectSessionRecovery, selectStartEntries } from "./session-lifecycle.mjs";
 
-function fixture({ mode = "session", runId = "active", entries = [] } = {}) {
+function fixture({ entries = [] } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "recovery-"));
   const session = path.join(root, "sessions", "sample");
   fs.mkdirSync(session, { recursive: true });
   fs.writeFileSync(path.join(session, "context.md"), "CONTEXT\n");
-  fs.writeFileSync(path.join(session, "progress.md"), "PROGRESS\n");
-  fs.writeFileSync(path.join(session, "session-state.json"), JSON.stringify({ schema: 1, generation: 0, mode, activeRun: mode === "run" ? { id: runId, path: `runs/${runId}` } : null }));
-  if (mode === "run") { fs.mkdirSync(path.join(session, "runs", runId), { recursive: true }); fs.writeFileSync(path.join(session, "runs", runId, "run.md"), "RUN\n"); }
   if (entries.length) {
     const body = entries.map((item, index) => {
-      const runStamp = item.runId ? ` run:${item.runId}` : "";
-      return `## 2026-01-01T00:00:0${index}Z${runStamp}\n\n${item.body}\n`;
+      const stamp = `2026-01-01T00:${String(Math.floor(index / 60)).padStart(2, "0")}:${String(index % 60).padStart(2, "0")}Z`;
+      const tokens = [stamp, ...(item.work ? [`work:${item.work}`] : []), ...(item.runId ? [`run:${item.runId}`] : [])].join(" ");
+      return `## ${tokens}\n\n${item.body}\n${item.next ? `\n다음: ${item.next}\n` : ""}`;
     }).join("\n");
     fs.writeFileSync(path.join(session, "history.md"), body);
   }
   return { root, session, recover: () => projectSessionRecovery({ headDirectory: root, liveSessionName: "sample" }) };
 }
 
-function semanticFixture() {
-  const data = fixture({ mode: "run" });
-  const run = path.join(data.session, "runs", "active");
-  fs.mkdirSync(path.join(run, "checkpoints"));
-  fs.mkdirSync(path.join(run, "execution-contracts"));
-  fs.writeFileSync(path.join(run, "checkpoints", "0001.md"), "# Checkpoint\n\nDecision: CONTINUE\n");
-  fs.writeFileSync(path.join(run, "execution-contracts", "0001.md"), "# Contract\n");
-  fs.writeFileSync(path.join(run, "run.json"), `${JSON.stringify({ format: "semantic-plan-run", version: 1, runId: "active", runIndex: "run.md", latestCheckpoint: "checkpoints/0001.md", currentExecutionContracts: ["execution-contracts/0001.md"] })}\n`);
-  return data;
-}
-
-test("Session recovery injects no history body, only a count line pointing at read_history", (t) => {
-  const data = fixture({ entries: ["ONE", "TWO", "THREE", "FOUR"].map((body) => ({ body })) }); t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
-  const recovery = data.recover();
-  assert.equal(recovery.metadata.mode, "session"); assert.match(recovery.prompt, /CONTEXT/); assert.match(recovery.prompt, /PROGRESS/);
-  assert.doesNotMatch(recovery.prompt, /ONE|TWO|THREE|FOUR/);
-  assert.match(recovery.prompt, /history: 4 entries, latest 2026-01-01T00:00:03Z \(read_history\)/);
-  assert.match(recovery.prompt, /active_job: none/);
-  assert.doesNotMatch(recovery.prompt, /ledger|slice/i);
-  assert.deepEqual(recovery.metadata.loadedPaths, ["context.md", "progress.md"]);
+test("parseHistoryEntries reads work labels, legacy run stamps, and titled headings", () => {
+  const entries = parseHistoryEntries("## 2026-01-01T00:00:00Z work:memory-redesign\n\nA\n\n## 2026-01-01T00:00:01Z run:active\n\nB\n\n## 2026-01-01T00:00:02Z work:x run:active\n\nC\n\n## 2026-07-08: Titled entry\n\nD\n");
+  assert.deepEqual(entries.map((entry) => [entry.timestamp, entry.work, entry.runId, entry.label]), [
+    ["2026-01-01T00:00:00Z", "memory-redesign", "", "memory-redesign"],
+    ["2026-01-01T00:00:01Z", "", "active", "active"],
+    ["2026-01-01T00:00:02Z", "x", "active", "x"],
+    ["2026-07-08:", "", "", ""],
+  ]);
+  assert.match(entries[3].body, /^## 2026-07-08: Titled entry\n\nD$/);
 });
 
-test("Run recovery isolates and orders active Run checkpoint history", (t) => {
-  const data = fixture({ mode: "run", entries: [{ body: "SESSION" }, { body: "OTHER", runId: "other" }, { body: "ACTIVE-ONE", runId: "active" }, { body: "ACTIVE-TWO", runId: "active" }] }); t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
+test("Session start loads context, the current work chain (first + last 10) and the recent window, in time order", (t) => {
+  const entries = [
+    ...[0, 1, 2, 3].map((n) => ({ body: `A-${n}`, work: "alpha" })),
+    ...[4, 5].map((n) => ({ body: `U-${n}` })),
+    ...Array.from({ length: 14 }, (_, i) => ({ body: `B-${i + 6}`, work: "beta", next: `after B-${i + 6}` })),
+  ];
+  const data = fixture({ entries }); t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(data.session, "progress.md"), "PROGRESS\n");
   const recovery = data.recover();
-  assert.equal(recovery.metadata.mode, "run"); assert.match(recovery.prompt, /CONTEXT[\s\S]*RUN[\s\S]*PROGRESS/); assert.match(recovery.prompt, /ACTIVE-ONE[\s\S]*ACTIVE-TWO/); assert.doesNotMatch(recovery.prompt, /SESSION|OTHER/);
-  assert.doesNotMatch(recovery.prompt, /ledger|slice/i);
+  assert.deepEqual(recovery.metadata.loadedPaths, ["context.md", "history.md"]);
+  assert.equal(recovery.metadata.work, "beta");
+  assert.equal(recovery.metadata.historyEntries, 20);
+  assert.equal(recovery.metadata.loadedEntries, 11);
+  assert.match(recovery.prompt, /history: 20 entries, latest 2026-01-01T00:00:19Z \(read_history\)/);
+  assert.match(recovery.prompt, /work: beta \(14 entries\)/);
+  assert.match(recovery.prompt, /loaded_entries: 11 of 20/);
+  assert.match(recovery.prompt, /cursor: 다음: after B-19/);
+  assert.match(recovery.prompt, /CONTEXT[\s\S]*B-6\b[\s\S]*B-10\b[\s\S]*B-19\b/);
+  for (const absent of ["A-0", "A-3", "U-4", "U-5", "B-7", "B-8", "B-9", "PROGRESS"]) assert.doesNotMatch(recovery.prompt, new RegExp(`\\b${absent}\\b`));
+  assert.doesNotMatch(recovery.prompt, /active_job|progress\.md/);
+  const order = ["B-6", "B-10", "B-15", "B-19"].map((marker) => recovery.prompt.indexOf(`\n${marker}\n`));
+  assert.deepEqual([...order].sort((a, b) => a - b), order);
 });
 
-test("empty history recovers context and progress", (t) => {
+test("an unlabeled last entry loads only the recent window", (t) => {
+  const data = fixture({ entries: [{ body: "L-0", work: "alpha" }, { body: "L-1", work: "alpha" }, { body: "L-2", work: "alpha" }, { body: "L-3", work: "alpha" }, { body: "L-4", work: "alpha" }, { body: "L-5", work: "alpha" }, { body: "N-6" }] });
+  t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
+  const recovery = data.recover();
+  assert.match(recovery.prompt, /work: none/);
+  assert.match(recovery.prompt, /loaded_entries: 5 of 7/);
+  assert.match(recovery.prompt, /cursor: none/);
+  assert.match(recovery.prompt, /L-2[\s\S]*L-5[\s\S]*N-6/);
+  assert.doesNotMatch(recovery.prompt, /L-0|L-1/);
+});
+
+test("a legacy run stamp counts as the work label", (t) => {
+  const data = fixture({ entries: [{ body: "S-0" }, { body: "R-1", runId: "old-run" }, { body: "S-2" }, { body: "S-3" }, { body: "S-4" }, { body: "S-5" }, { body: "S-6" }, { body: "R-7", runId: "old-run" }] });
+  t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
+  const recovery = data.recover();
+  assert.match(recovery.prompt, /work: old-run \(2 entries\)/);
+  assert.match(recovery.prompt, /R-1[\s\S]*S-3[\s\S]*R-7/);
+  assert.equal(recovery.metadata.loadedEntries, 6);
+});
+
+test("empty history recovers context only", (t) => {
   const data = fixture(); t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
-  assert.equal(data.recover().metadata.mode, "session");
-  assert.match(data.recover().prompt, /CONTEXT/);
-  assert.match(data.recover().prompt, /PROGRESS/);
+  const recovery = data.recover();
+  assert.equal(recovery.metadata.mode, "session");
+  assert.deepEqual(recovery.metadata.loadedPaths, ["context.md"]);
+  assert.match(recovery.prompt, /CONTEXT/);
+  assert.match(recovery.prompt, /history: 0 entries \(read_history\)/);
+  assert.match(recovery.prompt, /work: none/);
 });
 
-test("active job survives repeated Session/Run recovery and its final direction section is filled", (t) => {
-  for (const mode of ["session", "run"]) {
-    const data = fixture({ mode });
-    t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
-    const id = "20260907-parity";
-    const job = path.join(data.session, "jobs", id);
-    fs.mkdirSync(job, { recursive: true });
-    fs.writeFileSync(path.join(data.session, "jobs", "active.json"), JSON.stringify({ id }));
-    fs.writeFileSync(path.join(job, "job.md"), "# job\n\n## 문제\nPROBLEM\n\n## 목표\nGOAL\n\n## 해결방향\nDIRECTION\n");
-    for (let n = 0; n < 2; n++) {
-      const recovered = data.recover();
-      assert.match(recovered.prompt, /active_job: 20260907-parity \(해결방향 filled\)/);
-      assert.match(recovered.prompt, /CONTEXT[\s\S]*PROBLEM[\s\S]*GOAL[\s\S]*DIRECTION[\s\S]*PROGRESS/);
-    }
-    fs.writeFileSync(path.join(job, "job.md"), "# job\n\n## 해결방향\n\n## 기록\nNOTE\n");
-    assert.match(data.recover().prompt, /해결방향 empty/);
-    fs.unlinkSync(path.join(data.session, "jobs", "active.json"));
-    assert.match(data.recover().prompt, /active_job: none/);
-    assert.doesNotMatch(data.recover().prompt, /NOTE/);
-  }
+test("job pointer, progress.md, session-state.json and runs/ are records only and are not loaded", (t) => {
+  const data = fixture({ entries: [{ body: "ENTRY", work: "x" }] });
+  t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
+  const id = "20260907-parity";
+  fs.mkdirSync(path.join(data.session, "jobs", id), { recursive: true });
+  fs.writeFileSync(path.join(data.session, "jobs", "active.json"), JSON.stringify({ id }));
+  fs.writeFileSync(path.join(data.session, "jobs", id, "job.md"), "# job\n\n## 문제\nPROBLEM\n");
+  fs.writeFileSync(path.join(data.session, "progress.md"), "PROGRESS\n");
+  fs.writeFileSync(path.join(data.session, "session-state.json"), JSON.stringify({ schema: 1, generation: 3, mode: "run", activeRun: { id: "old", path: "runs/old" } }));
+  fs.mkdirSync(path.join(data.session, "runs", "old", "checkpoints"), { recursive: true });
+  fs.writeFileSync(path.join(data.session, "runs", "old", "run.md"), "RUN-CANON\n");
+  fs.writeFileSync(path.join(data.session, "runs", "old", "checkpoints", "0001.md"), "CHECKPOINT-CANON\n");
+  const recovery = data.recover();
+  assert.match(recovery.prompt, /CONTEXT[\s\S]*ENTRY/);
+  assert.doesNotMatch(recovery.prompt, /PROBLEM|PROGRESS|active_job|RUN-CANON|CHECKPOINT-CANON|^mode:|active_run/m);
+  assert.deepEqual(recovery.metadata.loadedPaths, ["context.md", "history.md"]);
 });
 
-test("history hash or checkpoint junk does not empty Session recovery", (t) => {
+test("history junk or checkpoint junk does not empty Session recovery", (t) => {
   const cases = [
     (data) => { fs.mkdirSync(path.join(data.session, "checkpoints"), { recursive: true }); fs.writeFileSync(path.join(data.session, "checkpoints", "transaction.json"), "{}"); },
     (data) => fs.writeFileSync(path.join(data.session, "history.md"), "TAMPERED"),
   ];
   for (const mutate of cases) {
-    const data = fixture({ entries: [{ body: "ENTRY" }] });
+    const data = fixture({ entries: [{ body: "ENTRY", work: "x" }] });
     mutate(data);
     const recovery = data.recover();
     assert.equal(recovery.metadata.mode, "session");
     assert.match(recovery.prompt, /CONTEXT/);
-    assert.match(recovery.prompt, /PROGRESS/);
+    assert.doesNotMatch(recovery.prompt, /ledger|slice/i);
     fs.rmSync(data.root, { recursive: true, force: true });
   }
 });
 
-test("semantic Run recovery still includes Session context, progress, and pointer files", (t) => {
-  const data = semanticFixture(); t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));
-  const recovery = data.recover();
-  assert.equal(recovery.metadata.format, "semantic");
-  assert.match(recovery.prompt, /CONTEXT/);
-  assert.match(recovery.prompt, /PROGRESS/);
-  assert.match(recovery.prompt, /RUN[\s\S]*Checkpoint[\s\S]*Contract/);
-  assert.ok(recovery.metadata.loadedPaths.includes("context.md"));
-  assert.ok(recovery.metadata.loadedPaths.includes("runs/active/run.md"));
-});
-
-test("semantic pointer failure still recovers Session files", (t) => {
-  const mutations = [
-    (run) => fs.writeFileSync(path.join(run, "run.json"), "{}"),
-    (run) => { const pointer = JSON.parse(fs.readFileSync(path.join(run, "run.json"))); pointer.latestCheckpoint = "checkpoints/missing.md"; fs.writeFileSync(path.join(run, "run.json"), JSON.stringify(pointer)); },
-    (run) => { fs.unlinkSync(path.join(run, "run.json")); fs.symlinkSync("run.md", path.join(run, "run.json")); },
-    (run) => { const pointer = JSON.parse(fs.readFileSync(path.join(run, "run.json"))); pointer.currentExecutionContracts = ["../run.md"]; fs.writeFileSync(path.join(run, "run.json"), JSON.stringify(pointer)); },
-  ];
-  for (const mutate of mutations) {
-    const data = semanticFixture(); const run = path.join(data.session, "runs", "active"); mutate(run);
-    const recovery = data.recover();
-    assert.equal(recovery.metadata.mode, "run");
-    assert.notEqual(recovery.metadata.diagnosis, "SEMANTIC_RUN_POINTER_CORRUPT");
-    assert.match(recovery.prompt, /CONTEXT/);
-    assert.equal(fs.existsSync(path.join(run, "state.json")), false);
-    fs.rmSync(data.root, { recursive: true, force: true });
-  }
+test("selectStartEntries is pure and bounded", () => {
+  const entries = Array.from({ length: 40 }, (_, i) => ({ timestamp: `t${i}`, work: "w", runId: "", label: "w", body: `## t${i} work:w\n\nE${i}\n\n다음: go ${i}` }));
+  const memory = selectStartEntries(entries);
+  assert.equal(memory.selected.length, 11);
+  assert.equal(memory.selected[0].timestamp, "t0");
+  assert.equal(memory.selected[10].timestamp, "t39");
+  assert.equal(memory.cursor, "다음: go 39");
+  assert.deepEqual(selectStartEntries([]), { total: 0, latest: "", work: "", chainCount: 0, selected: [], cursor: "" });
 });

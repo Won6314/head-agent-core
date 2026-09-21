@@ -37,9 +37,7 @@ Ownership rule: a meaning lives in exactly one place. `shared/` owns what to res
 
 | Module | Meaning |
 |---|---|
-| `session-lifecycle.mjs` | Session identity, active Job, Run recovery payload (`projectSessionRecovery`), and `parseHistoryEntries` — the single parser for `history.md` checkpoint headings (`## <ISO>` with optional `run:<id>`) |
-| `semantic-run.mjs` | Pointer-only Run reader (`run.json` → `run.md`, latest checkpoint, current contracts) and the checkpoint decision set: `START CONTINUE LOCAL_CORRECTION PLAN_CHANGE_REQUIRED USER_DECISION STOPPED DONE FAILED` |
-| `session-transitions.mjs` | Session ↔ Run mode transitions used by both the OpenCode `head_session` tool and the Claude `head-session` MCP adapter |
+| `session-lifecycle.mjs` | Session identity, the start payload derived from `history.md` (`projectSessionRecovery`), and `parseHistoryEntries` — the single parser for checkpoint headings (`## <ISO>` with an optional `work:<slug>`; a pre-2026-09-17 `run:<id>` still reads as that entry's label) |
 | `checkpoint-ledger.mjs` | Legacy ledger records; reads `REVISE` as `LOCAL_CORRECTION`, writes only the semantic set |
 | `compact-policy.mjs` | Compaction summary policy: pointer-only when no real user turn followed the latest checkpoint, a short factual summary of the checkpoint gap otherwise, one sentence of current work when the checkpoint cannot be resolved; plus the user-turn restoration budget. Runtime-neutral inputs, `{ runtime }` selects the wrapping |
 | `context-composition.mjs` | Base files, the HEAD prompt (`buildHeadPrompt`), the agent state directory (`<agent dir>/state/`), session records, and size-rotated JSONL logs |
@@ -52,7 +50,6 @@ Ownership rule: a meaning lives in exactly one place. `shared/` owns what to res
 | Recovery after start or compaction | `session-recovery.mjs` — CLI the project's SessionStart hook executes | `compact-recovery.mjs` — plugin, same `projectSessionRecovery` |
 | Compaction summary instruction | `compaction-prompt.mjs` — PreCompact hook reading the transcript JSONL | inside `compact-recovery.mjs` |
 | Restoring compacted user turns | `compact-user-turns.mjs` — SessionStart(compact) hook | `compact-recovery.mjs` with `state/compact-spans/` |
-| Session mode tool | project MCP adapter over `session-transitions` | `head-session.mjs` plugin tool `head_session` |
 | Core first in the system prompt | project renders `HEAD_CORE.md` into `--system-prompt-file` | `head-core-first.mjs` moves the Core block first |
 | Restore identity | `upsert-restore-id.py` | `save-session-id.js` |
 
@@ -65,18 +62,13 @@ Durable authority lives in the agent's session directory; conversation state is 
 ```text
 <agent dir>/sessions/<session>/
 ├── context.md                 identity and agreement; edited only on user instruction
-├── progress.md                one-line current position
-├── history.md                 checkpoints, "## <ISO>" or "## <ISO> run:<id>"
-├── session-state.json         mode: session | run
-├── jobs/<id>/job.md           problem · goal · direction (user's words, HEAD's agreed direction)
-└── runs/<id>/
-    ├── run.md                 thin index: outcome, results, boundaries, success, position
-    ├── run.json               pointers only
-    ├── checkpoints/NNNN-*.md
-    └── execution-contracts/NNNN-*.md
+├── history.md                 checkpoints, "## <ISO>[ work:<slug>]", each ending in its "다음:" cursor
+├── session-state.json         record only (the Run mode it named was removed 2026-09-17)
+├── jobs/<id>/job.md           record only (record_job removed 2026-09-17)
+└── runs/<id>/                 record only (record_run, head_session, layered_run removed 2026-09-17)
 ```
 
-Recovery fails closed on conflicting identity, invalid pointers, path escape, or malformed canon. Legacy Runs remain recoverable through their existing format.
+A start (session start or post-compaction) loads context.md plus memory derived from history.md alone: the chain of entries sharing the last entry's work label (first entry + last 10) united with the last 5 entries, in time order, cut by count and never summarised. There is no mode and no state file is read — a pointer that HEAD must remember to close is exactly what compaction makes it forget. Recovery fails closed on conflicting identity, path escape, or malformed canon.
 
 Compaction keeps: the canon above (re-read, not summarized), the user's own words from the compacted span, and a pointer or a ≤8-line factual gap summary. Model-authored summaries are never resubmitted as user instructions.
 

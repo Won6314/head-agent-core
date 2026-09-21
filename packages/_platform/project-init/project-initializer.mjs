@@ -62,7 +62,7 @@ function config(coreRoot, target, role) {
   if (role === "head") return {
     instructions: [absolute(coreRoot, "packages/core/head/HEAD_CORE.md"), absolute(target, ".claude/agents/head/CLAUDE.md"), absolute(target, ".claude/agents/head/HEAD_CONTEXT.md")],
     skills: { paths: [absolute(coreRoot, "packages/skills"), absolute(target, ".claude/skills")] },
-    plugin: [absolute(coreRoot, "packages/opencode-runtime/runtime/opencode/plugins/head-core-first.mjs"), absolute(coreRoot, "packages/opencode-runtime/runtime/opencode/save-opencode-session-id.js"), absolute(coreRoot, "packages/opencode-runtime/runtime/opencode/plugins/head-session.mjs"), absolute(coreRoot, "packages/opencode-runtime/runtime/opencode/plugins/compact-recovery.mjs")],
+    plugin: [absolute(coreRoot, "packages/opencode-runtime/runtime/opencode/plugins/head-core-first.mjs"), absolute(coreRoot, "packages/opencode-runtime/runtime/opencode/save-opencode-session-id.js"), absolute(coreRoot, "packages/opencode-runtime/runtime/opencode/plugins/compact-recovery.mjs")],
     mcp: { "agent-task": mcp("agent-task"), "agent-comm": mcp("agent-comm") },
   };
   const core = { developer: "DEVELOPER_CORE.md", coder: "CODER_CORE.md", reviewer: "REVIEWER_CORE.md" }[role];

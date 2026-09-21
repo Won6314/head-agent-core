@@ -1,9 +1,18 @@
 import fs from "node:fs";
 import path from "node:path";
-import { resolveSemanticRun } from "./semantic-run.mjs";
 
 const SESSION_NAME = /^[A-Za-z0-9._-]+$/;
-export const PROGRESS_LIMIT = 12_000;
+
+// Start-of-session memory (user decision 2026-09-17: "상태는 버리고 저장만").
+// There is no open/closed state to maintain: every checkpoint is an append-only
+// history entry that names the work it belonged to, and the start load is derived
+// from history each time — the recent window plus the chain of entries sharing the
+// last entry's work label, both cut by count, never summarised.
+export const RECENT_ENTRIES = 5;
+export const WORK_CHAIN_TAIL = 10;
+export const WORK_SLUG = /^[a-z0-9가-힣][a-z0-9가-힣-]{0,60}$/;
+export const CURSOR_PREFIX = "다음:";
+const CURSOR_LIMIT = 400;
 
 function directSessionDir(headDirectory, name) {
   if (!SESSION_NAME.test(String(name || ""))) return "";
@@ -16,51 +25,12 @@ function directSessionDir(headDirectory, name) {
   } catch { return ""; }
 }
 
-function regularText(file) {
-  try {
-    const metadata = fs.lstatSync(file);
-    return metadata.isFile() && !metadata.isSymbolicLink() ? fs.readFileSync(file, "utf8") : "";
-  } catch { return ""; }
-}
-
 function directBytes(file) {
   try {
     const metadata = fs.lstatSync(file);
     if (!metadata.isFile() || metadata.isSymbolicLink()) return { status: "corrupt" };
     return { status: "present", body: fs.readFileSync(file) };
   } catch (error) { return error?.code === "ENOENT" ? { status: "missing" } : { status: "corrupt" }; }
-}
-
-function stateFile(sessionDir) {
-  const file = path.join(sessionDir, "session-state.json");
-  try {
-    const metadata = fs.lstatSync(file);
-    if (!metadata.isFile() || metadata.isSymbolicLink()) return { status: "corrupt" };
-    return { status: "present", body: fs.readFileSync(file, "utf8") };
-  } catch (error) { return error?.code === "ENOENT" ? { status: "missing" } : { status: "corrupt" }; }
-}
-
-function isPlainObject(value) {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
-
-function hasExactKeys(value, keys) {
-  return Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
-}
-
-export function parseSessionState(sessionDir) {
-  const source = stateFile(sessionDir);
-  if (source.status !== "present") return source;
-  let value;
-  try { value = JSON.parse(source.body); } catch { return { status: "corrupt" }; }
-  if (!isPlainObject(value) || !hasExactKeys(value, ["schema", "generation", "mode", "activeRun"])
-    || value.schema !== 1 || !Number.isSafeInteger(value.generation) || value.generation < 0) return { status: "corrupt" };
-  if (value.mode === "session" && value.activeRun === null) return { status: "session", state: value };
-  if (value.mode !== "run" || !isPlainObject(value.activeRun) || !hasExactKeys(value.activeRun, ["id", "path"])
-    || !SESSION_NAME.test(value.activeRun.id) || typeof value.activeRun.path !== "string") return { status: "corrupt" };
-  const expected = `runs/${value.activeRun.id}`;
-  if (value.activeRun.path !== expected && value.activeRun.path !== ".") return { status: "corrupt" };
-  return { status: "run", state: value };
 }
 
 export function resolveSessionIdentity({ headDirectory, liveSessionName = "", sessionRecord = null } = {}) {
@@ -75,53 +45,25 @@ export function resolveSessionIdentity({ headDirectory, liveSessionName = "", se
   return { status: "unresolved", diagnosis: "SESSION_IDENTITY_UNRESOLVED" };
 }
 
-function resolveActiveRun(sessionDir, activeRun) {
-  const runDir = activeRun.path === "." ? sessionDir : path.join(sessionDir, activeRun.path);
-  try {
-    const metadata = fs.lstatSync(runDir);
-    if (!metadata.isDirectory() || metadata.isSymbolicLink()) return "";
-    const resolvedSession = fs.realpathSync(sessionDir);
-    const resolvedRun = fs.realpathSync(runDir);
-    if (activeRun.path !== "." && path.dirname(resolvedRun) !== fs.realpathSync(path.join(resolvedSession, "runs"))) return "";
-    return resolvedRun;
-  } catch { return ""; }
-}
+const LOADED_RULE = "loaded_rule: context.md carries the session's intent and constraints. The history entries below are the memory loaded for this start — the current work chain (first entry plus the last "
+  + `${WORK_CHAIN_TAIL} that share the last entry's work label) and the recent window (last ${RECENT_ENTRIES}), in time order, cut by count and never summarised. `
+  + "The last entry's 다음: line is the cursor. Before acting on a request that continues this session, read the sources the graph selects for it; pull more history with read_history(work=..., grep=..., last=...)";
 
-const JOB_ID = /^[0-9]{8}-[a-z0-9가-힣][a-z0-9가-힣-]{0,60}$/;
-
-/** The job in progress: `jobs/active.json` names it, `jobs/<id>/job.md` is its record. Never a Run pointer. */
-export function resolveActiveJob(sessionDir) {
-  const pointer = directBytes(path.join(sessionDir, "jobs", "active.json"));
-  if (pointer.status !== "present") return { status: pointer.status === "missing" ? "none" : "corrupt" };
-  let id;
-  try { id = JSON.parse(pointer.body.toString("utf8"))?.id; } catch { return { status: "corrupt" }; }
-  if (typeof id !== "string" || !JOB_ID.test(id)) return { status: "corrupt" };
-  const file = path.join(sessionDir, "jobs", id, "job.md");
-  const body = presentText(directBytes(file));
-  if (!body.trim()) return { status: "corrupt", id };
-  const direction = /^## 해결방향[ \t]*\r?\n([\s\S]*?)(?=^## |(?![\s\S]))/m.exec(body)?.[1] || "";
-  return { status: "active", id, file, body, directionFilled: Boolean(direction.trim()) };
-}
-
-function jobHeaderLine(job) {
-  if (!job || job.status === "none") return "active_job: none";
-  if (job.status !== "active") return `active_job: corrupt${job.id ? ` (${job.id})` : ""}`;
-  return `active_job: ${job.id} (해결방향 ${job.directionFilled ? "filled" : "empty"})`;
-}
-
-function runtimeHeader({ identity, mode, loaded = [], activeRun = "none", diagnosis = "", job = null, history = "" }) {
+function runtimeHeader({ identity, loaded = [], diagnosis = "", memory = null }) {
   return [
     "<HEAD_RUNTIME_CONTEXT>",
     `logical_session: ${identity?.sessionName || "unresolved"}`,
     `logical_session_directory: ${identity?.sessionDir || "unresolved"}`,
-    `mode: ${mode}`,
     `identity_source: ${identity?.source || (identity?.status === "conflict" ? "conflict" : "unresolved")}`,
     "canon_path_rule: resolve paths listed in loaded against logical_session_directory, never against the process working directory",
-    "loaded_rule: context.md and progress.md carry the session's intent, constraints, and cursor, not its working context. Before answering or acting on a request that continues this session, rebuild that context: read the recent history entries (read_history), the job or run canon the cursor names, and the sources the graph selects for the request",
+    LOADED_RULE,
     `loaded: ${loaded.length ? loaded.join(", ") : "none"}`,
-    `active_run: ${activeRun}`,
-    jobHeaderLine(job),
-    ...(history ? [history] : []),
+    ...(memory ? [
+      `history: ${memory.total} entries${memory.total ? `, latest ${memory.latest || "?"}` : ""} (read_history)`,
+      `work: ${memory.work ? `${memory.work} (${memory.chainCount} entries)` : "none"}`,
+      `loaded_entries: ${memory.selected.length} of ${memory.total}`,
+      `cursor: ${memory.cursor || "none"}`,
+    ] : []),
     ...(diagnosis ? [`diagnosis: ${diagnosis}`] : []),
     "</HEAD_RUNTIME_CONTEXT>",
   ].join("\n");
@@ -135,85 +77,83 @@ function presentText(source) {
   return source.status === "present" ? source.body.toString("utf8") : "";
 }
 
+/**
+ * Parse `## <timestamp>[ work:<slug>][ run:<id>]` entries of one history.md.
+ * `label` is the work label an entry belongs to: its `work:` token, or — for entries
+ * written before labels existed — its `run:` stamp.
+ */
 export function parseHistoryEntries(body) {
   const text = Buffer.isBuffer(body) ? body.toString("utf8") : String(body || "");
   const matches = [...text.matchAll(/^##\s+.+$/gm)];
   return matches.map((match, index) => {
-    const heading = match[0];
-    const parsed = heading.match(/^##\s+(\S+)(?:\s+run:(\S+))?/);
+    const tokens = match[0].replace(/^##\s+/, "").trim().split(/\s+/);
+    let runId = "";
+    let work = "";
+    for (const token of tokens.slice(1)) {
+      if (!runId && token.startsWith("run:")) runId = token.slice(4);
+      else if (!work && token.startsWith("work:")) work = token.slice(5);
+    }
     const start = match.index;
     const end = index + 1 < matches.length ? matches[index + 1].index : text.length;
-    return { timestamp: parsed?.[1] || "", runId: parsed?.[2] || "", body: text.slice(start, end).trimEnd() };
+    return { timestamp: tokens[0] || "", runId, work, label: work || runId, body: text.slice(start, end).trimEnd() };
   });
 }
 
-// Session mode injects no history: the record stays on disk and HEAD reads it through
-// `read_history` when the work needs it (user decision 2026-09-03; the same rule was
-// recorded 2026-07-18 and 2026-08-11). Run mode keeps its own Run-scoped checkpoint
-// history because the Run canon is the exception that carries it.
-function selectedHistory(entries, mode, runId) {
-  if (mode === "run" && runId) return entries.filter((entry) => entry.runId === runId);
-  return [];
+function cursorOf(entry) {
+  if (!entry) return "";
+  const lines = entry.body.split("\n").map((line) => line.trim()).filter(Boolean);
+  const last = lines[lines.length - 1] || "";
+  return last.startsWith(CURSOR_PREFIX) ? last.slice(0, CURSOR_LIMIT) : "";
 }
 
-function historyHeaderLine(entries) {
-  if (!entries.length) return "history: 0 entries";
-  const latest = entries[entries.length - 1];
-  return `history: ${entries.length} entries, latest ${latest.timestamp || "?"} (read_history)`;
+/**
+ * The entries a start loads, derived from history alone: the chain of entries sharing
+ * the last entry's label (first + last `chainTail`) united with the last `recent`
+ * entries, returned in time order. No pointer, no close call, no file that grows.
+ */
+export function selectStartEntries(entries, { recent = RECENT_ENTRIES, chainTail = WORK_CHAIN_TAIL } = {}) {
+  const total = entries.length;
+  const last = entries[total - 1];
+  const work = last?.label || "";
+  const chain = work ? entries.filter((entry) => entry.label === work) : [];
+  const chainPick = chain.length <= chainTail + 1 ? chain : [chain[0], ...chain.slice(-chainTail)];
+  const picked = new Set([...chainPick, ...entries.slice(-recent)]);
+  return {
+    total,
+    latest: last?.timestamp || "",
+    work,
+    chainCount: chain.length,
+    selected: entries.filter((entry) => picked.has(entry)),
+    cursor: cursorOf(last),
+  };
 }
 
-/** Recover Session files by session name. History hashes never empty the payload. */
+function memorySection(historyPath, memory) {
+  if (!memory.selected.length) return "";
+  const heading = `# Loaded File: ${historyPath} — ${memory.selected.length} of ${memory.total} entries (work chain + recent window, time order)`;
+  return [heading, "", memory.selected.map((entry) => entry.body).join("\n\n---\n\n"), ""].join("\n");
+}
+
+/**
+ * Recover a Session by name: context.md plus the memory derived from history.md.
+ * There is no mode. session-state.json, jobs/active.json and progress.md are not
+ * read — the Run and job mechanisms were removed on 2026-09-17 ("걍 죽여"); their
+ * directories stay on disk as records only.
+ */
 export function projectSessionRecovery({ headDirectory, liveSessionName, sessionRecord } = {}) {
   const identity = resolveSessionIdentity({ headDirectory, liveSessionName, sessionRecord });
   if (identity.status !== "resolved") {
-    return { prompt: runtimeHeader({ identity, mode: "unresolved", diagnosis: identity.diagnosis }), metadata: { mode: "unresolved", identityStatus: identity.status, diagnosis: identity.diagnosis, loadedPaths: [], activeRun: "" } };
+    return { prompt: runtimeHeader({ identity, diagnosis: identity.diagnosis }), metadata: { mode: "unresolved", identityStatus: identity.status, diagnosis: identity.diagnosis, loadedPaths: [] } };
   }
-
-  const parsed = parseSessionState(identity.sessionDir);
-  const mode = parsed.status === "run" ? "run" : "session";
-  const runId = mode === "run" ? parsed.state.activeRun.id : "";
   const contextPath = path.join(identity.sessionDir, "context.md");
-  const progressPath = path.join(identity.sessionDir, "progress.md");
   const historyPath = path.join(identity.sessionDir, "history.md");
   const context = presentText(directBytes(contextPath));
-  const progress = presentText(directBytes(progressPath)).slice(0, PROGRESS_LIMIT);
   const historySource = directBytes(historyPath);
-  const allEntries = historySource.status === "present" ? parseHistoryEntries(historySource.body) : [];
-  const selected = selectedHistory(allEntries, mode, runId);
-  const historyLine = historyHeaderLine(allEntries);
-  const loadedPaths = [
-    ...(context.trim() ? ["context.md"] : []),
-    ...(progress.trim() ? ["progress.md"] : []),
-    ...(selected.length ? ["history.md"] : []),
-  ];
-  const historySections = selected.map((entry) => section("Checkpoint history", historyPath, entry.body));
-  const job = resolveActiveJob(identity.sessionDir);
-  const jobRel = job.status === "active" ? path.relative(identity.sessionDir, job.file) : "";
-  if (jobRel) loadedPaths.splice(context.trim() ? 1 : 0, 0, jobRel);
-  const jobSection = job.status === "active" ? section("Job job.md", job.file, job.body) : "";
-
-  if (mode === "session") {
-    return {
-      prompt: [runtimeHeader({ identity, mode: "session", loaded: loadedPaths, job, history: historyLine }), section("Session context.md", contextPath, context), jobSection, section("Session progress.md", progressPath, progress), ...historySections].filter(Boolean).join("\n---\n\n"),
-      metadata: { mode: "session", identityStatus: "resolved", identitySource: identity.source, loadedPaths, activeRun: "", activeJob: job.status === "active" ? job.id : "", contextPath, progressPath },
-    };
-  }
-
-  const runDir = resolveActiveRun(identity.sessionDir, parsed.state.activeRun);
-  const semantic = runDir && resolveSemanticRun(runDir, parsed.state.activeRun.id);
-  const runPath = runDir ? path.join(runDir, "run.md") : "";
-  const run = runPath ? presentText(directBytes(runPath)) : "";
-  if (run.trim()) loadedPaths.splice(loadedPaths.includes("progress.md") ? loadedPaths.indexOf("progress.md") : loadedPaths.length, 0, path.relative(identity.sessionDir, runPath));
-  const semanticSections = semantic?.status === "valid" ? [
-    section("Run run.md", semantic.runIndex.path, semantic.runIndex.body),
-    section("Latest Checkpoint", semantic.latestCheckpoint.path, semantic.latestCheckpoint.body),
-    ...semantic.contracts.map((contract) => section("Current Execution Contract", contract.path, contract.body)),
-  ] : [section("Run run.md", runPath, run)];
-  if (semantic?.status === "valid") {
-    loadedPaths.push(path.relative(identity.sessionDir, semantic.latestCheckpoint.path), ...semantic.contracts.map((contract) => path.relative(identity.sessionDir, contract.path)));
-  }
+  const memory = selectStartEntries(historySource.status === "present" ? parseHistoryEntries(historySource.body) : []);
+  const historySection = memorySection(historyPath, memory);
+  const loadedPaths = [...(context.trim() ? ["context.md"] : []), ...(historySection ? ["history.md"] : [])];
   return {
-    prompt: [runtimeHeader({ identity, mode: "run", loaded: loadedPaths, activeRun: runId, job, history: historyLine }), section("Session context.md", contextPath, context), jobSection, ...semanticSections, section("Session progress.md", progressPath, progress), ...historySections].filter(Boolean).join("\n---\n\n"),
-    metadata: { mode: "run", format: semantic?.status === "valid" ? "semantic" : "legacy", identityStatus: "resolved", identitySource: identity.source, loadedPaths, activeRun: runId, activeJob: job.status === "active" ? job.id : "", contextPath, runPath, progressPath },
+    prompt: [runtimeHeader({ identity, loaded: loadedPaths, memory }), section("Session context.md", contextPath, context), historySection].filter(Boolean).join("\n---\n\n"),
+    metadata: { mode: "session", identityStatus: "resolved", identitySource: identity.source, loadedPaths, work: memory.work, historyEntries: memory.total, loadedEntries: memory.selected.length, cursor: memory.cursor, contextPath, historyPath },
   };
 }
