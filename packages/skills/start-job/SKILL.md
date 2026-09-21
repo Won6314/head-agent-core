@@ -1,25 +1,82 @@
 ---
 name: start-job
 description: >
-  Problem → goal → how it gets solved. Run before proposing or making any
-  solution — a plan, a change, a tool, a procedure, a delegation — however
-  small. Grounds each step in what already exists and keeps only what the
-  goal needs; stays short when the problem is plain.
+  기획·변경·제작·위임 전에 문제를 파악하고 기존 자료를 조사해,
+  문제·목표·조건을 사용자와 맞춘다. 그 이해를 바탕으로 직접 수행하거나
+  일회 위임·plan-run으로 이어간다. 단순한 작업은 짧게 처리한다.
 ---
 
 # Start Job
 
-Reason from the problem to the next action, one step at a time, and show the steps. A plain problem takes a few lines.
+사용자가 원하는 결과와 현재 상황을 이해하고, 그 작업을 해결하는 데
+필요한 만큼만 진행하라. 사용자가 요청한 단계와 범위 안에서 수행하라.
 
-1. **Problem and goal.** State the problem and the result that would solve it. Ask the user until both are concrete. A user-facing product result is shaped through `product-planning` (problem → user value → user flow). Name the job with a short slug; its first checkpoint carries it as the `work` label.
-2. **What already exists.** Search what already exists for this goal — graph, canon, code, prior work and decisions, existing tools and skills — and read it. For a change to software or a system, trace the current path from its input to where the result is used. Say what was found.
-3. **Reason step by step.** Ask of the goal "how does this get solved?" and answer from what was found. Ask the same of that answer until the next action is plain. Where solutions differ materially in product, policy, architecture, cost, or workflow, lay them out and let the user choose. For example:
-   - Problem: the LLM starts work without looking at existing materials.
-   - Goal: it reads what exists before it plans.
-   - How is that solved? → The instructions it follows must make it look first.
-   - How? → Core's planning item gains a line to search before planning.
-   - Next action: draft that line and show it.
-4. **Keep it small.** Check each step against the goal: it is needed, and nothing simpler already serves — an existing material, a sentence instead of a tool, one direct edit instead of a procedure. Drop the rest and say what was dropped.
-5. **Act.** Show the reasoning and the next action. The next action is direct work, `delegate-once` for one bounded result another owner returns whole, or `plan-run` for dependent results carried across checkpoints.
+## 1. 문제를 파악하라
 
-A worker's `[from <agent> msg:<id>]` question → `agent-reply`.
+사용자 요청과 기존 대화를 읽고, 무엇이 문제이며 어떤 결과를 원하는지
+파악하라. 이미 내려진 결정과 지켜야 할 조건을 함께 확인하라.
+작업의 뜻이나 범위가 불분명하면 사용자에게 질문하라.
+
+## 2. 기존 자료를 조사하라
+
+그래프와 정본에서 관련 소스를 고르고, 기존 기능·자료·도구·지침을 읽어라.
+무엇이 이미 가능하고, 무엇이 부족하며, 무엇을 재사용할 수 있는지 확인하라.
+
+시스템을 바꾸는 작업이라면 현재 입력이 실제 결과와 소비자까지
+어떻게 이어지는지 확인하라. 조사한 사실로 문제와 목표에 대한 이해를 보완하라.
+
+## 3. 작업을 정의하고 사용자와 확인하라
+
+다음을 짧고 구체적인 불릿으로 제시하라.
+
+- 문제: 현재 무엇이 잘 안 되거나 부족한가.
+- 목표: 이번 작업으로 무엇을 가능하게 하거나 어떤 결과를 만들려는가.
+- 조건: 이미 결정된 사항과 지켜야 할 범위·제약은 무엇인가.
+
+사용자가 작업의 뜻과 범위를 검수할 수 있도록 쓰고, 의도와 맞는지 확인하라.
+이미 합의된 내용은 재사용하고, 빠지거나 달라진 부분만 확인하라.
+확인된 작업 정의를 이후 판단과 진행의 기준으로 삼아라.
+
+## 4. 진행 경로를 선택하라
+
+확인된 문제·목표·조건과 조사 결과를 바탕으로,
+어떤 방식으로 이 일을 끝낼 수 있는지 판단하라.
+작업의 길이나 분량보다 결과의 독립성과 진행 중 필요한 전체 판단을 기준으로 삼아라.
+
+### 직접 수행
+
+HEAD가 필요한 맥락을 유지하면서 방법을 정하고 결과까지 완결할 수 있다면
+직접 수행하라.
+
+목표를 이루려면 무엇을 어떻게 해야 하는지 기존 사실과 자료에서 도출하라.
+기존 것을 재사용하고, 더 단순한 방법으로 같은 결과를 얻을 수 있는지 확인하라.
+필요한 행동을 수행한 뒤 실제 결과가 목표를 충족하는지 확인하라.
+조사·기획·구현 중 사용자가 요청한 범위의 결과를 완성하라.
+
+### 일회 위임
+
+맡길 결과의 뜻과 범위가 분명하고, 한 소유자가 자기 범위 안에서
+독립적으로 판단·수행하여 완성된 결과를 돌려줄 수 있다면
+`delegate-once`를 사용하라.
+
+작업량이 많더라도 하나의 완결된 조사·제작·검증 결과로 받아
+통합할 수 있다면 이 경로에 해당한다.
+
+### plan-run
+
+해결 방법을 찾는 기획부터 여러 차례의 구체화와 전체 판단이 필요하거나,
+서로 의존하는 결과들을 연결하며 진행해야 한다면 `plan-run`을 사용하라.
+
+특히 앞의 결과와 새 사실을 받아 전체 계획을 갱신하고,
+그 이해에서 다음 작업을 정해야 하는 경우에 이 경로를 선택하라.
+
+## 공통 판단 원칙
+
+- 다음 행동과 그 행동이 목표에 필요한 이유를 보여라.
+- 중요한 방향·정책·구조·비용의 선택은 실질적인 차이를 설명하고 사용자와 정하라.
+- 단계·도구·파일·절차는 결과에 필요한 만큼만 둬라.
+- 진행 중 새 사실이 나오면 전체 목표와 조건에 비춰 방법과 다음 행동을 갱신하라.
+
+작업에 짧은 이름을 붙이고, 첫 체크포인트의 `work` 라벨로 사용하라.
+
+워커의 `[from <agent> msg:<id>]` 질문에는 `agent-reply`를 사용하라.
