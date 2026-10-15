@@ -1,6 +1,6 @@
 # Skills
 
-Top-level workflows advertised to HEAD through runtime Skill discovery. Detailed condition-selected branches live outside Skill discovery under [`packages/procedures/`](../procedures/README.md).
+Candidate skills. Nothing under `candidates/` is loaded by the plugin; a skill ships when it moves to the root `skills/` folder. Branch procedures they link live in [`../procedures/`](../procedures/README.md).
 
 ## Work routing
 
