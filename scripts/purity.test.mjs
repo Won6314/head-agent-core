@@ -4,8 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const packagesRoot = path.join(repoRoot, "packages");
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const FORBIDDEN = [
   { name: "posix-home", pattern: new RegExp("/" + "ho" + "me/") },
@@ -20,7 +19,7 @@ const ALLOWED = {
 
 function walk(directory, files = []) {
   for (const name of fs.readdirSync(directory).sort()) {
-    if (name === "_platform" || name === "node_modules" || name === ".git") continue;
+    if (name === "node_modules" || name === ".git" || name === ".head") continue;
     const full = path.join(directory, name);
     const stat = fs.lstatSync(full);
     if (stat.isDirectory()) walk(full, files);
@@ -33,9 +32,9 @@ function isText(buffer) {
   return !buffer.includes(0);
 }
 
-test("packages tree has no absolute paths, product names, or project session paths", () => {
+test("plugin tree has no absolute paths, product names, or project session paths", () => {
   const hits = [];
-  for (const file of walk(packagesRoot)) {
+  for (const file of walk(repoRoot)) {
     const relative = path.relative(repoRoot, file);
     if (ALLOWED[relative]) continue;
     const buffer = fs.readFileSync(file);
