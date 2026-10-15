@@ -52,7 +52,8 @@ test('identity: older entries are summary lines only, last five are time+body, o
   s.save({summary:'after',history:'after body',conversation_id:'seed'});assert.match(s.load({conversation_id:'seed',history_count:1}),/\nM SIDE RESULT ← 합쳐짐 side\n/);
 });
 test('Claude hook: identity in hook when it fits; over the cap the conversation MCP sends the same load as a channel message',async()=>{
-  const {dir,s}=fixture(),hook=(id,source='startup')=>spawnSync(process.execPath,[path.resolve('scripts/hook.mjs')],{input:JSON.stringify({hook_event_name:'SessionStart',session_id:id,source,cwd:dir}),env:{...process.env,CLAUDE_PROJECT_DIR:dir,HEAD_CONTEXT_SESSION:'demo'},encoding:'utf8'});
+  const {dir,s}=fixture();callTool(s,'project_setup',{action:'never_ask',step:'setup'},undefined,dir); // identity alone; the first-run guide is covered in first-run.test
+  const hook=(id,source='startup')=>spawnSync(process.execPath,[path.resolve('scripts/hook.mjs')],{input:JSON.stringify({hook_event_name:'SessionStart',session_id:id,source,cwd:dir}),env:{...process.env,CLAUDE_PROJECT_DIR:dir,HEAD_CONTEXT_SESSION:'demo'},encoding:'utf8'});
   const small=hook('small');assert.equal(small.status,0);assert.equal(JSON.parse(small.stdout).hookSpecificOutput.additionalContext,s.load({conversation_id:'small'}));
   assert.equal(hook('small','resume').stdout,'');
   for(let i=0;i<5;i++)s.save({summary:'BIG-'+i,history:'긴 본문 '.repeat(500),conversation_id:'seed'});

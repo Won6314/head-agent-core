@@ -104,6 +104,24 @@ limit/count 0은 전체. 지도는 최근 체크포인트부터 채우고 `그 �
 파일 변경 뒤 색인 실패/중단은 다음 읽기의 mtime/size 동기화로 회복된다. 파일이 권위다.
 강제 종료된 lock 디렉터리의 자동 회수는 이전과 같이 범위 밖이다.
 
+## 프로젝트 첫 실행 (초기설정·조사)
+
+플러그인을 켠 프로젝트에서 처음 시작하면 두 단계를 한 번씩 묻는다. 묻는 것은 LLM, 쓰는 것은 코드(`project_setup`)다.
+
+- 상태: `.head/config.json`의 `first_run: {setup, survey}`. 값은 `done`(끝남) 또는 `never_ask`(다시 묻지 않음). 없으면 아직 안 함. `sessions_dir` 등 다른 키는 그대로 둔다.
+- 시작 훅(startup·/clear만, resume·compact 제외): 초기설정 전이면 짧은 안내를 세션 정체성 뒤에 붙인다. 정체성이 훅 상한을 넘어 채널로 가도 안내는 훅에 남는다.
+  모델은 첫 입력에서 먼저 "초기설정 해도 될까요?"를 묻고 답을 받은 뒤 원래 이야기로 간다. 거절하면 "다시는 묻지 않을까요?"를 묻고, 예일 때만 기록한다(아니오면 다음 시작에 다시 묻는다).
+- 초기설정 = 플러그인의 `instructions/HEAD_CORE.md`를 프로젝트 `.head/core.md`로 복사 + 프로젝트 `CLAUDE.md`에 `@.head/core.md` 한 줄(파일 없으면 생성, 있으면 끝에 한 번만, 기존 내용 보존).
+  CLAUDE.md가 의존하는 파일은 언제나 프로젝트 안에 둔다. 플러그인 설치 경로(버전마다 바뀜)를 가리키지 않는다.
+  도구 결과로 코어 본문을 돌려주므로 그 대화부터 적용된다.
+- 초기설정이 끝난 프로젝트는 시작마다(모든 source) `.head/core.md`를 플러그인 코어로 맞춘다.
+  Claude Code 2.1.300 실측: 대화형은 CLAUDE.md를 시작 훅 뒤(첫 질의 때)에 읽어 같은 시작에 반영되고, 헤드리스 `-p`는 훅 전에 읽어 다음 시작부터 반영된다.
+- 조사: 초기설정이 끝났고 플러그인에 `instructions/survey.md`가 있을 때만 "프로젝트 조사해볼까요?"를 묻는다. 지금은 그 파일이 없어 묻지 않는다(내용 준비 중).
+
+| 도구 | 인자 |
+|---|---|
+| project_setup | action=setup / never_ask(step=setup·survey) / survey_done. conversation_id 없음(프로젝트 단위) |
+
 ## SQLite
 
 `.head/index.sqlite` 하나. 외부 npm/서버/타이머 없음. SQLite 기본 rollback journal은

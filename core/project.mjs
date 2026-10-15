@@ -1,0 +1,53 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {optionalRead,atomicText,atomicJSON,noSymlink,locked} from './storage.mjs';
+// Project first run. Two steps, each asked once per project: setup (core instructions
+// into the project) and survey (asked only when the plugin carries its procedure).
+// State lives in .head/config.json under first_run: {setup, survey}, each 'done' or 'never_ask'.
+// Everything CLAUDE.md depends on is copied into the project, never pointed at the plugin path.
+const plugin=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+export const CORE_SOURCE=path.join(plugin,'instructions','HEAD_CORE.md');
+export const SURVEY_SOURCE=path.join(plugin,'instructions','survey.md');
+export const IMPORT_LINE='@.head/core.md';
+export const STEPS=['setup','survey'];
+const VALUES=['done','never_ask'];
+const files=project=>{if(!project||!path.isAbsolute(project))throw new Error('절대 프로젝트 경로가 필요합니다.');const root=path.join(project,'.head');return {root,config:noSymlink(path.join(root,'config.json')),core:noSymlink(path.join(root,'core.md')),claude:noSymlink(path.join(project,'CLAUDE.md'))};};
+const readConfig=file=>JSON.parse(optionalRead(file)||'{}');
+export function firstRun(project){const s=readConfig(files(project).config).first_run||{};return Object.fromEntries(STEPS.map(k=>[k,VALUES.includes(s[k])?s[k]:null]));}
+function mark(project,step,value){
+  if(!STEPS.includes(step))throw new Error(`알 수 없는 단계: ${step}`);
+  const {config}=files(project);fs.mkdirSync(path.dirname(config),{recursive:true});
+  locked(config,()=>{const c=readConfig(config);c.first_run={...(c.first_run||{}),[step]:value};atomicJSON(config,c);});
+}
+const surveyReady=()=>fs.existsSync(SURVEY_SOURCE);
+const hasImport=text=>text.split(/\r?\n/).some(l=>l.trim()===IMPORT_LINE);
+// Keeps the project copy equal to the plugin's core. CLAUDE.md is read before the
+// start hook runs, so a refresh written here applies from the next start.
+export function refreshCore(project){
+  if(firstRun(project).setup!=='done')return false;
+  const {core}=files(project),body=fs.readFileSync(CORE_SOURCE,'utf8');
+  if(optionalRead(core)===body)return false;atomicText(core,body);return true;
+}
+const surveyQuestion=()=>`"프로젝트 조사해볼까요?"를 물으세요. 예면 ${SURVEY_SOURCE} 절차를 따르고 끝나면 project_setup(action=survey_done). 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 project_setup(action=never_ask, step=survey).`;
+// Start-hook guide, kept short to stay inside the hook cap together with the identity.
+export function guide(project){
+  const s=firstRun(project);
+  if(!s.setup)return `# 프로젝트 첫 실행 (head-context)\n이 프로젝트는 초기설정 전입니다. 사용자의 첫 입력에 답하기 전에 먼저 짧게 "초기설정 해도 될까요?"를 물으세요. 초기설정은 HEAD 코어 지침을 \`.head/core.md\`에 두고, 프로젝트 CLAUDE.md에 \`${IMPORT_LINE}\` 한 줄을 넣습니다(파일이 없으면 만들고 기존 내용은 그대로 둡니다).\n- 예: project_setup(action=setup)을 부르고, 돌려받은 코어 지침을 이 대화부터 따르세요.\n- 아니오: "다시는 묻지 않을까요?"를 물으세요. 예면 project_setup(action=never_ask, step=setup), 아니오면 아무것도 기록하지 않습니다(다음 시작에 다시 묻습니다).\n답을 받은 뒤 사용자의 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.`;
+  if(s.setup==='done'&&!s.survey&&surveyReady())return `# 프로젝트 조사 (head-context)\n사용자의 첫 입력에 답하기 전에 먼저 짧게 ${surveyQuestion()} 답을 받은 뒤 원래 이야기로 이어가세요.`;
+  return '';
+}
+// The one writer of the project files. The LLM guides; this code writes.
+export function setupTool(project,{action,step}){
+  if(action==='never_ask'){if(!STEPS.includes(step))throw new Error('never_ask에는 step(setup 또는 survey)이 필요합니다.');mark(project,step,'never_ask');return `이 프로젝트에서는 ${step==='setup'?'초기설정':'프로젝트 조사'}을 다시 묻지 않습니다. 기록: .head/config.json first_run.${step}=never_ask`;}
+  if(action==='survey_done'){mark(project,'survey','done');return '프로젝트 조사를 끝남으로 기록했습니다.';}
+  if(action!=='setup')throw new Error('action은 setup, never_ask, survey_done 중 하나입니다.');
+  const f=files(project),body=fs.readFileSync(CORE_SOURCE,'utf8');
+  fs.mkdirSync(f.root,{recursive:true});atomicText(f.core,body);
+  const before=optionalRead(f.claude);let claude;
+  if(hasImport(before))claude='이미 있어 그대로 두었습니다';
+  else{atomicText(f.claude,before?`${before}${before.endsWith('\n')?'':'\n'}\n${IMPORT_LINE}\n`:`${IMPORT_LINE}\n`);claude=before?'기존 내용 끝에 한 줄을 더했습니다':'새로 만들었습니다';}
+  mark(project,'setup','done');
+  const next=surveyReady()&&firstRun(project).survey===null?`\n\n이어서 ${surveyQuestion()}`:'';
+  return `초기설정을 마쳤습니다.\n- .head/core.md: 코어 지침을 썼습니다.\n- CLAUDE.md의 \`${IMPORT_LINE}\`: ${claude}.\n- 다음 시작부터는 CLAUDE.md로 코어 지침이 들어갑니다. 이 대화에서는 아래 코어 지침을 지금부터 따르세요.${next}\n\n${body}`;
+}

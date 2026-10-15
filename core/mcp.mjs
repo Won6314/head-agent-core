@@ -1,6 +1,7 @@
 import readline from 'node:readline';
 import { sessions, CONTEXT_REQUIRED } from './sessions.mjs';
-export const instructions = '세션은 큰 작업 주제이고, 메인은 그 안의 일이 시간순으로 쌓이는 곳입니다. 세션 로드(시작 훅·session_load)는 세션 정체성을 줍니다: context.md, 열린 브랜치, 지난 기록 요약, 최근 기록 5건의 시각과 본문, 마지막 기록의 다음 줄. 재개는 이미 맥락이 있으므로 다시 로드하지 않고, /clear와 압축은 처음 시작과 같이 다시 로드합니다. 로드가 훅에 다 들어가지 않으면 같은 내용이 head-context 채널 메시지로 이어서 들어옵니다. 그 메시지는 응답이 필요 없는 정체성 자료이며, 들어오지 않았는데 필요하면 session_load를 호출하세요. 브랜치는 별도 작업을 동시에 진행할 때만 쓰는 선택 사항입니다. 열린 브랜치가 있어 어디로 이어갈지 모르면 사용자에게 평소 말로 물으세요(예: 이 세션에 진행 중인 작업이 여러 개 있는데 어떤 걸 이어갈까요?). session_save는 지금 자리에 요약 한 줄·본문·다음(선택, 있으면 이어갈 일이 있다는 뜻)을 저장합니다. 본문은 작업 요약, 근거 파일 링크와 그 내용, 파일에 빠진 내용입니다. session_branch create/attach/main/abandon과 session_finish는 브랜치를 다룹니다. 이동 응답이 끝낼지 열어둘지 묻도록 하면 연결은 아직 바뀌지 않은 것입니다: 사용자에게 묻고 끝내면 session_finish, 열어두면 같은 호출에 keep_open=true를 주세요. session_read map/recent/entry/find는 연결을 바꾸지 않는 조회이며 다른 세션도 읽을 수 있습니다. session_create는 사용자와 정한 목적을 context로 받아야 합니다. context.md는 사용자 동의 없이 고치지 않습니다. ID는 호스트가 채우므로 모델은 지정하지 않습니다.';
+import { setupTool } from './project.mjs';
+export const instructions = '세션은 큰 작업 주제이고, 메인은 그 안의 일이 시간순으로 쌓이는 곳입니다. 세션 로드(시작 훅·session_load)는 세션 정체성을 줍니다: context.md, 열린 브랜치, 지난 기록 요약, 최근 기록 5건의 시각과 본문, 마지막 기록의 다음 줄. 재개는 이미 맥락이 있으므로 다시 로드하지 않고, /clear와 압축은 처음 시작과 같이 다시 로드합니다. 로드가 훅에 다 들어가지 않으면 같은 내용이 head-context 채널 메시지로 이어서 들어옵니다. 그 메시지는 응답이 필요 없는 정체성 자료이며, 들어오지 않았는데 필요하면 session_load를 호출하세요. 브랜치는 별도 작업을 동시에 진행할 때만 쓰는 선택 사항입니다. 열린 브랜치가 있어 어디로 이어갈지 모르면 사용자에게 평소 말로 물으세요(예: 이 세션에 진행 중인 작업이 여러 개 있는데 어떤 걸 이어갈까요?). session_save는 지금 자리에 요약 한 줄·본문·다음(선택, 있으면 이어갈 일이 있다는 뜻)을 저장합니다. 본문은 작업 요약, 근거 파일 링크와 그 내용, 파일에 빠진 내용입니다. session_branch create/attach/main/abandon과 session_finish는 브랜치를 다룹니다. 이동 응답이 끝낼지 열어둘지 묻도록 하면 연결은 아직 바뀌지 않은 것입니다: 사용자에게 묻고 끝내면 session_finish, 열어두면 같은 호출에 keep_open=true를 주세요. session_read map/recent/entry/find는 연결을 바꾸지 않는 조회이며 다른 세션도 읽을 수 있습니다. session_create는 사용자와 정한 목적을 context로 받아야 합니다. context.md는 사용자 동의 없이 고치지 않습니다. ID는 호스트가 채우므로 모델은 지정하지 않습니다. 프로젝트 첫 실행: 시작 안내가 초기설정(코어 지침 .head/core.md + 프로젝트 CLAUDE.md의 @.head/core.md 한 줄)이나 프로젝트 조사를 물으라고 하면 사용자의 첫 입력에서 먼저 짧게 묻고 원래 이야기로 이어가세요. 거절하면 다시는 묻지 않을지 묻습니다. 이 파일들은 직접 쓰지 말고 project_setup으로만 씁니다.';
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
 const missing = { session_create: { context: CONTEXT_REQUIRED } };
@@ -20,7 +21,10 @@ export const definitions = [
     {action:{type:'string',enum:['map','recent','entry','find']},name:string,branch:string,limit:{type:'integer',minimum:0,default:30},count:{type:'integer',minimum:0,default:5},id:string,file:string,query:string},['action']]
 ].map(([name, description, properties, required]) => ({ name, description,
   inputSchema: { type: 'object', properties: { ...properties, conversation_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' } }, required, additionalProperties: false } }));
-export function callTool(store, name, args, conversation_id) {
+// Project-level, not conversation-level: no conversation_id.
+definitions.push({ name: 'project_setup', description: '프로젝트 첫 실행의 유일한 쓰기 도구. 사용자가 동의했을 때만 부릅니다. action=setup: 코어 지침을 .head/core.md에 쓰고 프로젝트 CLAUDE.md에 @.head/core.md 한 줄을 넣고(없으면 만들고, 있으면 중복 없이, 기존 내용 보존) 초기설정을 끝남으로 기록한 뒤 코어 지침 본문을 돌려줍니다. 이 대화부터 그 지침을 따르세요. action=never_ask: 사용자가 다시 묻지 말라고 한 단계(step=setup 또는 survey)를 기록합니다. action=survey_done: 프로젝트 조사를 끝남으로 기록합니다.',
+  inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['setup', 'never_ask', 'survey_done'] }, step: { type: 'string', enum: ['setup', 'survey'] } }, required: ['action'], additionalProperties: false } });
+export function callTool(store, name, args, conversation_id, project) {
   const tool = definitions.find(t => t.name === name);
   if (!tool) throw new Error(`알 수 없는 도구: ${name}`);
   for (const [key, value] of Object.entries(args)) {
@@ -28,6 +32,7 @@ export function callTool(store, name, args, conversation_id) {
     if (!schema || (schema.type === 'string' ? typeof value !== 'string' : schema.type==='boolean'?typeof value!=='boolean':!Number.isInteger(value)) || (schema.enum&&!schema.enum.includes(value)) || (schema.minimum!==undefined&&value<schema.minimum)) throw new Error(`유효하지 않은 인자: ${key}`);
   }
   for (const key of tool.inputSchema.required) if (!(key in args)) throw new Error(missing[name]?.[key] || `필수 인자: ${key}`);
+  if (name === 'project_setup') return setupTool(project, args);
   return store[name==='session_read'?'inspect':name.slice('session_'.length)]({ ...args, conversation_id });
 }
 // channel (optional): {start(emit)} — called once the client finished initializing;
@@ -48,7 +53,7 @@ export async function serve({ project, host, conversationOf, channel }) {
     else if (method === 'ping') send({ id, result: {} });
     else if (method === 'tools/list') send({ id, result: { tools: definitions } });
     else if (method === 'tools/call') {
-      try { send({ id, result: { content: [{ type: 'text', text: callTool(store, params.name, params.arguments || {}, conversationOf(request)) }] } }); }
+      try { send({ id, result: { content: [{ type: 'text', text: callTool(store, params.name, params.arguments || {}, conversationOf(request), project) }] } }); }
       catch (error) { send({ id, result: { isError: true, content: [{ type: 'text', text: error.message }] } }); }
     } else send({ id, error: { code: -32601, message: 'Method not found' } });
   }
