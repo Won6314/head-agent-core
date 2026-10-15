@@ -61,7 +61,7 @@ Durable authority lives in the agent's session directory; conversation state is 
 
 ```text
 <agent dir>/sessions/<session>/
-├── context.md                 identity and agreement; edited only on user instruction
+├── context.md                 identity and agreement; never edited without user consent
 ├── history.md                 checkpoints, "## <ISO>[ work:<slug>]", each ending in its "다음:" cursor
 ├── session-state.json         record only (the Run mode it named was removed 2026-09-17)
 ├── jobs/<id>/job.md           record only (record_job removed 2026-09-17)

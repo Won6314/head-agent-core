@@ -56,6 +56,20 @@ test("Session start loads context, the current work chain (first + last 10) and 
   assert.deepEqual([...order].sort((a, b) => a - b), order);
 });
 
+test("body headings belong to the preceding dated entry, including legacy dated titles", () => {
+  const text = "## 2026-07-08: Titled entry\n\n## 조사\n\n자료 A.\n\n## 2026-07-09 Legacy title\n\n## 결론\n\n자료 B.\n\n## 2026-09-30T12:00:00.000Z work:recall\n\n## 목표와 합의\n\n본문.\n\n## 근거\n\n[자료](evidence/result.md)\n\n다음: 완료\n";
+  const entries = parseHistoryEntries(text);
+  assert.equal(entries.length, 3);
+  assert.ok(entries[0].body.includes("## 조사\n\n자료 A."));
+  assert.ok(entries[1].body.includes("## 결론\n\n자료 B."));
+  assert.equal(entries[2].work, "recall");
+  assert.ok(entries[2].body.includes("[자료](evidence/result.md)"));
+  const memory = selectStartEntries(entries);
+  assert.equal(memory.latest, "2026-09-30T12:00:00.000Z");
+  assert.equal(memory.work, "recall");
+  assert.equal(memory.cursor, "다음: 완료");
+});
+
 test("an unlabeled last entry loads only the recent window", (t) => {
   const data = fixture({ entries: [{ body: "L-0", work: "alpha" }, { body: "L-1", work: "alpha" }, { body: "L-2", work: "alpha" }, { body: "L-3", work: "alpha" }, { body: "L-4", work: "alpha" }, { body: "L-5", work: "alpha" }, { body: "N-6" }] });
   t.after(() => fs.rmSync(data.root, { recursive: true, force: true }));

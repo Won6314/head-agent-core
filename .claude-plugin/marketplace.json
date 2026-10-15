@@ -1,0 +1,12 @@
+{
+  "name": "head-local",
+  "owner": {"name": "head-agent-core"},
+  "description": "head-agent-core plugins installed from this checkout. Plugin sources are relative, so edits under packages/ apply without reinstalling.",
+  "plugins": [
+    {
+      "name": "head-context",
+      "source": "./packages/context",
+      "description": "세션 메인·브랜치의 파일 기록과 그래프를 복구하고 호스트의 지금 지시·대화·하위작업을 판으로 보여줍니다."
+    }
+  ]
+}

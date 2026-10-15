@@ -20,6 +20,7 @@ Core is attached, not installed. The project supplies:
 | Project binding | `<agent dir>/CLAUDE.md` | Project facts and constraints only. Does not restate Core principles |
 | Authority index | `<agent dir>/HEAD_CONTEXT.md` | One line per canonical source HEAD may need |
 | Skill links | `<agent dir>/.claude/skills/<name>` → `packages/skills/<name>` | Both runtimes discover skills from this directory |
+| Procedure link | `<agent dir>/.claude/procedures` → `packages/procedures` | Both runtimes report a skill's symlink path as its base directory, so a Core skill's `../../procedures/...` link resolves here. The project generator creates it when any Core skill is linked |
 | Runtime registration | Claude: hook commands that execute `packages/head-runtime/claude/*`. OpenCode: `plugin[]` entries for `packages/head-runtime/opencode/*` | The adapters are Core's; the registration is the project's |
 | System prompt | Claude: render `HEAD_CORE.md` (+ any project common block) into `--system-prompt-file`. OpenCode: list `HEAD_CORE.md` first in `instructions` and load the `head-core-first` plugin | Core principles precede project instructions |
 | Session directory | `<agent dir>/sessions/<session>/` with `context.md`, `history.md` (labeled checkpoint entries, each ending in its `다음:` cursor), `jobs/`, `runs/` | The canon the shared runtime recovers from: context plus memory derived from history by work label and recency; no state file |

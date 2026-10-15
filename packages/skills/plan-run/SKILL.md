@@ -1,38 +1,68 @@
 ---
 name: plan-run
-description: >
-  Durable Plan and Run work: an Accepted Plan Baseline carried through dependent bounded Results, checkpoint decisions, and Run recovery. Indexes one procedure per condition.
+description: 보존된 계획 맥락에서 기획·실행·검수를 이어가는 메인 운영 지침. 여러 단계의 결과를 받아 다음 일을 정할 때 사용하며, 현재 스텝의 호출문으로 내부 HEAD를 실행한다.
 ---
 
 # Plan Run
 
-`plan-run` carries an Accepted Plan Baseline through exact Result execution. The Planner owns the Plan and checkpoint judgment; the Runner only materializes and dispatches the selected Result or horizon.
+기존 활성 Run은 [기존 절차](legacy.md)를 유지한다.
 
-## Authority flow
+## 메인의 일
 
-```text
-Accepted Plan Baseline
-→ Runner-authored Execution Contract
-→ Worker Produced Result and Worker Report/Evidence
-→ saved-Planner Checkpoint review
-→ Runner applies the decision and prepares the next contract
+사용자 대화·단계 연결·오류 처리를 맡는다. 실제 기획·수행·검증은 해당 HEAD에게 맡기고, 반환된 판단과 참조로 다음 호출을 선택한다. 작업 HEAD에게 다음 호출문을 작성시키지 않는다.
+
+P0를 만들기 전에는 사용자 피드백으로 문제·목표·조건·초기 방향을 맞춘다. 이후에는 기본 자율형으로 알림을 받아 진행한다. 필수 사용자 입력이나 기존 합의·권한 밖 결정이 필요하면 사용자에게 요청한다.
+
+## 시작과 출발 맥락
+
+초기 합의를 가진 현재 HEAD를 보존할 때 `context_fork`를 호출한다.
+
+```json
+{"source_id":"current"}
 ```
 
-Load one procedure for the current condition:
+반환된 `session_id`를 `P0_ID`로 보관하고 첫 `SEED_ID`도 그 값으로 둔다. 이후 호출에는 실제로 반환된 명시 ID를 쓴다. `current`로 메인을 대신 포크하지 않는다.
 
-- Investigation is sufficient to preserve the whole problem as a Problem Baseline for planning: [capture-problem-baseline.md](../../procedures/plan-run/planning/capture-problem-baseline.md).
-- The Planner needs a user-reviewable Plan Draft: [compile-plan-draft.md](../../procedures/plan-run/planning/compile-plan-draft.md).
-- An accepted Plan Draft has Results that need decomposition or acceptance: [refine-result-graph.md](../../procedures/plan-run/planning/refine-result-graph.md).
-- The complete Plan needs its accepted baseline and initial route: [accept-plan-baseline.md](../../procedures/plan-run/planning/accept-plan-baseline.md).
-- An Accepted Plan Baseline must activate its Runner: [activate-runner.md](../../procedures/plan-run/planning/activate-runner.md).
-- The Planner is preparing the compact Run canon: [initialize-run.md](../../procedures/plan-run/run/initialize-run.md).
-- Independently ready Results need one dependency-safe horizon: [select-horizon.md](../../procedures/plan-run/results/select-horizon.md).
-- The Runner needs an Execution Contract for one exact selected Result or a correction delta: [prepare-execution-contract.md](../../procedures/plan-run/results/prepare-execution-contract.md).
-- Frozen Execution Contracts for the selected horizon are ready for workers: [dispatch-horizon.md](../../procedures/plan-run/results/dispatch-horizon.md).
-- Worker Report/Evidence for a terminal horizon needs a saved-Planner Checkpoint Reviewer judgment: [review-checkpoint.md](../../procedures/plan-run/run/review-checkpoint.md).
-- A saved-Planner Checkpoint decision needs mechanical application: [apply-checkpoint.md](../../procedures/plan-run/run/apply-checkpoint.md).
-- An active Run needs its exact current position: [recover-run.md](../../procedures/plan-run/run/recover-run.md).
-- The user stops a nonterminal Run: [stop-run.md](../../procedures/plan-run/run/stop-run.md).
-- A Checkpoint is terminal: [finish-run.md](../../procedures/plan-run/run/finish-run.md).
+- `P0_ID`: 전체 목표의 보존 기준. 전체 조건을 사용자와 바꾸면 별도 새 기준을 보존하고 이후 리뷰 참조를 갱신한다. 이전 기준은 남긴다.
+- `SEED_ID`: 이번 Q/P와 별도 계획 검증의 공통 출발점. 처음에는 P0, 이후에는 결과를 검수·재통합한 판단 맥락이다.
+- `P_ID`: 이번 ideation을 만든 플래너. 실행 플래닝은 이 완료 맥락에서 시작한다.
+- `PN_ID`: 독립 검증·수용을 마친 상태의 보존본. Rn 및 이번 결과 검수의 출발점이다.
 
-When a selected planning procedure saves, loads, or migrates context, also read [context-anchor-operations.md](../../procedures/plan-run/planning/context-anchor-operations.md). When the Result owner is `coder`, read [coder.md](../../procedures/plan-run/workers/coder.md) with the selected Result procedure only.
+`context_run`은 새 child에서 실행하고 결과·검증된 child ID·handoff 참조를 돌려준다. 실행마다 실제 반환 ID와 자료 참조를 유지한다. 호출문의 `{...}`는 이 반환값과 실제 파일 경로로 채워 보내며, JSON 문자열은 올바르게 escape한다.
+
+## 이번 스텝만 읽기
+
+| 이번에 할 일 | 지침 |
+|---|---|
+| 큰 작업 흐름과 단기 목표를 만든다 | [01 — Q/P ideation](steps/01-ideation.md) |
+| 선택한 일을 실제 실행 규격으로 만든다 | [02 — 실행 플래닝](steps/02-execution-planning.md) |
+| 계획이 정말 필요한 최소인지 본다 | [03 — P0 계획 점검](steps/03-minimum-plan-review.md) |
+| 계획을 검증·수용하고 Pn을 보존한다 | [04 — Pn 계획 검증](steps/04-plan-acceptance.md) |
+| 수용한 계획을 수행한다 | [05 — Rn 실행](steps/05-execution.md) |
+| 실제 결과를 확인한다 | [06 — Pn 결과 검수](steps/06-result-review.md) |
+| 지금까지의 진행을 전체적으로 본다 | [07 — P0 전체 진행 점검](steps/07-progress-review.md) |
+| 판단을 반영하고 다음 방향 또는 완료를 정한다 | [08 — 재통합·다음 방향](steps/08-next-direction.md) |
+
+## 작업 지침과 완료 알림
+
+각 호출의 `command`만 작업 HEAD에게 전달한다. 분기 입력은 이미 포크된 정체성·현재 역할·실제 할 일부터 명시한다. 결과·판단은 맡기되 Run 운영 명령 작성은 맡기지 않는다.
+
+`completion_note`는 메인이 제공하는 **알림용 텍스트**다. 실행기가 보관했다가 기존 결과·상태·세션 ID와 함께 메인에게 돌려준다. 작업 프롬프트에는 넣지 않는다. 기본 `null`이면 추가 메모 없이 기존 완료 알림만 보낸다.
+
+메모의 다음 단계는 안내다. 프로세스 종료와 업무 수용을 구별하고, 실제 결과가 준비됐거나 검토를 통과했을 때 해당 다음 단계로 간다. 실패·입력 요청·보완을 정상 완료로 읽지 않는다.
+
+## 보완·추가 확인·사용자 입력
+
+- 결과 보완은 Rn, 실행 계획 보완은 그 계획을 만든 HEAD, 큰 흐름 보완은 Q/P에 돌린다.
+- 수정된 본의 검수는 해당 보존 기준에서 새 분기로 한다. 대상이 바뀌지 않는 설명·근거 확인은 기존 검수 맥락을 이어간다.
+- 사용자 답도 그 답을 필요로 하는 기존 맥락에 전달한다. Q/P의 공통 조건이 바뀌면 양쪽과 후속 검증에 같은 결정을 전달한다.
+
+완료된 task를 이어갈 때는 `quick_task_control`을 사용한다. `{ROLE_INPUT}`에는 분기 정체성과 이번에 할 일·보완 내용을 포함한다. 다음 `completion_note`는 그 작업을 소비할 스텝 파일의 안내를 사용한다.
+
+```json
+{"task_id":"{LATEST_TASK_ID}","action":"continue","strategy":"resume","command":"{ROLE_INPUT}","completion_note":"{MAIN_COMPLETION_NOTE}"}
+```
+
+continuation은 새 task ID를 반환하므로 다음 호출은 그 ID를 쓴다. 이미 실행 중인 작업을 중복 재개하지 않는다. 운영 오류는 기존 상태·중단 기능으로 확인하며, 무엇이 실행됐는지 모르는 상태에서 처음부터 다시 돌리지 않는다.
+
+pane 보기·새 분해방법론·장기 컨텍스트 재구성은 이 지침의 선행 조건이 아니다.

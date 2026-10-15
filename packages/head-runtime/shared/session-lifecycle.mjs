@@ -84,7 +84,9 @@ function presentText(source) {
  */
 export function parseHistoryEntries(body) {
   const text = Buffer.isBuffer(body) ? body.toString("utf8") : String(body || "");
-  const matches = [...text.matchAll(/^##\s+.+$/gm)];
+  // Only date-led entry headers split history; Markdown section headings stay in the body.
+  // Keep legacy YYYY-MM-DD titles as well as the ISO timestamps written today.
+  const matches = [...text.matchAll(/^##[ \t]+\d{4}-\d{2}-\d{2}(?=[T: \t\r]|$).*$/gm)];
   return matches.map((match, index) => {
     const tokens = match[0].replace(/^##\s+/, "").trim().split(/\s+/);
     let runId = "";
