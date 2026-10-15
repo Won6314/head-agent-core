@@ -49,7 +49,7 @@ export async function serve({ project, host, conversationOf, channel }) {
       continue;
     }
     const { id, method, params = {} } = request;
-    if (method === 'initialize') send({ id, result: { protocolVersion: params.protocolVersion, capabilities: { tools: {}, ...(channel ? { experimental: { 'claude/channel': {} } } : {}) }, serverInfo: { name: 'head-context', version: '0.4.0' }, instructions } });
+    if (method === 'initialize') send({ id, result: { protocolVersion: params.protocolVersion, capabilities: { tools: {}, ...(channel ? { experimental: { 'claude/channel': {} } } : {}) }, serverInfo: { name: 'head-context', version: '0.5.0' }, instructions } });
     else if (method === 'ping') send({ id, result: {} });
     else if (method === 'tools/list') send({ id, result: { tools: definitions } });
     else if (method === 'tools/call') {

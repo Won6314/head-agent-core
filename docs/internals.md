@@ -1,9 +1,6 @@
-# head-context 0.4.0 candidate — 기록과 파일 위치 그래프
+# head-context 내부 형식
 
-이 경로가 운영 플러그인이다. HEAD 런처가 로컬 마켓 `head-local`의 설치본(원본 직접 읽기)으로 켠다.
-메인·브랜치 기록과 그래프 기반 읽기에 이어, 시작/재개/압축 복구·호스트 지금 줄·새 판 흐름을 구현했다.
-운영 HEAD 지침은 제안만 만들었고 변경하지 않았다. agent-task/Herdr 연결은 다음 범위다.
-판의 옛 works 투영을 제거했고 `--watch`/q/Esc와 `--json`은 유지했다.
+사용법은 [README](../README.md). 이 문서는 기록 파일·도구·SQLite 색인·훅 동작의 세부 계약이다.
 
 ## 계약
 
@@ -162,11 +159,8 @@ require의 동기 구간에서 **SQLite 경고만** 선택적으로 억제하고
 HEAD_CONTEXT_TEST_ROOT=/절대/시험폴더 node --test scripts/*.test.mjs
 node scripts/map.mjs /절대/프로젝트 세션 30
 node scripts/board.mjs /절대/프로젝트 --watch
-claude --plugin-dir /home/jywon/head-context-next
+claude --plugin-dir /절대/head-agent-core
 ```
-
-검증 실물은 `/home/jywon/backups/head-context-migration-20261012/evidence/phase3-core/`.
-기존 운영 sessions 전체 복사본에서만 실제 자료 색인을 만들었다. 운영 위치에 반영하지 않았다.
 
 ## 시작·재개·압축 = 세션 로드
 
@@ -185,10 +179,9 @@ claude --plugin-dir /home/jywon/head-context-next
 - 넘으면 훅은 세션·자리와 안내 한 줄만 넣고 `.head/state/pending-load/claude-<대화ID>.json`에 자기 프로세스 조상 pid를 남긴다.
   같은 Claude 프로세스의 head-context MCP(ppid 일치)가 initialized 2초 뒤부터 0.5초마다 이 파일을 집어
   같은 로드를 `notifications/claude/channel`(meta kind=session_load)로 보낸다. Claude는 이것을 한 턴으로 넣는다.
-- 채널은 `claude/channel` capability를 선언한 플러그인 MCP다. 운영은 head-agent-core 루트의 로컬 디렉터리 마켓
-  `head-local`(`.claude-plugin/marketplace.json`, 원본을 상대경로로 직접 읽음)에서 설치하고,
-  `--channels plugin:head-context@head-local`로 등록한다. 관리 설정 `/etc/claude-code/managed-settings.json`의
-  `allowedChannelPlugins`에 `head-context@head-local`이 있어야 한다. `--plugin-dir`로 띄우는 개발 실행은
+- 채널은 `claude/channel` capability를 선언한 플러그인 MCP다. 마켓에서 설치하고
+  `--channels plugin:head-context@<마켓>`로 등록한다. 관리 설정 `/etc/claude-code/managed-settings.json`의
+  `allowedChannelPlugins`에 이 플러그인이 있어야 한다. `--plugin-dir`로 띄우는 개발 실행은
   `--dangerously-load-development-channels plugin:head-context@inline`이 필요하다. 채널이 없으면 메시지는 버려지고,
   훅 안내에 따라 모델이 session_load를 부른다. 10분 넘은 대기 파일은 버린다.
 - Claude의 SessionStart `initialUserMessage`는 interactive 시작·/clear에서 턴을 만들지 않아(헤드리스 전용) 쓰지 않는다.
@@ -202,12 +195,9 @@ claude --plugin-dir /home/jywon/head-context-next
   slash command, synthetic/system 입력, 워커 완료·다른 HEAD 전달은 현재 줄을 바꾸지 않는다.
 - SessionStart timeout 20초: 첫 SQLite 색인과 10초 잠금 대기를 수용.
 
-### JSON 변경
+### 판 JSON
 
 --json은 `[ {name, main:{status,summary,timestamp,conversations}, branches:[{name,topic,parent,status,summary,timestamp,conversations}]} ]`.
 conversation은 host/conversation_id/alive/status/host_status/current/subtasks/running_subtasks를 갖는다.
-옛 works와 stopped 집계는 없다. JSON도 텍스트와 같은 메인·열린 브랜치·소유 대화 구조다.
+JSON도 텍스트와 같은 메인·열린 브랜치·소유 대화 구조다.
 watch의 q/Esc/Ctrl+C 종료는 그대로이며 데이터/서비스를 변경하지 않는다(파생 SQLite 색인만 갱신 가능).
-
-phase4 실물·HEAD 세 글의 전후 제안·운영 반영 순서는
-`/home/jywon/backups/head-context-migration-20261012/evidence/phase4-flow/`에 있다. 실행 반영은 하지 않았다.

@@ -90,7 +90,7 @@ test('host-owned current line: first Unicode line, 80 cap, short/slash/synthetic
   send('😀'.repeat(100));assert.equal(Array.from(activity(dir,'claude','seed').current).length,80);
   transition(dir,{host:'claude',conversation_id:'seed',status:'blocked'});assert.equal(Array.from(activity(dir,'claude','seed').current).length,80);
   claudeEvent(dir,{hook_event_name:'UserPromptSubmit',session_id:'seed',prompt:'시스템이 넣은 아주 긴 입력',is_meta:true});assert.equal(Array.from(activity(dir,'claude','seed').current).length,80);
-  send('/home/jywon/long-path.txt 내용을 확인해줘');assert.match(activity(dir,'claude','seed').current,/long-path/);
+  send('/tmp/long-path.txt 내용을 확인해줘');assert.match(activity(dir,'claude','seed').current,/long-path/);
 });
 test('board: main only, branch, nested, stopped open, child under owning conversation, multiple main, json no works',()=>{
   const {dir,s}=fixture();live(dir,'seed');userInstruction(dir,{host:'claude',conversation_id:'seed',text:'메인에서 사용자 문의를 처리해줘'});

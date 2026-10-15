@@ -12,8 +12,4 @@ coverage/
 .DS_Store
 Thumbs.db
 *conflicted copy*
-runtime/config/
-runtime/state/
-runtime/cache/
-runtime/data/
-runtime/tmp/
+.head/
