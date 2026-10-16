@@ -36,3 +36,19 @@ export function identity(g,{name,stem,count=RECENT_COUNT,limit=SUMMARY_LIMIT}){
 export function leaveGuide(branch,target){
   return `# 브랜치를 떠나기 전 물음\n현재 브랜치 '${branch}'에서 ${target}로 이동하려 합니다. 연결은 아직 바꾸지 않았습니다.\n호스트 질문 도구로 “끝낼까요, 열어둘까요”를 한 번 물으세요.\n끝낸다면 정리 항목을 대화에 보여주고 session_finish한 뒤 이동하세요. 열어두기로 답했다면 같은 이동 호출에 keep_open=true를 넣으세요. 새 브랜치 만들기는 부모를 유지한 갈라짐이므로 이 물음 없이 진행합니다.`;
 }
+// Topic list (session_list): name, the first sentence of context.md (the topic itself),
+// and the newest checkpoint summary, most recently recorded first.
+export const UNCONNECTED='이 대화는 아직 작업 주제에 연결되지 않았습니다.';
+const cut=(text,n)=>{const a=Array.from(text);return a.length>n?a.slice(0,n).join('')+'…':text;};
+export function topicLine(context){
+  const line=context.split('\n').map(l=>l.trim()).find(l=>l&&!l.startsWith('#'))||'';
+  return cut(line.replace(/^[-*>]\s*/,'').split(/(?<=[.!?。])\s/)[0],100);
+}
+export function topicList(g){
+  const rows=g.names().map(name=>{
+    const last=g.own(name,'main').at(-1),e=last?g.detail(last):null;
+    return {name,line:topicLine(g.session(name).context),recent:e?cut(mapSummary(e).text,80):'',rank:Date.parse(e?.timestamp)||0};
+  }).sort((a,b)=>b.rank-a.rank||a.name.localeCompare(b.name));
+  if(!rows.length)return '아직 작업 주제가 없습니다.';
+  return ['# 작업 주제 목록 (최근 기록 순)',...rows.map(r=>`- ${r.name} — ${r.line||'(첫 문장 없음)'}${r.recent?` (최근: ${r.recent})`:''}`)].join('\n');
+}

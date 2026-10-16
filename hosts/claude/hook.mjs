@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { sessions } from '../../core/sessions.mjs';
-import { HOOK_BUDGET } from '../../core/recovery.mjs';
+import { HOOK_BUDGET, UNCONNECTED } from '../../core/recovery.mjs';
 import { event } from './state.mjs';
 import { inheritedFork } from './recovery.mjs';
 import { requestLoad, previousConversation } from './channel.mjs';
@@ -28,7 +28,8 @@ try {
     try { refreshCore(project); if (source === 'startup' || source === 'clear') first = guide(project); }
     catch (error) { console.error(`head-context: ${error.message}`); }
     const join = text => [text, first].filter(Boolean).join('\n\n');
-    let additionalContext = join(started?.text || '');
+    // Not connected to a session: say so; the instructions tell the model to match the user's work.
+    let additionalContext = join(started ? started.text : UNCONNECTED);
     if (started?.text && JSON.stringify(additionalContext).length > HOOK_BUDGET) {
       // Over the host cap: the conversation's MCP process sends the same load as a channel turn.
       requestLoad(project, input.session_id);
