@@ -10,7 +10,7 @@ test('exact anchor survives a later duplicate legacy timestamp and index rebuild
   const dir=fs.mkdtempSync(path.join(root,'duplicates-')),s=sessions(dir);
   s.create({name:'demo',context:'direction',conversation_id:'c'});const base=path.join(dir,'.head/sessions/demo'),file=path.join(base,'history.md');
   const stamp='2026-10-13T00:00:00.000Z',entry=name=>`## ${stamp} work:old\n\n요약: ${name}\n\n${name}\n\n다음: next\n\n`;
-  fs.writeFileSync(file,entry('first')+entry('second'));s.branch({action:'create',branch:'frozen',topic:'duplicate anchor',conversation_id:'c'});
+  fs.writeFileSync(file,entry('first')+entry('second'));s.branch({action:'create',branch:'frozen',parent:'메인',label:'duplicate anchor',conversation_id:'c'});
   assert.match(fs.readFileSync(path.join(base,'work/frozen/history.md'),'utf8'),/갈래-ID: demo\/main@2026-10-13T00:00:00.000Z#2/);
   fs.appendFileSync(file,entry('late duplicate'));const inherited=()=>withGraph(dir,g=>g.recent('demo','frozen',0).map(e=>e.summary));
   assert.deepEqual(inherited(),['first','second']);fs.unlinkSync(path.join(dir,'.head/index.sqlite'));assert.deepEqual(inherited(),['first','second']);
@@ -19,7 +19,9 @@ test('broken session is reported while valid sources continue; archive/work arti
   const dir=fs.mkdtempSync(path.join(root,'bad-source-')),s=sessions(dir);s.create({name:'good',context:'D',conversation_id:'c'});
   fs.mkdirSync(path.join(dir,'.head/sessions/broken/context.md'),{recursive:true});fs.mkdirSync(path.join(dir,'.head/sessions/_archive'),{recursive:true});fs.writeFileSync(path.join(dir,'.head/sessions/_archive/context.md'),'archived');
   fs.mkdirSync(path.join(dir,'.head/sessions/good/work/artifact'),{recursive:true});fs.writeFileSync(path.join(dir,'.head/sessions/good/work/artifact/history.md'),'An unrelated artifact, not a branch.');
-  const data=withGraph(dir,g=>({names:g.names(),errors:g.errors,branches:g.branches('good')}));assert.deepEqual(data.names,['good']);assert.equal(data.branches.length,0);assert.equal(data.errors[0].name,'broken');assert.match(s.list(),/broken: 읽기 실패/);
+  const data=withGraph(dir,g=>({names:g.names(),errors:g.errors,branches:g.branches('good')}));assert.deepEqual(data.names,['good']);
+  assert.deepEqual(data.branches.map(b=>b.name),[s.connection('c').branch]); // the artifact folder is not one of them
+  assert.equal(data.errors[0].name,'broken');assert.match(s.list(),/broken: 읽기 실패/);
 });
 test('session_create requires a purpose: missing/blank context is refused before any folder exists, for MCP and direct callers',()=>{
   const dir=fs.mkdtempSync(path.join(root,'purpose-')),s=sessions(dir),topics=path.join(dir,'.head/sessions'),reason=/방향\(context\)이 필요합니다\. 목적 없는 세션은 만들지 않습니다/;

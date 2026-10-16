@@ -14,7 +14,7 @@ test('unconnected conversation gets one line; session_list gives name, first sen
   assert.ok(hook(dir,'e1').startsWith(UNCONNECTED));assert.equal(sessions(dir).list(),'아직 작업 주제가 없습니다.');
   const api=sessions(dir);
   api.create({name:'login-fix',context:'# login-fix\n\n로그인이 가끔 풀리는 문제를 고친다. 둘째 문장은 목록에 안 나간다.\n\n## 범위\n- 웹만',conversation_id:'a'});
-  api.save({summary:'세션 만료 시간을 찾음',history:'본문',conversation_id:'a'});
+  api.save({summary:'세션 만료 시간을 찾음',history:'본문',next:'고칠 자리 찾기',conversation_id:'a'});
   api.create({name:'docs',context:'# docs\n\n## 작업 주제\n\n사용자 문서를 정리한다.',conversation_id:'b'});
   const out=api.list();
   assert.match(out,/- login-fix — 로그인이 가끔 풀리는 문제를 고친다\. \(최근: 세션 만료 시간을 찾음\)/);
@@ -22,4 +22,5 @@ test('unconnected conversation gets one line; session_list gives name, first sen
   assert.ok(out.indexOf('login-fix')<out.indexOf('- docs'));
   assert.ok(hook(dir,'n1').startsWith(UNCONNECTED));assert.doesNotMatch(hook(dir,'a'),/아직 작업 주제에 연결되지/);
   assert.match(instructions,/session_list로 작업 주제 목록을 불러와/);assert.match(instructions,/이거 ○○ 작업 맞나요/);
+  assert.match(out,/\(남은 일 1개\)/);
 });

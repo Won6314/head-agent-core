@@ -2,28 +2,36 @@ import {mapSummary,contentBody} from './history.mjs';
 export const RECENT_COUNT=5;
 export const SUMMARY_LIMIT=30;
 export const HOOK_BUDGET=9000; // JSON string length; leaves room within host's 10,000-char limit.
-export function openBranchLines(branches,g,name){
-  return branches.filter(b=>b.status==='열림').map(b=>{
-    const own=g.own(name,b.name).at(-1);
-    return {rank:Date.parse(own?.stamp||b.started)||0,text:`${b.name} · 주제: ${b.topic} · 마지막 체크포인트: ${own?.stamp||'없음'}`};
-  }).sort((a,b)=>b.rank-a.rank||a.text.localeCompare(b.text)).map(row=>row.text);
-}
 // A finished/abandoned branch is a higher-level event than an ordinary checkpoint.
 const mergeOf=(g,row)=>g.db.prepare("SELECT src FROM edges WHERE dst=? AND kind='merge'").get(row.id)?.src.split('/').at(-1);
 const marker=e=>e.branch?`브랜치 ${e.branch} ${e.status}${e.reason?` · 이유: ${e.reason}`:''}${e.record?` · 기록: ${e.record}`:''}`:'';
-// Session identity: direction, open branches, older checkpoints as summary lines only,
-// the last `count` checkpoints as time + body, and the newest one's cursor.
-export function identity(g,{name,stem,count=RECENT_COUNT,limit=SUMMARY_LIMIT}){
-  const s=g.session(name),b=stem==='main'?null:g.header(name,stem),rows=g.lineage(name,stem);
-  const recent=count===0?[]:rows.slice(-count),older=rows.slice(0,rows.length-recent.length),shown=limit===0?older:older.slice(-limit);
-  const open=openBranchLines(g.branches(name),g,name);
-  const lines=[`세션: ${name}`,`자리: ${stem==='main'?'메인':`브랜치 ${stem} · 주제: ${b.topic}`}`,'# context.md',s.context.trim()];
-  if(open.length)lines.push('# 열린 브랜치',...open);
+// Pending work on other branches of this session: what a new conversation can take over.
+// The core does not move the conversation; it hands the model the words to ask with.
+export function pendingLines(pending){
+  if(!pending?.length)return [];
+  return ['# 남은 일 (다른 자리에서 멈춘 일)',
+    ...pending.map(p=>`- '${p.label}' · 다음: ${p.next||'(없음)'} · 이어받기: session_branch(action="attach", branch="${p.branch}")`),
+    '사용자에게 한 번만 물으세요: "○○의 \'이름표\' 이어서 할까요?" 예라면 그 이어받기를 호출하고, 아니면 지금 자리에서 계속하세요.'];
+}
+// Session identity: direction, what the session did (the main index and this branch's
+// older records as one summary line each), this branch's recap, its last `count` records
+// as time + body with the newest cursor, and the pending work other places left behind.
+export function identity(g,{name,stem,count=RECENT_COUNT,limit=SUMMARY_LIMIT,recap='',pending=[]}){
+  const s=g.session(name),b=stem==='main'?null:g.header(name,stem),record=stem==='main'?null:`work/${stem}/history.md`;
+  const own=g.own(name,stem),recent=count===0?[]:own.slice(-count),taken=new Set(recent.map(r=>r.id));
+  // A branch reads the main index too: that is where the rest of the session shows up.
+  const rows=[...(stem==='main'?[]:g.own(name,'main')),...own.filter(r=>!taken.has(r.id))]
+    .sort((a,b)=>String(a.stamp).localeCompare(String(b.stamp))||a.seq-b.seq);
+  // This branch's own index lines say nothing the records below do not.
+  const older=rows.map(row=>({row,e:g.detail(row)})).filter(({e})=>!record||e.source!==record);
+  const shown=limit===0?older:older.slice(-limit);
+  const lines=[`세션: ${name}`,`자리: ${stem==='main'?'메인(색인)':`브랜치 ${stem} · 이름표: ${b.label}`}`,'# context.md',s.context.trim()];
   if(older.length){
     lines.push('# 지난 기록 (요약)');
     if(shown.length<older.length)lines.push(`그 앞 ${older.length-shown.length}개 — session_read map으로 봅니다.`);
-    for(const row of shown){const e=g.detail(row),merged=mergeOf(g,row);lines.push(`${merged?'M':'*'} ${mapSummary(e).text}${merged?` ← 합쳐짐 ${merged}`:''}`);}
+    for(const {row,e} of shown){const merged=mergeOf(g,row);lines.push(`${merged?'M':'*'} ${mapSummary(e).text}${merged?` ← 합쳐짐 ${merged}`:''}`);}
   }
+  if(recap)lines.push('# 지금까지 요약 (이 자리)',recap);
   if(recent.length){
     lines.push('# 최근 기록');
     recent.forEach((row,i)=>{
@@ -31,10 +39,8 @@ export function identity(g,{name,stem,count=RECENT_COUNT,limit=SUMMARY_LIMIT}){
       lines.push('',`## ${e.timestamp}`,...(marker(e)?[marker(e)]:[]),contentBody(e)||'(본문 없음)',...(last&&e.next?['',`다음: ${e.next}`]:[]));
     });
   } else lines.push('# 최근 기록','(체크포인트 없음)');
+  lines.push(...pendingLines(pending));
   return lines.join('\n');
-}
-export function leaveGuide(branch,target){
-  return `# 브랜치를 떠나기 전 물음\n현재 브랜치 '${branch}'에서 ${target}로 이동하려 합니다. 연결은 아직 바꾸지 않았습니다.\n호스트 질문 도구로 “끝낼까요, 열어둘까요”를 한 번 물으세요.\n끝낸다면 정리 항목을 대화에 보여주고 session_finish한 뒤 이동하세요. 열어두기로 답했다면 같은 이동 호출에 keep_open=true를 넣으세요. 새 브랜치 만들기는 부모를 유지한 갈라짐이므로 이 물음 없이 진행합니다.`;
 }
 // Topic list (session_list): name, the first sentence of context.md (the topic itself),
 // and the newest checkpoint summary, most recently recorded first.
@@ -44,11 +50,11 @@ export function topicLine(context){
   const line=context.split('\n').map(l=>l.trim()).find(l=>l&&!l.startsWith('#'))||'';
   return cut(line.replace(/^[-*>]\s*/,'').split(/(?<=[.!?。])\s/)[0],100);
 }
-export function topicList(g){
+export function topicList(g,pendingCount=()=>0){
   const rows=g.names().map(name=>{
     const last=g.own(name,'main').at(-1),e=last?g.detail(last):null;
-    return {name,line:topicLine(g.session(name).context),recent:e?cut(mapSummary(e).text,80):'',rank:Date.parse(e?.timestamp)||0};
+    return {name,line:topicLine(g.session(name).context),recent:e?cut(mapSummary(e).text,80):'',pending:pendingCount(name),rank:Date.parse(e?.timestamp)||0};
   }).sort((a,b)=>b.rank-a.rank||a.name.localeCompare(b.name));
   if(!rows.length)return '아직 작업 주제가 없습니다.';
-  return ['# 작업 주제 목록 (최근 기록 순)',...rows.map(r=>`- ${r.name} — ${r.line||'(첫 문장 없음)'}${r.recent?` (최근: ${r.recent})`:''}`)].join('\n');
+  return ['# 작업 주제 목록 (최근 기록 순)',...rows.map(r=>`- ${r.name} — ${r.line||'(첫 문장 없음)'}${r.recent?` (최근: ${r.recent})`:''}${r.pending?` (남은 일 ${r.pending}개)`:''}`)].join('\n');
 }
