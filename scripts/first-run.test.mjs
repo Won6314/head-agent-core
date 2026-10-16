@@ -65,8 +65,9 @@ test('survey is asked only after setup and only when the plugin carries its proc
 test('guide rides with the session identity, also when the identity goes to the channel',()=>{
   const dir=fresh(),s=sessions(dir);s.create({name:'demo',context:'FIRST RUN DIRECTION',conversation_id:'seed'});
   const small=hook(dir,{id:'small',session:'demo'});assert.match(small,/FIRST RUN DIRECTION/);assert.match(small,/초기설정 해도 될까요/);
-  for(let i=0;i<5;i++)s.save({summary:'BIG-'+i,history:'긴 본문 '.repeat(500),conversation_id:'seed'});
-  const big=hook(dir,{id:'big',session:'demo'});assert.match(big,/채널 메시지로 이어서/);assert.match(big,/초기설정 해도 될까요/);assert.ok(JSON.stringify(big).length<9000);
+  for(let i=0;i<5;i++)s.save({summary:'BIG-'+i,history:'긴 본문 '.repeat(500),next:'더',conversation_id:'seed'});
+  // The conversation that holds the big records is the one whose load runs over the cap.
+  const big=hook(dir,{id:'seed',session:'demo'});assert.match(big,/session_load를 호출해/);assert.match(big,/초기설정 해도 될까요/);assert.ok(JSON.stringify(big).length<9000);
 });
 test('real MCP process lists project_setup and runs it in CLAUDE_PROJECT_DIR',()=>{
   const dir=fresh(),[list,call]=mcp(dir,{action:'setup'});

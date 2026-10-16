@@ -1,40 +1,56 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { processEvidence, parentPid, evidenceAlive } from '../../core/liveness.mjs';
+import { pidAlive, readJSON } from '../../core/liveness.mjs';
 
-function linuxIdentity(pid) {
-  const stat = fs.readFileSync(`/proc/${pid}/stat`, 'utf8');
-  const parts = stat.slice(stat.lastIndexOf(')') + 2).split(' ');
-  return { pid: Number(pid), ppid: Number(parts[1]), start: parts[19], zombie: parts[0] === 'Z' };
-}
-function registryFor(pid) {
-  try { return JSON.parse(fs.readFileSync(path.join(os.homedir(), '.claude', 'sessions', `${pid}.json`), 'utf8')); }
-  catch (error) { if (error.code === 'ENOENT') return null; throw error; }
-}
-export function hostProcess(conversation) {
-  let pid = process.ppid;
-  for (let depth = 0; pid > 1 && depth < 20; depth++) {
-    try {
-      const registry = registryFor(pid);
-      if (registry?.sessionId === conversation) return processEvidence(pid);
-      pid = parentPid(pid);
-    } catch { break; }
+// Claude Code keeps one small file per running conversation in ~/.claude/sessions:
+// <pid>.json with {pid, sessionId, cwd, startedAt, ...}. It is removed when the
+// session ends and leftovers from a crash are cleared on the next run. That file is
+// the whole witness here: no /proc, no ancestor walk, so Mac, Windows and Linux agree.
+// Documented at https://code.claude.com/docs/en/claude-directory (the fields are not).
+export const registryDir = () => process.env.HEAD_CONTEXT_CLAUDE_SESSIONS || path.join(os.homedir(), '.claude', 'sessions');
+export const registryOf = pid => (Number.isInteger(Number(pid)) ? readJSON(path.join(registryDir(), `${Number(pid)}.json`)) : null);
+// The conversation a given process is running, and the process running a conversation.
+export const conversationOfPid = pid => registryOf(pid)?.sessionId || null;
+export function ownerOf(conversation) {
+  if (!conversation) return null;
+  let entries;
+  try { entries = fs.readdirSync(registryDir()); } catch { return null; }
+  for (const name of entries) {
+    const pid = /^(\d+)\.json$/.exec(name)?.[1];
+    if (!pid) continue;
+    const registry = readJSON(path.join(registryDir(), name));
+    if (registry?.sessionId === conversation) return { ...registry, pid: Number(pid), file: path.join(registryDir(), name) };
   }
   return null;
 }
-export function alive(status, conversation) {
-  if (status?.liveness) return evidenceAlive(status);
-  if (status?.process?.platform === 'linux') {
-    try { const p = linuxIdentity(status.process.pid); return !p.zombie && p.start === status.process.start; }
-    catch { return false; }
+// The conversation this MCP server was started for: its parent is the Claude process.
+export const currentConversation = () => conversationOfPid(process.ppid);
+// Liveness evidence a later reader can check without knowing this host.
+export function sessionEvidence(conversation) {
+  const owner = ownerOf(conversation);
+  return owner ? { type: 'host-session', pid: owner.pid, session_id: conversation, registry: owner.file, machine: os.hostname() } : null;
+}
+export const aliveConversation = conversation => { const owner = ownerOf(conversation); return Boolean(owner) && pidAlive(owner.pid); };
+// Claude Code Desktop keeps its own record of each conversation it hosts, named by the
+// registry's hostSessionId: <root>/<account>/<org>/local_<id>.json. A fork made in the
+// app (/subtask, a side session) carries no fork mark in the engine's records, but its
+// app record names the parent's app id (forkedFromSessionId), and the parent's app record
+// names the parent's engine conversation (cliSessionId).
+const desktopRoots = () => [process.env.HEAD_CONTEXT_DESKTOP_SESSIONS,
+  path.join(os.homedir(), 'Library', 'Application Support', 'Claude', 'claude-code-sessions'),
+  process.env.APPDATA && path.join(process.env.APPDATA, 'Claude', 'claude-code-sessions')].filter(Boolean);
+const dirs = dir => { try { return fs.readdirSync(dir, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => path.join(dir, e.name)); } catch { return []; } };
+function desktopRecord(hostId) {
+  if (!/^local_[0-9a-fA-F-]+$/.test(hostId || '')) return null;
+  for (const root of desktopRoots()) for (const account of dirs(root)) for (const org of dirs(account)) {
+    const record = readJSON(path.join(org, `${hostId}.json`));
+    if (record) return record;
   }
-  const directory = path.join(os.homedir(), '.claude', 'sessions');
-  try {
-    return fs.readdirSync(directory).some(file => {
-      if (!/^\d+\.json$/.test(file)) return false;
-      try { const r = JSON.parse(fs.readFileSync(path.join(directory, file), 'utf8')); if (r.sessionId !== conversation) return false; process.kill(Number(file.slice(0, -5)), 0); return true; }
-      catch { return false; }
-    });
-  } catch { return false; }
+  return null;
+}
+export function desktopForkParent(conversation) {
+  const host = ownerOf(conversation)?.hostSessionId;
+  const parent = host && desktopRecord(host)?.forkedFromSessionId;
+  return (parent && desktopRecord(parent)?.cliSessionId) || null;
 }

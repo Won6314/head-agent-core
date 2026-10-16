@@ -1,8 +1,10 @@
 import { locations, recordFile, optionalRead, atomicJSON } from './storage.mjs';
 export function activity(project,host,id){return JSON.parse(optionalRead(recordFile(locations(project).state,'activity',id,host))||'null');}
-export function markRecovered(project,host,id){
+// One merge point for what the host noticed about a conversation outside a transition:
+// that the start hook saw it, the title it carries, or that it handed its place over.
+export function markSeen(project,host,id,patch={}){
   const file=recordFile(locations(project).state,'activity',id,host),previous=activity(project,host,id);
-  atomicJSON(file,{...previous,host,conversation_id:id,recovery_seen_at:new Date().toISOString()});
+  atomicJSON(file,{...previous,host,conversation_id:id,...patch,recovery_seen_at:new Date().toISOString()});
 }
 export function userInstruction(project,{host,conversation_id,text,is_user=true}){
   if(!is_user||typeof text!=='string')return;

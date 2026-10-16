@@ -43,8 +43,9 @@ export default { id: 'head-context', server: async ({ directory, client }) => {
     if (nativeChild(id)) return '';
     roots.add(id);
     const previous=activity(directory,'opencode',id),seen=previous?.recovery_seen_at||previous?.updated_at;
-    store.start({conversation_id:id,session_name:process.env.HEAD_CONTEXT_SESSION,from_conversation_id:parents.get(id),
-      source:seen?'resume':'startup',inherited_context:Boolean(parents.get(id)&&!seen)});
+    store.start({conversation_id:id,session_name:process.env.HEAD_CONTEXT_SESSION,
+      origins:parents.get(id)?[{conversation_id:parents.get(id),kind:'fork'}]:[],
+      source:seen?'resume':'startup',title:names.get(id)});
     return store.identity({conversation_id:id});
   };
   const child = (id, status) => report(directory, { host: 'opencode', parent_conversation_id: parents.get(id), id,

@@ -14,10 +14,12 @@ export function parseHistory(text) {
     const tokens = m[0].replace(/^##\s+/, '').trim().split(/\s+/);
     const lines = body.slice(m[0].length).split('\n').map(l => l.trim()).filter(Boolean);
     const explicit = lines.find(l => l.startsWith('요약:'))?.slice(3).trim();
-    const fallback = lines.filter(l => !/^(다음:|상태:|기록:|브랜치:|이유:)/.test(l)).map(summaryLine).find(Boolean);
+    const fallback = lines.filter(l => !/^(다음:|상태:|기록:|브랜치:|이유:|이름표:)/.test(l)).map(summaryLine).find(Boolean);
     const summary = explicit || Array.from(fallback || '(요약 없음)').slice(0, 80).join('');
-    return { timestamp: tokens[0], explicit_summary: explicit || null, work: tokens.find(t => t.startsWith('work:'))?.slice(5) || '',
-      summary, status:lines.find(l=>l.startsWith('상태:'))?.slice(3).trim()||'열림', branch:lines.find(l=>l.startsWith('브랜치:'))?.slice(4).trim()||'', record:lines.find(l=>l.startsWith('기록:'))?.slice(3).trim()||'', ended: lines.includes('상태: 끝남')||lines.includes('상태: 중단'), next: lines.at(-1)?.startsWith('다음:') ? lines.at(-1).slice(3).trim() : '', body,
+    // A main-line index entry: one line naming the branch label and the file the body is in.
+    const index = lines.map(l => /^이름표: (.*) · 본문: (\S+)$/.exec(l)).find(Boolean);
+    return { timestamp: tokens[0], label: index?.[1] || '', source: index?.[2] || '', explicit_summary: explicit || null, work: tokens.find(t => t.startsWith('work:'))?.slice(5) || '',
+      summary, status:lines.find(l=>l.startsWith('상태:'))?.slice(3).trim()||'열림', branch:lines.find(l=>l.startsWith('브랜치:'))?.slice(4).trim()||'', record:lines.find(l=>l.startsWith('기록:'))?.slice(3).trim()||'', ended: ['상태: 끝남','상태: 멈춤','상태: 중단'].some(l=>lines.includes(l)), next: lines.at(-1)?.startsWith('다음:') ? lines.at(-1).slice(3).trim() : '', body,
       start:Buffer.byteLength(text.slice(0,m.index)),end:Buffer.byteLength(text.slice(0,m.index+body.length)) };
   });
 }

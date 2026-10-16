@@ -170,7 +170,7 @@ class Graph {
           const first=this.own(name,b.name)[0];if(anchor&&first)this.edge(anchor.id,first.id,'next');
         }catch(error){this.errors.push({name,error:readError(error)});}pending.splice(i,1);progress=true;}}
       if(pending.length)this.errors.push({name,error:'브랜치 부모 순환 또는 부모 누락'});
-      for(const row of this.own(name,'main')){const e=this.detail(row);if(e.branch&&e.record===`work/${e.branch}/history.md`&&['끝남','중단'].includes(e.status)&&branches.some(b=>b.name===e.branch))this.edge(stemId(name,e.branch),row.id,'merge');}
+      for(const row of this.own(name,'main')){const e=this.detail(row);if(e.branch&&e.record===`work/${e.branch}/history.md`&&['끝남','멈춤','중단'].includes(e.status)&&branches.some(b=>b.name===e.branch))this.edge(stemId(name,e.branch),row.id,'merge');}
     }
   }
 }

@@ -16,9 +16,9 @@ test('normalized host boundary isolates equal native IDs and reads legacy eviden
   try {
     const a = sessions(root, { host: 'alpha' }), b = sessions(root, { host: 'bravo' });
     a.create({ name: 'demo', context: 'direction', conversation_id: 'same' });
-    a.branch({action:'create',branch:'A',topic:'alpha branch',conversation_id:'same'});
+    a.branch({action:'create',branch:'A',label:'alpha branch',conversation_id:'same'});
     b.load({ name: 'demo', conversation_id: 'same' });
-    b.branch({action:'create',branch:'B',topic:'bravo branch',conversation_id:'same'});
+    b.branch({action:'create',branch:'B',label:'bravo branch',conversation_id:'same'});
     a.save({ summary: 'A', history: 'A body', next: 'A next', conversation_id: 'same' });
     b.save({ summary: 'B', history: 'B body', next: 'B next', conversation_id: 'same' });
     transition(root, { host: 'alpha', conversation_id: 'same', status: 'waiting', liveness: processEvidence() });
@@ -36,10 +36,12 @@ test('normalized host boundary isolates equal native IDs and reads legacy eviden
       assert.equal(evidenceAlive({ process: { pid: evidence.pid, start: evidence.start, platform: 'linux' } }), true);
       assert.equal(evidenceAlive({ liveness: { ...evidence, start: 'wrong' } }), false);
     }
+    // Legacy evidence (a plain linux process) is still read, on the place that holds it.
     const legacy = sessions(root, { host: 'claude' });
-    legacy.load({ name: 'demo', work: 'old', conversation_id: 'legacy' });
+    legacy.load({ name: 'demo', conversation_id: 'legacy' });
+    const place = legacy.connection('legacy').branch;
     fs.writeFileSync(path.join(root, '.head/state/activity/claude-legacy.json'), JSON.stringify({ conversation_id: 'legacy', status: 'waiting', process: evidence && { pid: evidence.pid, start: evidence.start, platform: 'linux' } }));
-    assert.equal(board(root)[0].main.status, evidence ? 'waiting' : 'stopped');
+    assert.equal(board(root)[0].branches.find(w => w.name === place).status, evidence ? 'waiting' : 'stopped');
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
 test('OpenCode V1 admission, MCP ID injection, permission/question and native child events', async () => {
@@ -58,21 +60,23 @@ test('OpenCode V1 admission, MCP ID injection, permission/question and native ch
     assert.equal(args.conversation_id, 'ses_root');
     callTool(sessions(root, { host: 'opencode' }), 'session_save', args, args.conversation_id);
     const event = (type, properties) => hooks.event({ event: { type, properties } });
+    const placeOf = () => { const data = board(root)[0]; return data.branches.find(b => b.conversations.some(c => c.host === 'opencode')); };
     await event('permission.asked', { sessionID: 'ses_root', id: 'p' });
-    assert.equal(board(root)[0].main.status, 'waiting');
+    assert.equal(placeOf().status, 'waiting');
     await event('permission.replied', { sessionID: 'ses_root', requestID: 'p' });
     await event('question.asked', { sessionID: 'ses_root', id: 'q' });
     assert.equal(JSON.parse(fs.readFileSync(path.join(root, '.head/state/activity/opencode-ses_root.json'))).status, 'blocked');
     await event('question.rejected', { sessionID: 'ses_root', id: 'q' });
     await event('session.created', { info: { id: 'ses_child', parentID: 'ses_root', title: 'native child' } });
     await event('session.status', { sessionID: 'ses_child', status: { type: 'busy' } });
-    assert.equal(board(root)[0].main.conversations.find(c=>c.host==='opencode').running_subtasks, 1);
+    assert.equal(placeOf().conversations.find(c=>c.host==='opencode').running_subtasks, 1);
     await event('session.status', { sessionID: 'ses_child', status: { type: 'idle' } });
-    assert.equal(board(root)[0].main.conversations.find(c=>c.host==='opencode').running_subtasks, 0);
+    assert.equal(placeOf().conversations.find(c=>c.host==='opencode').running_subtasks, 0);
     await event('session.status', { sessionID: 'ses_root', status: { type: 'idle' } });
-    assert.equal(board(root)[0].main.status, 'waiting');
+    assert.equal(placeOf().status, 'waiting');
+    const name = placeOf().name;
     await hooks.dispose();
-    assert.equal(board(root)[0].main.status, 'stopped');
+    assert.equal(board(root)[0].branches.find(b => b.name === name)?.status || 'stopped', 'stopped');
   } finally {
     for (const [i, key] of ['HEAD_CONTEXT_SESSION', 'HEAD_CONTEXT_WORK'].entries()) if (previous[i] === undefined) delete process.env[key]; else process.env[key] = previous[i];
     fs.rmSync(root, { recursive: true, force: true });

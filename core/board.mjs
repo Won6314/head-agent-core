@@ -15,7 +15,7 @@ export function renderBoard(data,{all=false}={}){
     const shown=new Set();
     const show=(b,depth)=>{
       if(shown.has(b.name))return;shown.add(b.name);const indent='  '.repeat(depth),cs=b.conversations.filter(c=>c.alive);
-      lines.push(`${indent}${symbols[b.status]} ${b.topic||b.name} [${b.name}] · ${detail(cs,b.summary)}`);children(cs,indent+'  ');
+      lines.push(`${indent}${symbols[b.status]} ${b.label||b.name} [${b.name}] · ${b.lifecycle||''}${b.lifecycle?' · ':''}${detail(cs,b.summary)}`);children(cs,indent+'  ');
       for(const child of s.branches.filter(x=>x.parent===b.name))show(child,depth+1);
     };
     for(const b of s.branches.filter(b=>b.parent==='main'||!s.branches.some(p=>p.name===b.parent)))show(b,1);
