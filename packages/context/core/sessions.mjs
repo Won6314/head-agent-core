@@ -5,7 +5,7 @@ import {parseHistory} from './history.mjs';
 import {evidenceAlive} from './liveness.mjs';
 import {conversationView,groupStatus} from './work-view.mjs';
 import {activity,markRecovered} from './state.mjs';
-import {identity,openBranchLines,leaveGuide,RECENT_COUNT,SUMMARY_LIMIT} from './recovery.mjs';
+import {identity,openBranchLines,leaveGuide,topicList,RECENT_COUNT,SUMMARY_LIMIT} from './recovery.mjs';
 import {withGraph} from './graph.mjs';
 import {branchPath,branchHeader,BRANCH_MARKER,firstLine} from './branch-format.mjs';
 import {validName,optionalRead,noSymlink,locations,recordFile,atomicJSON,atomicText,records,readError,locked,entry,line} from './storage.mjs';
@@ -97,7 +97,7 @@ export function sessions(project,{host='claude',isAlive=evidenceAlive}={}){
     names:()=>withGraph(project,g=>g.names()),
     view:name=>withGraph(project,g=>sessionView(g,name)),
     views:()=>withGraph(project,g=>{const all=stateRecords();return [...g.names().map(name=>sessionView(g,name,all)),...g.errors.map(e=>({name:e.name,error:e.error,main:{conversations:[]},branches:[]}))];}),
-    list(){return withGraph(project,g=>[...g.names().map(name=>`${name}\n# 열린 브랜치\n${openBranchLines(g.branches(name),g,name).join('\n')}\n${g.map(name,undefined,5)}`),...g.errors.map(e=>`${e.name}: 읽기 실패 — ${e.error}`)].join('\n')||'세션이 없습니다.');},
+    list(){return withGraph(project,g=>[topicList(g),...g.errors.map(e=>`${e.name}: 읽기 실패 — ${e.error}`)].join('\n'));},
     create({name,context,conversation_id,keep_open=false}){
       // 목적 없는 세션은 만들지 않는다: 방향이 없거나 공백뿐이면 폴더를 만들기 전에 거절한다.
       if(context!==undefined&&typeof context!=='string')throw new Error('context는 문자열이어야 합니다.');
