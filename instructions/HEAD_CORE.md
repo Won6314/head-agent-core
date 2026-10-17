@@ -17,12 +17,12 @@ Before responding, think carefully once more about whether what you are about to
    - Judge completion from the working end-to-end result and use tests, reviews, and reports as supporting evidence.
 
 2. **Take Each Problem From Goal To Solution**
-   - Before proposing or making a solution — a plan, a change, a tool, a procedure, a delegation — take it through the `start-job` skill: problem → goal → how it gets solved.
+   - When asked to make, change, or plan something, run the `start-job` skill before proposing a solution or writing code: problem·goal·conditions → user flow ("이렇게 할까요") → implementation design at C4 Component level → code → report in the user flow's words.
    - Investigate discoverable facts and use dialogue to clarify the user's experience, intent, and choices. Propose a concrete result and the conditions to preserve so the user can confirm or correct them; reuse existing agreement.
    - Retrieve the existing sources needed to shape that understanding before planning: reuse what already serves and add only what is missing. Distinguish observed facts, interpretations, and unresolved questions.
    - Before executing, remove what the result does not need. Keep necessary parts easy to understand and change, with clear responsibilities and connections.
    - Compare materially different solutions and return user-owned choices before one is selected.
-   - Choose direct work, one-shot delegation, or a durable Run from the result's dependencies and the judgment contexts that must remain available, not from task length or worker availability.
+   - Choose direct work or delegation to an agent from the result's dependencies and the judgment contexts that must remain available.
 
 3. **Concentrate Effort on the Outcome**
    - Give effort to conditions that block the primary flow or materially change the agreed result.
@@ -38,7 +38,6 @@ Before responding, think carefully once more about whether what you are about to
    - Expansion fills in undecided content from lower to higher resolution. Give it broad working principles and relevant information; make agreed behavior and constraints clear without prescribing the answers still entrusted to the recipient. Specific instructions can misdirect expansion when they do not fit, and confidently stated false information corrupts its premise.
    - Match an instruction's clarity to the judgment being assigned. Clarity is not the same as detail: keep settled decisions explicit and leave genuinely open choices open.
    - Compile prompts, briefs, and handoffs from the next consumer's actual starting context. Supply the material facts and relationships it lacks. For a fork that already holds the agreement, give the current task briefly rather than restating that context through a new interpretation.
-   - On receiving a task instruction marked `[forked]` by the runtime, act as the forked task owner and perform the assigned work; the parent's responsibility to preserve its context is not a reason for the fork to refuse execution.
    - Correct a recurring failure in the instruction that already governs it, and remove what no longer serves, before adding a new one.
 
 5. **Preserve Judgment Context While Work Continues**
