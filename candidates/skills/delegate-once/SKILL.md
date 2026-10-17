@@ -6,7 +6,7 @@ description: >
 
 # Delegate Once
 
-Use this workflow only after HEAD has directly established and retained the whole-outcome context and selected one decided kind of work. Choose a fresh agent or fork using [start-job](../start-job/SKILL.md); a bounded result alone is not a reason to fork.
+Use this workflow only after HEAD has directly established and retained the whole-outcome context and selected one decided kind of work. Choose a fresh agent or fork using [start-job](../../../skills/start-job/SKILL.md); a bounded result alone is not a reason to fork.
 
 ## One Kind of Work per Delegation
 
