@@ -38,7 +38,7 @@
 | session_create | 새 작업 세션(context 필수), 메인에 연결 |
 | session_save | 기록. next 없으면 작업 브랜치를 닫음(recap 필수) |
 | session_branch | create(이름 필수)/attach/abandon(reason 필수) |
-| session_read | map/recent/entry/find, 연결을 바꾸지 않음 |
+| session_read | map/recent/entry/find/files, 연결을 바꾸지 않음. files는 기록(id) 또는 작업 브랜치(branch)가 가리킨 파일과 그 파일들이 링크·백틱 경로로 가리킨 파일을 나무 모양으로(depth 1~3, 기본 2, 50개까지) |
 | session_todo | add/list/done |
 | session_conversations | 살아 있는 대화: 작업 세션 → 작업 브랜치 → 대화, 안 붙은 대화 묶음. 대화마다 제목·주소·마지막 활동. 현황판 같은 추가기능도 이 데이터(`tree()`)로 만든다 |
 | project_setup | 첫 실행 초기설정(.head/core.md + CLAUDE.md 한 줄) |
@@ -85,7 +85,9 @@
 ## 파일·색인
 
 - `sessions/<이름>/context.md`, `history.md`(메인), `work/<작업 브랜치>/history.md`, `todo.md`. 파일이 원본이다.
-- `.head/index.sqlite`: 위치·구조만 담는 색인(files/nodes/edges). 손상·버전 불일치면 파일에서 다시 만든다.
+- `.head/index.sqlite`: 위치·구조만 담는 색인(files/nodes/edges, 스키마 2). 손상·버전 불일치면 파일에서 다시 만든다.
+  `linkfiles`/`links`는 files가 물을 때만 채우는 파일→파일 링크 캐시다(수정 시각·크기가 바뀐 파일만 다시 읽음, 1MB 초과·글 아닌 파일·URL·없는 파일 제외).
+- 작업 파일 규칙: 작업 세션 폴더의 `work/YYYY-MM/YYYY-MM-DD-<이름>.md`(여러 개면 같은 이름 폴더), 커지면 `work/<작업명>/`으로 옮기고 가리키던 기록 링크도 고친다. 서버 안내문과 session_save 설명에 있다.
 - 작업 브랜치 파일 머리의 `이름표:`·`갈래:`·`상태:` 줄과 메인의 색인 줄(`이름표: … · 본문: …`)은 파일 형식이라 그대로 둔다.
 - 지도는 `git log --graph`처럼 저장 하나가 한 줄(짧은 ID 5자, MM-DD HH:MM, 요약), 메인이 첫 열. 시각은 `.head/config.json`의 `timezone`, 없으면 컴퓨터 시간대.
 

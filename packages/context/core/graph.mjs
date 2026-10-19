@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import {createRequire} from 'node:module';
 import {locations,validName,noSymlink,locked,readError} from './storage.mjs';
 import {parseHistory} from './history.mjs';
@@ -13,27 +14,45 @@ try {
   process.emitWarning=function(warning,...args){if(String(warning).startsWith('SQLite is an experimental feature'))return;return emit.call(this,warning,...args);};
   ({DatabaseSync}=createRequire(import.meta.url)('node:sqlite'));
 } finally {process.emitWarning=emit;}
-const VERSION=1;
+const VERSION=2;
 export const stemId=(session,stem)=>`stem:${encodeURIComponent(session)}/${encodeURIComponent(stem)}`;
 export const checkpointId=(session,stem,time,occurrence=1)=>`${encodeURIComponent(session)}/${encodeURIComponent(stem)}@${time}${occurrence>1?'#'+occurrence:''}`;
+// One path as written in a record or a file, to an existing file: a link target or a
+// backtick path, without its title, anchor or trailing punctuation; URLs are not files;
+// `~/` is the home folder; a relative path is tried against each folder in turn.
+function resolveRef(value,dirs){
+  value=value.replace(/^<|>$/g,'').replace(/\s+["'].*$/,'').split('#')[0].replace(/[,;。]+$/,'');
+  if(!value||/^[a-z]+:\/\//i.test(value))return null;
+  try{value=decodeURIComponent(value);}catch{}
+  if(value.startsWith('~/'))value=path.join(os.homedir(),value.slice(2));
+  for(const dir of dirs){try{const file=path.resolve(dir,value);if(fs.statSync(file).isFile())return file;}catch{}}
+  return null;
+}
+const linked=body=>[...[...body.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map(m=>m[1]),...[...body.matchAll(/`([^`\n]+)`/g)].map(m=>m[1])];
+// What a record points at (the points edges): links, backtick paths, bare paths and bare
+// file names, resolved against the session folder.
 function references(body,dir){
-  const candidates=[...body.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map(m=>m[1]);
-  candidates.push(...[...body.matchAll(/`([^`\n]+)`/g)].map(m=>m[1]));
+  const candidates=linked(body);
   candidates.push(...[...body.matchAll(/(?:^|\s|[:(])((?:\/|\.\.?\/|[\w가-힣.-]+\/)[^\s<>"'`)\]]+)/gm)].map(m=>m[1]));
   candidates.push(...[...body.matchAll(/(?:^|[\s:(])([\w가-힣.-]+\.[A-Za-z0-9]{1,10})(?=$|[\s,.)])/gm)].map(m=>m[1]));
-  return [...new Set(candidates.flatMap(value=> {
-    value=value.replace(/^<|>$/g,'').replace(/\s+["'].*$/,'').split('#')[0].replace(/[,;。]+$/,'');
-    if(/^[a-z]+:\/\//i.test(value))return [];
-    try {value=decodeURIComponent(value);const file=path.resolve(dir,value);return fs.statSync(file).isFile()?[file]:[];}catch{return [];}
-  }))];
+  return [...new Set(candidates.map(value=>resolveRef(value,[dir])).filter(Boolean))];
+}
+// What a file points at, for session_read files: only links and backtick paths, resolved
+// against the file's own folder and then its session folder. Over 1MB or not text: none.
+export const LINK_BYTES=1024*1024;
+function fileReferences(file,text,sessionDir){
+  const dirs=[path.dirname(file),...(sessionDir?[sessionDir]:[])];
+  return [...new Set(linked(text).map(value=>resolveRef(value,dirs)).filter(f=>f&&f!==file))];
 }
 function schema(db){
-  db.exec('DROP TABLE IF EXISTS edges; DROP TABLE IF EXISTS nodes; DROP TABLE IF EXISTS files;');
+  db.exec('DROP TABLE IF EXISTS edges; DROP TABLE IF EXISTS nodes; DROP TABLE IF EXISTS files; DROP TABLE IF EXISTS links; DROP TABLE IF EXISTS linkfiles;');
   db.exec(`CREATE TABLE files(path TEXT PRIMARY KEY,mtime REAL NOT NULL,size INTEGER NOT NULL);
     CREATE TABLE nodes(id TEXT PRIMARY KEY,kind TEXT NOT NULL,session TEXT NOT NULL,stem TEXT NOT NULL,stamp TEXT NOT NULL,file TEXT NOT NULL,start INTEGER NOT NULL,end INTEGER NOT NULL,seq INTEGER NOT NULL);
     CREATE INDEX nodes_stem ON nodes(session,stem,kind,seq);
     CREATE TABLE edges(src TEXT NOT NULL,dst TEXT NOT NULL,kind TEXT NOT NULL,PRIMARY KEY(src,dst,kind));
-    CREATE INDEX edges_destination ON edges(dst,kind); PRAGMA user_version=${VERSION};`);
+    CREATE INDEX edges_destination ON edges(dst,kind);
+    CREATE TABLE linkfiles(path TEXT PRIMARY KEY,mtime REAL NOT NULL,size INTEGER NOT NULL);
+    CREATE TABLE links(src TEXT NOT NULL,dst TEXT NOT NULL,PRIMARY KEY(src,dst)); PRAGMA user_version=${VERSION};`);
 }
 export function withGraph(project,fn){
   const {root,topics,timezone}=locations(project);fs.mkdirSync(root,{recursive:true});const file=noSymlink(path.join(root,'index.sqlite'));
@@ -44,7 +63,7 @@ export function withGraph(project,fn){
     try {db=new DatabaseSync(file,{timeout:5000});db.exec('PRAGMA busy_timeout=5000;');db.prepare('PRAGMA user_version').get();}
     catch(e){try{db?.close();}catch{};if(!/not a database|malformed/i.test(e.message))throw e;fs.unlinkSync(file);db=new DatabaseSync(file,{timeout:5000});}
     try {
-      const shape={files:'path,mtime,size',nodes:'id,kind,session,stem,stamp,file,start,end,seq',edges:'src,dst,kind'};
+      const shape={files:'path,mtime,size',nodes:'id,kind,session,stem,stamp,file,start,end,seq',edges:'src,dst,kind',linkfiles:'path,mtime,size',links:'src,dst'};
       if(db.prepare('PRAGMA user_version').get().user_version!==VERSION || Object.entries(shape).some(([table,columns])=>db.prepare(`PRAGMA table_info(${table})`).all().map(c=>c.name).join(',')!==columns)){
         db.close();fs.unlinkSync(file);db=new DatabaseSync(file,{timeout:5000});db.exec('BEGIN IMMEDIATE');schema(db);db.exec('COMMIT');
       }
@@ -96,6 +115,62 @@ class Graph {
   map(session,stem,limit=30){
     this.session(session);const {lines,omitted,name}=renderMap(this,session,{stem,limit});
     return [`# 지도: ${session}${stem&&stem!=='main'?' / '+name(stem):''}`,...lines,...(omitted?[`그 앞 ${omitted}개`]:[])].join('\n');
+  }
+  // The files one file points at, read again only when its time or size changed.
+  fileLinks(file){
+    let stat;try{stat=fs.statSync(file);}catch{return [];}
+    if(!stat.isFile())return [];
+    const cached=this.db.prepare('SELECT * FROM linkfiles WHERE path=?').get(file);
+    if(cached&&cached.mtime===stat.mtimeMs&&cached.size===stat.size)return this.db.prepare('SELECT dst FROM links WHERE src=? ORDER BY rowid').all(file).map(r=>r.dst);
+    let found=[];
+    if(stat.size<=LINK_BYTES){
+      const data=fs.readFileSync(file);
+      if(!data.subarray(0,8192).includes(0)){
+        const rel=path.relative(this.topics,file),top=rel.split(path.sep)[0];
+        const sessionDir=rel&&!rel.startsWith('..')&&!path.isAbsolute(rel)&&top?path.join(this.topics,top):null;
+        found=fileReferences(file,data.toString('utf8'),sessionDir);
+      }
+    }
+    this.db.prepare('DELETE FROM links WHERE src=?').run(file);
+    for(const dst of found)this.db.prepare('INSERT OR IGNORE INTO links VALUES(?,?)').run(file,dst);
+    this.db.prepare('INSERT OR REPLACE INTO linkfiles VALUES(?,?,?)').run(file,stat.mtimeMs,stat.size);
+    this.linkReads=(this.linkReads||0)+1;
+    return found;
+  }
+  // The files a record (or every record of a work branch) points at, followed file to
+  // file as a tree: each file once, `depth` levels (1–3), at most `max` files.
+  files(session,{id,branch,depth=2,max=50}={}){
+    if(!Number.isInteger(depth)||depth<1||depth>3)throw new Error('depth는 1~3입니다.');
+    const s=this.session(session),base=path.dirname(s.file);
+    let rows,title;
+    if(id){const e=this.entry(id,session);rows=[{id:e.id}];title=`기록 ${this.shortIds(session).get(e.id)||e.id} · ${e.summary}`;}
+    else if(branch){if(!this.header(session,branch))throw new Error(`작업 브랜치가 없습니다: ${branch}`);rows=this.own(session,branch);title=`작업 브랜치 ${branch} (기록 ${rows.length}개)`;}
+    else throw new Error('files에는 id(기록 지도 ID) 또는 branch가 필요합니다.');
+    const roots=[];
+    for(const r of rows)for(const e of this.db.prepare("SELECT dst FROM edges WHERE src=? AND kind='points' ORDER BY rowid").all(r.id)){const f=e.dst.slice(5);if(!roots.includes(f))roots.push(f);}
+    const seen=new Set(),children=new Map(),later=new Set(),queue=[];
+    for(const f of roots){if(seen.size>=max){later.add(f);continue;}seen.add(f);queue.push({file:f,level:1});}
+    while(queue.length){
+      const {file,level}=queue.shift();if(level>=depth)continue;
+      const kids=[];
+      for(const f of this.fileLinks(file)){
+        if(seen.has(f)){kids.push({file:f,again:true});continue;}
+        if(seen.size>=max){later.add(f);continue;}
+        seen.add(f);kids.push({file:f});queue.push({file:f,level:level+1});
+      }
+      children.set(file,kids);
+    }
+    const home=os.homedir(),show=f=>{const rel=path.relative(base,f);return !rel.startsWith('..')&&!path.isAbsolute(rel)?rel:f.startsWith(home+path.sep)?'~'+f.slice(home.length):f;};
+    const lines=[`# 파일: ${title}`],drawn=new Set();
+    const draw=(file,indent,again)=>{
+      if(again||drawn.has(file)){lines.push(`${indent}- ${show(file)} (앞에 나옴)`);return;}
+      drawn.add(file);lines.push(`${indent}- ${show(file)}`);
+      for(const k of children.get(file)||[])draw(k.file,indent+'  ',k.again);
+    };
+    for(const f of roots)if(seen.has(f))draw(f,'');
+    if(!roots.length)lines.push('(가리킨 파일 없음)');
+    if(later.size)lines.push(`(파일 ${max}개에서 잘랐습니다. 더 있음: ${later.size}개 이상)`);
+    return lines.join('\n');
   }
   find({file,query,session,limit=30}){
     if(!Number.isInteger(limit)||limit<0)throw new Error('limit는 0 이상의 정수입니다.');

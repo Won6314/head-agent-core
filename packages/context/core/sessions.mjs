@@ -221,15 +221,16 @@ export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],no
       });
       return load({branch,conversation_id});
     },
-    inspect({action='map',name,branch,limit=30,count=5,id,file,query,conversation_id}){
+    inspect({action='map',name,branch,limit=30,count=5,id,file,query,depth=2,conversation_id}){
       return withGraph(project,g=>{
         const previous=connection(conversation_id),selected=name||previous?.session;
         if(action==='entry'){if(!id)throw new Error('id가 필요합니다.');return g.entry(id,selected).body;}
         if(action==='find'){if(!file&&!query)throw new Error('find에는 file 또는 query가 필요합니다.');return g.find({file,query,session:name||(!path.isAbsolute(file||'')?previous?.session:undefined),limit}).map(e=>`${e.id} · ${e.summary}`).join('\n')||'(없음)';}
         if(!selected)throw new Error('작업 세션 이름이 필요합니다.');
         if(action==='map')return g.map(selected,branch,limit);
+        if(action==='files')return g.files(selected,{id,branch,depth});
         if(action==='recent'){const stem=branch||(!name&&previous?effective(previous,g):'main');return g.recent(selected,stem,count).map(e=>e.body).join('\n\n')||'(기록 없음)';}
-        throw new Error('action은 map/recent/entry/find입니다.');
+        throw new Error('action은 map/recent/entry/find/files입니다.');
       });
     },
     // Current work context of a connected conversation, without changing the connection.

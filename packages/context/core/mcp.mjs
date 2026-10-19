@@ -14,6 +14,7 @@ export const instructions = `일을 시작할 때는 먼저 start-job 스킬을 
 저장
 - 무엇: 작업 브랜치에 남기는 기록 한 번입니다. 작업 요약, 근거 파일 링크, 파일에 빠진 내용을 씁니다.
 - 언제: 결과나 결정이 생기면 남깁니다. 이어 갈 일이 있으면 다음을 적고, 끝났으면 다음 없이 정리를 줍니다. 그 저장으로 작업 브랜치가 닫힙니다.
+- 작업 파일: 작업 세션 폴더의 work/YYYY-MM/YYYY-MM-DD-<이름>.md에 둡니다(여러 개면 같은 이름 폴더). 커진 작업은 work/<작업명>/으로 옮기고 그 파일을 가리키던 기록의 링크도 고칩니다. 포크·에이전트에 맡길 때는 결과 파일 경로를 이 규칙대로 정해 줍니다.
 - 기본 포크와 하위 에이전트는 저장하지 않습니다. 결과는 부모 대화가 받아 저장합니다.
 
 할 일
@@ -36,12 +37,12 @@ export const definitions = [
     { name: string, branch: string, history_count: { type: 'integer', minimum: 0, default: 3 }, map_limit: { type: 'integer', minimum: 0, default: 30, description: '흐름 지도 줄 최대 수. 0은 전체.' } }, []],
   ['session_create', '새 작업 세션을 만들고 이 대화를 그 메인에 연결합니다. context(목적)는 필수이며 없거나 공백뿐이면 만들지 않고 거절합니다. 기존 파일은 덮어쓰지 않습니다. context는 context.md 본문입니다. 첫 줄은 `# 이름`, 바로 아래에는 이 작업 세션이 무엇을 하는지 한 문장을 씁니다(작업 세션 목록에 그대로 나갑니다). 그 아래에는 방향·전제·범위·다른 작업 세션과의 경계 중 정해진 것만 둡니다. 진행 상황·최근 작업·파일 목록은 쓰지 않습니다.',
     { name: string, context: { type: 'string', description: '필수. 사용자와 정한 이 작업 세션의 목적·방향. 비어 있으면 만들지 않습니다.' } }, ['name', 'context']],
-  ['session_save', '이 대화가 일하는 작업 브랜치(없으면 메인)에 기록 하나를 남깁니다. summary는 한 줄 요약, history는 본문, next는 이어 갈 일이 있을 때만 한 줄. 본문은 작업 요약, 근거 파일 링크와 그 내용, 파일에 빠진 내용입니다. 작업 내용이 아직 파일에 없으면 먼저 파일로 남기고 링크합니다. 사용자 원문, 진행 경과, 실행 증거(ID·명령·로그)는 넣지 않습니다. 저장할 때마다 최근 기록이 밀려나므로 잘게 나눠 저장하지 말고, 같은 경계의 일은 모아 한 번에 저장합니다. 작업 브랜치에서 next 없이 저장하면 recap(그 작업 브랜치에서 한 일 전체 정리)이 필수이고, 그 저장으로 작업 브랜치가 닫혀 메인에 합쳐집니다. next와 recap은 함께 줄 수 없습니다.',
+  ['session_save', '이 대화가 일하는 작업 브랜치(없으면 메인)에 기록 하나를 남깁니다. summary는 한 줄 요약, history는 본문, next는 이어 갈 일이 있을 때만 한 줄. 본문은 작업 요약, 근거 파일 링크와 그 내용, 파일에 빠진 내용입니다. 작업 내용이 아직 파일에 없으면 먼저 파일로 남기고 링크합니다(작업 세션 폴더의 work/YYYY-MM/YYYY-MM-DD-<이름>.md, 여러 개면 같은 이름 폴더, 커진 작업은 work/<작업명>/으로 옮기고 가리키던 기록 링크도 고침). 사용자 원문, 진행 경과, 실행 증거(ID·명령·로그)는 넣지 않습니다. 저장할 때마다 최근 기록이 밀려나므로 잘게 나눠 저장하지 말고, 같은 경계의 일은 모아 한 번에 저장합니다. 작업 브랜치에서 next 없이 저장하면 recap(그 작업 브랜치에서 한 일 전체 정리)이 필수이고, 그 저장으로 작업 브랜치가 닫혀 메인에 합쳐집니다. next와 recap은 함께 줄 수 없습니다.',
     { summary: string, history: string, next: string, recap: { type: 'string', description: '작업 브랜치를 닫는 저장(next 없음)에만. 그 작업 브랜치에서 한 일 전체 정리.' } }, ['summary', 'history']],
   ['session_branch','작업 브랜치 다루기. create는 branch 이름(필수, 그 일을 나타내는 짧은 이름)으로 새 작업 브랜치를 열고 이 대화를 거기에 둡니다(parent 생략은 이 대화의 작업 브랜치, 없으면 메인). attach는 있는 작업 브랜치를 이어 갑니다(다른 대화가 같은 작업 브랜치에 있어도 됩니다). abandon은 사용자가 그만둔 작업 브랜치를 reason과 함께 중단합니다. 다른 작업 브랜치로 옮겨도 떠난 작업 브랜치는 열린 채 남습니다.',
     {action:{type:'string',enum:['create','attach','abandon']},branch:string,parent:string,reason:string},['action']],
-  ['session_read','연결을 바꾸지 않고 기록을 읽습니다: map(흐름 지도) / recent(최근 본문) / entry(지도의 짧은 ID 또는 전체 ID) / find(file은 그 파일을 가리키는 기록, query는 본문 낱말). name은 다른 작업 세션, branch는 그 작업 브랜치(부모 포함). limit는 지도·결과 건수, 0 전체.',
-    {action:{type:'string',enum:['map','recent','entry','find']},name:string,branch:string,limit:{type:'integer',minimum:0,default:30},count:{type:'integer',minimum:0,default:5},id:string,file:string,query:string},['action']],
+  ['session_read','연결을 바꾸지 않고 기록을 읽습니다: map(흐름 지도) / recent(최근 본문) / entry(지도의 짧은 ID 또는 전체 ID) / find(file은 그 파일을 가리키는 기록, query는 본문 낱말) / files(id 기록 또는 branch 작업 브랜치 기록 전체가 가리킨 파일과, 그 파일들이 링크·백틱 경로로 가리킨 파일을 나무 모양으로. depth 1~3, 기본 2, 파일 50개까지). name은 다른 작업 세션, branch는 그 작업 브랜치(부모 포함). limit는 지도·결과 건수, 0 전체.',
+    {action:{type:'string',enum:['map','recent','entry','find','files']},name:string,branch:string,limit:{type:'integer',minimum:0,default:30},count:{type:'integer',minimum:0,default:5},id:string,file:string,query:string,depth:{type:'integer',minimum:1,default:2}},['action']],
   ['session_todo','작업 세션의 할 일(todo.md). 사용자가 나중에 할 일을 말하면 add, 할 일을 물으면 list, 끝났다고 하면 done. add의 text는 나중에 오해가 없도록 할 일과 범위를 분명히 쓰고 사용자 원문을 근거로 인용합니다. 사용자가 정하지 않은 것을 확정사항으로 쓰지 않습니다. 기한이 있으면 상대 날짜를 실제 날짜로 바꿔 due(YYYY-MM-DD)에 넣습니다. done은 match가 열린 항목 하나에만 맞을 때 끝냅니다. name 생략은 이 대화의 작업 세션입니다.',
     {action:{type:'string',enum:['add','list','done']},text:string,due:string,match:string,name:string},['action']],
   ['session_conversations','살아 있는 대화를 작업 세션 → 작업 브랜치 → 대화로 보여 줍니다(작업 세션에 안 붙은 대화는 따로). 대화마다 제목, 주소, 마지막 활동. 다른 대화에 메시지를 보내기 전에 이 목록에서 대화를 고르고, 호스트의 메시지 도구(SendMessage)의 받는 쪽에 주소를 그대로 씁니다. name을 주면 그 작업 세션만.',

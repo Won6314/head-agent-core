@@ -101,3 +101,37 @@ test('concurrent processes write the same file and index without losing or dupli
   await Promise.all(Array.from({length:4},(_,i)=>new Promise((resolve,reject)=>{const child=spawn(process.execPath,['--input-type=module','-e',code,dir,'child'+i],{stdio:['ignore','pipe','pipe']});let error='';child.stderr.on('data',d=>error+=d);child.on('exit',c=>c===0?resolve():reject(new Error(error)));child.on('error',reject);})));assert.equal(withGraph(dir,g=>g.recent('demo','main',0).length),32);
   assert.equal(new Set(withGraph(dir,g=>g.recent('demo','main',0).map(e=>e.id))).size,32);assert.match(s.inspect({action:'map',conversation_id:'c',limit:4}),/그 앞 28개/); // 32 records; the 32 index lines they left on main are not drawn
 });
+test('files: a record’s files and the files they link, as a tree — each once, depth 1–3, cached by time and size, 50 at most',()=>{
+  const {dir,s,base}=fixture();const w=path.join(base,'work/2026-10');fs.mkdirSync(w,{recursive:true});
+  const put=(name,text)=>{const f=path.join(w,name);fs.writeFileSync(f,text);return f;};
+  put('a.md','[b](b.md) and `work/2026-10/c.md` and [web](https://example.com/x.md) and [gone](missing.md) and bare d.md');
+  put('b.md','back to [a](a.md#top) and [d](./d.md "title")');put('c.md','nothing');put('d.md','[e](e.md)');put('e.md','end');
+  put('big.md','[e](e.md) '+'x'.repeat(1024*1024));fs.writeFileSync(path.join(w,'bin.dat'),Buffer.from([0,1,2,...Buffer.from('[e](e.md)')]));
+  put('f.md','[big](big.md) [bin](bin.dat)');
+  s.save({summary:'with files',history:'See [a](work/2026-10/a.md) and [f](work/2026-10/f.md).',conversation_id:'c'});
+  const short=/([0-9a-f]{5}) [^\n]+ with files/.exec(s.inspect({action:'map',conversation_id:'c'}))[1];
+  assert.equal(s.inspect({action:'files',id:short,conversation_id:'c'}),[`# 파일: 기록 ${short} · with files`,'- work/2026-10/a.md','  - work/2026-10/b.md','  - work/2026-10/c.md','- work/2026-10/f.md','  - work/2026-10/big.md','  - work/2026-10/bin.dat'].join('\n'));
+  assert.equal(s.inspect({action:'files',id:short,depth:1,conversation_id:'c'}),[`# 파일: 기록 ${short} · with files`,'- work/2026-10/a.md','- work/2026-10/f.md'].join('\n'));
+  const three=s.inspect({action:'files',id:short,depth:3,conversation_id:'c'});
+  assert.match(three,/\n- work\/2026-10\/a\.md\n  - work\/2026-10\/b\.md\n    - work\/2026-10\/a\.md \(앞에 나옴\)\n    - work\/2026-10\/d\.md\n  - work\/2026-10\/c\.md\n/);
+  assert.doesNotMatch(three,/e\.md|missing|example/); // e is depth 4; big and binary files are not read
+  // Links are kept in the index with time and size: an unchanged file is not read again.
+  assert.equal(withGraph(dir,g=>{g.files('demo',{id:short,depth:3});return g.linkReads||0;}),0);
+  fs.writeFileSync(path.join(w,'c.md'),'now [e](e.md)');
+  assert.equal(withGraph(dir,g=>{const out=g.files('demo',{id:short,depth:3});assert.match(out,/  - work\/2026-10\/c\.md\n    - work\/2026-10\/e\.md/);return g.linkReads;}),1);
+  // A work branch: every record of it.
+  s.branch({action:'create',branch:'docs',conversation_id:'c'});
+  s.save({summary:'one',history:'[c](work/2026-10/c.md)',next:'n',conversation_id:'c'});s.save({summary:'two',history:'[d](work/2026-10/d.md) [c](work/2026-10/c.md)',next:'n',conversation_id:'c'});
+  assert.equal(s.inspect({action:'files',branch:'docs',depth:1,conversation_id:'c'}),'# 파일: 작업 브랜치 docs (기록 2개)\n- work/2026-10/c.md\n- work/2026-10/d.md');
+  // At most 50 files, the rest counted.
+  for(let i=0;i<60;i++)put(`m${i}.md`,'x');
+  s.save({summary:'many',history:Array.from({length:60},(_,i)=>`[m${i}](work/2026-10/m${i}.md)`).join(' '),next:'n',conversation_id:'c'});
+  const many=/([0-9a-f]{5}) [^\n]+ many/.exec(s.inspect({action:'map',conversation_id:'c'}))[1];
+  const cut=s.inspect({action:'files',id:many,conversation_id:'c'});
+  assert.equal(cut.split('\n').filter(l=>l.startsWith('- ')).length,50);assert.match(cut,/\(파일 50개에서 잘랐습니다\. 더 있음: 10개 이상\)$/);
+  assert.match(s.inspect({action:'files',id:many,name:'demo'}),/^# 파일: /);
+  assert.throws(()=>s.inspect({action:'files',id:short,depth:4,conversation_id:'c'}),/depth는 1~3/);
+  assert.throws(()=>s.inspect({action:'files',conversation_id:'c'}),/id\(기록 지도 ID\) 또는 branch/);
+  assert.throws(()=>callTool(s,'session_read',{action:'files',id:short,depth:0},'c'),/유효하지 않은 인자: depth/);
+  assert.match(callTool(s,'session_read',{action:'files',id:short,agent_id:'fork'},'c'),/a\.md/); // a read: allowed in a fork
+});
