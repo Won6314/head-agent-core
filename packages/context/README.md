@@ -103,6 +103,8 @@
 
 ## 배포·업데이트
 
+설치(Claude Code 2.1.275 이상): `/plugin install head-context --marketplace Won6314/head-agent-core`. 그다음 첫 대화에서 초기설정에 동의하면 프로젝트에 자동 업데이트까지 적힌다.
+
 공개 GitHub `Won6314/head-agent-core`의 마켓 `head-agent-core`(저장소 이름과 같음)로 낸다. 새 판은 `plugin.json` 버전을 올려 main에 합치고 태그 `head-context--v<판>`을 단다. 초기설정이 프로젝트 settings에 이 마켓을 `autoUpdate: true`로 적으므로 앱이 시작할 때 새 판을 받는다.
 
 ## 시험
