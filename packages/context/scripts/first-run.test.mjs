@@ -14,7 +14,7 @@ const tool=(dir,args)=>callTool(sessions(dir),'project_setup',args,undefined,dir
 const read=(dir,f)=>fs.readFileSync(path.join(dir,f),'utf8');
 const hook=(dir,{id='c1',source='startup',session}={})=>{const r=spawnSync(process.execPath,[path.resolve('scripts/hook.mjs')],{input:JSON.stringify({hook_event_name:'SessionStart',session_id:id,source,cwd:dir}),env:{...process.env,CLAUDE_PROJECT_DIR:dir,HEAD_CONTEXT_SESSION:session||''},encoding:'utf8'});assert.equal(r.status,0);assert.equal(r.stderr,'');return r.stdout?JSON.parse(r.stdout).hookSpecificOutput.additionalContext:'';};
 // An unconnected conversation gets one line first; the first-run guide follows it.
-const guidePart=s=>s.replace('이 대화는 아직 작업 주제에 연결되지 않았습니다.','').trim();
+const guidePart=s=>s.replace('이 대화는 아직 작업 세션에 연결되지 않았습니다.','').trim();
 const mcp=(dir,args)=>{const r=spawnSync(process.execPath,[path.resolve('scripts/mcp.mjs')],{env:{...process.env,CLAUDE_PROJECT_DIR:dir},input:[{jsonrpc:'2.0',id:1,method:'tools/list'},{jsonrpc:'2.0',id:2,method:'tools/call',params:{name:'project_setup',arguments:args}}].map(m=>JSON.stringify(m)).join('\n')+'\n',encoding:'utf8'});return r.stdout.trim().split('\n').map(l=>JSON.parse(l));};
 
 test('fresh project: start hook asks setup on startup/clear only, setup writes core + one CLAUDE.md line and returns the core',()=>{
@@ -62,12 +62,13 @@ test('survey is asked only after setup and only when the plugin carries its proc
     tool(other,{action:'never_ask',step:'survey'});assert.equal(guidePart(hook(other)),'');
   }finally{fs.rmSync(SURVEY_SOURCE,{force:true});}
 });
-test('guide rides with the session identity, also when the identity goes to the channel',()=>{
+test('guide rides with the work context, also when the work context goes to the channel',()=>{
   const dir=fresh(),s=sessions(dir);s.create({name:'demo',context:'FIRST RUN DIRECTION',conversation_id:'seed'});
   const small=hook(dir,{id:'small',session:'demo'});assert.match(small,/FIRST RUN DIRECTION/);assert.match(small,/초기설정 해도 될까요/);
-  for(let i=0;i<5;i++)s.save({summary:'BIG-'+i,history:'긴 본문 '.repeat(500),next:'더',conversation_id:'seed'});
-  // The conversation that holds the big records is the one whose load runs over the cap.
-  const big=hook(dir,{id:'seed',session:'demo'});assert.match(big,/session_load를 호출해/);assert.match(big,/초기설정 해도 될까요/);assert.ok(JSON.stringify(big).length<9000);
+  s.branch({action:'create',branch:'big',conversation_id:'seed'});
+  for(let i=0;i<5;i++)s.save({summary:'BIG-'+i,history:'긴 본문 '.repeat(800),next:'더',conversation_id:'seed'});
+  // The conversation on the branch with the big records is the one whose load runs over the cap.
+  const big=hook(dir,{id:'seed',session:'demo'});assert.match(big,/session_load를 불러/);assert.match(big,/작업 브랜치: big/);assert.match(big,/초기설정 해도 될까요/);assert.ok(JSON.stringify(big).length<9000);
 });
 test('real MCP process lists project_setup and runs it in CLAUDE_PROJECT_DIR',()=>{
   const dir=fresh(),[list,call]=mcp(dir,{action:'setup'});

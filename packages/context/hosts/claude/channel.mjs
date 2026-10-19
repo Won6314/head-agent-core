@@ -22,7 +22,7 @@ export function loadChannel(project,store,{delay=2000,conversationOf=currentConv
           if(!mine||job.conversation_id!==mine)continue;
           fs.unlinkSync(file);
           const text=store.identity({conversation_id:job.conversation_id});
-          if(text)emit(`# 세션 로드 (응답 불필요)\n${text}`,{kind:'session_load'});
+          if(text)emit(`# 작업 맥락 (응답 불필요)\n${text}`,{kind:'session_load'});
         }catch(error){console.error(`head-context: ${error.message}`);}
       }
     };

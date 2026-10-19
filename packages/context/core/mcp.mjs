@@ -1,29 +1,47 @@
 import readline from 'node:readline';
 import { sessions, CONTEXT_REQUIRED } from './sessions.mjs';
 import { setupTool } from './project.mjs';
-export const instructions = '세션은 큰 작업 주제입니다. 세션에 연결된 대화는 저마다 자기 브랜치(자리)에서 일하고, 코어가 그 브랜치를 자동으로 만들고 이름 붙이고 닫습니다. 메인(history.md)은 색인입니다: 저장할 때마다 시각·이름표·요약·본문 링크 한 줄이 메인에 남고, 본문은 그 대화의 브랜치 파일에 쌓입니다. 세션 로드(시작 훅·session_load)는 지금 자리의 정체성을 줍니다: context.md, 기록 지도(git 그래프 모양, 최신이 위, 한 줄에 짧은 ID·시각·요약), 이 자리의 지금까지 요약, 최근 기록의 짧은 ID·시각·본문, 마지막 다음 줄, 그리고 다른 자리의 남은 일. 재개는 이미 맥락이 있으므로 다시 로드하지 않고, /clear와 압축은 처음 시작과 같이 다시 로드합니다. 시작 안내가 로드가 훅 상한을 넘었다고 하면 session_load를 호출해 받으세요(채널이 열린 호스트에서는 같은 내용이 메시지로 먼저 올 수도 있습니다). session_save는 지금 자리에 요약 한 줄·본문·다음(선택)을 저장합니다. 본문은 작업 요약, 근거 파일 링크와 그 내용, 파일에 빠진 내용입니다. 이어갈 일이 남았으면 next를 주세요. 이어갈 일이 없으면 next를 비우고 recap(지금까지 요약)을 반드시 주세요: 그 자리에서 한 일 전체를 정리한 글이며 브랜치 첫머리에 덮어써집니다. next와 recap은 함께 줄 수 없습니다. 브랜치의 상태(진행 중·남은 일·내려감·끝남)는 코어가 계산합니다. 모델도 사용자도 정하지 않습니다. 대화가 끝나면 코어가 메인에 합쳐짐 항목 하나를 자동으로 씁니다. session_finish는 지금 자리를 지금 닫고(메인에 합쳐짐 1개) 이 대화에 새 자리를 줍니다. 다른 주제로 넘어갈 때만 쓰고, 보통은 저장만 하면 됩니다. session_branch create는 이 대화의 자리를 새로 가르고, attach는 남은 일이 있는 자리를 이어받고, abandon은 사용자가 그만둔 자리를 이유와 함께 중단합니다. 살아 있는 대화가 붙은 자리에는 붙을 수 없습니다. 로드에 남은 일이 보이면 사용자에게 한 번만 물으세요: "○○의 \'이름표\' 이어서 할까요?" 예라면 session_branch(action="attach", branch=…), 아니면 지금 자리에서 계속합니다. session_read map/recent/entry/find는 연결을 바꾸지 않는 조회이며 다른 세션도 읽을 수 있습니다. session_create는 사용자와 정한 목적을 context로 받아야 합니다. context.md에는 작업 주제만 둡니다. 일의 진행·결과·파일은 session_save로 기록하고 context.md에 쓰지 않습니다. context.md는 사용자 동의 없이 고치지 않습니다. ID는 호스트가 채우므로 모델은 지정하지 않습니다. 작업 주제 맞추기: 사용자는 작업 주제(세션)를 몰라도 됩니다. 맞추는 것은 당신의 일입니다. 아직 작업 주제가 없는 대화에서 사용자가 기록할 만한 일(이어서 할 작업, 결과물이나 결정이 남는 일)을 말하면 session_list로 작업 주제 목록을 불러와 맞춰 보세요. 작업 주제가 한 번 정해진 대화는 그대로 갑니다. 맞는 주제가 있으면 "이거 ○○ 작업 맞나요?"라고 묻고, 맞다면 session_load로 불러오세요. 없으면 사용자의 말로 이름과 한 문장을 지어 "새 작업 주제로 만들까요? ○○ — (한 문장)"이라고 묻고, 좋다면 session_create로 만드세요. 단순한 질문이나 짧은 대화에는 묻지 말고 그냥 답하세요. 이 판단은 답에 쓰지 않습니다. 사용자에게 묻는 것은 작업 주제뿐입니다. "세션"·"브랜치"·자리 고르기를 사용자에게 들이밀지 말고 "작업 주제"라고 하세요. 초기설정 질문이 있으면 그것을 먼저 묻습니다. 프로젝트 첫 실행: 시작 안내가 초기설정(코어 지침 .head/core.md + 프로젝트 CLAUDE.md의 @.head/core.md 한 줄)이나 프로젝트 조사를 물으라고 하면 사용자의 첫 입력에서 먼저 짧게 묻고 원래 이야기로 이어가세요. 거절하면 다시는 묻지 않을지 묻습니다. 이 파일들은 직접 쓰지 말고 project_setup으로만 씁니다.';
+export const instructions = `작업 세션
+- 무엇: 이어지는 큰 일의 묶음입니다. 목적은 context.md에 있습니다. 호스트가 말하는 "세션"은 이 대화이며 작업 세션과 다릅니다.
+- 언제: 대화에서 이어질 일이 시작됐는데 작업 세션이 없으면, 목록(session_list)에서 맞는 것을 찾아 사용자에게 묻고 불러옵니다. 없으면 목적을 정해 새로 만듭니다. context.md는 사용자 동의 없이 고치지 않습니다.
+
+작업 브랜치
+- 무엇: 작업 세션 안에서 열리고 닫히는 한 번의 일입니다. 이름이 있고, 여러 개가 동시에 열릴 수 있으며, 닫히면 메인에 합쳐집니다.
+- 언제: 작업에 착수할 때 엽니다. 불러온 작업 맥락에 이어 갈 작업 브랜치가 있으면 골라 이어 갑니다.
+
+저장
+- 무엇: 작업 브랜치에 남기는 기록 한 번입니다. 작업 요약, 근거 파일 링크, 파일에 빠진 내용을 씁니다.
+- 언제: 결과나 결정이 생기면 남깁니다. 이어 갈 일이 있으면 다음을 적고, 끝났으면 다음 없이 정리를 줍니다. 그 저장으로 작업 브랜치가 닫힙니다.
+- 기본 포크와 하위 에이전트는 저장하지 않습니다. 결과는 부모 대화가 받아 저장합니다.`;
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
 const missing = { session_create: { context: CONTEXT_REQUIRED } };
+// Tools that change a record or a connection. A call made inside a fork or a subagent
+// (the host fills agent_id) may read but not write.
+export const WRITES = { session_load: true, session_create: true, session_save: true, session_branch: true, session_todo: args => args.action !== 'list' };
+export const FORK_WRITE_REFUSED = '기본 포크와 하위 에이전트는 작업 기록을 쓰지 않습니다(읽기만 됩니다). 결과는 부모 대화에 돌려주세요. 부모 대화가 저장합니다.';
 export const definitions = [
-  ['session_list', '작업 주제 목록을 읽습니다: 이름, context.md 첫 문장, 최신 기록 요약, 남은 일 수를 최근 기록 순으로. 기록 지도는 session_read map입니다.', {}, []],
-  ['session_load', '세션을 정하고 이 대화를 그 세션의 자기 자리(브랜치)에 붙인 뒤 정체성을 돌려줍니다: context.md, 기록 지도(git 그래프 모양, 최신이 위, 한 줄에 짧은 ID·시각·요약), 이 자리의 지금까지 요약, 최근 기록의 짧은 ID·시각·본문, 마지막 다음, 다른 자리의 남은 일. 처음 붙는 대화는 자리가 자동으로 생기고, 이미 자리가 있으면 그 자리를 그대로 씁니다. branch를 주면 그 자리를 이어받습니다(살아 있는 대화가 붙은 자리는 거절). branch=main은 메인 색인 조회용입니다.',
-    { name: string, branch:string, history_count: { type: 'integer', minimum: 0, default: 5 },map_limit:{type:'integer',minimum:0,default:30,description:'기록 지도 줄 최대 수. 0은 전체.'} }, []],
-  ['session_create', '새 세션과 사용자 방향을 만들고 현재 대화를 그 세션의 새 자리에 묶습니다. context(방향)는 필수이며 없거나 공백뿐이면 세션을 만들지 않고 거절합니다. 기존 파일은 덮어쓰지 않습니다. context는 context.md 본문입니다. 첫 줄은 `# 이름`, 바로 아래에는 이 주제가 무엇을 하는지 한 문장을 씁니다(작업 주제 목록에 그대로 나갑니다). 그 아래에는 방향·전제·범위·다른 주제와의 경계 중 정해진 것만 둡니다. 진행 상황·최근 작업·파일 목록은 쓰지 않습니다.',
-    { name: string, context: { type: 'string', description: '필수. 사용자와 정한 이 세션의 목적·방향. 비어 있으면 만들지 않습니다.' } }, ['name', 'context']],
-  ['session_save', '지금 자리에 체크포인트를 저장합니다. 본문은 이 자리의 브랜치 파일에, 메인에는 시각·이름표·요약·본문 링크 한 줄이 색인으로 남습니다. summary는 한 줄 요약(이름표도 이 줄로 갱신됩니다), history는 본문, next는 이어갈 일이 있을 때만 한 줄. next가 없으면 recap(지금까지 요약)이 필수이고, next가 있으면 recap을 줄 수 없습니다.',
-    { summary: string, history: string, next: string, recap: { type: 'string', description: '다음이 없는 저장에만. 이 자리에서 한 일 전체 정리. 브랜치 첫머리에 덮어씁니다.' } }, ['summary', 'history']],
-  ['session_finish', '지금 자리(또는 branch로 지정한 자리)를 지금 닫습니다. 코어가 메인에 합쳐짐 항목 1개를 쓰고(끝남 또는 멈춤은 마지막 저장의 다음 여부로 계산), 지금 자리를 닫았으면 이 대화는 새 자리로 이어갑니다. 요약·본문은 받지 않습니다: 저장된 기록에서 코어가 만듭니다.',
-    {branch:string}, []],
-  ['session_branch','자리 다루기. create는 이 대화의 자리를 새로 갈라 붙습니다(label은 이름표, parent 생략은 지금 자리). attach는 branch로 지정한 남은 일 자리를 이어받습니다. abandon은 사용자가 그만둔 자리를 중단하며 reason이 필수입니다. 떠난 자리는 저장이 없으면 버리고, 있으면 메인에 합쳐집니다.',
-    {action:{type:'string',enum:['create','attach','abandon']},branch:string,label:string,parent:string,reason:string},['action']],
-  ['session_read','연결을 바꾸지 않고 그래프로 map/recent/entry/find를 읽습니다. map name은 다른 세션 보기, branch는 그 줄기(부모 포함). limit는 최근 지도/결과 건수, 0 전체. entry는 지도의 짧은 ID(그 세션 안에서, 다른 세션은 name과 함께) 또는 전체 ID. find file은 기존 파일을 가리키는 항목, query는 파일 본문 낱말 검색.',
-    {action:{type:'string',enum:['map','recent','entry','find']},name:string,branch:string,limit:{type:'integer',minimum:0,default:30},count:{type:'integer',minimum:0,default:5},id:string,file:string,query:string},['action']]
+  ['session_list', '작업 세션 목록을 읽습니다: 이름, context.md 첫 문장, 메인의 최신 요약, 열린 작업 브랜치 수를 최근 기록 순으로. 기록 지도는 session_read map입니다.', {}, []],
+  ['session_load', '작업 세션을 불러와 이 대화를 연결하고 작업 맥락을 돌려줍니다: context.md, 이 대화의 작업 브랜치(최근 기록과 다음), 열린 작업 브랜치, 할 일, 흐름 지도(git 그래프 모양, 최신이 위). branch를 주면 그 작업 브랜치를 이어 갑니다(닫힌 것은 다시 열립니다). branch=main은 메인에서 일합니다. 생략하면 이 작업 세션에서 쓰던 작업 브랜치, 처음이면 메인입니다.',
+    { name: string, branch: string, history_count: { type: 'integer', minimum: 0, default: 3 }, map_limit: { type: 'integer', minimum: 0, default: 30, description: '흐름 지도 줄 최대 수. 0은 전체.' } }, []],
+  ['session_create', '새 작업 세션을 만들고 이 대화를 그 메인에 연결합니다. context(목적)는 필수이며 없거나 공백뿐이면 만들지 않고 거절합니다. 기존 파일은 덮어쓰지 않습니다. context는 context.md 본문입니다. 첫 줄은 `# 이름`, 바로 아래에는 이 작업 세션이 무엇을 하는지 한 문장을 씁니다(작업 세션 목록에 그대로 나갑니다). 그 아래에는 방향·전제·범위·다른 작업 세션과의 경계 중 정해진 것만 둡니다. 진행 상황·최근 작업·파일 목록은 쓰지 않습니다.',
+    { name: string, context: { type: 'string', description: '필수. 사용자와 정한 이 작업 세션의 목적·방향. 비어 있으면 만들지 않습니다.' } }, ['name', 'context']],
+  ['session_save', '이 대화가 일하는 작업 브랜치(없으면 메인)에 기록 하나를 남깁니다. summary는 한 줄 요약, history는 본문, next는 이어 갈 일이 있을 때만 한 줄. 작업 브랜치에서 next 없이 저장하면 recap(그 작업 브랜치에서 한 일 전체 정리)이 필수이고, 그 저장으로 작업 브랜치가 닫혀 메인에 합쳐집니다. next와 recap은 함께 줄 수 없습니다.',
+    { summary: string, history: string, next: string, recap: { type: 'string', description: '작업 브랜치를 닫는 저장(next 없음)에만. 그 작업 브랜치에서 한 일 전체 정리.' } }, ['summary', 'history']],
+  ['session_branch','작업 브랜치 다루기. create는 branch 이름(필수, 그 일을 나타내는 짧은 이름)으로 새 작업 브랜치를 열고 이 대화를 거기에 둡니다(parent 생략은 이 대화의 작업 브랜치, 없으면 메인). attach는 있는 작업 브랜치를 이어 갑니다(다른 대화가 같은 작업 브랜치에 있어도 됩니다). abandon은 사용자가 그만둔 작업 브랜치를 reason과 함께 중단합니다. 다른 작업 브랜치로 옮겨도 떠난 작업 브랜치는 열린 채 남습니다.',
+    {action:{type:'string',enum:['create','attach','abandon']},branch:string,parent:string,reason:string},['action']],
+  ['session_read','연결을 바꾸지 않고 기록을 읽습니다: map(흐름 지도) / recent(최근 본문) / entry(지도의 짧은 ID 또는 전체 ID) / find(file은 그 파일을 가리키는 기록, query는 본문 낱말). name은 다른 작업 세션, branch는 그 작업 브랜치(부모 포함). limit는 지도·결과 건수, 0 전체.',
+    {action:{type:'string',enum:['map','recent','entry','find']},name:string,branch:string,limit:{type:'integer',minimum:0,default:30},count:{type:'integer',minimum:0,default:5},id:string,file:string,query:string},['action']],
+  ['session_todo','작업 세션의 할 일(todo.md). 사용자가 나중에 할 일을 말하면 add, 할 일을 물으면 list, 끝났다고 하면 done. add의 text는 나중에 오해가 없도록 할 일과 범위를 분명히 쓰고 사용자 원문을 근거로 인용합니다. 사용자가 정하지 않은 것을 확정사항으로 쓰지 않습니다. 기한이 있으면 상대 날짜를 실제 날짜로 바꿔 due(YYYY-MM-DD)에 넣습니다. done은 match가 열린 항목 하나에만 맞을 때 끝냅니다. name 생략은 이 대화의 작업 세션입니다.',
+    {action:{type:'string',enum:['add','list','done']},text:string,due:string,match:string,name:string},['action']],
+  ['session_conversations','살아 있는 대화를 작업 세션 → 작업 브랜치 → 대화로 보여 줍니다(작업 세션에 안 붙은 대화는 따로). 대화마다 제목, 주소, 마지막 활동. 다른 대화에 메시지를 보내기 전에 이 목록에서 대화를 고르고, 호스트의 메시지 도구(SendMessage)의 받는 쪽에 주소를 그대로 씁니다. name을 주면 그 작업 세션만.',
+    {name:string},[]]
 ].map(([name, description, properties, required]) => ({ name, description,
-  inputSchema: { type: 'object', properties: { ...properties, conversation_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' } }, required, additionalProperties: false } }));
+  inputSchema: { type: 'object', properties: { ...properties, conversation_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' }, agent_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' } }, required, additionalProperties: false } }));
 // Project-level, not conversation-level: no conversation_id.
 definitions.push({ name: 'project_setup', description: '프로젝트 첫 실행의 유일한 쓰기 도구. 사용자가 동의했을 때만 부릅니다. action=setup: 코어 지침을 .head/core.md에 쓰고 프로젝트 CLAUDE.md에 @.head/core.md 한 줄을 넣고(없으면 만들고, 있으면 중복 없이, 기존 내용 보존) 초기설정을 끝남으로 기록한 뒤 코어 지침 본문을 돌려줍니다. 이 대화부터 그 지침을 따르세요. action=never_ask: 사용자가 다시 묻지 말라고 한 단계(step=setup 또는 survey)를 기록합니다. action=survey_done: 프로젝트 조사를 끝남으로 기록합니다.',
   inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['setup', 'never_ask', 'survey_done'] }, step: { type: 'string', enum: ['setup', 'survey'] } }, required: ['action'], additionalProperties: false } });
+const METHODS = { session_read: 'inspect', session_conversations: 'conversations' };
 export function callTool(store, name, args, conversation_id, project) {
   const tool = definitions.find(t => t.name === name);
   if (!tool) throw new Error(`알 수 없는 도구: ${name}`);
@@ -33,12 +51,15 @@ export function callTool(store, name, args, conversation_id, project) {
   }
   for (const key of tool.inputSchema.required) if (!(key in args)) throw new Error(missing[name]?.[key] || `필수 인자: ${key}`);
   if (name === 'project_setup') return setupTool(project, args);
-  return store[name==='session_read'?'inspect':name.slice('session_'.length)]({ ...args, conversation_id });
+  const { agent_id, ...rest } = args;
+  const writes = WRITES[name];
+  if (agent_id && (typeof writes === 'function' ? writes(rest) : writes)) throw new Error(FORK_WRITE_REFUSED);
+  return store[METHODS[name] || name.slice('session_'.length)]({ ...rest, conversation_id });
 }
 // channel (optional): {start(emit)} — called once the client finished initializing;
 // emit(content, meta) sends a claude/channel notification that the host turns into a turn.
-export async function serve({ project, host, conversationOf, channel }) {
-  const store = sessions(project, { host });
+export async function serve({ project, host, conversationOf, channel, options = {} }) {
+  const store = sessions(project, { host, ...options });
   const send = message => process.stdout.write(`${JSON.stringify({ jsonrpc: '2.0', ...message })}\n`);
   for await (const line of readline.createInterface({ input: process.stdin, crlfDelay: Infinity })) {
     let request;
@@ -49,7 +70,7 @@ export async function serve({ project, host, conversationOf, channel }) {
       continue;
     }
     const { id, method, params = {} } = request;
-    if (method === 'initialize') send({ id, result: { protocolVersion: params.protocolVersion, capabilities: { tools: {}, ...(channel ? { experimental: { 'claude/channel': {} } } : {}) }, serverInfo: { name: 'head-context', version: '0.6.0' }, instructions } });
+    if (method === 'initialize') send({ id, result: { protocolVersion: params.protocolVersion, capabilities: { tools: {}, ...(channel ? { experimental: { 'claude/channel': {} } } : {}) }, serverInfo: { name: 'head-context', version: '0.7.0' }, instructions } });
     else if (method === 'ping') send({ id, result: {} });
     else if (method === 'tools/list') send({ id, result: { tools: definitions } });
     else if (method === 'tools/call') {

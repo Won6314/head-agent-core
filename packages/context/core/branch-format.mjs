@@ -28,7 +28,6 @@ export function branchHeader(text){
 // Header edits keep the checkpoints untouched: only the field value or the recap block
 // is replaced, so the file stays the record and the index re-reads it unchanged.
 export const withStatus=(text,status)=>text.replace(/^상태: .*$/m,`상태: ${status}`);
-export const withLabel=(text,label)=>text.replace(/^(?:이름표|주제): .*$/m,`이름표: ${line(label,'label')}`);
 export function withRecap(text,recap){
   const body=String(recap).trim(),heading=text.match(/^##[ \t]+\d{4}-\d{2}-\d{2}/m),end=heading?.index??text.length;
   const start=text.indexOf(`\n${RECAP_HEADING}`);
