@@ -138,13 +138,14 @@ export function renderMap(g,session,{stem,limit=30,current}={}){
   const tips=new Map();for(const r of order)if(!tips.has(r.stem))tips.set(r.stem,r.id);
   const label=r=>{
     if(tips.get(r.stem)!==r.id)return '';
-    const status=r.stem==='main'?'':byName.get(r.stem)?.status;
-    return ` (${current===r.stem?'지금: ':''}${nameOf(r.stem)}${status&&status!=='열림'?' '+status:''})`;
+    return ` (${current===r.stem?'HEAD -> ':''}${nameOf(r.stem)})`;
   };
   const time=clock(g.timezone),lines=[];
   order.forEach((r,i)=>{
     const e=detail(r),lane=laneOf.get(r.stem)??0,cells=cellsOf(running(i),lane);cells[lane*2]='*';
-    const closed=e.branch&&ENDED.includes(e.status)?`${e.status==='중단'?'중단':'합침'} ← ${nameOf(e.branch)}${e.status==='중단'?'':' · '+e.status}${e.reason?` · 이유: ${e.reason}`:''}`:'';
+    // A closing entry reads the way git writes it: Merge branch 'x' (끝남, and 0.6's 멈춤),
+    // Abandon branch 'x': reason (중단).
+    const closed=e.branch&&ENDED.includes(e.status)?(e.status==='중단'?`Abandon branch '${nameOf(e.branch)}'${e.reason?`: ${e.reason}`:''}`:`Merge branch '${nameOf(e.branch)}'`):'';
     lines.push(`${cells.join('').trimEnd()} ${ids.get(r.id)} ${time(r.stamp)} ${closed||mapSummary(e).text}${label(r)}`);
     const m=merges.get(r.id);
     if(m?.parent&&laneOf.has(m.stem)){const to=laneOf.get(m.stem);lines.push(across(cellsOf(running(i+0.3)),lane,to,to>lane?to*2-1:to*2+1,to>lane?'\\':'/').join('').trimEnd());}

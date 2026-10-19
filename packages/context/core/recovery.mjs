@@ -29,40 +29,71 @@ export function openBranches(g,name){
 //     (git-shaped), and this conversation's branch: its recap and newest saves.
 // Data only — what the parts mean is in the server instructions. session_load returns
 // both, the start hook sends them as separate outputs.
-export function sessionPart(g,{name,stem}){
+export function sessionPart(g,{name,stem,conversation=true}){
   const s=g.session(name),b=stem==='main'?null:g.header(name,stem);
-  return [`# 작업 세션: ${name}`,s.context.trim(),'',`이 대화의 작업 브랜치: ${b?`${branchTitle({name:stem,...b})}${isOpen(b.status)?'':` (${b.status})`}`:'없음(메인)'}`].join('\n');
+  const lines=[`# 작업 세션: ${name}`,s.context.trim()];
+  if(conversation)lines.push('',`이 대화의 작업 브랜치: ${b?`${branchTitle({name:stem,...b})}${isOpen(b.status)?'':` (${b.status})`}`:'없음(메인)'}`);
+  return lines.join('\n');
 }
-export function contextPart(g,{name,stem,count=RECENT_COUNT,limit=SUMMARY_LIMIT,todos=[],today=''}){
+// Saves shown with their body. bodyChars cuts a body to its first characters and points
+// at the whole one (session_read entry); 0 leaves the body out. The newest next stays.
+function saves(g,name,rows,{bodyChars=null}={}){
+  const time=clock(g.timezone),ids=g.shortIds(name),lines=[];
+  rows.forEach((row,i)=>{
+    const e=g.detail(row),last=i===rows.length-1,id=ids.get(row.id),body=contentBody(e)||'(본문 없음)';
+    const shown=bodyChars===null||body.length<=bodyChars?body:`${bodyChars?body.slice(0,bodyChars)+' …':''}(전문: session_read entry ${id})`;
+    lines.push('',`### ${id} ${time(row.stamp)} ${mapSummary(e).text}`,...(marker(e)?[marker(e)]:[]),shown,...(last&&e.next?['',`다음: ${e.next}`]:[]));
+  });
+  return lines;
+}
+// The newest saves of a whole session, whatever line they are on. A branch save also
+// leaves an index line on main; the save itself stands for it.
+function sessionSaves(g,name,count){
+  const branches=new Set(g.branches(name).map(b=>b.name));
+  return g.checkpoints(name).filter(r=>{if(r.stem!=='main'||!branches.size)return true;const m=/^work\/([^/]+)\/history\.md$/.exec(g.detail(r).source||'');return !(m&&branches.has(m[1]));}).slice(-count);
+}
+export function contextPart(g,{name,stem,count=RECENT_COUNT,limit=SUMMARY_LIMIT,todos=[],today='',bodyChars=null,overview=false}){
   const time=clock(g.timezone),lines=[];
   const open=openBranches(g,name);
   if(open.length){
     lines.push(`## 열린 작업 브랜치 (${open.length})`);
-    for(const b of open)lines.push(`- ${b.title}${b.name===stem?' (이 대화)':''} · 마지막 ${b.saves?time(b.last_at):'저장 없음'}${b.next?` · 다음: ${b.next}`:''}`);
+    for(const b of open)lines.push(`- ${b.title}${!overview&&b.name===stem?' (이 대화)':''} · 마지막 ${b.saves?time(b.last_at):'저장 없음'}${b.next?` · 다음: ${b.next}`:''}`);
   }
   if(todos.length){
     const soon=todos.filter(t=>dueSoon(t,today)),rest=todos.filter(t=>!dueSoon(t,today)).slice(0,Math.max(0,TODO_COUNT-soon.length));
     lines.push(...(lines.length?['']:[]),`## 할 일 (열린 ${todos.length}개${soon.length?`, 기한 임박 ${soon.length}개`:''})`,...[...soon,...rest].map(t=>cut(todoLine(t),120)));
     if(todos.length>soon.length+rest.length)lines.push('(전체: session_todo list)');
   }
-  const {lines:map,omitted}=renderMap(g,name,{limit,current:stem});
+  const {lines:map,omitted}=renderMap(g,name,{limit,current:overview?undefined:stem});
   if(map.length){
     lines.push(...(lines.length?['']:[]),'## 흐름 (최신이 위)',...map);
     if(omitted)lines.push(`그 앞 ${omitted}개 — session_read map`);
   }
-  if(stem!=='main'){
-    const b=g.header(name,stem),own=g.own(name,stem),recent=count===0?[]:own.slice(-count),ids=g.shortIds(name);
+  if(overview){
+    const rows=count===0?[]:sessionSaves(g,name,count);
+    if(rows.length)lines.push('',`## 최근 기록 (작업 세션 전체, ${rows.length}개)`,...saves(g,name,rows,{bodyChars}));
+  } else if(stem!=='main'){
+    const b=g.header(name,stem),own=g.own(name,stem),recent=count===0?[]:own.slice(-count);
     lines.push(...(lines.length?['']:[]),`## 이 작업 브랜치의 최근 기록: ${branchTitle({name:stem,...b})}`);
-    if(b.recap)lines.push('정리:',b.recap);
+    if(b.recap)lines.push('정리:',bodyChars!==null&&b.recap.length>bodyChars?`${b.recap.slice(0,bodyChars)} …`:b.recap);
     if(!recent.length)lines.push('(아직 기록 없음)');
-    recent.forEach((row,i)=>{
-      const e=g.detail(row),last=i===recent.length-1;
-      lines.push('',`### ${ids.get(row.id)} ${time(row.stamp)} ${mapSummary(e).text}`,...(marker(e)?[marker(e)]:[]),contentBody(e)||'(본문 없음)',...(last&&e.next?['',`다음: ${e.next}`]:[]));
-    });
+    lines.push(...saves(g,name,recent,{bodyChars}));
   }
   return lines.join('\n');
 }
+// The work context cut down to fit one hook output, in this order: fewer newest saves
+// (3, 2, 1), then each body to its first part with a pointer to the whole, then the map
+// to 15 lines. The open work branches, the to-dos and the last next always stay.
+export const FIT_STEPS=[{count:3},{count:2},{count:1},{count:1,bodyChars:1500},{count:1,bodyChars:500},{count:1,bodyChars:500,limit:15},{count:1,bodyChars:0,limit:15},{count:1,bodyChars:0,limit:5}];
+export function fittedContext(g,options,budget){
+  let text='';
+  for(const step of FIT_STEPS){text=contextPart(g,{...options,...step});if(text.length<=budget)return text;}
+  return text.slice(0,Math.max(0,budget-60))+'\n…(상한에서 잘렸습니다. 전부는 session_load)';
+}
 export function identity(g,options){return [sessionPart(g,options),contextPart(g,options)].filter(Boolean).join('\n\n');}
+// A work session read without connecting: the same work context, newest saves of the
+// whole session, nothing about a conversation.
+export function overview(g,options){return [sessionPart(g,{...options,stem:'main',conversation:false}),contextPart(g,{...options,stem:'main',overview:true})].filter(Boolean).join('\n\n');}
 // Work session list (session_list): name, the first sentence of context.md, the newest
 // main summary, and how many work branches are open; most recently recorded first.
 export const UNCONNECTED='이 대화는 아직 작업 세션에 연결되지 않았습니다.';

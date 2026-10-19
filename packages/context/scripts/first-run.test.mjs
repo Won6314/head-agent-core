@@ -71,7 +71,7 @@ test('guide rides with the work session part, also when the work context is over
   // The conversation on the branch with the big records is the one whose context runs over the cap.
   const {parts}=runStart({session_id:'seed',source:'startup',cwd:dir},{env:{CLAUDE_PROJECT_DIR:dir,HEAD_CONTEXT_SESSION:'demo'}});
   assert.match(parts.session,/FIRST RUN DIRECTION[\s\S]*이 대화의 작업 브랜치: big[\s\S]*초기설정 해도 될까요/);
-  assert.match(parts.context,/session_load를 불러 받으세요/);assert.ok(parts.context.length<9000);assert.equal(parts.recent,'');
+  assert.match(parts.context,/## 이 작업 브랜치의 최근 기록: big/);assert.ok(parts.context.length<=9000);assert.equal(parts.recent,'');
 });
 test('setup turns the built-in fork on in the project settings, keeping what is there',()=>{
   const settings=dir=>JSON.parse(read(dir,'.claude/settings.json'));

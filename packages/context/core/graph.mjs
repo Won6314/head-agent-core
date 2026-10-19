@@ -14,7 +14,7 @@ try {
   process.emitWarning=function(warning,...args){if(String(warning).startsWith('SQLite is an experimental feature'))return;return emit.call(this,warning,...args);};
   ({DatabaseSync}=createRequire(import.meta.url)('node:sqlite'));
 } finally {process.emitWarning=emit;}
-const VERSION=2;
+const VERSION=3; // 3: a record points only at links and backtick paths
 export const stemId=(session,stem)=>`stem:${encodeURIComponent(session)}/${encodeURIComponent(stem)}`;
 export const checkpointId=(session,stem,time,occurrence=1)=>`${encodeURIComponent(session)}/${encodeURIComponent(stem)}@${time}${occurrence>1?'#'+occurrence:''}`;
 // One path as written in a record or a file, to an existing file: a link target or a
@@ -29,13 +29,10 @@ function resolveRef(value,dirs){
   return null;
 }
 const linked=body=>[...[...body.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map(m=>m[1]),...[...body.matchAll(/`([^`\n]+)`/g)].map(m=>m[1])];
-// What a record points at (the points edges): links, backtick paths, bare paths and bare
-// file names, resolved against the session folder.
+// What a record points at (the points edges): links and backtick paths only, resolved
+// against the session folder. A file name merely mentioned in the text is not a pointer.
 function references(body,dir){
-  const candidates=linked(body);
-  candidates.push(...[...body.matchAll(/(?:^|\s|[:(])((?:\/|\.\.?\/|[\w가-힣.-]+\/)[^\s<>"'`)\]]+)/gm)].map(m=>m[1]));
-  candidates.push(...[...body.matchAll(/(?:^|[\s:(])([\w가-힣.-]+\.[A-Za-z0-9]{1,10})(?=$|[\s,.)])/gm)].map(m=>m[1]));
-  return [...new Set(candidates.map(value=>resolveRef(value,[dir])).filter(Boolean))];
+  return [...new Set(linked(body).map(value=>resolveRef(value,[dir])).filter(Boolean))];
 }
 // What a file points at, for session_read files: only links and backtick paths, resolved
 // against the file's own folder and then its session folder. Over 1MB or not text: none.

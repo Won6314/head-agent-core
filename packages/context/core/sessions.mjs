@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {parseHistory} from './history.mjs';
-import {identity,sessionPart,contextPart,topicList,openBranches,RECENT_COUNT,SUMMARY_LIMIT} from './recovery.mjs';
+import {identity,overview,sessionPart,fittedContext,topicList,openBranches,RECENT_COUNT,SUMMARY_LIMIT} from './recovery.mjs';
 import {withGraph} from './graph.mjs';
 import {clock} from './map-view.mjs';
 import {branchPath,branchText,branchHeader,withStatus,withRecap} from './branch-format.mjs';
@@ -229,8 +229,9 @@ export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],no
         if(!selected)throw new Error('작업 세션 이름이 필요합니다.');
         if(action==='map')return g.map(selected,branch,limit);
         if(action==='files')return g.files(selected,{id,branch,depth});
+        if(action==='overview'){g.session(selected);return overview(g,{name:selected,todos:openTodos(directory(selected)),today:today(timezone,now())});}
         if(action==='recent'){const stem=branch||(!name&&previous?effective(previous,g):'main');return g.recent(selected,stem,count).map(e=>e.body).join('\n\n')||'(기록 없음)';}
-        throw new Error('action은 map/recent/entry/find/files입니다.');
+        throw new Error('action은 overview/map/recent/entry/find/files입니다.');
       });
     },
     // Current work context of a connected conversation, without changing the connection.
@@ -251,7 +252,8 @@ export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],no
       const place=locate({conversation_id,session_name,origins});if(!place)return null;
       bind(place.session,place.stem,conversation_id,info);return place;
     },
-    // The two parts of the work context for a place, and the file that holds context.md.
-    parts({session,stem}){return withGraph(project,g=>({head:sessionPart(g,{name:session,stem}),context:contextPart(g,{name:session,stem,todos:todos(session),today:today(timezone,now())}),contextFile:path.join(directory(session),'context.md')}));}
+    // The two parts of the work context for a place as the start hook sends them: the
+    // work context already cut down to `budget`, and the file that holds context.md.
+    parts({session,stem},{budget=Infinity}={}){return withGraph(project,g=>({head:sessionPart(g,{name:session,stem}),context:fittedContext(g,{name:session,stem,todos:todos(session),today:today(timezone,now())},budget),contextFile:path.join(directory(session),'context.md')}));}
   };
 }

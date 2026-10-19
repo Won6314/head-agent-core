@@ -16,7 +16,8 @@ import { guide, refreshCore } from '../../core/project.mjs';
 // measured on 2.1.303) and runs them side by side in no fixed order:
 //   session — the work session, context.md whole, this conversation's work branch. It
 //     gives the conversation its place and must always arrive.
-//   context — open work branches, to-dos, the record map, this branch's newest saves.
+//   context — open work branches, to-dos, the record map, this branch's newest saves;
+//     over the cap it is cut down (fewer saves, shorter bodies, a shorter map).
 //   recent  — after a compact or /clear only: the last exchanges as they were said.
 const TOOL = /^mcp__plugin_head-context_context__session_/;
 const part = process.argv[2];
@@ -56,8 +57,8 @@ try {
     } else if (part === 'context' && !quiet) {
       const place = store.locate(where());
       if (place) {
-        const { context } = store.parts(place);
-        out('SessionStart', fit(context, HOOK_BUDGET, () => `## 작업 맥락\n작업 세션 '${place.session}'의 작업 맥락(열린 작업 브랜치·할 일·흐름·최근 기록)이 시작 안내 상한을 넘었습니다. session_load를 불러 받으세요.`));
+        // Cut down in order to fit; the open branches, the to-dos and the last next stay.
+        out('SessionStart', store.parts(place, { budget: HOOK_BUDGET }).context);
       }
     } else if (part === 'recent' && (source === 'compact' || source === 'clear')) {
       // After /clear the exchanges are in the conversation /clear replaced.

@@ -49,7 +49,7 @@ test('only a next-less save closes a branch: it needs the recap, merges once int
   assert.equal(merges.length,1);assert.equal(merges[0].status,'끝남');assert.equal(merges[0].summary,'끝냄');assert.match(merges[0].body,/RECAP-ALL/);
   assert.equal(s.connection('a').branch,null);
   assert.match(s.save({summary:'다음 일',history:'x',conversation_id:'a'}),/메인에 기록했습니다/);
-  assert.match(s.inspect({action:'map',conversation_id:'a'}),/합침 ← job · 끝남/);
+  assert.match(s.inspect({action:'map',conversation_id:'a'}),/ Merge branch 'job' \(HEAD -> main\)|Merge branch 'job'/);
 });
 test('leaving a branch, ending a conversation or many conversations on one branch close nothing',()=>{
   const {dir,s}=setup();s.branch({action:'create',branch:'one',conversation_id:'a'});s.save({summary:'one 1',history:'x',next:'n1',conversation_id:'a'});
@@ -88,7 +88,7 @@ test('0.6 records still read: an automatic branch keeps its label in the list, �
   fs.appendFileSync(file(dir,'demo','history.md'),`\n\n## 2026-10-17T01:00:00.000Z\n\n요약: 옛 일\n상태: 멈춤\n브랜치: ${stem}\n기록: work/${stem}/history.md\n\n옛 정리\n`);
   const loaded=s.load({name:'demo',conversation_id:'x'});
   assert.match(loaded,/## 열린 작업 브랜치 \(1\)\n- 7eea 옛 이름표 · 마지막 [^\n]+ · 다음: 옛 다음/);
-  assert.match(loaded,/합침 ← 7eea · 멈춤/);
+  assert.match(loaded,/ Merge branch '7eea'/);
   assert.match(s.branch({action:'attach',branch:stem,conversation_id:'x'}),/\n이 대화의 작업 브랜치: 7eea 옛 이름표\n[\s\S]*## 이 작업 브랜치의 최근 기록: 7eea 옛 이름표\n[\s\S]*옛 본문\n\n다음: 옛 다음$/);
   assert.equal(header(dir,stem).status,'열림');
 });

@@ -41,12 +41,13 @@ test('closing squashes one entry with its pointer and merge, is idempotent, and 
   const main=fs.readFileSync(path.join(base,'history.md'),'utf8');
   assert.equal(parseHistory(main).filter(e=>e.branch==='done').length,1);
   assert.match(main,/브랜치: done\n기록: work\/done\/history.md/);assert.doesNotMatch(main,/work:/);
-  assert.match(s.inspect({action:'map',conversation_id:'c'}),/합침 ← done · 끝남/);assert.match(s.inspect({action:'map',conversation_id:'c'}),/ branch-result \(done 끝남\)/);
+  assert.match(s.inspect({action:'map',conversation_id:'c'}),/^\* [0-9a-f]{5} [^\n]+ Merge branch 'done' \(main\)\n\|\\\n\| \* [0-9a-f]{5} [^\n]+ branch-result \(done\)\n/m);assert.doesNotMatch(s.inspect({action:'map',conversation_id:'c'}),/합침|끝남|지금:/);
   s.branch({action:'create',branch:'later',conversation_id:'c'});save(s,'to abandon');
   s.branch({action:'abandon',reason:'User stopped this direction.',conversation_id:'c'});
   assert.match(fs.readFileSync(path.join(base,'history.md'),'utf8'),/상태: 중단[\s\S]+이유: User stopped/);
   assert.equal(s.connection('c').branch,null);
   assert.match(fs.readFileSync(path.join(base,'work','later','history.md'),'utf8'),/상태: 중단/);
+  assert.match(s.inspect({action:'map',conversation_id:'c'}),/ Abandon branch 'later': User stopped this direction\. \(main\)\n/);
 });
 test('no parent checkpoints, branch-of-empty-branch, branch name safety',()=>{
   const {s,base}=fixture();s.branch({action:'create',branch:'empty',conversation_id:'c'});
@@ -55,10 +56,10 @@ test('no parent checkpoints, branch-of-empty-branch, branch name safety',()=>{
   assert.throws(()=>s.branch({action:'create',branch:'../escape',conversation_id:'c'}));assert.throws(()=>s.branch({action:'create',branch:'main',conversation_id:'c'}));
 });
 test('graph contains identifiers/locations/relationships only; file references and direct word search',()=>{
-  const {dir,s,base}=fixture();fs.writeFileSync(path.join(base,'doc.md'),'referenced file');fs.writeFileSync(path.join(base,'other.txt'),'other');
-  s.save({summary:'SUMMARY_SECRET_93',history:'BODY_SECRET_37 [reference](doc.md) and other.txt and missing.md.',next:'CURSOR_SECRET_58',conversation_id:'c'});
+  const {dir,s,base}=fixture();fs.writeFileSync(path.join(base,'doc.md'),'referenced file');fs.writeFileSync(path.join(base,'other.txt'),'other');fs.writeFileSync(path.join(base,'plain.md'),'named only');
+  s.save({summary:'SUMMARY_SECRET_93',history:'BODY_SECRET_37 [reference](doc.md) and `other.txt` and missing.md, and plain.md only named.',next:'CURSOR_SECRET_58',conversation_id:'c'});
   const result=s.inspect({action:'find',file:'doc.md',conversation_id:'c'});assert.match(result,/SUMMARY_SECRET_93/);assert.match(s.inspect({action:'find',file:'other.txt',conversation_id:'c'}),/SUMMARY_SECRET_93/);
-  assert.equal(s.inspect({action:'find',file:'missing.md',conversation_id:'c'}),'(없음)');assert.match(s.inspect({action:'find',query:'body_secret',conversation_id:'c'}),/SUMMARY_SECRET_93/);
+  assert.equal(s.inspect({action:'find',file:'missing.md',conversation_id:'c'}),'(없음)');assert.equal(s.inspect({action:'find',file:'plain.md',conversation_id:'c'}),'(없음)'); // a name in the text is not a pointerassert.match(s.inspect({action:'find',query:'body_secret',conversation_id:'c'}),/SUMMARY_SECRET_93/);
   const data=withGraph(dir,g=>({nodes:g.db.prepare('SELECT * FROM nodes').all(),edges:g.db.prepare('SELECT * FROM edges').all(),columns:g.db.prepare('PRAGMA table_info(nodes)').all().map(c=>c.name)}));
   for(const secret of ['DIRECTION_SECRET_19','BODY_SECRET_37','CURSOR_SECRET_58','SUMMARY_SECRET_93'])assert.ok(!JSON.stringify(data).includes(secret));
   const bytes=fs.readFileSync(path.join(dir,'.head/index.sqlite')).toString();assert.ok(!bytes.includes('BODY_SECRET_37'));assert.ok(!bytes.includes('DIRECTION_SECRET_19'));
