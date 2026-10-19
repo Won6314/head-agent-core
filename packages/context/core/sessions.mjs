@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {parseHistory} from './history.mjs';
-import {identity,topicList,openBranches,RECENT_COUNT,SUMMARY_LIMIT} from './recovery.mjs';
+import {identity,sessionPart,contextPart,topicList,openBranches,RECENT_COUNT,SUMMARY_LIMIT} from './recovery.mjs';
 import {withGraph} from './graph.mjs';
 import {clock} from './map-view.mjs';
 import {branchPath,branchText,branchHeader,withStatus,withRecap} from './branch-format.mjs';
@@ -185,6 +185,15 @@ export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],no
     if(action==='list'){const open=openTodos(dir);return open.length?[`# 할 일: ${target} (열린 ${open.length}개)`,...open.map(todoLine)].join('\n'):`작업 세션 '${target}'에 열린 할 일이 없습니다.`;}
     throw new Error('action은 add/list/done입니다.');
   };
+  const locate=({conversation_id,session_name,origins=[]})=>{
+    return withGraph(project,g=>{
+      const names=g.names(),cached=connection(conversation_id);let place=null;
+      if(cached?.session&&names.includes(cached.session))place={session:cached.session,branch:cached.branch};
+      else for(const link of origins){const bound=connection(link.conversation_id);if(bound?.session&&names.includes(bound.session)){place={session:bound.session,branch:bound.branch,from:link};break;}}
+      if(!place&&session_name&&names.includes(session_name))place={session:session_name,branch:null};
+      return place&&{session:place.session,stem:effective(place,g),from:place.from||null};
+    });
+  };
   return {
     connection,load,save,todo,conversations,tree,
     names:()=>withGraph(project,g=>g.names()),
@@ -230,20 +239,18 @@ export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],no
     // ancestor that holds one (`origins`, nearest first: the conversation it continues,
     // the one /clear replaced, the one it was copied from) — session and branch whole —
     // or the session named for it, on main. Nothing is opened or closed here.
-    start({conversation_id,session_name,origins=[],source='startup',info={}}){
-      const cached=connection(conversation_id);
-      let place=null;
-      if(cached?.session&&withGraph(project,g=>g.names().includes(cached.session)))place={session:cached.session,branch:cached.branch};
-      else for(const link of origins){const bound=connection(link.conversation_id);if(bound?.session&&withGraph(project,g=>g.names().includes(bound.session))){place={session:bound.session,branch:bound.branch,from:link};break;}}
-      if(!place&&session_name&&withGraph(project,g=>g.names().includes(session_name)))place={session:session_name,branch:null};
-      if(!place)return null;
-      const stem=withGraph(project,g=>effective({session:place.session,branch:place.branch},g));
-      bind(place.session,stem,conversation_id,info);
-      // The conversation already holds its context when the host resumes it (a copy made
-      // from another conversation starts as a resume). A fresh start, /clear and a compact
-      // need the work context put back in front of the model.
-      if(source==='resume'||source==='fork')return {text:'',session:place.session,stem};
-      return {text:withGraph(project,g=>work(g,place.session,stem)),session:place.session,stem};
-    }
+    // Where a conversation works, without changing anything: a conversation the core
+    // already knows keeps its place. A new one takes the place of the first ancestor that
+    // holds one (`origins`, nearest first: the conversation it continues, the one /clear
+    // replaced, the one it was copied from) — session and branch whole — or the session
+    // named for it, on main. Several start hooks may ask at once; the answer is the same.
+    locate,
+    // Start hook: give the conversation its place (nothing is opened or closed here).
+    start({conversation_id,session_name,origins=[],info={}}){
+      const place=locate({conversation_id,session_name,origins});if(!place)return null;
+      bind(place.session,place.stem,conversation_id,info);return place;
+    },
+    // The two parts of the work context for a place, and the file that holds context.md.
+    parts({session,stem}){return withGraph(project,g=>({head:sessionPart(g,{name:session,stem}),context:contextPart(g,{name:session,stem,todos:todos(session),today:today(timezone,now())}),contextFile:path.join(directory(session),'context.md')}));}
   };
 }

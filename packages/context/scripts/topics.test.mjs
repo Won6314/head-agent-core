@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import {spawnSync} from 'node:child_process';
+import {runStart} from './hook-run.mjs';
 import {sessions} from '../core/sessions.mjs';
 import {UNCONNECTED} from '../core/recovery.mjs';
 import {instructions} from '../core/mcp.mjs';
 const root=process.env.HEAD_CONTEXT_TEST_ROOT||os.tmpdir();
-const hook=(dir,id)=>{const r=spawnSync(process.execPath,[path.resolve('scripts/hook.mjs')],{input:JSON.stringify({hook_event_name:'SessionStart',session_id:id,source:'startup',cwd:dir}),env:{...process.env,CLAUDE_PROJECT_DIR:dir,HEAD_CONTEXT_SESSION:''},encoding:'utf8'});assert.equal(r.status,0);assert.equal(r.stderr,'');return r.stdout?JSON.parse(r.stdout).hookSpecificOutput.additionalContext:'';};
+const hook=(dir,id)=>runStart({session_id:id,source:'startup',cwd:dir},{env:{CLAUDE_PROJECT_DIR:dir}}).text;
 test('unconnected conversation gets one line; session_list gives name, first sentence, newest summary, open branches; the rule is in the instructions',()=>{
   const dir=fs.mkdtempSync(path.join(root,'topics-'));
   assert.ok(hook(dir,'e1').startsWith(UNCONNECTED));assert.equal(sessions(dir).list(),'아직 작업 세션이 없습니다.');

@@ -28,7 +28,7 @@ test('a work branch is opened by name only; a save writes the body there and one
   assert.throws(()=>s.branch({action:'create',conversation_id:'a'}),/이름\(branch\)이 필요합니다/);
   assert.throws(()=>s.branch({action:'create',branch:'main',conversation_id:'a'}),/예약 이름/);
   const loaded=s.branch({action:'create',branch:'login-fix',conversation_id:'a'});
-  assert.match(loaded,/## 이 대화의 작업 브랜치: login-fix\n\(아직 기록 없음\)/);
+  assert.match(loaded,/\n이 대화의 작업 브랜치: login-fix\n[\s\S]*## 이 작업 브랜치의 최근 기록: login-fix\n\(아직 기록 없음\)$/);
   assert.throws(()=>s.branch({action:'create',branch:'login-fix',conversation_id:'b'}),/작업 세션에 연결되지 않았습니다/);
   s.load({name:'demo',conversation_id:'b'});
   assert.throws(()=>s.branch({action:'create',branch:'login-fix',conversation_id:'b'}),/이미 있습니다/);
@@ -61,7 +61,7 @@ test('leaving a branch, ending a conversation or many conversations on one branc
   assert.deepEqual(withGraph(dir,g=>g.own('demo','two').map(r=>g.detail(r).summary)),['two by b','two by a']);
   const loaded=s.load({name:'demo',conversation_id:'c'});
   assert.match(loaded,/## 열린 작업 브랜치 \(2\)\n- two · 마지막 [^\n]+ · 다음: n\n- one · 마지막 [^\n]+ · 다음: n1/);
-  assert.doesNotMatch(loaded,/이 대화의 작업 브랜치/);
+  assert.match(loaded,/이 대화의 작업 브랜치: 없음\(메인\)/);assert.doesNotMatch(loaded,/이 작업 브랜치의 최근 기록/);
   assert.equal(parseHistory(read(dir,'demo','history.md')).filter(e=>e.status!=='열림').length,0);
 });
 test('a closed branch sends its other conversations to main; attaching to it opens it again; abandon keeps the reason',()=>{
@@ -69,7 +69,7 @@ test('a closed branch sends its other conversations to main; attaching to it ope
   s.load({name:'demo',conversation_id:'b'});s.branch({action:'attach',branch:'job',conversation_id:'b'});
   s.save({summary:'done',history:'x',recap:'all',conversation_id:'a'});
   assert.match(s.save({summary:'after',history:'z',conversation_id:'b'}),/메인에 기록했습니다/);
-  assert.match(s.branch({action:'attach',branch:'job',conversation_id:'b'}),/## 이 대화의 작업 브랜치: job\n정리:\nall/);
+  assert.match(s.branch({action:'attach',branch:'job',conversation_id:'b'}),/\n이 대화의 작업 브랜치: job\n[\s\S]*## 이 작업 브랜치의 최근 기록: job\n정리:\nall/);
   assert.equal(header(dir,'job').status,'열림');
   s.save({summary:'again',history:'w',recap:'all again',conversation_id:'b'});
   assert.equal(parseHistory(read(dir,'demo','history.md')).filter(e=>e.branch==='job').length,2);
@@ -89,7 +89,7 @@ test('0.6 records still read: an automatic branch keeps its label in the list, �
   const loaded=s.load({name:'demo',conversation_id:'x'});
   assert.match(loaded,/## 열린 작업 브랜치 \(1\)\n- 7eea 옛 이름표 · 마지막 [^\n]+ · 다음: 옛 다음/);
   assert.match(loaded,/합침 ← 7eea · 멈춤/);
-  assert.match(s.branch({action:'attach',branch:stem,conversation_id:'x'}),/## 이 대화의 작업 브랜치: 7eea 옛 이름표[\s\S]*옛 본문[\s\S]*다음: 옛 다음/);
+  assert.match(s.branch({action:'attach',branch:stem,conversation_id:'x'}),/\n이 대화의 작업 브랜치: 7eea 옛 이름표\n[\s\S]*## 이 작업 브랜치의 최근 기록: 7eea 옛 이름표\n[\s\S]*옛 본문\n\n다음: 옛 다음$/);
   assert.equal(header(dir,stem).status,'열림');
 });
 test('to-dos belong to the work session: add, list, done, and the open ones ride with the work context',()=>{

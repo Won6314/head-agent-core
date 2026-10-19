@@ -8,6 +8,7 @@ import {sessions} from '../core/sessions.mjs';
 import {withGraph} from '../core/graph.mjs';
 import {parseHistory} from '../core/history.mjs';
 import {callTool} from '../core/mcp.mjs';
+import {runStart} from './hook-run.mjs';
 const root=process.env.HEAD_CONTEXT_TEST_ROOT;
 if(!root)throw new Error('HEAD_CONTEXT_TEST_ROOT must point at the evidence test directory');
 // These tests are about the record files and the index; the conversation works on main.
@@ -84,15 +85,15 @@ test('legacy labels/fallback/connection and actual old 0.3 store append read as 
   assert.throws(()=>callTool(s,'session_save',{summary:'x',history:'y',work:'old'},'c'),/유효하지 않은 인자: work/);
   // A record from before branches existed keeps its session and works on main.
   const started=s.start({conversation_id:'c'});assert.equal(started.session,'demo');assert.equal(started.stem,'main');
-  assert.match(started.text,/## 흐름 \(최신이 위\)[\s\S]*real old MCP/);
+  assert.match(s.identity({conversation_id:'c'}),/## 흐름 \(최신이 위\)[\s\S]*real old MCP/);
 });
 test('other-session map does not rebind, load returns direction/map/body, MCP surface and old hook still run',()=>{
   const {dir,s}=fixture();save(s,'main');s.create({name:'other',context:'OTHER',conversation_id:'other'});save(s,'other','other');
   assert.match(s.inspect({action:'map',name:'other',conversation_id:'c'}),/^# 지도: other\n\* [0-9a-f]{5} [^\n]+ other/);assert.equal(s.connection('c').session,'demo');
   const loaded=s.load({conversation_id:'c'});assert.match(loaded,/DIRECTION_SECRET_19/);assert.match(loaded,/## 흐름/);assert.doesNotMatch(loaded,/# 지도:|BODY_SECRET/);
   assert.match(callTool(s,'session_read',{action:'recent',count:1},'c'),/BODY_SECRET/);assert.throws(()=>callTool(s,'session_read',{action:'oops'},'c'));
-  const hook=spawnSync(process.execPath,[path.resolve('scripts/hook.mjs')],{input:JSON.stringify({hook_event_name:'SessionStart',session_id:'c',source:'compact',cwd:dir}),env:{...process.env,CLAUDE_PROJECT_DIR:dir},encoding:'utf8'});
-  assert.equal(hook.status,0);assert.equal(hook.stderr,'');assert.match(hook.stdout,/DIRECTION_SECRET_19/);assert.ok(hook.stdout.length<10000);
+  const hook=runStart({session_id:'c',source:'compact',cwd:dir},{env:{CLAUDE_PROJECT_DIR:dir}});
+  assert.match(hook.parts.session,/DIRECTION_SECRET_19/);assert.match(hook.parts.context,/## 흐름/);assert.ok(hook.parts.session.length<10000&&hook.parts.context.length<10000);
 });
 test('concurrent processes write the same file and index without losing or duplicating records',async()=>{
   const {dir,s}=fixture();const module=path.resolve('core/sessions.mjs');
