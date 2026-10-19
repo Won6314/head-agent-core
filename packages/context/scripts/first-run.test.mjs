@@ -76,15 +76,21 @@ test('guide rides with the work session part, also when the work context is over
 test('setup turns the built-in fork on in the project settings, keeping what is there',()=>{
   const settings=dir=>JSON.parse(read(dir,'.claude/settings.json'));
   const one=fresh();assert.match(tool(one,{action:'setup'}),/env\.CLAUDE_CODE_FORK_SUBAGENT="1"\(기본 포크 켜기\): 새로 만들었습니다/);
-  assert.deepEqual(settings(one),{env:{CLAUDE_CODE_FORK_SUBAGENT:'1'}});
+  const market={'head-agent-core':{source:{source:'github',repo:'Won6314/head-agent-core'},autoUpdate:true}},plugins={'head-context@head-agent-core':true};
+  assert.deepEqual(settings(one),{env:{CLAUDE_CODE_FORK_SUBAGENT:'1'},extraKnownMarketplaces:market,enabledPlugins:plugins});
+  assert.match(tool(one,{action:'setup'}),/마켓 head-agent-core\(GitHub Won6314\/head-agent-core, 자동 업데이트\)와 enabledPlugins\."head-context@head-agent-core": 마켓은 이미 있어 그대로 두었습니다, 플러그인 켜기는 이미 있어\(true\) 그대로 두었습니다/);
   assert.match(tool(one,{action:'setup'}),/기본 포크 켜기\): 이미 있어 그대로 두었습니다/);
   const two=fresh();fs.mkdirSync(path.join(two,'.claude'));fs.writeFileSync(path.join(two,'.claude/settings.json'),JSON.stringify({permissions:{allow:['Bash(ls)']},env:{OTHER:'x'}}));
   assert.match(tool(two,{action:'setup'}),/기존 설정에 env 한 줄을 더했습니다/);
-  assert.deepEqual(settings(two),{permissions:{allow:['Bash(ls)']},env:{OTHER:'x',CLAUDE_CODE_FORK_SUBAGENT:'1'}});
+  assert.deepEqual(settings(two),{permissions:{allow:['Bash(ls)']},env:{OTHER:'x',CLAUDE_CODE_FORK_SUBAGENT:'1'},extraKnownMarketplaces:market,enabledPlugins:plugins});
   const three=fresh();fs.mkdirSync(path.join(three,'.claude'));fs.writeFileSync(path.join(three,'.claude/settings.json'),JSON.stringify({env:{CLAUDE_CODE_FORK_SUBAGENT:'0'}}));
-  assert.match(tool(three,{action:'setup'}),/이미 다른 값\("0"\)이 있어 그대로/);assert.deepEqual(settings(three),{env:{CLAUDE_CODE_FORK_SUBAGENT:'0'}});
+  assert.match(tool(three,{action:'setup'}),/이미 다른 값\("0"\)이 있어 그대로/);assert.deepEqual(settings(three),{env:{CLAUDE_CODE_FORK_SUBAGENT:'0'},extraKnownMarketplaces:market,enabledPlugins:plugins});
+  // A project that already names the marketplace (another source) or turned the plugin off keeps that.
+  const five=fresh();fs.mkdirSync(path.join(five,'.claude'));fs.writeFileSync(path.join(five,'.claude/settings.json'),JSON.stringify({extraKnownMarketplaces:{'head-agent-core':{source:{source:'directory',path:'/x'}}},enabledPlugins:{'head-context@head-agent-core':false}}));
+  assert.match(tool(five,{action:'setup'}),/마켓은 이미 있어 그대로 두었습니다, 플러그인 켜기는 이미 있어\(false\) 그대로 두었습니다/);
+  assert.deepEqual(settings(five),{extraKnownMarketplaces:{'head-agent-core':{source:{source:'directory',path:'/x'}}},enabledPlugins:{'head-context@head-agent-core':false},env:{CLAUDE_CODE_FORK_SUBAGENT:'1'}});
   const four=fresh();fs.mkdirSync(path.join(four,'.claude'));fs.writeFileSync(path.join(four,'.claude/settings.json'),'{ broken');
-  assert.match(tool(four,{action:'setup'}),/읽을 수 없는 JSON이라 고치지 않았습니다/);assert.equal(read(four,'.claude/settings.json'),'{ broken');assert.equal(firstRun(four).setup,'done');
+  assert.match(tool(four,{action:'setup'}),/읽을 수 없는 JSON이라 고치지 않았습니다[^\n]*\n[^\n]*읽을 수 없는 JSON이라 고치지 않았습니다\. 자동 업데이트를 받으려면/);assert.equal(read(four,'.claude/settings.json'),'{ broken');assert.equal(firstRun(four).setup,'done');
 });
 test('real MCP process lists project_setup and runs it in CLAUDE_PROJECT_DIR',()=>{
   const dir=fresh(),[list,call]=mcp(dir,{action:'setup'});
