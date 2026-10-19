@@ -15,7 +15,6 @@ export const instructions = `일을 시작할 때는 먼저 start-job 스킬을 
 - 무엇: 작업 브랜치에 남기는 기록 한 번입니다. 작업 요약, 근거 파일 링크, 파일에 빠진 내용을 씁니다.
 - 언제: 결과나 결정이 생기면 남깁니다. 이어 갈 일이 있으면 다음을 적고, 끝났으면 다음 없이 정리를 줍니다. 그 저장으로 작업 브랜치가 닫힙니다.
 - 작업 파일: 작업 세션 폴더의 work/YYYY-MM/YYYY-MM-DD-<이름>.md에 둡니다(여러 개면 같은 이름 폴더). 커진 작업은 work/<작업명>/으로 옮기고 그 파일을 가리키던 기록의 링크도 고칩니다. 포크·에이전트에 맡길 때는 결과 파일 경로를 이 규칙대로 정해 줍니다.
-- 기본 포크와 하위 에이전트는 저장하지 않습니다. 결과는 부모 대화가 받아 저장합니다.
 
 할 일
 - 무엇: 작업 세션에 남는 나중에 할 일입니다. 작업 브랜치가 닫혀도 남습니다.
@@ -27,10 +26,14 @@ export const instructions = `일을 시작할 때는 먼저 start-job 스킬을 
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
 const missing = { session_create: { context: CONTEXT_REQUIRED } };
-// Tools that change a record or a connection. A call made inside a fork or a subagent
-// (the host fills agent_id) may read but not write.
+// Tools that change a record or a connection. A call made by a task running inside the
+// conversation that called it (the host fills agent_id) may read but not write.
 export const WRITES = { session_load: true, session_create: true, session_save: true, session_branch: true, session_todo: args => args.action !== 'list' };
-export const FORK_WRITE_REFUSED = '기본 포크와 하위 에이전트는 작업 기록을 쓰지 않습니다(읽기만 됩니다). 결과는 부모 대화에 돌려주세요. 부모 대화가 저장합니다.';
+export const FORK_WRITE_REFUSED = '이 작업에서는 작업 기록을 쓰지 않습니다(읽기만 됩니다). 결과를 돌려주면 부른 대화가 확인하고 저장합니다.';
+// Said once to a task that runs inside the conversation that called it (the host's
+// SubagentStart: a fork made with the Agent tool or a subagent). A copy that becomes a
+// conversation of its own (a desktop side session) gets nothing and saves like any other.
+export const SUBAGENT_NOTICE = '이 작업은 부른 대화 안에서 맡은 일 하나를 합니다. 끝나면 결과를 돌려주세요. 부른 대화가 결과를 확인하고 저장합니다. 작업 기록(session_* 도구)은 읽기만 됩니다.';
 export const definitions = [
   ['session_list', '작업 세션 목록을 읽습니다: 이름, context.md 첫 문장, 메인의 최신 요약, 열린 작업 브랜치 수를 최근 기록 순으로. 기록 지도는 session_read map입니다.', {}, []],
   ['session_load', '작업 세션을 불러와 이 대화를 연결하고 작업 맥락을 돌려줍니다: context.md, 이 대화의 작업 브랜치(최근 기록과 다음), 열린 작업 브랜치, 할 일, 흐름 지도(git 그래프 모양, 최신이 위). branch를 주면 그 작업 브랜치를 이어 갑니다(닫힌 것은 다시 열립니다). branch=main은 메인에서 일합니다. 생략하면 이 작업 세션에서 쓰던 작업 브랜치, 처음이면 메인입니다.',

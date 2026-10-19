@@ -1,11 +1,80 @@
 {
   "hooks": {
-    "SessionStart": [{"hooks": [
-      {"type":"command","command":"node","args":["${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs","session"],"timeout":20},
-      {"type":"command","command":"node","args":["${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs","context"],"timeout":20},
-      {"type":"command","command":"node","args":["${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs","recent"],"timeout":20}
-    ]}],
-    "PreCompact": [{"hooks": [{"type":"command","command":"node","args":["${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs"],"timeout":10}]}],
-    "PreToolUse": [{"matcher":"^mcp__plugin_head-context_context__session_","hooks":[{"type":"command","command":"node","args":["${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs"],"timeout":5}]}]
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs",
+              "session"
+            ],
+            "timeout": 20
+          },
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs",
+              "context"
+            ],
+            "timeout": 20
+          },
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs",
+              "recent"
+            ],
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs"
+            ],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^mcp__plugin_head-context_context__session_",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs"
+            ],
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs"
+            ],
+            "timeout": 5
+          }
+        ]
+      }
+    ]
   }
 }

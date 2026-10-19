@@ -8,6 +8,7 @@ import {sessions} from '../core/sessions.mjs';
 import {ownerOf,hostInfo,liveConversations,transcriptsOf} from '../hosts/claude/process.mjs';
 import {ancestry,copiedFrom} from '../hosts/claude/recovery.mjs';
 import {runStart} from './hook-run.mjs';
+import {SUBAGENT_NOTICE} from '../core/mcp.mjs';
 const root=process.env.HEAD_CONTEXT_TEST_ROOT||os.tmpdir();
 // A fixture of what Claude Code writes down: one registry file per running conversation
 // (~/.claude/sessions), one record file per conversation (~/.claude/projects/<folder>),
@@ -95,6 +96,12 @@ test('the start hook: a fork or subagent start is skipped, a tool call gets the 
   assert.deepEqual(fork,{action:'map',conversation_id:'c',agent_id:'abb2338b'});
   assert.equal(run({hook_event_name:'PreToolUse',session_id:'c',tool_name:'mcp__plugin_head-context_context__project_setup',tool_input:{action:'setup'},cwd:st.dir}).stdout,'');
   for(const e of ['Stop','SessionEnd','UserPromptSubmit'])assert.equal(run({hook_event_name:e,session_id:'c',cwd:st.dir}).stdout,'');
+  for(const agent_type of ['fork','general-purpose']){
+    const sub=JSON.parse(run({hook_event_name:'SubagentStart',session_id:'c',agent_id:'a9',agent_type,cwd:st.dir}).stdout).hookSpecificOutput;
+    assert.equal(sub.hookEventName,'SubagentStart');assert.equal(sub.additionalContext,SUBAGENT_NOTICE);
+  }
+  assert.doesNotMatch(SUBAGENT_NOTICE,/포크|기본/);assert.match(SUBAGENT_NOTICE,/읽기만 됩니다/);
+  const hooks=JSON.parse(fs.readFileSync(path.resolve('hooks/hooks.json'),'utf8')).hooks;assert.ok(hooks.SubagentStart);
   assert.deepEqual(fs.readdirSync(path.join(st.dir,'.head/state')),['conversations']); // no activity, no subtasks
 });
 test('alive conversations: a running process anywhere, a desktop conversation active within 7 days; listed under session and branch',t=>{

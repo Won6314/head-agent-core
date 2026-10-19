@@ -7,10 +7,12 @@ import { ancestry } from './recovery.mjs';
 import { hostInfo } from './process.mjs';
 import { recentPart } from './recent.mjs';
 import { compactInstruction } from './compact.mjs';
+import { SUBAGENT_NOTICE } from '../../core/mcp.mjs';
 import { guide, refreshCore } from '../../core/project.mjs';
 
 // PreToolUse fills the host fields of the head-context tools: the conversation, and
-// inside a fork or subagent its agent id (writes are refused there). PreCompact turns the
+// for a task running inside it (fork, subagent) its agent id (writes are refused there).
+// SubagentStart tells such a task once that it reads records but does not write them. PreCompact turns the
 // host's summary into one pointer line. SessionStart runs three times, once per part,
 // because the host caps each hook output separately (about 10,000 characters each,
 // measured on 2.1.303) and runs them side by side in no fixed order:
@@ -31,6 +33,9 @@ try {
     const { agent_id: _ignored, ...rest } = input.tool_input || {};
     const updatedInput = { ...rest, conversation_id: input.session_id, ...(input.agent_id ? { agent_id: input.agent_id } : {}) };
     console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', updatedInput } }));
+  } else if (event === 'SubagentStart') {
+    // A task inside this conversation (a fork or a subagent): one notice, nothing else.
+    out('SubagentStart', SUBAGENT_NOTICE);
   } else if (event === 'PreCompact') {
     process.stdout.write(compactInstruction());
   } else if (event === 'SessionStart' && !input.agent_id) {

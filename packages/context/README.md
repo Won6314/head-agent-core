@@ -26,7 +26,7 @@
 - 작업 브랜치는 next 없는 저장으로만 닫힌다. 그 저장은 recap(전체 정리)이 필수이고, 메인에 합침 항목 하나를 쓰며, 저장한 대화는 메인으로 돌아온다.
   닫힌 작업 브랜치에 붙어 있던 다른 대화는 메인에 기록한다. 닫힌 작업 브랜치에 attach하면 다시 열린다. 사용자가 그만둔 일은 abandon(이유 필수).
 - 0.6의 `멈춤`(대화가 끝나 닫힌 것)은 열린 것으로 친다. 0.6 자동 이름(`branch-<시각>-<16진>`)은 짧은 이름 + 옛 이름표로 보인다.
-- 기본 포크·하위 에이전트(훅이 `agent_id`를 채운 호출)는 쓰기를 거절하고 읽기만 된다. 쓰기 = load·create·save·branch·todo add/done.
+- 대화 안에서 도는 작업(Agent 도구의 fork·하위 에이전트, 훅이 `agent_id`를 채운 호출)은 쓰기를 거절하고 읽기만 된다. 쓰기 = load·create·save·branch·todo add/done. 시작할 때 SubagentStart 훅이 안내 한 덩어리를 넣는다(맡은 일 하나, 결과를 돌려주면 부른 대화가 확인·저장, 기록은 읽기만). 대화가 되는 복제(데스크톱 사이드 포크)에는 아무것도 넣지 않고 보통 대화처럼 저장한다. 지침에는 포크 저장 규칙을 두지 않는다.
 - 할 일은 작업 세션의 `todo.md`(작업 브랜치가 닫혀도 남는다). 줄 형식은 앞선 도구와 같다: `- [ ] 2026-09-18 기한 2026-09-23(수) "원문"`.
 
 ## 도구 (호스트가 conversation_id·agent_id를 채움)
@@ -80,7 +80,7 @@
 
 ## 훅
 
-`hooks/hooks.json`: SessionStart 세 명령(`hook.mjs session|context|recent`), PreCompact 하나(요약 지시), PreToolUse 하나(`session_*` 도구). 하위 에이전트의 SessionStart는 건너뛴다. 파일 다시 붙이기 막기·스킬 목록 되살리기는 넣지 않았다(지금 버전에서 시험 뒤 정함).
+`hooks/hooks.json`: SessionStart 세 명령(`hook.mjs session|context|recent`), PreCompact 하나(요약 지시), SubagentStart 하나(대화 안 작업에 안내), PreToolUse 하나(`session_*` 도구). 하위 에이전트의 SessionStart는 건너뛴다. 파일 다시 붙이기 막기·스킬 목록 되살리기는 넣지 않았다(지금 버전에서 시험 뒤 정함).
 
 ## 파일·색인
 
