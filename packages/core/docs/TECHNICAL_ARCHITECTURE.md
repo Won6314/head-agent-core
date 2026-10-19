@@ -18,7 +18,7 @@ The install-shaped platform (host daemon, project initializer, onboarding) that 
 ```text
 packages/
   core/
-    head/HEAD_CORE.md          always-loaded principles — the only copy
+    head/HEAD_CORE.md          always-loaded principles — a link to packages/context/instructions/HEAD_CORE.md, the only copy
     docs/  theory/             this documentation and its background
   skills/                      start-job · product-planning · delegate-once · plan-run · agent-reply
   procedures/                  condition-selected branches a skill links to
