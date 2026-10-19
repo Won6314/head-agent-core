@@ -36,7 +36,7 @@ test('every conversation gets its own branch; a save writes the body there and o
   // A second conversation on the same topic works beside the first, not inside its file.
   live(dir,'c2');const identity=s.load({name:'demo',conversation_id:'c2',label:'문서 정리'});
   const two=seat(s,'c2');assert.notEqual(two,one);
-  assert.match(identity,/# 지난 기록 \(요약\)\n\* 설계 정함/);assert.match(identity,/자리: 브랜치 .+ · 이름표: 문서 정리/);
+  assert.match(identity,/# 기록 지도 \(최신이 위\)\n\* [0-9a-f]{5} \d\d-\d\d \d\d:\d\d 설계 정함/);assert.match(identity,/자리: 브랜치 .+ · 이름표: 문서 정리/);
   assert.throws(()=>s.load({name:'demo',branch:one,conversation_id:'c2'}),/살아 있는 대화가 붙어 있습니다/);
   // Reloading the same place keeps it (compact, /clear, an explicit session_load).
   s.load({conversation_id:'c2'});assert.equal(seat(s,'c2'),two);
@@ -90,7 +90,7 @@ test('a conversation that ends merges its branch into main: 끝남 carries the r
   assert.equal(branchHeader(read(dir,'demo/work',paused,'history.md')).status,'멈춤');
   // The merge entry keeps the old marker lines, so the graph still draws a merge edge.
   const map=s.inspect({action:'map',name:'demo'});
-  assert.equal((map.match(/← 합쳐짐/g)||[]).length,2);
+  assert.equal((map.match(/ 합침 ← /g)||[]).length,2);
   // Resuming reopens the branch, and the next close adds one more merge entry.
   live(dir,'again');s.load({name:'demo',conversation_id:'again',label:'다시'});s.branch({action:'attach',branch:paused,conversation_id:'again'});
   assert.equal(branchHeader(read(dir,'demo/work',paused,'history.md')).status,'열림');

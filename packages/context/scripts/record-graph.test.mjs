@@ -26,8 +26,14 @@ test('a branch keeps only its own records, the graph keeps the ancestry and the 
   s.load({branch:'main',conversation_id:'c'});save(s,'later-main');s.branch({action:'attach',branch:'B',conversation_id:'c'});
   const body=s.inspect({action:'recent',conversation_id:'c',count:10});assert.doesNotMatch(body,/later-main/);
   // Leaving A closed it (it had pending work), and B still holds the conversation.
-  const map=s.inspect({action:'map',branch:'B',conversation_id:'c'});assert.match(map,/A \[멈춤\]/);assert.match(map,/B \[열림\]/);assert.match(map,/갈라진 뒤 메인 \(요약만\)/);assert.match(map,/later-main/);
+  // The B map: main in the first column (with the save made after B forked), A, then B
+  // forking off A; each name at its own tip, a closed branch with its state.
+  const map=s.inspect({action:'map',branch:'B',conversation_id:'c'});assert.match(map,/^# 지도: demo \/ B\n/);assert.match(map,/ A-one \(A 멈춤\)\n/);assert.match(map,/ B-one \(B\)\n/);assert.match(map,/\n\* [0-9a-f]{5} [^\n]+ later-main \(main\)\n/);
+  assert.match(map,/\| \|\/\n\| \* [0-9a-f]{5} [^\n]+ A-one/);assert.match(map,/\n\|\/\n\* [0-9a-f]{5} [^\n]+ main-one\n?$/);assert.doesNotMatch(map,/demo\/|@20/);
   const rows=withGraph(dir,g=>g.recent('demo','B',0));assert.equal(rows.length,3);assert.equal(s.inspect({action:'entry',id:rows[1].id,conversation_id:'c'}),rows[1].body);
+  // A short ID from the map opens the same record; another session's short ID needs its name.
+  const short=/([0-9a-f]{5}) \d\d-\d\d \d\d:\d\d A-one/.exec(map)[1];assert.equal(s.inspect({action:'entry',id:short,conversation_id:'c'}),rows[1].body);
+  assert.equal(s.inspect({action:'entry',id:short,name:'demo'}),rows[1].body);assert.throws(()=>s.inspect({action:'entry',id:'zz-not',conversation_id:'c'}),/짧은 ID/);
   assert.doesNotMatch(fs.readFileSync(path.join(base,'history.md'),'utf8'),/work:/);
 });
 test('closing squashes one entry with its pointer and merge, is idempotent, and abandonment keeps the reason',()=>{
@@ -39,7 +45,7 @@ test('closing squashes one entry with its pointer and merge, is idempotent, and 
   const main=fs.readFileSync(path.join(base,'history.md'),'utf8');
   assert.equal(parseHistory(main).filter(e=>e.branch==='done').length,1);
   assert.match(main,/브랜치: done\n기록: work\/done\/history.md/);assert.doesNotMatch(main,/work:/);
-  assert.match(s.inspect({action:'map',conversation_id:'c'}),/합쳐짐/);assert.match(s.inspect({action:'map',conversation_id:'c'}),/done \[끝남\]/);
+  assert.match(s.inspect({action:'map',conversation_id:'c'}),/합침 ← done · 끝남/);assert.match(s.inspect({action:'map',conversation_id:'c'}),/ branch-result \(done 끝남\)/);
   s.branch({action:'create',label:'auto name',conversation_id:'c'});const name=s.connection('c').branch;assert.match(name,/^branch-/);
   save(s,'to abandon');
   s.branch({action:'abandon',reason:'User stopped this direction.',conversation_id:'c'});
@@ -50,7 +56,7 @@ test('closing squashes one entry with its pointer and merge, is idempotent, and 
 test('no parent checkpoints, branch-of-empty-branch, branch name safety',()=>{
   const {s,base}=fixture();s.branch({action:'create',branch:'empty',label:'empty',conversation_id:'c'});
   assert.match(fs.readFileSync(path.join(base,'work/empty/history.md'),'utf8'),/갈래: demo\/메인@없음/);
-  s.branch({action:'create',branch:'child',label:'child',conversation_id:'c'});save(s,'child-first');assert.match(s.inspect({action:'map',conversation_id:'c'}),/부모 체크포인트 없음/);
+  s.branch({action:'create',branch:'child',label:'child',conversation_id:'c'});save(s,'child-first');const orphan=s.inspect({action:'map',conversation_id:'c'});assert.match(orphan,/child-first \(child\)/);assert.doesNotMatch(orphan,/\|\//); // no fork point: the column just ends
   assert.throws(()=>s.branch({action:'create',branch:'../escape',label:'bad',conversation_id:'c'}));assert.throws(()=>s.branch({action:'create',branch:'main',label:'bad',conversation_id:'c'}));
 });
 test('graph contains identifiers/locations/relationships only; file references and direct word search',()=>{
@@ -84,13 +90,13 @@ test('legacy labels/fallback/connection and actual old 0.3 store append read as 
   assert.throws(()=>callTool(s,'session_save',{summary:'x',history:'y',work:'old'},'c'),/유효하지 않은 인자: work/);
   // A record from before places existed keeps its session and is given a place of its own.
   const started=s.start({conversation_id:'c'});assert.equal(started.session,'demo');assert.ok(started.stem.startsWith('branch-'));
-  assert.match(started.text,/# 지난 기록 \(요약\)[\s\S]*real old MCP/);
+  assert.match(started.text,/# 기록 지도 \(최신이 위\)[\s\S]*real old MCP/);
   assert.throws(()=>s.finish({conversation_id:'c',branch:'main'}),/메인은 색인/);
   assert.doesNotThrow(()=>board(dir));assert.doesNotThrow(()=>renderBoard(board(dir),{all:true}));
 });
 test('other-session map does not rebind, load returns direction/map/body, MCP surface and old hook still run',()=>{
   const {dir,s}=fixture();save(s,'main');s.create({name:'other',context:'OTHER',conversation_id:'other'});save(s,'other','other');
-  assert.match(s.inspect({action:'map',name:'other',conversation_id:'c'}),/other\/main/);assert.equal(s.connection('c').session,'demo');
+  assert.match(s.inspect({action:'map',name:'other',conversation_id:'c'}),/^# 지도: other\n\* [0-9a-f]{5} [^\n]+ other/);assert.equal(s.connection('c').session,'demo');
   const loaded=s.load({conversation_id:'c'});assert.match(loaded,/DIRECTION_SECRET_19/);assert.match(loaded,/# 최근 기록/);assert.doesNotMatch(loaded,/# 지도:/);
   assert.match(callTool(s,'session_read',{action:'recent',count:1},'c'),/BODY_SECRET/);assert.throws(()=>callTool(s,'session_read',{action:'oops'},'c'));
   const hook=spawnSync(process.execPath,[path.resolve('scripts/hook.mjs')],{input:JSON.stringify({hook_event_name:'SessionStart',session_id:'c',source:'compact',cwd:dir}),env:{...process.env,CLAUDE_PROJECT_DIR:dir},encoding:'utf8'});
@@ -111,5 +117,5 @@ test('concurrent processes write the same file and index without losing or dupli
   const {dir,s}=fixture();const module=path.resolve('core/sessions.mjs');
   const code=`import {sessions} from ${JSON.stringify('file://'+module)};const s=sessions(process.argv[1],{host:'claude'});s.load({name:'demo',conversation_id:process.argv[2]});for(let i=0;i<8;i++)s.save({summary:process.argv[2]+'-'+i,history:'concurrent',next:'next',conversation_id:process.argv[2]});`;
   await Promise.all(Array.from({length:4},(_,i)=>new Promise((resolve,reject)=>{const child=spawn(process.execPath,['--input-type=module','-e',code,dir,'child'+i],{stdio:['ignore','pipe','pipe']});let error='';child.stderr.on('data',d=>error+=d);child.on('exit',c=>c===0?resolve():reject(new Error(error)));child.on('error',reject);})));assert.equal(withGraph(dir,g=>g.recent('demo','main',0).length),32);
-  assert.equal(new Set(withGraph(dir,g=>g.recent('demo','main',0).map(e=>e.id))).size,32);assert.match(s.inspect({action:'map',conversation_id:'c',limit:4}),/그 앞 60개/); // 32 records and the 32 index lines they left on main
+  assert.equal(new Set(withGraph(dir,g=>g.recent('demo','main',0).map(e=>e.id))).size,32);assert.match(s.inspect({action:'map',conversation_id:'c',limit:4}),/그 앞 28개/); // 32 records; the 32 index lines they left on main are not drawn
 });

@@ -2,8 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createRequire} from 'node:module';
 import {locations,validName,noSymlink,locked,readError} from './storage.mjs';
-import {parseHistory,mapSummary} from './history.mjs';
+import {parseHistory} from './history.mjs';
 import {branchHeader} from './branch-format.mjs';
+import {renderMap,shortIds,matchShort} from './map-view.mjs';
 
 // 24.11.1 emits only this warning at require time. Do not mute other warnings.
 const emit=process.emitWarning;
@@ -35,7 +36,7 @@ function schema(db){
     CREATE INDEX edges_destination ON edges(dst,kind); PRAGMA user_version=${VERSION};`);
 }
 export function withGraph(project,fn){
-  const {root,topics}=locations(project);fs.mkdirSync(root,{recursive:true});const file=noSymlink(path.join(root,'index.sqlite'));
+  const {root,topics,timezone}=locations(project);fs.mkdirSync(root,{recursive:true});const file=noSymlink(path.join(root,'index.sqlite'));
   // Gate schema rebuild and corrupted-file replacement as well as normal operations.
   // History locks are never held by a graph read; writers release them before indexing.
   return locked(file,()=> {
@@ -48,12 +49,12 @@ export function withGraph(project,fn){
         db.close();fs.unlinkSync(file);db=new DatabaseSync(file,{timeout:5000});db.exec('BEGIN IMMEDIATE');schema(db);db.exec('COMMIT');
       }
       db.exec('BEGIN IMMEDIATE');
-      const g=new Graph(db,topics);g.sync();const result=fn(g);db.exec('COMMIT');return result;
+      const g=new Graph(db,topics,timezone);g.sync();const result=fn(g);db.exec('COMMIT');return result;
     }catch(e){try{db.exec('ROLLBACK');}catch{};throw e;}finally{db.close();}
   });
 }
 class Graph {
-  constructor(db,topics){this.db=db;this.topics=topics;this.errors=[];this.reindexed=[];}
+  constructor(db,topics,timezone){this.db=db;this.topics=topics;this.timezone=timezone;this.errors=[];this.reindexed=[];this.short=new Map();}
   node(row){this.db.prepare('INSERT OR REPLACE INTO nodes VALUES(?,?,?,?,?,?,?,?,?)').run(row.id,row.kind,row.session,row.stem,row.stamp||'',row.file,row.start,row.end,row.seq||0);}
   edge(src,dst,kind){this.db.prepare('INSERT OR IGNORE INTO edges VALUES(?,?,?)').run(src,dst,kind);}
   read(row){
@@ -79,31 +80,22 @@ class Graph {
   }
   recent(session,stem='main',count=5){if(!Number.isInteger(count)||count<0)throw new Error('count는 0 이상의 정수입니다.');const rows=this.lineage(session,stem);return (count===0?rows:rows.slice(-count)).map(row=>this.detail(row));}
   item(id){const row=this.db.prepare("SELECT * FROM nodes WHERE id=? AND kind='checkpoint'").get(id);if(!row)throw new Error('체크포인트 식별자가 없습니다.');return this.detail(row);}
-  map(session,stem,limit=30,{branchLimit=Infinity}={}){
-    this.session(session);if(!Number.isInteger(limit)||limit<0)throw new Error('limit는 0 이상의 정수입니다.');
-    const rows=stem?this.lineage(session,stem):this.db.prepare("SELECT * FROM nodes WHERE kind='checkpoint' AND session=? ORDER BY stamp,stem,seq").all(session).sort((a,b)=>(Date.parse(a.stamp)||0)-(Date.parse(b.stamp)||0)||a.stem.localeCompare(b.stem)||a.seq-b.seq);
-    const selected=limit===0?rows:rows.slice(-limit), lines=[`# 지도: ${session}${stem?' / '+stem:''}`];
-    const depth=name=>{let n=0,current=name;const seen=new Set();while(current!=='main'&&!seen.has(current)){seen.add(current);n++;current=this.header(session,current)?.parent||'main';}return n;};
-    for(const row of [...selected].reverse()){
-      const e=this.detail(row), merge=this.db.prepare("SELECT src FROM edges WHERE dst=? AND kind='merge'").get(row.id);
-      lines.push(`${'| '.repeat(depth(row.stem))}${merge?'M':'*'} ${e.id} · ${mapSummary(e).text}${merge?' ← 합쳐짐 '+merge.src.split('/').at(-1):''}`);
-    }
-    const shown=new Set(rows.map(r=>r.id));
-    let branchRows=0,omittedBranches=0;
-    for(const b of this.branches(session)) {
-      const key=stemId(session,b.name), anchor=this.db.prepare("SELECT n.id FROM edges e JOIN nodes n ON n.id=e.src WHERE e.dst=? AND e.kind='fork' AND n.kind='checkpoint'").get(key);
-      if(!stem||stem===b.name||anchor&&shown.has(anchor.id)){
-        if(branchRows++<branchLimit)lines.push(`|\\ ${b.name} [${b.status==='열림'?'열림':b.status}] ← ${b.parent}@${b.anchor||'없음'}${b.anchor?'':' (부모 체크포인트 없음)'}`);
-        else omittedBranches++;
-      }
-    }
-    if(omittedBranches)lines.push(`그 외 지도 갈래 ${omittedBranches}개`);
-    if(rows.length>selected.length)lines.push(`그 앞 ${rows.length-selected.length}개`);
-    if(stem&&stem!=='main'){
-      const inheritedIds=new Set(rows.map(r=>r.id));const newer=this.own(session,'main').filter(r=>!inheritedIds.has(r.id));
-      if(newer.length)lines.push('# 갈라진 뒤 메인 (요약만)',...newer.slice(-5).map(r=>`· ${r.id} · ${mapSummary(this.detail(r)).text}`));
-    }
-    return lines.join('\n');
+  // Every checkpoint of a session in time order, whichever line it is on.
+  checkpoints(session){return this.db.prepare("SELECT * FROM nodes WHERE kind='checkpoint' AND session=?").all(session).sort((a,b)=>(Date.parse(a.stamp)||0)-(Date.parse(b.stamp)||0)||a.stem.localeCompare(b.stem)||a.seq-b.seq);}
+  shortIds(session){if(!this.short.has(session))this.short.set(session,shortIds(this.checkpoints(session).map(r=>r.id)));return this.short.get(session);}
+  // A map ID: the full checkpoint ID, or a short ID read inside `session`.
+  entry(id,session){
+    if(id.includes('@'))return this.item(id);
+    if(!/^[0-9a-f]{4,40}$/i.test(id))throw new Error('지도 ID는 짧은 ID(16진수 5자 이상) 또는 전체 ID입니다.');
+    if(!session)throw new Error('짧은 ID는 세션 안에서 읽습니다. name으로 세션을 주세요.');
+    this.session(session);const found=matchShort(this.checkpoints(session).map(r=>r.id),id);
+    if(!found.length)throw new Error(`세션 '${session}'에 짧은 ID ${id}가 없습니다.`);
+    if(found.length>1)throw new Error(`짧은 ID ${id}가 여러 기록과 겹칩니다: ${found.map(f=>this.shortIds(session).get(f)).join(', ')}`);
+    return this.item(found[0]);
+  }
+  map(session,stem,limit=30){
+    this.session(session);const {lines,omitted,name}=renderMap(this,session,{stem,limit});
+    return [`# 지도: ${session}${stem&&stem!=='main'?' / '+name(stem):''}`,...lines,...(omitted?[`그 앞 ${omitted}개`]:[])].join('\n');
   }
   find({file,query,session,limit=30}){
     if(!Number.isInteger(limit)||limit<0)throw new Error('limit는 0 이상의 정수입니다.');

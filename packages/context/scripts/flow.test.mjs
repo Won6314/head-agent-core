@@ -31,7 +31,7 @@ test('map summary precedence: explicit then literal work label then body; graph 
 test('start = load: a new conversation gets its own place, resume says nothing, /clear carries the place over',()=>{
   const a=fixture();const fresh=a.s.start({conversation_id:'fresh',session_name:'demo'});
   // A new conversation reads the direction and the main index, not another place's body.
-  assert.match(fresh.text,/FLOW DIRECTION/);assert.match(fresh.text,/# 지난 기록 \(요약\)\n\* MAIN SUMMARY/);
+  assert.match(fresh.text,/FLOW DIRECTION/);assert.match(fresh.text,/# 기록 지도 \(최신이 위\)\n\* [0-9a-f]{5} \d\d-\d\d \d\d:\d\d MAIN SUMMARY/);
   assert.doesNotMatch(fresh.text,/MAIN FULL BODY|시작 자리 물음|session_read|요약: /);
   assert.notEqual(fresh.stem,a.seat);assert.equal(fresh.text,a.s.load({conversation_id:'fresh'}));
   const b=fixture();const peer=branch(b.dir,b.s);
@@ -42,7 +42,7 @@ test('start = load: a new conversation gets its own place, resume says nothing, 
   b.s.branch({action:'attach',branch:peer,conversation_id:'fresh'});
   assert.equal(b.s.start({conversation_id:'fresh',source:'resume'}).text,'');
   const compact=b.s.start({conversation_id:'fresh',source:'compact'}).text;
-  assert.match(compact,new RegExp(`자리: 브랜치 ${peer} · 이름표: BRANCH SUMMARY`));
+  assert.match(compact,new RegExp(`자리: 브랜치 ${peer} \\(지도: [^)]+\\) · 이름표: BRANCH SUMMARY`));
   assert.match(compact,/BRANCH FULL BODY/);assert.match(compact,/다음: branch cursor/);
   assert.doesNotMatch(compact.split('# 남은 일')[0],/다음: main cursor/); // another place's cursor is only offered as pending work
   const cleared=b.s.start({conversation_id:'after-clear',session_name:'no-such-session',source:'clear',
@@ -53,10 +53,12 @@ test('start = load: a new conversation gets its own place, resume says nothing, 
 test('identity: the main index as summary lines, this place as time+body, only the newest cursor, merges stand out',()=>{
   const {dir,s,seat}=fixture();for(let i=0;i<12;i++)s.save({summary:'SUM-'+i,history:'BODY-'+i,next:'NEXT-'+i,conversation_id:'seed'});
   const text=s.load({conversation_id:'seed'});
-  assert.match(text,/# 지난 기록 \(요약\)\n\* MAIN SUMMARY\n\* SUM-0\n/);assert.match(text,/\* SUM-6\n# 최근 기록/);
-  assert.doesNotMatch(text,/BODY-6\b|SUM-7|NEXT-10|요약:|demo\/main@/);
-  assert.match(text,/## \d{4}-[^\n]+\nBODY-7\n\n## [^\n]+\nBODY-8/);assert.match(text,/BODY-11\n\n다음: NEXT-11$/);
-  assert.match(s.load({conversation_id:'seed',map_limit:3}),/그 앞 5개 — session_read map/);
+  // The map holds every save, newest on top, the reader's own place marked at its tip.
+  assert.match(text,/# 기록 지도 \(최신이 위\)\n\* [0-9a-f]{5} \d\d-\d\d \d\d:\d\d SUM-11 \(지금: [0-9a-f]{4}\)\n/);
+  assert.match(text,/ SUM-0\n\* [0-9a-f]{5} [^\n]+ MAIN SUMMARY\n# 최근 기록/);
+  assert.doesNotMatch(text,/BODY-6\b|NEXT-10|요약:|demo\/main@/);
+  assert.match(text,/## [0-9a-f]{5} \d\d-\d\d \d\d:\d\d\nBODY-7\n\n## [^\n]+\nBODY-8/);assert.match(text,/BODY-11\n\n다음: NEXT-11$/);
+  assert.match(s.load({conversation_id:'seed',map_limit:3}),/그 앞 10개 — session_read map/);
   // A save with no next closes the cursor and keeps the recap at the top of the place.
   const file=path.join(dir,'.head/sessions/demo/work',seat,'history.md');
   s.save({summary:'DONE',history:'finished work',recap:'모두 끝났다',conversation_id:'seed'});
@@ -65,8 +67,9 @@ test('identity: the main index as summary lines, this place as time+body, only t
   // A finished place merges into main as one higher-level entry the map and load single out.
   s.finish({conversation_id:'seed'});
   const merged=s.load({conversation_id:'seed',history_count:1});
-  assert.match(merged,new RegExp(`\\nM DONE ← 합쳐짐 ${seat}\\n`));
-  assert.match(s.inspect({action:'map',conversation_id:'seed'}),new RegExp(`M [^\\n]+ ← 합쳐짐 ${seat}`));
+  const short=seat.split('-').at(-1).slice(0,4);
+  assert.match(merged,new RegExp(`\\n\\* [0-9a-f]{5} [^\\n]+ 합침 ← ${short} · 끝남 \\(main\\)\\n\\|\\\\\\n\\| \\* [0-9a-f]{5} [^\\n]+ DONE \\(${short} 끝남\\)\\n`));
+  assert.match(s.inspect({action:'map',conversation_id:'seed'}),new RegExp(`합침 ← ${short} · 끝남`));
 });
 test('Claude hook: identity in hook when it fits; over the cap the model is told to load it, and a channel host gets the same text',async()=>{
   const {dir,s}=fixture();callTool(s,'project_setup',{action:'never_ask',step:'setup'},undefined,dir); // identity alone; the first-run guide is covered in first-run.test
@@ -150,7 +153,7 @@ test('OpenCode pushes the identity of the place on every request and follows a m
     await hooks['chat.message']({sessionID:'ses_root'},{message:{role:'user'},parts:[{type:'text',text:'사용자 지시를 OpenCode 지금 줄로 적어줘'}]});
     const first={system:[]};await hooks['experimental.chat.system.transform']({sessionID:'ses_root'},first);
     const text=first.system.join('\n');
-    assert.match(text,/FLOW DIRECTION/);assert.match(text,/# 지난 기록 \(요약\)\n\* MAIN SUMMARY/);assert.doesNotMatch(text,/시작 자리 물음/);
+    assert.match(text,/FLOW DIRECTION/);assert.match(text,/# 기록 지도 \(최신이 위\)\n\* [0-9a-f]{5} [^\n]+ MAIN SUMMARY/);assert.doesNotMatch(text,/시작 자리 물음/);
     // Its own place, not the place the Claude conversation is on.
     const own=store.connection('ses_root').branch;assert.ok(own&&own!==seat);
     assert.match(activity(dir,'opencode','ses_root').current,/OpenCode/);
