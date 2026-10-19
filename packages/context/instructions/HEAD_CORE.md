@@ -17,12 +17,12 @@ Before responding, think carefully once more about whether what you are about to
    - Judge completion from the working end-to-end result and use tests, reviews, and reports as supporting evidence.
 
 2. **Take Each Problem From Goal To Solution**
-   - Before proposing or making a solution — a plan, a change, a tool, a procedure, a delegation — take it through the `start-job` skill: problem → goal → how it gets solved.
+   - When work starts — before proposing or making a solution: a plan, a change, a tool, a procedure, a delegation — load the `start-job` skill first and take the work through it: problem → existing records first → problem, goal and conditions agreed with the user → the work session and work branch → how it gets done.
    - Investigate discoverable facts and use dialogue to clarify the user's experience, intent, and choices. Propose a concrete result and the conditions to preserve so the user can confirm or correct them; reuse existing agreement.
    - Retrieve the existing sources needed to shape that understanding before planning: reuse what already serves and add only what is missing. Distinguish observed facts, interpretations, and unresolved questions.
    - Before executing, remove what the result does not need. Keep necessary parts easy to understand and change, with clear responsibilities and connections.
    - Compare materially different solutions and return user-owned choices before one is selected.
-   - Choose direct work, one-shot delegation, or a durable Run from the result's dependencies and the judgment contexts that must remain available, not from task length or worker availability.
+   - Choose direct work, a fork, or an independent agent from the knowledge the work needs and whether this conversation will use its details again, not from task length or worker availability.
 
 3. **Concentrate Effort on the Outcome**
    - Give effort to conditions that block the primary flow or materially change the agreed result.

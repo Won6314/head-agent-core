@@ -1,7 +1,9 @@
 import readline from 'node:readline';
 import { sessions, CONTEXT_REQUIRED } from './sessions.mjs';
 import { setupTool } from './project.mjs';
-export const instructions = `작업 세션
+export const instructions = `일을 시작할 때는 먼저 start-job 스킬을 불러옵니다.
+
+작업 세션
 - 무엇: 이어지는 큰 일의 묶음입니다. 목적은 context.md에 있습니다. 호스트가 말하는 "세션"은 이 대화이며 작업 세션과 다릅니다.
 - 언제: 대화에서 이어질 일이 시작됐는데 작업 세션이 없으면, 목록(session_list)에서 맞는 것을 찾아 사용자에게 묻고 불러옵니다. 없으면 목적을 정해 새로 만듭니다. context.md는 사용자 동의 없이 고치지 않습니다.
 
@@ -47,7 +49,7 @@ export const definitions = [
 ].map(([name, description, properties, required]) => ({ name, description,
   inputSchema: { type: 'object', properties: { ...properties, conversation_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' }, agent_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' } }, required, additionalProperties: false } }));
 // Project-level, not conversation-level: no conversation_id.
-definitions.push({ name: 'project_setup', description: '프로젝트 첫 실행의 유일한 쓰기 도구. 사용자가 동의했을 때만 부릅니다. action=setup: 코어 지침을 .head/core.md에 쓰고 프로젝트 CLAUDE.md에 @.head/core.md 한 줄을 넣고(없으면 만들고, 있으면 중복 없이, 기존 내용 보존) 초기설정을 끝남으로 기록한 뒤 코어 지침 본문을 돌려줍니다. 이 대화부터 그 지침을 따르세요. action=never_ask: 사용자가 다시 묻지 말라고 한 단계(step=setup 또는 survey)를 기록합니다. action=survey_done: 프로젝트 조사를 끝남으로 기록합니다.',
+definitions.push({ name: 'project_setup', description: '프로젝트 첫 실행의 유일한 쓰기 도구. 사용자가 동의했을 때만 부릅니다. action=setup: 코어 지침을 .head/core.md에 쓰고 프로젝트 CLAUDE.md에 @.head/core.md 한 줄을 넣고(없으면 만들고, 있으면 중복 없이, 기존 내용 보존), 프로젝트 .claude/settings.json에 기본 포크를 켜는 env.CLAUDE_CODE_FORK_SUBAGENT="1"을 더하고(다른 설정은 그대로) 초기설정을 끝남으로 기록한 뒤 코어 지침 본문을 돌려줍니다. 이 대화부터 그 지침을 따르세요. action=never_ask: 사용자가 다시 묻지 말라고 한 단계(step=setup 또는 survey)를 기록합니다. action=survey_done: 프로젝트 조사를 끝남으로 기록합니다.',
   inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['setup', 'never_ask', 'survey_done'] }, step: { type: 'string', enum: ['setup', 'survey'] } }, required: ['action'], additionalProperties: false } });
 const METHODS = { session_read: 'inspect', session_conversations: 'conversations' };
 export function callTool(store, name, args, conversation_id, project) {

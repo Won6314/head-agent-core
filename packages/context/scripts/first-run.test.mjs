@@ -73,9 +73,23 @@ test('guide rides with the work session part, also when the work context is over
   assert.match(parts.session,/FIRST RUN DIRECTION[\s\S]*이 대화의 작업 브랜치: big[\s\S]*초기설정 해도 될까요/);
   assert.match(parts.context,/session_load를 불러 받으세요/);assert.ok(parts.context.length<9000);assert.equal(parts.recent,'');
 });
+test('setup turns the built-in fork on in the project settings, keeping what is there',()=>{
+  const settings=dir=>JSON.parse(read(dir,'.claude/settings.json'));
+  const one=fresh();assert.match(tool(one,{action:'setup'}),/env\.CLAUDE_CODE_FORK_SUBAGENT="1"\(기본 포크 켜기\): 새로 만들었습니다/);
+  assert.deepEqual(settings(one),{env:{CLAUDE_CODE_FORK_SUBAGENT:'1'}});
+  assert.match(tool(one,{action:'setup'}),/기본 포크 켜기\): 이미 있어 그대로 두었습니다/);
+  const two=fresh();fs.mkdirSync(path.join(two,'.claude'));fs.writeFileSync(path.join(two,'.claude/settings.json'),JSON.stringify({permissions:{allow:['Bash(ls)']},env:{OTHER:'x'}}));
+  assert.match(tool(two,{action:'setup'}),/기존 설정에 env 한 줄을 더했습니다/);
+  assert.deepEqual(settings(two),{permissions:{allow:['Bash(ls)']},env:{OTHER:'x',CLAUDE_CODE_FORK_SUBAGENT:'1'}});
+  const three=fresh();fs.mkdirSync(path.join(three,'.claude'));fs.writeFileSync(path.join(three,'.claude/settings.json'),JSON.stringify({env:{CLAUDE_CODE_FORK_SUBAGENT:'0'}}));
+  assert.match(tool(three,{action:'setup'}),/이미 다른 값\("0"\)이 있어 그대로/);assert.deepEqual(settings(three),{env:{CLAUDE_CODE_FORK_SUBAGENT:'0'}});
+  const four=fresh();fs.mkdirSync(path.join(four,'.claude'));fs.writeFileSync(path.join(four,'.claude/settings.json'),'{ broken');
+  assert.match(tool(four,{action:'setup'}),/읽을 수 없는 JSON이라 고치지 않았습니다/);assert.equal(read(four,'.claude/settings.json'),'{ broken');assert.equal(firstRun(four).setup,'done');
+});
 test('real MCP process lists project_setup and runs it in CLAUDE_PROJECT_DIR',()=>{
   const dir=fresh(),[list,call]=mcp(dir,{action:'setup'});
-  assert.equal(fs.existsSync(path.resolve('skills')),false); // no slash-command skill: everything goes through plain words
+  assert.deepEqual(fs.readdirSync(path.resolve('skills')),['start-job']); // one skill the model loads; none for the user to type
+  assert.doesNotMatch(fs.readFileSync(path.resolve('skills/start-job/SKILL.md'),'utf8'),/disable-model-invocation|argument-hint/);
   const def=list.result.tools.find(t=>t.name==='project_setup');assert.ok(def);assert.equal('conversation_id' in def.inputSchema.properties,false);
   assert.equal(call.result.isError,undefined);assert.ok(call.result.content[0].text.endsWith(core));assert.equal(read(dir,'CLAUDE.md'),'@.head/core.md\n');
 });

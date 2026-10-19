@@ -122,6 +122,12 @@ test('a fork or subagent (agent_id) may read but not write; the tool surface car
   assert.throws(()=>callTool(s,'session_branch',{action:'create',branch:'x',label:'y'},'a'),/유효하지 않은 인자: label/);
   assert.throws(()=>callTool(s,'session_branch',{action:'main'},'a'),/유효하지 않은 인자: action/);
   for(const word of ['작업 세션','작업 브랜치','저장','기본 포크와 하위 에이전트는 저장하지 않습니다'])assert.match(instructions,new RegExp(word));
+  assert.ok(instructions.startsWith('일을 시작할 때는 먼저 start-job 스킬을 불러옵니다.\n\n작업 세션\n'));
+  const skill=fs.readFileSync(new URL('../skills/start-job/SKILL.md',import.meta.url),'utf8');
+  assert.match(skill,/^---\nname: start-job\ndescription: 일을 시작하기 전에 불러온다\./);assert.doesNotMatch(skill,/disable-model-invocation|delegate-once|context_run|plan-run/);
+  for(const step of ['## 1. 문제를 파악한다','## 2. 기존 자료를 먼저 찾는다','## 3. 문제·목표·조건을 맞춘다','## 4. 진행 방식을 고른다','subagent_type "fork"'])assert.ok(skill.includes(step),step);
+  const core=fs.readFileSync(new URL('../instructions/HEAD_CORE.md',import.meta.url),'utf8');
+  assert.match(core,/load the `start-job` skill first/);assert.doesNotMatch(core,/durable Run/);
   for(const old of ['자리','이름표','작업 주제','지금까지 요약','체크포인트'])assert.doesNotMatch(instructions,new RegExp(old));
   assert.match(instructions,/\n\n할 일\n- 무엇: 작업 세션에 남는 나중에 할 일입니다\. 작업 브랜치가 닫혀도 남습니다\.\n- 언제: [^\n]+session_todo add[^\n]+session_todo done/);
   assert.match(instructions,/\n\n다른 대화\n- 무엇: 이 프로젝트에서 살아 있는 대화와[^\n]+\n- 언제: [^\n]+session_conversations[^\n]+목록의 주소로 SendMessage를 씁니다\.$/);
