@@ -3,7 +3,6 @@ import { sessions } from '../../core/sessions.mjs';
 import { HOOK_BUDGET, UNCONNECTED } from '../../core/recovery.mjs';
 import { ancestry } from './recovery.mjs';
 import { hostInfo } from './process.mjs';
-import { requestLoad } from './channel.mjs';
 import { guide, refreshCore } from '../../core/project.mjs';
 
 // Two events only. PreToolUse fills the host fields of the head-context tools: the
@@ -31,9 +30,7 @@ try {
     const join = text => [text, first].filter(Boolean).join('\n\n');
     let additionalContext = join(started ? started.text : UNCONNECTED);
     if (started?.text && JSON.stringify(additionalContext).length > HOOK_BUDGET) {
-      // Over the host cap: ask for the load instead of carrying it. Where a channel is
-      // registered this conversation's own MCP process delivers the same text as a turn.
-      requestLoad(project, input.session_id);
+      // Over the host cap: the model is told to ask for the same text with session_load.
       additionalContext = join(`작업 세션: ${started.session}${started.stem === 'main' ? '' : ` · 작업 브랜치: ${started.stem}`}\n[작업 맥락이 시작 안내 상한을 넘었습니다. session_load를 불러 받으세요.]`);
     }
     if (additionalContext) console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext } }));

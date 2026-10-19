@@ -123,4 +123,8 @@ test('a fork or subagent (agent_id) may read but not write; the tool surface car
   assert.throws(()=>callTool(s,'session_branch',{action:'main'},'a'),/유효하지 않은 인자: action/);
   for(const word of ['작업 세션','작업 브랜치','저장','기본 포크와 하위 에이전트는 저장하지 않습니다'])assert.match(instructions,new RegExp(word));
   for(const old of ['자리','이름표','작업 주제','지금까지 요약','체크포인트'])assert.doesNotMatch(instructions,new RegExp(old));
+  assert.match(instructions,/\n\n할 일\n- 무엇: 작업 세션에 남는 나중에 할 일입니다\. 작업 브랜치가 닫혀도 남습니다\.\n- 언제: [^\n]+session_todo add[^\n]+session_todo done/);
+  assert.match(instructions,/\n\n다른 대화\n- 무엇: 이 프로젝트에서 살아 있는 대화와[^\n]+\n- 언제: [^\n]+session_conversations[^\n]+목록의 주소로 SendMessage를 씁니다\.$/);
+  const save=definitions.find(t=>t.name==='session_save').description;
+  for(const rule of ['근거 파일 링크와 그 내용','먼저 파일로 남기고 링크','실행 증거\\(ID·명령·로그\\)는 넣지 않습니다','같은 경계의 일은 모아 한 번에'])assert.match(save,new RegExp(rule));
 });

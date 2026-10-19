@@ -12,7 +12,15 @@ export const instructions = `작업 세션
 저장
 - 무엇: 작업 브랜치에 남기는 기록 한 번입니다. 작업 요약, 근거 파일 링크, 파일에 빠진 내용을 씁니다.
 - 언제: 결과나 결정이 생기면 남깁니다. 이어 갈 일이 있으면 다음을 적고, 끝났으면 다음 없이 정리를 줍니다. 그 저장으로 작업 브랜치가 닫힙니다.
-- 기본 포크와 하위 에이전트는 저장하지 않습니다. 결과는 부모 대화가 받아 저장합니다.`;
+- 기본 포크와 하위 에이전트는 저장하지 않습니다. 결과는 부모 대화가 받아 저장합니다.
+
+할 일
+- 무엇: 작업 세션에 남는 나중에 할 일입니다. 작업 브랜치가 닫혀도 남습니다.
+- 언제: 사용자가 나중에 하자고 하거나 미룬 일이 생기면 남깁니다(session_todo add). 끝나면 끝냄으로 표시합니다(session_todo done).
+
+다른 대화
+- 무엇: 이 프로젝트에서 살아 있는 대화와, 각 대화가 일하는 작업 세션·작업 브랜치입니다.
+- 언제: 다른 대화에 말을 전하거나 그 대화가 무엇을 하는지 알아야 할 때 먼저 목록(session_conversations)을 봅니다. 보낼 때는 목록의 주소로 SendMessage를 씁니다.`;
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
 const missing = { session_create: { context: CONTEXT_REQUIRED } };
@@ -26,7 +34,7 @@ export const definitions = [
     { name: string, branch: string, history_count: { type: 'integer', minimum: 0, default: 3 }, map_limit: { type: 'integer', minimum: 0, default: 30, description: '흐름 지도 줄 최대 수. 0은 전체.' } }, []],
   ['session_create', '새 작업 세션을 만들고 이 대화를 그 메인에 연결합니다. context(목적)는 필수이며 없거나 공백뿐이면 만들지 않고 거절합니다. 기존 파일은 덮어쓰지 않습니다. context는 context.md 본문입니다. 첫 줄은 `# 이름`, 바로 아래에는 이 작업 세션이 무엇을 하는지 한 문장을 씁니다(작업 세션 목록에 그대로 나갑니다). 그 아래에는 방향·전제·범위·다른 작업 세션과의 경계 중 정해진 것만 둡니다. 진행 상황·최근 작업·파일 목록은 쓰지 않습니다.',
     { name: string, context: { type: 'string', description: '필수. 사용자와 정한 이 작업 세션의 목적·방향. 비어 있으면 만들지 않습니다.' } }, ['name', 'context']],
-  ['session_save', '이 대화가 일하는 작업 브랜치(없으면 메인)에 기록 하나를 남깁니다. summary는 한 줄 요약, history는 본문, next는 이어 갈 일이 있을 때만 한 줄. 작업 브랜치에서 next 없이 저장하면 recap(그 작업 브랜치에서 한 일 전체 정리)이 필수이고, 그 저장으로 작업 브랜치가 닫혀 메인에 합쳐집니다. next와 recap은 함께 줄 수 없습니다.',
+  ['session_save', '이 대화가 일하는 작업 브랜치(없으면 메인)에 기록 하나를 남깁니다. summary는 한 줄 요약, history는 본문, next는 이어 갈 일이 있을 때만 한 줄. 본문은 작업 요약, 근거 파일 링크와 그 내용, 파일에 빠진 내용입니다. 작업 내용이 아직 파일에 없으면 먼저 파일로 남기고 링크합니다. 사용자 원문, 진행 경과, 실행 증거(ID·명령·로그)는 넣지 않습니다. 저장할 때마다 최근 기록이 밀려나므로 잘게 나눠 저장하지 말고, 같은 경계의 일은 모아 한 번에 저장합니다. 작업 브랜치에서 next 없이 저장하면 recap(그 작업 브랜치에서 한 일 전체 정리)이 필수이고, 그 저장으로 작업 브랜치가 닫혀 메인에 합쳐집니다. next와 recap은 함께 줄 수 없습니다.',
     { summary: string, history: string, next: string, recap: { type: 'string', description: '작업 브랜치를 닫는 저장(next 없음)에만. 그 작업 브랜치에서 한 일 전체 정리.' } }, ['summary', 'history']],
   ['session_branch','작업 브랜치 다루기. create는 branch 이름(필수, 그 일을 나타내는 짧은 이름)으로 새 작업 브랜치를 열고 이 대화를 거기에 둡니다(parent 생략은 이 대화의 작업 브랜치, 없으면 메인). attach는 있는 작업 브랜치를 이어 갑니다(다른 대화가 같은 작업 브랜치에 있어도 됩니다). abandon은 사용자가 그만둔 작업 브랜치를 reason과 함께 중단합니다. 다른 작업 브랜치로 옮겨도 떠난 작업 브랜치는 열린 채 남습니다.',
     {action:{type:'string',enum:['create','attach','abandon']},branch:string,parent:string,reason:string},['action']],
@@ -56,21 +64,16 @@ export function callTool(store, name, args, conversation_id, project) {
   if (agent_id && (typeof writes === 'function' ? writes(rest) : writes)) throw new Error(FORK_WRITE_REFUSED);
   return store[METHODS[name] || name.slice('session_'.length)]({ ...rest, conversation_id });
 }
-// channel (optional): {start(emit)} — called once the client finished initializing;
-// emit(content, meta) sends a claude/channel notification that the host turns into a turn.
-export async function serve({ project, host, conversationOf, channel, options = {} }) {
+export async function serve({ project, host, conversationOf, options = {} }) {
   const store = sessions(project, { host, ...options });
   const send = message => process.stdout.write(`${JSON.stringify({ jsonrpc: '2.0', ...message })}\n`);
   for await (const line of readline.createInterface({ input: process.stdin, crlfDelay: Infinity })) {
     let request;
     try { request = JSON.parse(line); }
     catch { send({ id: null, error: { code: -32700, message: 'Parse error' } }); continue; }
-    if (request.id === undefined) {
-      if (request.method === 'notifications/initialized' && channel) channel.start((content, meta = {}) => send({ method: 'notifications/claude/channel', params: { content, meta } }));
-      continue;
-    }
+    if (request.id === undefined) continue;
     const { id, method, params = {} } = request;
-    if (method === 'initialize') send({ id, result: { protocolVersion: params.protocolVersion, capabilities: { tools: {}, ...(channel ? { experimental: { 'claude/channel': {} } } : {}) }, serverInfo: { name: 'head-context', version: '0.7.0' }, instructions } });
+    if (method === 'initialize') send({ id, result: { protocolVersion: params.protocolVersion, capabilities: { tools: {} }, serverInfo: { name: 'head-context', version: '0.7.0' }, instructions } });
     else if (method === 'ping') send({ id, result: {} });
     else if (method === 'tools/list') send({ id, result: { tools: definitions } });
     else if (method === 'tools/call') {

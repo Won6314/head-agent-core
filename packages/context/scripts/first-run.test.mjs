@@ -62,7 +62,7 @@ test('survey is asked only after setup and only when the plugin carries its proc
     tool(other,{action:'never_ask',step:'survey'});assert.equal(guidePart(hook(other)),'');
   }finally{fs.rmSync(SURVEY_SOURCE,{force:true});}
 });
-test('guide rides with the work context, also when the work context goes to the channel',()=>{
+test('guide rides with the work context, also when the work context is over the cap',()=>{
   const dir=fresh(),s=sessions(dir);s.create({name:'demo',context:'FIRST RUN DIRECTION',conversation_id:'seed'});
   const small=hook(dir,{id:'small',session:'demo'});assert.match(small,/FIRST RUN DIRECTION/);assert.match(small,/초기설정 해도 될까요/);
   s.branch({action:'create',branch:'big',conversation_id:'seed'});
@@ -72,6 +72,7 @@ test('guide rides with the work context, also when the work context goes to the 
 });
 test('real MCP process lists project_setup and runs it in CLAUDE_PROJECT_DIR',()=>{
   const dir=fresh(),[list,call]=mcp(dir,{action:'setup'});
+  assert.equal(fs.existsSync(path.resolve('skills')),false); // no slash-command skill: everything goes through plain words
   const def=list.result.tools.find(t=>t.name==='project_setup');assert.ok(def);assert.equal('conversation_id' in def.inputSchema.properties,false);
   assert.equal(call.result.isError,undefined);assert.ok(call.result.content[0].text.endsWith(core));assert.equal(read(dir,'CLAUDE.md'),'@.head/core.md\n');
 });

@@ -189,7 +189,7 @@ export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],no
     connection,load,save,todo,conversations,tree,
     names:()=>withGraph(project,g=>g.names()),
     list:()=>withGraph(project,g=>[topicList(g),...g.errors.map(e=>`${e.name}: 읽기 실패 — ${e.error}`)].join('\n')),
-    // One work session's open branches for display (board, adapters).
+    // One work session's open branches, for adapters outside the core.
     view:name=>withGraph(project,g=>({name,branches:openBranches(g,name).map(b=>({name:b.name,title:b.title,next:b.next,last_at:b.last_at}))})),
     create({name,context,conversation_id}){
       // 목적 없는 작업 세션은 만들지 않는다: 방향이 없거나 공백뿐이면 폴더를 만들기 전에 거절한다.

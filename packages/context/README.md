@@ -2,7 +2,8 @@
 
 작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 작업 맥락을 다시 불러온다.
 살아 있는 대화를 작업 세션·작업 브랜치와 묶어 보여 준다. 포크·새 대화·대화 사이 메시지는 호스트(Claude Code) 기능을 그대로 쓴다.
-기준 환경은 이 플러그인만 붙은 Claude Code 데스크톱 앱이다. 상주 프로세스는 없다(도구 호출 때만 도는 MCP 하나와 훅 둘).
+기준 환경은 이 플러그인만 붙은 Claude Code 데스크톱 앱이다. 상주 프로세스는 없다(도구 호출 때만 도는 MCP 하나와 훅 둘). 사용자가 직접 치는 명령(스킬)은 두지 않는다: 모든 것은 자연어로 하고 모델이 도구를 부른다.
+현황판·채널·대화 상태 표시는 코어 밖(추가기능)이다.
 
 ## 용어
 
@@ -37,7 +38,7 @@
 | session_branch | create(이름 필수)/attach/abandon(reason 필수) |
 | session_read | map/recent/entry/find, 연결을 바꾸지 않음 |
 | session_todo | add/list/done |
-| session_conversations | 살아 있는 대화: 작업 세션 → 작업 브랜치 → 대화, 안 붙은 대화 묶음. 대화마다 제목·주소·마지막 활동 |
+| session_conversations | 살아 있는 대화: 작업 세션 → 작업 브랜치 → 대화, 안 붙은 대화 묶음. 대화마다 제목·주소·마지막 활동. 현황판 같은 추가기능도 이 데이터(`tree()`)로 만든다 |
 | project_setup | 첫 실행 초기설정(.head/core.md + CLAUDE.md 한 줄) |
 
 ## 작업 맥락 (시작 훅·session_load)
@@ -55,7 +56,7 @@
 ```
 
 - 재개(resume)는 이미 맥락이 있으므로 넣지 않는다. 새 시작·/clear·압축은 넣는다.
-- 훅 JSON 9,000자를 넘으면 훅은 한 줄 안내만 넣고, 채널이 있는 호스트에서는 같은 MCP가 같은 내용을 메시지로 보낸다(`hosts/claude/channel.mjs`).
+- 훅 JSON 9,000자를 넘으면 훅은 작업 세션·작업 브랜치 이름과 `session_load`를 부르라는 안내 한 줄만 넣는다. 채널은 쓰지 않는다.
 
 ## 대화 알아보기 (Claude)
 
@@ -84,5 +85,4 @@
 ```bash
 HEAD_CONTEXT_TEST_ROOT=<절대 시험 폴더> node --test scripts/*.test.mjs
 node scripts/map.mjs <절대 프로젝트> <작업 세션> 30
-node scripts/board.mjs <절대 프로젝트> [--all] [--json] [--watch]
 ```

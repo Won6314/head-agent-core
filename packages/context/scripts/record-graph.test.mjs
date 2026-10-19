@@ -7,7 +7,6 @@ import {fileURLToPath} from 'node:url';
 import {sessions} from '../core/sessions.mjs';
 import {withGraph} from '../core/graph.mjs';
 import {parseHistory} from '../core/history.mjs';
-import {board,renderBoard} from '../core/board.mjs';
 import {callTool} from '../core/mcp.mjs';
 const root=process.env.HEAD_CONTEXT_TEST_ROOT;
 if(!root)throw new Error('HEAD_CONTEXT_TEST_ROOT must point at the evidence test directory');
@@ -86,7 +85,6 @@ test('legacy labels/fallback/connection and actual old 0.3 store append read as 
   // A record from before branches existed keeps its session and works on main.
   const started=s.start({conversation_id:'c'});assert.equal(started.session,'demo');assert.equal(started.stem,'main');
   assert.match(started.text,/## 흐름 \(최신이 위\)[\s\S]*real old MCP/);
-  assert.doesNotThrow(()=>board(dir));assert.doesNotThrow(()=>renderBoard(board(dir),{all:true}));
 });
 test('other-session map does not rebind, load returns direction/map/body, MCP surface and old hook still run',()=>{
   const {dir,s}=fixture();save(s,'main');s.create({name:'other',context:'OTHER',conversation_id:'other'});save(s,'other','other');
