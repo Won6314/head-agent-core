@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import {spawnSync} from 'node:child_process';
+import {spawnSync,spawn} from 'node:child_process';
 import {sessions} from '../core/sessions.mjs';
 import {ownerOf,hostInfo,liveConversations,transcriptsOf} from '../hosts/claude/process.mjs';
 import {ancestry,copiedFrom} from '../hosts/claude/recovery.mjs';
@@ -119,12 +119,12 @@ test('alive conversations: a running process anywhere, a desktop conversation ac
   const ids=liveConversations(st.dir).map(c=>c.conversation_id).sort();
   assert.deepEqual(ids,['cli-on','desk','desk-loose']);
   const out=s.conversations({conversation_id:'cli-on'});
-  assert.match(out,/## demo\n- 대화 "앱 제목 desk" · 주소: local_desk · 마지막 [^\n]+\n- 작업 브랜치 job\n  - 대화 "name-cli-on" · 주소: name-cli-on · 마지막 [^\n]+ \(이 대화\)/);
-  assert.match(out,/## 작업 세션 없음\n- 대화 "desk-loo" · 주소: \(모름\)/);
+  assert.match(out,/## demo\n- 메인\n  - 이름 앱 제목 desk · 보낼 곳 local_desk · 사람 · 마지막 [^\n]+\n    하는 일: [^\n]+\n- 작업 브랜치 job\n  - 이름 name-cli-on · 보낼 곳 name-cli-on · [^\n]*마지막 [^\n]+ \(이 대화\)\n    하는 일: 주제: job/);
+  assert.match(out,/## 작업 세션 없음\n- 보낼 곳 \(모름\) · 사람/);
   assert.match(s.conversations({name:'demo'}),/## demo/);assert.doesNotMatch(s.conversations({name:'demo'}),/작업 세션 없음/);
   // After the branch closes its conversations show under the session.
   s.save({summary:'끝',history:'x',recap:'r',conversation_id:'cli-on'});
-  assert.match(s.conversations({}),/## demo\n- 대화 "name-cli-on"/);
+  assert.match(s.conversations({}),/## demo\n- 메인\n  - 이름 name-cli-on/);
 });
 test('a start is never blocked by a registry that is missing, empty or in another shape',t=>{
   t.after(after);const st=stage(),s=api(st.dir);s.create({name:'demo',context:'D',conversation_id:'c'});
@@ -175,4 +175,23 @@ test('after /clear the recent exchanges come from the conversation /clear replac
   assert.match(parts.session,/# 작업 세션: demo/);assert.ok(parts.recent.length<=9000);
   assert.match(parts.recent,new RegExp(`^# 최근 대화 \\(직전 주고받기 [1-4]번, 원문\\)\\n앞의 [1-4]번은 상한 때문에 뺐습니다\\. 대화 기록 파일: ${oldFile.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}`));
   assert.match(parts.recent,/OLD-ASK-5[\s\S]*OLD-ANSWER-5$/);assert.doesNotMatch(parts.recent,/OLD-ASK-1 /);
+});
+test('one work session with several live conversations: each has its own inbox address, kind and what it is doing',t=>{
+  t.after(after);const st=stage(),s=api(st.dir);
+  const user=text=>({type:'user',message:{role:'user',content:text}});
+  s.create({name:'demo',context:'D',conversation_id:'a'});s.load({name:'demo',conversation_id:'b'});s.load({name:'demo',conversation_id:'f'});
+  s.branch({action:'create',branch:'기억기능-보강',conversation_id:'b'});
+  // Same short name for a and b: only the socket tells them apart.
+  st.running(process.pid,'a',{name:'head-2b',messagingSocketPath:'/run/x/a.sock'});
+  st.running(process.ppid,'b',{name:'head-2b',messagingSocketPath:'/run/x/b.sock'});
+  const copy=spawn(process.execPath,['-e','setTimeout(()=>{},60000)']);t.after(()=>copy.kill());
+  st.running(copy.pid,'f',{name:'head-03',entrypoint:'sdk-cli',messagingSocketPath:'/run/x/f.sock'});
+  st.transcript('a',[user('herdr에 새 pane 열어서 네가 해봐라'),user('<channel source="agent-task">다른 세션 메시지'),{type:'assistant'}]);
+  st.transcript('b',[user('<pasted_content id="x">\n기억 기능 보강 계획을 세워 보자\n</pasted_content id="x">')]);
+  st.transcript('f',[user('부모의 오래된 첫 말입니다 길게'),user('[forked] 처음 맡은 일'),user('[forked] 지금 맡은 일입니다\n자세히'),user('[quick_task completed] cqt-x 끝남 알림')]);
+  const out=s.conversations({conversation_id:'a'});
+  assert.match(out,/- 메인\n  - 이름 head-2b · 보낼 곳 uds:\/run\/x\/a\.sock · 사람 · [^\n]+\(이 대화\)\n    하는 일: 최근 지시: "herdr에 새 pane 열어서 네가 해봐라"/);
+  assert.match(out,/- 작업 브랜치 기억기능-보강\n  - 이름 head-2b · 보낼 곳 uds:\/run\/x\/b\.sock · 사람[^\n]*\n    하는 일: 주제: 기억기능-보강 · 최근 지시: "기억 기능 보강 계획을 세워 보자"/);
+  assert.match(out,/이름 head-03 · 보낼 곳 uds:\/run\/x\/f\.sock · 포크·워커[^\n]*\n    하는 일: 맡은 일: "지금 맡은 일입니다" · 최근 지시: "부모의 오래된 첫 말입니다 길게"/);
+  assert.match(out,/보내기: SendMessage\(to: 보낼 곳\)/);
 });

@@ -1,3 +1,4 @@
+import {kindOf} from './instruction.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {parseHistory} from './history.mjs';
@@ -159,18 +160,29 @@ export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],no
   // Alive conversations under their work session and work branch. What "alive" means is
   // the host's: a running process, or where processes come and go on their own (the
   // desktop app), recent activity. The core keeps no state about it.
+  // What each conversation is doing, for choosing where a message goes: a copy's task,
+  // the work branch's name (its topic), the last thing a person said to it.
+  const doing=(c,branch)=>{
+    const clip=(t,n=80)=>{const a=Array.from(String(t).replace(/\s+/g,' ').trim());return a.length>n?`${a.slice(0,n).join('')}…`:a.join('');};
+    const parts=[c.task&&`맡은 일: "${clip(c.task)}"`,branch&&`주제: ${branch}`,c.said&&`최근 지시: "${clip(c.said)}"`].filter(Boolean);
+    return parts.join(' · ')||'(아직 지시 없음)';
+  };
   const conversations=({name,conversation_id}={})=>{
     const data=tree({name}),time=clock(data.timezone);
-    const show=c=>`대화 "${c.title||c.conversation_id.slice(0,8)}" · 주소: ${c.address||'(모름)'} · 마지막 ${c.last_at?time(new Date(c.last_at).toISOString()):'(모름)'}${c.conversation_id===conversation_id?' (이 대화)':''}`;
-    const lines=['# 살아 있는 대화 (작업 세션 → 작업 브랜치 → 대화)'];
+    const show=(c,branch)=>{
+      const head=[c.title&&`이름 ${c.title}`,`보낼 곳 ${c.address||'(모름)'}`,kindOf(c.entrypoint),c.last_at&&`마지막 ${time(new Date(c.last_at).toISOString())}`].filter(Boolean).join(' · ');
+      return `${head}${c.conversation_id===conversation_id?' (이 대화)':''}\n    하는 일: ${doing(c,branch)}`;
+    };
+    const lines=['# 살아 있는 대화 (작업 세션 → 작업 브랜치 → 대화)','보내기: SendMessage(to: 보낼 곳). 이름은 여러 대화가 같을 수 있어 보낼 곳을 그대로 씁니다. 보낼 곳은 대화가 다시 시작하면 바뀌므로 방금 읽은 이 목록의 것을 씁니다.'];
     for(const s of data.sessions){
       const has=s.conversations.length||s.branches.some(b=>b.conversations.length);
-      lines.push('',`## ${s.name}`,...s.conversations.map(r=>`- ${show(r)}`));
-      for(const b of s.branches)if(b.conversations.length)lines.push(`- 작업 브랜치 ${b.title}`,...b.conversations.map(r=>`  - ${show(r)}`));
+      lines.push('',`## ${s.name}`);
+      if(s.conversations.length)lines.push('- 메인',...s.conversations.map(r=>`  - ${show(r)}`));
+      for(const b of s.branches)if(b.conversations.length)lines.push(`- 작업 브랜치 ${b.title}`,...b.conversations.map(r=>`  - ${show(r,b.title)}`));
       if(!has)lines.push('(살아 있는 대화 없음)');
     }
     if(data.loose.length)lines.push('','## 작업 세션 없음',...data.loose.map(r=>`- ${show(r)}`));
-    if(lines.length===1)lines.push('(살아 있는 대화 없음)');
+    if(lines.length===2)lines.push('','(살아 있는 대화 없음)');
     return lines.join('\n');
   };
   const todo=({action,text,due,match,name,conversation_id})=>{

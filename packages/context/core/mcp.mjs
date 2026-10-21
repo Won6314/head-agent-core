@@ -22,7 +22,7 @@ export const instructions = `일을 시작할 때는 먼저 start-job 스킬을 
 
 다른 대화
 - 무엇: 이 프로젝트에서 살아 있는 대화와, 각 대화가 일하는 작업 세션·작업 브랜치입니다.
-- 언제: 다른 대화에 말을 전하거나 그 대화가 무엇을 하는지 알아야 할 때 먼저 목록(session_conversations)을 봅니다. 보낼 때는 목록의 주소로 SendMessage를 씁니다.`;
+- 언제: 다른 대화에 말을 전하거나 그 대화가 무엇을 하는지 알아야 할 때 먼저 목록(session_conversations)을 봅니다. 보낼 때는 목록의 보낼 곳으로 SendMessage를 씁니다.`;
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
 const missing = { session_create: { context: CONTEXT_REQUIRED } };
@@ -48,7 +48,7 @@ export const definitions = [
     {action:{type:'string',enum:['overview','map','recent','entry','find','files']},name:string,branch:string,limit:{type:'integer',minimum:0,default:30},count:{type:'integer',minimum:0,default:5},id:string,file:string,query:string,depth:{type:'integer',minimum:1,default:2}},['action']],
   ['session_todo','작업 세션의 할 일(todo.md). 사용자가 나중에 할 일을 말하면 add, 할 일을 물으면 list, 끝났다고 하면 done. add의 text는 나중에 오해가 없도록 할 일과 범위를 분명히 쓰고 사용자 원문을 근거로 인용합니다. 사용자가 정하지 않은 것을 확정사항으로 쓰지 않습니다. 기한이 있으면 상대 날짜를 실제 날짜로 바꿔 due(YYYY-MM-DD)에 넣습니다. done은 match가 열린 항목 하나에만 맞을 때 끝냅니다. name 생략은 이 대화의 작업 세션입니다.',
     {action:{type:'string',enum:['add','list','done']},text:string,due:string,match:string,name:string},['action']],
-  ['session_conversations','살아 있는 대화를 작업 세션 → 작업 브랜치 → 대화로 보여 줍니다(작업 세션에 안 붙은 대화는 따로). 대화마다 제목, 주소, 마지막 활동. 다른 대화에 메시지를 보내기 전에 이 목록에서 대화를 고르고, 호스트의 메시지 도구(SendMessage)의 받는 쪽에 주소를 그대로 씁니다. name을 주면 그 작업 세션만.',
+  ['session_conversations','다른 대화에 말을 전하기 전에 받을 대화를 고르는 목록입니다. 살아 있는 대화를 작업 세션 → 작업 브랜치 → 대화로 보여 주고(작업 세션에 안 붙은 대화는 따로), 대화마다 이름, 보낼 곳, 종류(사람 / 포크·워커), 마지막 활동, 하는 일 한 줄을 붙입니다. 하는 일은 포크·워커면 맡은 일, 작업 브랜치면 그 이름(주제), 그리고 사람이 마지막으로 시킨 말입니다. 고르는 법: 1) 전할 내용과 맞는 작업 세션·작업 브랜치(주제) 아래의 대화를 고릅니다. 2) 같은 곳에 여럿이면 사람 대화 가운데 하는 일이 맞고 마지막 활동이 가장 최근인 것을 고릅니다. 포크·워커에는 그 대화가 맡은 일에 관한 말만 보냅니다. 3) 그래도 하나로 좁혀지지 않으면 보내지 말고 후보(작업 브랜치·이름·하는 일)를 사용자에게 보여 고르게 합니다. 같은 말을 여러 대화에 한꺼번에 보내지 않습니다. 보내기는 SendMessage(to: 목록의 보낼 곳)입니다. 이름(head-2b 같은 것)은 여러 대화가 같을 수 있으니 보낼 곳을 씁니다. 보낼 곳은 대화가 다시 시작하면 바뀌므로 방금 읽은 목록의 것을 씁니다. name을 주면 그 작업 세션만.',
     {name:string},[]]
 ].map(([name, description, properties, required]) => ({ name, description,
   inputSchema: { type: 'object', properties: { ...properties, conversation_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' }, agent_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' } }, required, additionalProperties: false } }));
