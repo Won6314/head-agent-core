@@ -12,6 +12,9 @@ import { ownerOf } from './process.mjs';
 //   copy      — a fork made by the host (a desktop side session, --fork-session) starts
 //     with the records of the conversation it was copied from, under that conversation's
 //     own sessionId. The last foreign sessionId before its own records is its parent.
+//     A copy made through the SDK (agent-task context_run) rewrites sessionId and marks
+//     each copied record with forkedFrom.sessionId instead.
+//   parent    — whoever started the conversation named its parent in HEAD_CONTEXT_PARENT.
 const TAIL = 4096, DEPTH = 32, LIMIT = 64 * 1024 * 1024;
 function tail(file, bytes = TAIL) {
   try {
@@ -44,6 +47,9 @@ export function continuations(directory) {
 export function copiedFrom(transcript, self) {
   let text;
   try { if (fs.statSync(transcript).size > LIMIT) return null; text = fs.readFileSync(transcript, 'utf8'); } catch { return null; }
+  // A copy made through the SDK marks every copied record with forkedFrom.sessionId.
+  const marked = /"forkedFrom":\{"sessionId":"([^"]+)"/.exec(text.slice(0, 64 * 1024))?.[1];
+  if (marked && marked !== self) return marked;
   let parent = null;
   for (const line of text.split('\n')) {
     const id = /"sessionId":"([^"]+)"/.exec(line)?.[1];
@@ -67,6 +73,8 @@ export function ancestry(project, input, { directory = input.transcript_path ? p
   if (!self) return [];
   const links = [], seen = new Set([self]);
   const add = (conversation_id, kind) => { if (conversation_id && !seen.has(conversation_id)) { links.push({ conversation_id, kind }); seen.add(conversation_id); return true; } return false; };
+  const named = process.env.HEAD_CONTEXT_PARENT;
+  if (named) add(named, 'parent');
   const chain = directory ? continuations(directory) : new Map();
   for (let current = self, depth = 0; depth < DEPTH; depth++) { if (!add(chain.get(current), 'continued')) break; current = chain.get(current); }
   if (input.source === 'clear') add(previousOfClear(project, self), 'clear');

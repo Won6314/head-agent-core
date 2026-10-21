@@ -1,4 +1,4 @@
-# head-context 0.7.0 — 작업 세션·작업 브랜치·저장
+# head-context 0.7.1 — 작업 세션·작업 브랜치·저장
 
 작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 작업 맥락을 다시 불러온다.
 살아 있는 대화를 작업 세션·작업 브랜치와 묶어 보여 준다. 포크·새 대화·대화 사이 메시지는 호스트(Claude Code) 기능을 그대로 쓴다.
@@ -27,6 +27,8 @@
   닫힌 작업 브랜치에 붙어 있던 다른 대화는 메인에 기록한다. 닫힌 작업 브랜치에 attach하면 다시 열린다. 사용자가 그만둔 일은 abandon(이유 필수).
 - 0.6의 `멈춤`(대화가 끝나 닫힌 것)은 열린 것으로 친다. 0.6 자동 이름(`branch-<시각>-<16진>`)은 짧은 이름 + 옛 이름표로 보인다.
 - 대화 안에서 도는 작업(Agent 도구의 fork·하위 에이전트, 훅이 `agent_id`를 채운 호출)은 쓰기를 거절하고 읽기만 된다. 쓰기 = load·create·save·branch·todo add/done. 시작할 때 SubagentStart 훅이 안내 한 덩어리를 넣는다(맡은 일 하나, 결과를 돌려주면 부른 대화가 확인·저장, 기록은 읽기만). 대화가 되는 복제(데스크톱 사이드 포크)에는 아무것도 넣지 않고 보통 대화처럼 저장한다. 지침에는 포크 저장 규칙을 두지 않는다.
+- 프로그램이 돌리는 대화(entrypoint `sdk-cli`·`sdk-ts`·`sdk-py`, 곧 `claude -p`로 띄운 포크·워커)도 쓰기를 거절하고 읽기만 된다. 판정은 MCP 서버가 받는 `CLAUDE_CODE_ENTRYPOINT`(없으면 등록 파일). 사람이 돌리는 대화(cli·claude-desktop·편집기)는 그대로 쓴다.
+- 작업 브랜치 저장의 상대 링크(`[이름](work/…)`)는 브랜치 파일 자리에서도 열리게 `../../`을 붙여 적는다. 색인은 기록 파일 폴더 → 작업 세션 폴더 순으로 찾는다.
 - 할 일은 작업 세션의 `todo.md`(작업 브랜치가 닫혀도 남는다). 줄 형식은 앞선 도구와 같다: `- [ ] 2026-09-18 기한 2026-09-23(수) "원문"`.
 
 ## 도구 (호스트가 conversation_id·agent_id를 채움)
@@ -40,7 +42,7 @@
 | session_branch | create(이름 필수)/attach/abandon(reason 필수) |
 | session_read | overview(둘러보기: 연결 없이 작업 맥락을 읽기 전용으로, 최근 기록은 작업 세션 전체에서)/map/recent/entry/find/files, 연결을 바꾸지 않음. files는 기록(id) 또는 작업 브랜치(branch)가 가리킨 파일과 그 파일들이 링크·백틱 경로로 가리킨 파일을 나무 모양으로(depth 1~3, 기본 2, 50개까지) |
 | session_todo | add/list/done |
-| session_conversations | 살아 있는 대화: 작업 세션 → 작업 브랜치 → 대화, 안 붙은 대화 묶음. 대화마다 제목·주소·마지막 활동. 현황판 같은 추가기능도 이 데이터(`tree()`)로 만든다 |
+| session_conversations | 살아 있는 대화: 작업 세션 → 작업 브랜치 → 대화, 안 붙은 대화 묶음. 대화마다 제목·주소·종류·마지막 활동·하는 일. 포크·워커는 띄운 대화가 살아 있으면 그 아래에 한 번만 |
 | project_setup | 첫 실행 초기설정(.head/core.md + CLAUDE.md 한 줄) |
 
 ## 작업 맥락 (시작 훅·session_load)
@@ -76,7 +78,23 @@
 - 살아 있는 대화: 등록 파일(`~/.claude/sessions/<pid>.json`)의 cwd가 이 프로젝트이고 pid가 응답하는 대화(CLI·데스크톱 모두),
   그리고 데스크톱 대화(entrypoint `claude-desktop`) 중 기록 파일이 7일 안에 바뀐 것. 데스크톱 앱은 쉬는 대화를 내렸다가 메시지가 오면 다시 띄우므로 데스크톱 대화에는 "끝남"이 없고, 7일은 보여 줄 범위다.
   보관한 데스크톱 대화(앱 기록의 isArchived)는 뺀다. 생존은 목록을 그릴 때만 보고 저장하지 않는다.
-- 주소: 데스크톱은 hostSessionId(`local_…`), CLI는 등록 파일의 name. 프로세스가 없는 데스크톱 대화는 연결 파일이나 앱 기록에서 찾는다.
+- 주소: CLI는 등록 파일의 `messagingSocketPath`를 `uds:<경로>`로(SendMessage가 받는 모양), 데스크톱은 hostSessionId(`local_…`). 프로세스가 없는 데스크톱 대화는 연결 파일이나 앱 기록에서 찾는다.
+- 부모: 프로그램이 돌리는 대화는 시작 훅이 연결 파일에 `parent`를 적는다. 띄운 쪽이 준 환경 변수 `HEAD_CONTEXT_PARENT`가 먼저이고, 없으면 복사된 기록의 `forkedFrom.sessionId`(SDK 세션 복사) 또는 앞선 다른 sessionId(`--fork-session`). 새 대화가 이어받는 자리도 이 순서의 부모가 맨 앞이다.
+
+## 현황 데이터 (추가기능용)
+
+현황판·폰 화면 같은 코어 밖 도구는 `hosts/claude/tree.mjs`의 `claudeTree(project, {name})`로 `session_conversations`와 같은 데이터를 받는다. 부를 때마다 등록 파일과 기록 끝을 읽어 만들고 저장하지 않는다.
+
+```
+{timezone, sessions:[{name, main:{last_summary,last_at}, conversations:[Row],
+  branches:[{name,title,next,last_at,last_summary,conversations:[Row]}]}], loose:[Row]}
+Row = {conversation_id,title,address,last_at,entrypoint,kind:'person'|'copy',parent,said,task,doing,session,stem,children:[Row]}
+```
+
+- `kind:'copy'`이고 부모가 살아 있으면 부모의 `children`에만 들어간다. 부모가 없으면 자기 줄기의 맨 뒤(사람 다음)에 남는다.
+- 작업 중·대기 같은 상태는 코어에 없다. 필요하면 등록 파일의 `status`를 직접 읽는다.
+- `doing(row, 작업 브랜치 이름, 메인의 마지막 저장)`은 `core/sessions.mjs`에서도 내보낸다.
+- 코어 밖 도구의 하위 작업 보고는 `core/state.mjs`의 `report()`(선택 칸 `child_conversation_id` 포함)로 `.head/state/subtasks/`에 남긴다. 코어는 이것을 읽지 않는다.
 
 ## 훅
 
@@ -100,6 +118,14 @@
 - 저장 없는 0.6 자동 브랜치(`branch-<시각>-<16진>`, 열림·멈춤, 다른 브랜치가 갈라져 나오지 않은 것). 그 브랜치를 가리키던 대화는 메인으로.
 - 이름표에 ` (fork)`가 반복되면 하나만 남긴다.
 다시 돌려도 더 할 일이 없다.
+
+## 0.7.1에서 바뀐 것
+
+- `claude -p`로 도는 대화: 띄운 대화 아래 하위로 묶고, 쓰기를 거절한다. 부모는 `HEAD_CONTEXT_PARENT` 또는 복사된 기록의 `forkedFrom`.
+- `session_conversations`: 하위 묶기, 메인 대화의 하는 일에 메인의 마지막 저장. 현황 데이터 `claudeTree()`·`doing()`을 내보냄.
+- 작업 브랜치 저장의 상대 링크가 브랜치 파일에서도 열림.
+- 서버 안내문: 작업 세션은 사용자에게 물은 뒤 만든다.
+- `report()`: `child_conversation_id`, 이전 `kind` 유지.
 
 ## 배포·업데이트
 

@@ -36,3 +36,12 @@ test('kept for adapters outside the core: process evidence and the subtask repor
     assert.throws(() => report(root, { host: 'claude', parent_conversation_id: 'p', id: 'c', status: 'busy' }), /하위작업 상태/);
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
+test('0.7.1: report keeps a subtask child conversation id once given',async()=>{
+  const {report}=await import('../core/state.mjs');const os=await import('node:os');const fs=await import('node:fs');const path=await import('node:path');
+  const dir=fs.mkdtempSync(path.join(process.env.HEAD_CONTEXT_TEST_ROOT||os.tmpdir(),'report-'));
+  report(dir,{host:'claude',parent_conversation_id:'p',id:'ctx-1',name:'일',status:'running',kind:'context_run',child_conversation_id:'k'});
+  report(dir,{host:'claude',parent_conversation_id:'p',id:'ctx-1',status:'ended'});
+  const r=JSON.parse(fs.readFileSync(path.join(dir,'.head/state/subtasks/claude-p__ctx-1.json'),'utf8'));
+  const assert=(await import('node:assert/strict')).default;
+  assert.equal(r.child_conversation_id,'k');assert.equal(r.status,'ended');assert.equal(r.name,'일');assert.equal(r.kind,'context_run');
+});

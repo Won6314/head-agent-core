@@ -12,7 +12,13 @@ export function instructionLine(text){
 }
 // Who runs a conversation: a person at a terminal or in the desktop app, or a program
 // that started a copy or a worker.
-export function kindOf(entrypoint){
+// A program runs a conversation through the SDK (claude -p is 'sdk-cli', the libraries
+// 'sdk-ts' / 'sdk-py'); a person runs it everywhere else (cli, claude-desktop, an editor).
+export const isCopy=entrypoint=>/^sdk-/.test(String(entrypoint||''));
+export function kindKey(entrypoint){
   if(!entrypoint)return null;
-  return entrypoint==='cli'||entrypoint==='claude-desktop'?'사람':'포크·워커';
+  return isCopy(entrypoint)?'copy':'person';
+}
+export function kindOf(entrypoint){
+  const k=kindKey(entrypoint);return k?(k==='person'?'사람':'포크·워커'):null;
 }

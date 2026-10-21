@@ -192,6 +192,72 @@ test('one work session with several live conversations: each has its own inbox a
   const out=s.conversations({conversation_id:'a'});
   assert.match(out,/- 메인\n  - 이름 head-2b · 보낼 곳 uds:\/run\/x\/a\.sock · 사람 · [^\n]+\(이 대화\)\n    하는 일: 최근 지시: "herdr에 새 pane 열어서 네가 해봐라"/);
   assert.match(out,/- 작업 브랜치 기억기능-보강\n  - 이름 head-2b · 보낼 곳 uds:\/run\/x\/b\.sock · 사람[^\n]*\n    하는 일: 주제: 기억기능-보강 · 최근 지시: "기억 기능 보강 계획을 세워 보자"/);
-  assert.match(out,/이름 head-03 · 보낼 곳 uds:\/run\/x\/f\.sock · 포크·워커[^\n]*\n    하는 일: 맡은 일: "지금 맡은 일입니다" · 최근 지시: "부모의 오래된 첫 말입니다 길게"/);
+  assert.match(out,/이름 head-03 · 보낼 곳 uds:\/run\/x\/f\.sock · 포크·워커[^\n]*\n    하는 일: 맡은 일: "지금 맡은 일입니다"\n/);
   assert.match(out,/보내기: SendMessage\(to: 보낼 곳\)/);
+});
+test('0.7.1: a copy run by a program sits once, under the live conversation that started it; summaries ride on main and branches',t=>{
+  t.after(after);const st=stage(),s=api(st.dir);
+  const user=text=>({type:'user',message:{role:'user',content:text}});
+  s.create({name:'demo',context:'D',conversation_id:'a'});s.save({summary:'MAIN-OWN',history:'m',conversation_id:'a'});
+  s.load({name:'demo',conversation_id:'b'});s.branch({action:'create',branch:'job',conversation_id:'b'});
+  s.save({summary:'JOB-LAST',history:'j',next:'n',conversation_id:'b'}); // also leaves an index line on main
+  st.running(process.pid,'a',{name:'head-a',messagingSocketPath:'/run/x/a.sock'});
+  st.running(process.ppid,'b',{name:'head-b',messagingSocketPath:'/run/x/b.sock'});
+  const k1=spawn(process.execPath,['-e','setTimeout(()=>{},60000)']),k2=spawn(process.execPath,['-e','setTimeout(()=>{},60000)']);t.after(()=>{k1.kill();k2.kill();});
+  st.running(k1.pid,'f',{name:'head-f',entrypoint:'sdk-cli',messagingSocketPath:'/run/x/f.sock'});
+  st.running(k2.pid,'o',{name:'head-o',entrypoint:'sdk-cli',messagingSocketPath:'/run/x/o.sock'});
+  st.transcript('a',[user('사람이 시킨 말입니다 길게')]);st.transcript('b',[user('브랜치에서 시킨 말입니다')]);
+  st.transcript('f',[user('[forked] 포크가 맡은 일입니다')]);st.transcript('o',[user('[forked] 부모가 없는 포크의 일')]);
+  // The start hook names the parent; here the connection carries it as the hook would leave it.
+  s.start({conversation_id:'f',origins:[{conversation_id:'a',kind:'parent'}],info:{entrypoint:'sdk-cli',parent:'a'}});
+  s.start({conversation_id:'o',origins:[{conversation_id:'a',kind:'parent'}],info:{entrypoint:'sdk-cli',parent:'gone'}});
+  const data=s.tree({name:'demo'}),demo=data.sessions[0];
+  assert.equal(demo.main.last_summary,'MAIN-OWN');
+  const job=demo.branches.find(b=>b.name==='job');assert.equal(job.last_summary,'JOB-LAST');assert.equal(job.conversations[0].conversation_id,'b');
+  assert.match(job.conversations[0].doing,/주제: job · 최근 지시: "브랜치에서 시킨 말입니다"/);
+  const top=demo.conversations.map(r=>r.conversation_id);assert.deepEqual(top,['a','o']); // f only under a; orphan copy after people
+  const a=demo.conversations[0];assert.equal(a.kind,'person');assert.deepEqual(a.children.map(c=>c.conversation_id),['f']);
+  assert.equal(a.children[0].kind,'copy');assert.equal(a.children[0].parent,'a');assert.match(a.children[0].doing,/^맡은 일: "포크가 맡은 일입니다"/);
+  const out=s.conversations({conversation_id:'a'});
+  assert.match(out,/  - 이름 head-a · [^\n]+\(이 대화\)\n    하는 일: 최근 지시: "사람이 시킨 말입니다 길게" · 마지막 저장: MAIN-OWN\n      - 이름 head-f · 보낼 곳 uds:\/run\/x\/f\.sock · 포크·워커[^\n]*\n        하는 일: 맡은 일: "포크가 맡은 일입니다"/);
+  assert.equal(out.match(/head-f/g).length,1);
+  assert.doesNotMatch(job.conversations[0].doing,/마지막 저장/); // a branch has its topic instead
+});
+test('0.7.1: an SDK copy names its parent in forkedFrom; HEAD_CONTEXT_PARENT comes first; the start hook keeps parent and entrypoint',t=>{
+  t.after(after);const st=stage(),s=api(st.dir);s.create({name:'demo',context:'D',conversation_id:'p'});
+  s.branch({action:'create',branch:'work1',conversation_id:'p'});
+  const file=st.transcript('k',[{type:'user',sessionId:'k',forkedFrom:{sessionId:'p',messageUuid:'u'}},{type:'user',sessionId:'k'}]);
+  assert.equal(copiedFrom(file,'k'),'p');
+  assert.deepEqual(ancestry(st.dir,{session_id:'k',transcript_path:file}),[{conversation_id:'p',kind:'copy'}]);
+  runStart({session_id:'k',source:'resume',cwd:st.dir,transcript_path:file},{env:{CLAUDE_PROJECT_DIR:st.dir,CLAUDE_CODE_ENTRYPOINT:'sdk-cli'}});
+  const c=s.connection('k');assert.equal(c.session,'demo');assert.equal(c.branch,'work1');assert.equal(c.parent,'p');assert.equal(c.entrypoint,'sdk-cli');
+  // A worker started fresh: only the starter can say who its parent is.
+  const fresh=st.transcript('w',[{type:'user',sessionId:'w'}]);
+  runStart({session_id:'w',source:'startup',cwd:st.dir,transcript_path:fresh},{env:{CLAUDE_PROJECT_DIR:st.dir,CLAUDE_CODE_ENTRYPOINT:'sdk-cli',HEAD_CONTEXT_PARENT:'p'}});
+  assert.equal(s.connection('w').parent,'p');assert.equal(s.connection('w').branch,'work1');
+  // A person's conversation records no parent even when copied.
+  const side=st.transcript('d',[{type:'user',sessionId:'d',forkedFrom:{sessionId:'p'}}]);
+  runStart({session_id:'d',source:'resume',cwd:st.dir,transcript_path:side},{env:{CLAUDE_PROJECT_DIR:st.dir,CLAUDE_CODE_ENTRYPOINT:'cli'}});
+  assert.equal(s.connection('d').parent,undefined);assert.equal(s.connection('d').session,'demo');
+});
+test('0.7.1: a conversation run by claude -p reads records but its writes are refused (real MCP process)',t=>{
+  t.after(after);const st=stage(),s=api(st.dir);s.create({name:'demo',context:'D',conversation_id:'p'});
+  st.running(process.pid,'p');s.start({conversation_id:'k',origins:[{conversation_id:'p',kind:'parent'}]});
+  const call=(entry,name,args)=>{const r=spawnSync(process.execPath,[path.resolve(path.dirname(new URL(import.meta.url).pathname),'../hosts/claude/mcp.mjs')],{env:{...process.env,CLAUDE_PROJECT_DIR:st.dir,CLAUDE_CODE_ENTRYPOINT:entry},input:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:{conversation_id:'k',...args}}})+'\n',encoding:'utf8'});return JSON.parse(r.stdout).result;};
+  const refused=call('sdk-cli','session_save',{summary:'x',history:'y'});assert.equal(refused.isError,true);assert.match(refused.content[0].text,/읽기만 됩니다/);
+  assert.equal(call('sdk-cli','session_todo',{action:'add',text:'t'}).isError,true);
+  assert.equal(call('sdk-cli','session_list',{}).isError,undefined);
+  assert.equal(call('sdk-cli','session_todo',{action:'list'}).isError,undefined);
+  assert.equal(call('cli','session_save',{summary:'x',history:'y'}).isError,undefined);
+  assert.equal(call('claude-vscode','session_save',{summary:'x2',history:'y'}).isError,undefined);
+});
+test('0.7.1: a branch save climbs back up in its links, and its files still resolve',t=>{
+  t.after(after);const st=stage(),s=api(st.dir);s.create({name:'demo',context:'D',conversation_id:'c'});
+  const w=path.join(st.dir,'.head/sessions/demo/work/2026-10');fs.mkdirSync(w,{recursive:true});fs.writeFileSync(path.join(w,'a.md'),'a');
+  s.branch({action:'create',branch:'docs',conversation_id:'c'});
+  s.save({summary:'one',history:'See [a](work/2026-10/a.md) and [web](https://x.y) and `work/2026-10/a.md`.',next:'n',conversation_id:'c'});
+  const text=fs.readFileSync(path.join(st.dir,'.head/sessions/demo/work/docs/history.md'),'utf8');
+  assert.match(text,/\[a\]\(\.\.\/\.\.\/work\/2026-10\/a\.md\)/);assert.match(text,/\[web\]\(https:\/\/x\.y\)/);
+  assert.ok(fs.existsSync(path.resolve(path.join(st.dir,'.head/sessions/demo/work/docs'),'../../work/2026-10/a.md')));
+  assert.equal(s.inspect({action:'files',branch:'docs',depth:1,conversation_id:'c'}),'# 파일: 작업 브랜치 docs (기록 1개)\n- work/2026-10/a.md');
 });

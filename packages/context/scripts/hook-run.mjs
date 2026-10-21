@@ -6,7 +6,7 @@ import {spawnSync} from 'node:child_process';
 const script=path.resolve(path.dirname(new URL(import.meta.url).pathname),'hook.mjs');
 export const PARTS=['session','context','recent'];
 export function runHook(input,{env={},part}={}){
-  const r=spawnSync(process.execPath,[script,...(part?[part]:[])],{input:JSON.stringify(input),env:{...process.env,HEAD_CONTEXT_SESSION:'',...env},encoding:'utf8'});
+  const r=spawnSync(process.execPath,[script,...(part?[part]:[])],{input:JSON.stringify(input),env:{...process.env,HEAD_CONTEXT_SESSION:'',CLAUDE_CODE_ENTRYPOINT:'',HEAD_CONTEXT_PARENT:'',...env},encoding:'utf8'});
   assert.equal(r.status,0);assert.equal(r.stderr,'');return r.stdout;
 }
 export function runStart(input,{env={}}={}){

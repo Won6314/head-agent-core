@@ -79,7 +79,7 @@ test('legacy labels/fallback/connection and actual old 0.3 store append read as 
   fs.writeFileSync(path.join(dir,'.head/state/conversations/claude-c.json'),JSON.stringify({host:'claude',conversation_id:'c',session:'demo',work:'old'}));
   const {sessions:oldSessions}=await import(new URL('../core/sessions.mjs',import.meta.url).href);
   oldSessions(dir,{host:'claude'}).save({summary:'old MCP append',history:'old resident code',next:'cursor',conversation_id:'c'});
-  const oldMcp=spawnSync(process.execPath,[fileURLToPath(new URL('../hosts/claude/mcp.mjs',import.meta.url))],{env:{...process.env,CLAUDE_PROJECT_DIR:dir},input:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'session_save',arguments:{conversation_id:'c',summary:'real old MCP',history:'stdio old process body',next:'old cursor'}}})+'\n',encoding:'utf8'});
+  const oldMcp=spawnSync(process.execPath,[fileURLToPath(new URL('../hosts/claude/mcp.mjs',import.meta.url))],{env:{...process.env,CLAUDE_PROJECT_DIR:dir,CLAUDE_CODE_ENTRYPOINT:'cli'},input:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'session_save',arguments:{conversation_id:'c',summary:'real old MCP',history:'stdio old process body',next:'old cursor'}}})+'\n',encoding:'utf8'});
   assert.equal(oldMcp.status,0);assert.equal(JSON.parse(oldMcp.stdout).result.isError,undefined);
   const data=withGraph(dir,g=>g.recent('demo','main',0));assert.equal(data.length,3);assert.equal(data[0].summary,'context_run old summary');assert.equal(data[1].summary,'old MCP append');assert.equal(data[2].summary,'real old MCP');
   assert.equal(withGraph(dir,g=>g.branches('demo').length),0);

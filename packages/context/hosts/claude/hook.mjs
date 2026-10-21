@@ -3,7 +3,8 @@ import path from 'node:path';
 import { sessions } from '../../core/sessions.mjs';
 import { HOOK_BUDGET, UNCONNECTED } from '../../core/recovery.mjs';
 import { locations } from '../../core/storage.mjs';
-import { ancestry } from './recovery.mjs';
+import { ancestry, copiedFrom } from './recovery.mjs';
+import { isCopy } from '../../core/instruction.mjs';
 import { hostInfo } from './process.mjs';
 import { recentPart } from './recent.mjs';
 import { compactInstruction } from './compact.mjs';
@@ -45,6 +46,14 @@ try {
       origins: store.connection(input.session_id) ? [] : ancestry(project, input) });
     if (part === 'session') {
       const info = { transcript_path: input.transcript_path, ...(input.session_title ? { title: input.session_title } : {}) };
+      // A conversation run by a program (claude -p): who started it, so a list shows it under
+      // that conversation. Named by the starter, or read from the copied records.
+      const entrypoint = process.env.CLAUDE_CODE_ENTRYPOINT;
+      if (entrypoint) info.entrypoint = entrypoint;
+      if (isCopy(entrypoint)) {
+        const parent = process.env.HEAD_CONTEXT_PARENT || (input.transcript_path ? copiedFrom(input.transcript_path, input.session_id) : null);
+        if (parent && parent !== input.session_id) info.parent = parent;
+      }
       const place = store.start({ ...where(), info });
       // First run: refresh the project copy of the core (applies next start, since CLAUDE.md
       // is read before this hook), and on a fresh start add the short setup/survey guide.

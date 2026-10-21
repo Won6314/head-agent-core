@@ -5,7 +5,7 @@ export const instructions = `일을 시작할 때는 먼저 start-job 스킬을 
 
 작업 세션
 - 무엇: 이어지는 큰 일의 묶음입니다. 목적은 context.md에 있습니다. 호스트가 말하는 "세션"은 이 대화이며 작업 세션과 다릅니다.
-- 언제: 대화에서 이어질 일이 시작됐는데 작업 세션이 없으면, 목록(session_list)에서 맞는 것을 찾아 사용자에게 묻고 불러옵니다. 없으면 목적을 정해 새로 만듭니다. context.md는 사용자 동의 없이 고치지 않습니다.
+- 언제: 대화에서 이어질 일이 시작됐는데 작업 세션이 없으면, 목록(session_list)에서 맞는 것을 찾아 사용자에게 묻고 불러옵니다. 없으면 사용자와 목적을 정하고, 새로 만들지 물은 뒤 만듭니다. context.md는 사용자 동의 없이 고치지 않습니다.
 
 작업 브랜치
 - 무엇: 작업 세션 안에서 열리고 닫히는 한 번의 일입니다. 이름이 있고, 여러 개가 동시에 열릴 수 있으며, 닫히면 메인에 합쳐집니다.
@@ -48,7 +48,7 @@ export const definitions = [
     {action:{type:'string',enum:['overview','map','recent','entry','find','files']},name:string,branch:string,limit:{type:'integer',minimum:0,default:30},count:{type:'integer',minimum:0,default:5},id:string,file:string,query:string,depth:{type:'integer',minimum:1,default:2}},['action']],
   ['session_todo','작업 세션의 할 일(todo.md). 사용자가 나중에 할 일을 말하면 add, 할 일을 물으면 list, 끝났다고 하면 done. add의 text는 나중에 오해가 없도록 할 일과 범위를 분명히 쓰고 사용자 원문을 근거로 인용합니다. 사용자가 정하지 않은 것을 확정사항으로 쓰지 않습니다. 기한이 있으면 상대 날짜를 실제 날짜로 바꿔 due(YYYY-MM-DD)에 넣습니다. done은 match가 열린 항목 하나에만 맞을 때 끝냅니다. name 생략은 이 대화의 작업 세션입니다.',
     {action:{type:'string',enum:['add','list','done']},text:string,due:string,match:string,name:string},['action']],
-  ['session_conversations','다른 대화에 말을 전하기 전에 받을 대화를 고르는 목록입니다. 살아 있는 대화를 작업 세션 → 작업 브랜치 → 대화로 보여 주고(작업 세션에 안 붙은 대화는 따로), 대화마다 이름, 보낼 곳, 종류(사람 / 포크·워커), 마지막 활동, 하는 일 한 줄을 붙입니다. 하는 일은 포크·워커면 맡은 일, 작업 브랜치면 그 이름(주제), 그리고 사람이 마지막으로 시킨 말입니다. 고르는 법: 1) 전할 내용과 맞는 작업 세션·작업 브랜치(주제) 아래의 대화를 고릅니다. 2) 같은 곳에 여럿이면 사람 대화 가운데 하는 일이 맞고 마지막 활동이 가장 최근인 것을 고릅니다. 포크·워커에는 그 대화가 맡은 일에 관한 말만 보냅니다. 3) 그래도 하나로 좁혀지지 않으면 보내지 말고 후보(작업 브랜치·이름·하는 일)를 사용자에게 보여 고르게 합니다. 같은 말을 여러 대화에 한꺼번에 보내지 않습니다. 보내기는 SendMessage(to: 목록의 보낼 곳)입니다. 이름(head-2b 같은 것)은 여러 대화가 같을 수 있으니 보낼 곳을 씁니다. 보낼 곳은 대화가 다시 시작하면 바뀌므로 방금 읽은 목록의 것을 씁니다. name을 주면 그 작업 세션만.',
+  ['session_conversations','다른 대화에 말을 전하기 전에 받을 대화를 고르는 목록입니다. 살아 있는 대화를 작업 세션 → 작업 브랜치 → 대화로 보여 주고(작업 세션에 안 붙은 대화는 따로), 대화마다 이름, 보낼 곳, 종류(사람 / 포크·워커), 마지막 활동, 하는 일 한 줄을 붙입니다. 포크·워커는 띄운 대화가 살아 있으면 그 대화 아래에 들여 써서 한 번만 보입니다. 하는 일은 포크·워커면 맡은 일, 작업 브랜치면 그 이름(주제), 그리고 사람이 마지막으로 시킨 말이고, 메인이면 메인의 마지막 저장이 붙습니다. 고르는 법: 1) 전할 내용과 맞는 작업 세션·작업 브랜치(주제) 아래의 대화를 고릅니다. 2) 같은 곳에 여럿이면 사람 대화 가운데 하는 일이 맞고 마지막 활동이 가장 최근인 것을 고릅니다. 포크·워커에는 그 대화가 맡은 일에 관한 말만 보냅니다. 3) 그래도 하나로 좁혀지지 않으면 보내지 말고 후보(작업 브랜치·이름·하는 일)를 사용자에게 보여 고르게 합니다. 같은 말을 여러 대화에 한꺼번에 보내지 않습니다. 보내기는 SendMessage(to: 목록의 보낼 곳)입니다. 이름(head-2b 같은 것)은 여러 대화가 같을 수 있으니 보낼 곳을 씁니다. 보낼 곳은 대화가 다시 시작하면 바뀌므로 방금 읽은 목록의 것을 씁니다. name을 주면 그 작업 세션만.',
     {name:string},[]]
 ].map(([name, description, properties, required]) => ({ name, description,
   inputSchema: { type: 'object', properties: { ...properties, conversation_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' }, agent_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' } }, required, additionalProperties: false } }));
@@ -56,7 +56,9 @@ export const definitions = [
 definitions.push({ name: 'project_setup', description: '프로젝트 첫 실행의 유일한 쓰기 도구. 사용자가 동의했을 때만 부릅니다. action=setup: 코어 지침을 .head/core.md에 쓰고 프로젝트 CLAUDE.md에 @.head/core.md 한 줄을 넣고(없으면 만들고, 있으면 중복 없이, 기존 내용 보존), 프로젝트 .claude/settings.json에 기본 포크를 켜는 env.CLAUDE_CODE_FORK_SUBAGENT="1"과 이 플러그인의 마켓(extraKnownMarketplaces, 자동 업데이트)·enabledPlugins를 더하고(다른 설정은 그대로, 이미 있으면 그대로) 초기설정을 끝남으로 기록한 뒤 코어 지침 본문을 돌려줍니다. 이 대화부터 그 지침을 따르세요. action=never_ask: 사용자가 다시 묻지 말라고 한 단계(step=setup 또는 survey)를 기록합니다. action=survey_done: 프로젝트 조사를 끝남으로 기록합니다.',
   inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['setup', 'never_ask', 'survey_done'] }, step: { type: 'string', enum: ['setup', 'survey'] } }, required: ['action'], additionalProperties: false } });
 const METHODS = { session_read: 'inspect', session_conversations: 'conversations' };
-export function callTool(store, name, args, conversation_id, project) {
+// readOnly: the host says this conversation is run by a program (a fork or worker started
+// with claude -p); it may read but not write, like a task inside a conversation.
+export function callTool(store, name, args, conversation_id, project, readOnly = false) {
   const tool = definitions.find(t => t.name === name);
   if (!tool) throw new Error(`알 수 없는 도구: ${name}`);
   for (const [key, value] of Object.entries(args)) {
@@ -67,10 +69,10 @@ export function callTool(store, name, args, conversation_id, project) {
   if (name === 'project_setup') return setupTool(project, args);
   const { agent_id, ...rest } = args;
   const writes = WRITES[name];
-  if (agent_id && (typeof writes === 'function' ? writes(rest) : writes)) throw new Error(FORK_WRITE_REFUSED);
+  if ((agent_id || readOnly) && (typeof writes === 'function' ? writes(rest) : writes)) throw new Error(FORK_WRITE_REFUSED);
   return store[METHODS[name] || name.slice('session_'.length)]({ ...rest, conversation_id });
 }
-export async function serve({ project, host, conversationOf, options = {} }) {
+export async function serve({ project, host, conversationOf, options = {}, readOnly = () => false }) {
   const store = sessions(project, { host, ...options });
   const send = message => process.stdout.write(`${JSON.stringify({ jsonrpc: '2.0', ...message })}\n`);
   for await (const line of readline.createInterface({ input: process.stdin, crlfDelay: Infinity })) {
@@ -79,11 +81,11 @@ export async function serve({ project, host, conversationOf, options = {} }) {
     catch { send({ id: null, error: { code: -32700, message: 'Parse error' } }); continue; }
     if (request.id === undefined) continue;
     const { id, method, params = {} } = request;
-    if (method === 'initialize') send({ id, result: { protocolVersion: params.protocolVersion, capabilities: { tools: {} }, serverInfo: { name: 'head-context', version: '0.7.0' }, instructions } });
+    if (method === 'initialize') send({ id, result: { protocolVersion: params.protocolVersion, capabilities: { tools: {} }, serverInfo: { name: 'head-context', version: '0.7.1' }, instructions } });
     else if (method === 'ping') send({ id, result: {} });
     else if (method === 'tools/list') send({ id, result: { tools: definitions } });
     else if (method === 'tools/call') {
-      try { send({ id, result: { content: [{ type: 'text', text: callTool(store, params.name, params.arguments || {}, conversationOf(request), project) }] } }); }
+      try { send({ id, result: { content: [{ type: 'text', text: callTool(store, params.name, params.arguments || {}, conversationOf(request), project, readOnly()) }] } }); }
       catch (error) { send({ id, result: { isError: true, content: [{ type: 'text', text: error.message }] } }); }
     } else send({ id, error: { code: -32601, message: 'Method not found' } });
   }

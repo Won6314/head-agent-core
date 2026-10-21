@@ -1,4 +1,4 @@
-import {kindOf} from './instruction.mjs';
+import {kindOf,kindKey} from './instruction.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {parseHistory} from './history.mjs';
@@ -16,6 +16,31 @@ export const RECAP_REQUIRED='다음이 없는 저장은 작업 브랜치를 닫�
 export const RECAP_REFUSED='다음이 있는 저장에는 recap을 받지 않습니다. 정리는 작업 브랜치를 닫는 저장(다음 없음)에만 씁니다.';
 export const NOT_CONNECTED='이 대화는 아직 작업 세션에 연결되지 않았습니다. 먼저 작업 세션을 불러오거나 만드세요.';
 const MAIN=['main','메인'];
+// What each conversation is doing, for choosing where a message goes: a copy's task,
+// the work branch's name (its topic), the last thing a person said to it, and on main
+// (which has no topic) main's last save. A copy with a task carries its parent's words
+// as its own history, so only its task is shown.
+export function doing(c,branch,last){
+  const clip=(t,n=80)=>{const a=Array.from(String(t).replace(/\s+/g,' ').trim());return a.length>n?`${a.slice(0,n).join('')}…`:a.join('');};
+  const parts=[c.task&&`맡은 일: "${clip(c.task)}"`,branch&&`주제: ${branch}`,c.said&&!(c.task&&c.kind==='copy')&&`최근 지시: "${clip(c.said)}"`,last&&`마지막 저장: ${clip(last)}`].filter(Boolean);
+  return parts.join(' · ')||'(아직 지시 없음)';
+}
+// A save's links are written from the work session folder (work/2026-10/…). A branch's
+// saves live two folders down (work/<branch>/history.md), so its relative links get the
+// way back up, and a person opening the branch file can follow them.
+export function fromBranch(text){
+  return String(text).replace(/(\]\()(\s*)([^)\s]+)/g,(m,open,space,target)=>{
+    if(/^(?:[a-z][a-z0-9+.-]*:|\/|#|~)/i.test(target))return m;
+    return `${open}${space}../../${target.replace(/^\.\//,'')}`;
+  });
+}
+// The last save a stem made itself: on main, not the index line a branch save leaves
+// there nor the entry a closing branch merges in.
+function lastOwn(g,session,stem){
+  const rows=g.own(session,stem);
+  for(let i=rows.length-1;i>=0&&i>=rows.length-200;i--){const e=g.detail(rows[i]);if(stem!=='main'||(!e.record&&!e.source))return e;}
+  return null;
+}
 // Host hooks, both optional:
 //   hostInfo(conversation_id) — what the host knows about one conversation right now
 //     ({host_session_id, pid, title, entrypoint, ...}); kept on the connection so the
@@ -127,7 +152,7 @@ export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],no
       if(!header)throw new Error('작업 브랜치 파일을 읽지 못했습니다.');
       const updated=next?text:withRecap(text,recap);
       if(updated!==text)atomicText(file,updated);
-      fs.appendFileSync(file,uniqueEntry(file,{summary,history,next}));
+      fs.appendFileSync(file,uniqueEntry(file,{summary,history:fromBranch(history),next}));
       locked(main,()=>fs.appendFileSync(main,uniqueEntry(main,{summary,index:{label:header.label||bound.stem,record}})));
     });
     withGraph(project,g=>g.recent(bound.session,bound.stem,1));
@@ -147,41 +172,53 @@ export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],no
   // Alive conversations under their work session and work branch. What "alive" means is
   // the host's: a running process, or where processes come and go on their own (the
   // desktop app), recent activity. The core keeps no state about it.
+  // A copy run by a program (a fork or worker, kind 'copy') whose parent is alive is shown
+  // once, under that parent (children), not again on its own line.
   const tree=({name}={})=>withGraph(project,g=>{
     const known=new Map(records(path.join(state,'conversations')).filter(c=>c.host===host).map(c=>[c.conversation_id,c]));
+    const titles=new Map();
     const rows=live(known).map(c=>{const bound=known.get(c.conversation_id),inSession=bound?.session&&g.names().includes(bound.session);
-      return {...c,session:inSession?bound.session:null,stem:inSession?effective(bound,g):'main'};});
+      const kind=kindKey(c.entrypoint||bound?.entrypoint);
+      return {...c,kind,parent:kind==='copy'?(c.parent||bound?.parent||null):null,session:inSession?bound.session:null,stem:inSession?effective(bound,g):'main',children:[]};});
+    const byId=new Map(rows.map(r=>[r.conversation_id,r]));
+    // Nest copies under a live parent; a loop or a missing parent leaves the copy where it is.
+    const top=[];
+    for(const r of rows){
+      let p=r.parent&&byId.get(r.parent),guard=0;
+      for(let a=p;a&&guard<32;a=a.parent&&byId.get(a.parent),guard++)if(a===r){p=null;break;}
+      if(p&&p!==r)p.children.push(r);else top.push(r);
+    }
+    // People first, then copies whose parent is gone; newest first within each.
+    top.sort((a,b)=>(a.kind==='copy')-(b.kind==='copy'));
     if(name)g.session(name);
     const names=name?[name]:[...new Set(rows.filter(r=>r.session).map(r=>r.session))].sort();
-    return {timezone:g.timezone,sessions:names.map(s=>{const mine=rows.filter(r=>r.session===s);
-      return {name:s,conversations:mine.filter(r=>r.stem==='main'),branches:openBranches(g,s).map(b=>({name:b.name,title:b.title,next:b.next,last_at:b.last_at,conversations:mine.filter(r=>r.stem===b.name)}))};}),
-      loose:name?[]:rows.filter(r=>!r.session)};
+    const out={timezone:g.timezone,sessions:names.map(s=>{const mine=top.filter(r=>r.session===s);
+      const main=lastOwn(g,s,'main');
+      const branches=openBranches(g,s).map(b=>{titles.set(`${s}\0${b.name}`,b.title);const e=lastOwn(g,s,b.name);
+        return {name:b.name,title:b.title,next:b.next,last_at:b.last_at,last_summary:e?.summary||null,conversations:mine.filter(r=>r.stem===b.name)};});
+      return {name:s,main:{last_summary:main?.summary||null,last_at:main?.timestamp||null},conversations:mine.filter(r=>r.stem==='main'),branches};}),
+      loose:name?[]:top.filter(r=>!r.session)};
+    const fill=(r,last)=>{r.doing=doing(r,r.stem!=='main'?titles.get(`${r.session}\0${r.stem}`):undefined,r.kind==='copy'?null:last);r.children.forEach(k=>fill(k));};
+    for(const s of out.sessions){s.conversations.forEach(r=>fill(r,s.main.last_summary));for(const b of s.branches)b.conversations.forEach(r=>fill(r));}
+    out.loose.forEach(fill);
+    return out;
   });
-  // Alive conversations under their work session and work branch. What "alive" means is
-  // the host's: a running process, or where processes come and go on their own (the
-  // desktop app), recent activity. The core keeps no state about it.
-  // What each conversation is doing, for choosing where a message goes: a copy's task,
-  // the work branch's name (its topic), the last thing a person said to it.
-  const doing=(c,branch)=>{
-    const clip=(t,n=80)=>{const a=Array.from(String(t).replace(/\s+/g,' ').trim());return a.length>n?`${a.slice(0,n).join('')}…`:a.join('');};
-    const parts=[c.task&&`맡은 일: "${clip(c.task)}"`,branch&&`주제: ${branch}`,c.said&&`최근 지시: "${clip(c.said)}"`].filter(Boolean);
-    return parts.join(' · ')||'(아직 지시 없음)';
-  };
   const conversations=({name,conversation_id}={})=>{
     const data=tree({name}),time=clock(data.timezone);
-    const show=(c,branch)=>{
+    // One conversation and, indented under it, the copies it started.
+    const show=(c,pad='  ')=>{
       const head=[c.title&&`이름 ${c.title}`,`보낼 곳 ${c.address||'(모름)'}`,kindOf(c.entrypoint),c.last_at&&`마지막 ${time(new Date(c.last_at).toISOString())}`].filter(Boolean).join(' · ');
-      return `${head}${c.conversation_id===conversation_id?' (이 대화)':''}\n    하는 일: ${doing(c,branch)}`;
+      return [`${pad}- ${head}${c.conversation_id===conversation_id?' (이 대화)':''}`,`${pad||'  '}  하는 일: ${c.doing}`,...(c.children||[]).flatMap(k=>show(k,`${pad}    `))];
     };
     const lines=['# 살아 있는 대화 (작업 세션 → 작업 브랜치 → 대화)','보내기: SendMessage(to: 보낼 곳). 이름은 여러 대화가 같을 수 있어 보낼 곳을 그대로 씁니다. 보낼 곳은 대화가 다시 시작하면 바뀌므로 방금 읽은 이 목록의 것을 씁니다.'];
     for(const s of data.sessions){
       const has=s.conversations.length||s.branches.some(b=>b.conversations.length);
       lines.push('',`## ${s.name}`);
-      if(s.conversations.length)lines.push('- 메인',...s.conversations.map(r=>`  - ${show(r)}`));
-      for(const b of s.branches)if(b.conversations.length)lines.push(`- 작업 브랜치 ${b.title}`,...b.conversations.map(r=>`  - ${show(r,b.title)}`));
+      if(s.conversations.length)lines.push('- 메인',...s.conversations.flatMap(r=>show(r)));
+      for(const b of s.branches)if(b.conversations.length)lines.push(`- 작업 브랜치 ${b.title}`,...b.conversations.flatMap(r=>show(r)));
       if(!has)lines.push('(살아 있는 대화 없음)');
     }
-    if(data.loose.length)lines.push('','## 작업 세션 없음',...data.loose.map(r=>`- ${show(r)}`));
+    if(data.loose.length)lines.push('','## 작업 세션 없음',...data.loose.flatMap(r=>show(r,'')));
     if(lines.length===2)lines.push('','(살아 있는 대화 없음)');
     return lines.join('\n');
   };

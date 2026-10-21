@@ -31,8 +31,10 @@ function resolveRef(value,dirs){
 const linked=body=>[...[...body.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map(m=>m[1]),...[...body.matchAll(/`([^`\n]+)`/g)].map(m=>m[1])];
 // What a record points at (the points edges): links and backtick paths only, resolved
 // against the session folder. A file name merely mentioned in the text is not a pointer.
-function references(body,dir){
-  return [...new Set(linked(body).map(value=>resolveRef(value,[dir])).filter(Boolean))];
+// A save's links: from the file it is in (a branch file's links climb back up), then
+// from the work session folder (how saves were written before 0.7.1, and how main's are).
+function references(body,dirs){
+  return [...new Set(linked(body).map(value=>resolveRef(value,dirs)).filter(Boolean))];
 }
 // What a file points at, for session_read files: only links and backtick paths, resolved
 // against the file's own folder and then its session folder. Over 1MB or not text: none.
@@ -212,7 +214,7 @@ class Graph {
           for(const [seq,e] of parseHistory(text).entries()){
             const occurrence=(counts.get(e.timestamp)||0)+1;counts.set(e.timestamp,occurrence);
             const id=checkpointId(source.session,source.stem,e.timestamp,occurrence);this.node({...source,id,kind:'checkpoint',stamp:e.timestamp,start:e.start,end:e.end,seq});
-            for(const file of references(e.body,source.dir)){this.node({id:'file:'+file,kind:'file',session:'',stem:'',file,start:0,end:fs.statSync(file).size});this.edge(id,'file:'+file,'points');}
+            for(const file of references(e.body,[...new Set([path.dirname(source.file),source.dir])])){this.node({id:'file:'+file,kind:'file',session:'',stem:'',file,start:0,end:fs.statSync(file).size});this.edge(id,'file:'+file,'points');}
           }
         }
         this.db.prepare('INSERT OR REPLACE INTO files VALUES(?,?,?)').run(source.file,stable.mtimeMs,stable.size);
