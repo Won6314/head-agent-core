@@ -89,6 +89,12 @@ test('setup turns the built-in fork on in the project settings, keeping what is 
   const five=fresh();fs.mkdirSync(path.join(five,'.claude'));fs.writeFileSync(path.join(five,'.claude/settings.json'),JSON.stringify({extraKnownMarketplaces:{'head-agent-core':{source:{source:'directory',path:'/x'}}},enabledPlugins:{'head-context@head-agent-core':false}}));
   assert.match(tool(five,{action:'setup'}),/마켓은 이미 있어 그대로 두었습니다, 플러그인 켜기는 이미 있어\(false\) 그대로 두었습니다/);
   assert.deepEqual(settings(five),{extraKnownMarketplaces:{'head-agent-core':{source:{source:'directory',path:'/x'}}},enabledPlugins:{'head-context@head-agent-core':false},env:{CLAUDE_CODE_FORK_SUBAGENT:'1'}});
+  // `claude plugin marketplace add` leaves the GitHub entry without autoUpdate; setup adds it, an explicit false stays.
+  const six=fresh();fs.mkdirSync(path.join(six,'.claude'));fs.writeFileSync(path.join(six,'.claude/settings.json'),JSON.stringify({extraKnownMarketplaces:{'head-agent-core':{source:{source:'github',repo:'Won6314/head-agent-core'}}},enabledPlugins:plugins}));
+  assert.match(tool(six,{action:'setup'}),/마켓에 자동 업데이트를 더했습니다, 플러그인 켜기는 이미 있어\(true\) 그대로 두었습니다/);
+  assert.deepEqual(settings(six),{extraKnownMarketplaces:market,enabledPlugins:plugins,env:{CLAUDE_CODE_FORK_SUBAGENT:'1'}});
+  const seven=fresh();fs.mkdirSync(path.join(seven,'.claude'));fs.writeFileSync(path.join(seven,'.claude/settings.json'),JSON.stringify({extraKnownMarketplaces:{'head-agent-core':{source:{source:'github',repo:'Won6314/head-agent-core'},autoUpdate:false}}}));
+  assert.match(tool(seven,{action:'setup'}),/마켓은 이미 있어 그대로 두었습니다/);assert.equal(settings(seven).extraKnownMarketplaces['head-agent-core'].autoUpdate,false);
   const four=fresh();fs.mkdirSync(path.join(four,'.claude'));fs.writeFileSync(path.join(four,'.claude/settings.json'),'{ broken');
   assert.match(tool(four,{action:'setup'}),/읽을 수 없는 JSON이라 고치지 않았습니다[^\n]*\n[^\n]*읽을 수 없는 JSON이라 고치지 않았습니다\. 자동 업데이트를 받으려면/);assert.equal(read(four,'.claude/settings.json'),'{ broken');assert.equal(firstRun(four).setup,'done');
 });

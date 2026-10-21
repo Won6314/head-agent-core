@@ -35,7 +35,13 @@ function projectSettings(file){
   else{next.env={...(settings.env||{}),[FORK_ENV]:'1'};added.push('fork');fork=text.trim()?'기존 설정에 env 한 줄을 더했습니다':'새로 만들었습니다';}
   const parts=[];
   if(settings.extraKnownMarketplaces!==undefined&&!isObject(settings.extraKnownMarketplaces))parts.push('extraKnownMarketplaces가 객체가 아니라 마켓은 고치지 않았습니다');
-  else if(settings.extraKnownMarketplaces?.[MARKETPLACE]!==undefined)parts.push('마켓은 이미 있어 그대로 두었습니다');
+  else if(settings.extraKnownMarketplaces?.[MARKETPLACE]!==undefined){
+    // `claude plugin marketplace add Won6314/head-agent-core` writes the entry without
+    // autoUpdate; that GitHub entry gets it. Any autoUpdate already set and any other
+    // source (a local directory, a fork) are kept.
+    const entry=settings.extraKnownMarketplaces[MARKETPLACE];
+    if(isObject(entry)&&entry.autoUpdate===undefined&&entry.source?.source==='github'&&entry.source?.repo===MARKETPLACE_REPO){next.extraKnownMarketplaces={...settings.extraKnownMarketplaces,[MARKETPLACE]:{...entry,autoUpdate:true}};added.push('autoUpdate');parts.push('마켓에 자동 업데이트를 더했습니다');}
+    else parts.push('마켓은 이미 있어 그대로 두었습니다');}
   else{next.extraKnownMarketplaces={...(settings.extraKnownMarketplaces||{}),[MARKETPLACE]:{source:{source:'github',repo:MARKETPLACE_REPO},autoUpdate:true}};added.push('market');parts.push('마켓을 더했습니다');}
   if(settings.enabledPlugins!==undefined&&!isObject(settings.enabledPlugins))parts.push('enabledPlugins가 객체가 아니라 플러그인 켜기는 고치지 않았습니다');
   else if(settings.enabledPlugins?.[PLUGIN_ID]!==undefined)parts.push(`플러그인 켜기는 이미 있어(${JSON.stringify(settings.enabledPlugins[PLUGIN_ID])}) 그대로 두었습니다`);

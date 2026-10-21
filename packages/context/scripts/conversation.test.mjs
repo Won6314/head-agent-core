@@ -186,7 +186,7 @@ test('one work session with several live conversations: each has its own inbox a
   st.running(process.ppid,'b',{name:'head-2b',messagingSocketPath:'/run/x/b.sock'});
   const copy=spawn(process.execPath,['-e','setTimeout(()=>{},60000)']);t.after(()=>copy.kill());
   st.running(copy.pid,'f',{name:'head-03',entrypoint:'sdk-cli',messagingSocketPath:'/run/x/f.sock'});
-  st.transcript('a',[user('herdr에 새 pane 열어서 네가 해봐라'),user('<channel source="agent-task">다른 세션 메시지'),{type:'assistant'}]);
+  st.transcript('a',[user('herdr에 새 pane 열어서 네가 해봐라'),user('<channel source="agent-task">다른 세션 메시지'),user('[동료 thinkingking · chat #622] 4번 5번 눈은 왜그러는거야'),{...user('This session is being continued from a previous conversation that ran out of context.'),isCompactSummary:true},user('This session is being continued from a previous conversation that ran out of context. 요약'),{type:'assistant'}]);
   st.transcript('b',[user('<pasted_content id="x">\n기억 기능 보강 계획을 세워 보자\n</pasted_content id="x">')]);
   st.transcript('f',[user('부모의 오래된 첫 말입니다 길게'),user('[forked] 처음 맡은 일'),user('[forked] 지금 맡은 일입니다\n자세히'),user('[quick_task completed] cqt-x 끝남 알림')]);
   const out=s.conversations({conversation_id:'a'});

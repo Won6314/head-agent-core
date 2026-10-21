@@ -86,7 +86,7 @@ export function recentPrompts(file) {
   for (let i = lines.length - 1; i >= 0 && !(said && task); i--) {
     if (!lines[i].includes('"type":"user"')) continue;
     let row; try { row = JSON.parse(lines[i]); } catch { continue; }
-    if (row?.type !== 'user' || row.isMeta) continue;
+    if (row?.type !== 'user' || row.isMeta || row.isCompactSummary) continue;
     const body = bodyOf(row); if (!body) continue;
     if (!task && /^\s*\[forked\]/.test(body)) task = body.replace(/^\s*\[forked\]\s*/, '').split(/\r?\n/).map(l => l.trim()).find(Boolean) || null;
     if (!said) said = instructionLine(body);
