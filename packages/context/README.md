@@ -113,6 +113,16 @@ Row = {conversation_id,title,address,last_at,entrypoint,kind:'person'|'copy',par
 
 ## 0.6에서 올릴 때 (한 번)
 
+0.6은 마켓 `head-local`(GitHub `plugin-root` 브랜치)이었다. 0.7부터는 main의 마켓 `head-agent-core`다. 마켓 이름이 달라 자동으로 넘어가지 않으니 이 순서로 바꾼다.
+
+1. 예전 판 떼기: `/plugin uninstall head-context@head-local`, `/plugin marketplace remove head-local`. 프로젝트·사용자 settings에 `head-local`이 남아 있으면(`extraKnownMarketplaces`, `enabledPlugins`) 지운다.
+2. 새 판 설치: 아래 [배포·업데이트](#배포업데이트)의 설치 명령.
+3. 기록 정리: 아래 스크립트를 미리 보기로 돌려 보고 `--apply`. 스크립트는 설치된 플러그인 폴더(`~/.claude/plugins/cache/head-agent-core/head-context/<판>/scripts/`)에 있다.
+4. 자동 업데이트 붙이기: 0.6에서 초기설정을 마친 프로젝트는 초기설정을 다시 묻지 않는다. Claude Code를 다시 연 뒤 모델에게 `project_setup`(action=setup)을 한 번 부르게 한다. 이미 있는 것은 그대로 두고 빠진 것(마켓 `autoUpdate`, 플러그인 켜기, 기본 포크 env)만 더한다.
+5. 한 번 더 다시 연다. 프로젝트의 `.head/core.md`(코어 지침 사본)는 시작할 때마다 새 판의 지침으로 맞춰지지만, `CLAUDE.md`가 그보다 먼저 읽히므로 새 지침은 그다음 시작부터 들어간다.
+
+작업 기록(`.head/sessions/` 등)은 그대로 읽힌다. 지우지 않는다.
+
 `node scripts/migrate-0.7.mjs <절대 프로젝트> [--apply]` — 미리 보기가 기본이고, 지우지 않고 `.head/state/_0.6/`으로 옮긴다.
 - 옛 상태 파일 `activity/`·`pending-load/`(0.7은 읽지 않음). `subtasks/`는 코어 밖 도구가 아직 써서 둔다.
 - 저장 없는 0.6 자동 브랜치(`branch-<시각>-<16진>`, 열림·멈춤, 다른 브랜치가 갈라져 나오지 않은 것). 그 브랜치를 가리키던 대화는 메인으로.
@@ -129,7 +139,14 @@ Row = {conversation_id,title,address,last_at,entrypoint,kind:'person'|'copy',par
 
 ## 배포·업데이트
 
-설치(Claude Code 2.1.275 이상): `/plugin install head-context --marketplace Won6314/head-agent-core`. 그다음 첫 대화에서 초기설정에 동의하면 프로젝트에 자동 업데이트까지 적힌다.
+설치(Claude Code 2.1.275 이상), 앱이나 대화 안에서:
+
+```
+/plugin marketplace add Won6314/head-agent-core
+/plugin install head-context@head-agent-core
+```
+
+터미널에서는 한 줄로 `claude plugin install head-context --marketplace Won6314/head-agent-core`. 그다음 첫 대화에서 초기설정에 동의하면 프로젝트에 자동 업데이트까지 적힌다.
 
 공개 GitHub `Won6314/head-agent-core`의 마켓 `head-agent-core`(저장소 이름과 같음)로 낸다. 새 판은 `plugin.json` 버전을 올려 main에 합치고 태그 `head-context--v<판>`을 단다. 초기설정이 프로젝트 settings에 이 마켓을 `autoUpdate: true`로 적으므로 앱이 시작할 때 새 판을 받는다.
 

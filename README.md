@@ -13,6 +13,7 @@ The product-neutral skeleton for a HEAD-led agent installation: the coordinating
 
 | Package | Owns |
 |---|---|
+| `packages/context/` | The `head-context` Claude Code plugin, published through this repository's marketplace. Install and upgrade: [packages/context/README.md](packages/context/README.md) |
 | `packages/core/` | `head/HEAD_CORE.md` (always-loaded principles), `docs/`, `theory/` |
 | `packages/skills/` | Advertised top-level skills: `start-job`, `product-planning`, `delegate-once`, `plan-run`, `agent-reply` |
 | `packages/procedures/` | Condition-selected procedures a skill links to |
