@@ -1,6 +1,6 @@
 {
   "name": "head-context",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 작업 맥락을 다시 불러옵니다. 살아 있는 대화를 작업 세션·작업 브랜치와 묶어 보여 줍니다. 첫 실행에 동의를 받아 HEAD 코어 지침을 켜고, 시작·/clear·압축 때 넣습니다. Codex용 포장(.codex-plugin)이 같은 기록을 씁니다.",
   "author": {
     "name": "Won6314"

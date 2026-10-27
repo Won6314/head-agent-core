@@ -1,0 +1,10 @@
+{
+  "source": "0.8.0 (1eae20b): setup; create legacy; branch ongoing; save; load from Codex",
+  "files": {
+    ".head/state/conversations/claude-old-claude.json": "{\n  \"host\": \"claude\",\n  \"conversation_id\": \"old-claude\",\n  \"session\": \"legacy\",\n  \"branch\": \"ongoing\",\n  \"bound_at\": \"2026-10-27T11:57:05.257Z\"\n}\n",
+    ".head/state/conversations/codex-old-codex.json": "{\n  \"host\": \"codex\",\n  \"conversation_id\": \"old-codex\",\n  \"session\": \"legacy\",\n  \"branch\": \"ongoing\",\n  \"bound_at\": \"2026-10-27T11:57:05.266Z\"\n}\n",
+    ".head/sessions/legacy/context.md": "LEGACY 0.8.0 CONTEXT",
+    ".head/sessions/legacy/history.md": "\n\n## 2026-10-27T11:57:05.262Z\n\n요약: LEGACY SAVE\n이름표: ongoing · 본문: work/ongoing/history.md\n\n\n\n",
+    ".head/sessions/legacy/work/ongoing/history.md": "<!-- head-context branch:1 -->\n# ongoing\n\n이름표: ongoing\n시작: 2026-10-27T11:57:05.256Z\n갈래: legacy/메인@없음\n갈래-ID: \n상태: 열림\n\n\n## 2026-10-27T11:57:05.261Z\n\n요약: LEGACY SAVE\n\nLEGACY BODY\n\n다음: LEGACY NEXT\n\n"
+  }
+}

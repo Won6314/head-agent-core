@@ -1,6 +1,6 @@
 {
   "name": "head-context",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 HEAD 코어 지침과 작업 맥락을 넣습니다. Claude Code와 같은 프로젝트 기록을 같이 씁니다.",
   "author": { "name": "Won6314" },
   "repository": "https://github.com/Won6314/head-agent-core",

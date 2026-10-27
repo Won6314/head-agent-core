@@ -91,7 +91,7 @@ test('Codex tool server: the conversation from _meta.threadId, the project from 
   sessions(dir, { host: 'codex' }).create({ name: 'demo', context: 'MCP DIRECTION', conversation_id: 'seed' });
   codex(dir, 'session', { id: 'th1', data });
   const [init, load, unknown] = mcp([{ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18' } }, call(2, 'session_load', { name: 'demo' }, 'th1'), call(3, 'session_list', {}, 'nobody')], { HEAD_CONTEXT_CODEX_DATA: data });
-  assert.equal(init.result.serverInfo.version, '0.8.0');
+  assert.equal(init.result.serverInfo.version, '0.8.1');
   assert.equal(load.result.isError, undefined); assert.match(load.result.content[0].text, /MCP DIRECTION/);
   const bound = JSON.parse(fs.readFileSync(path.join(dir, '.head/state/conversations/codex-th1.json'), 'utf8'));
   assert.equal(bound.host, 'codex'); assert.equal(bound.session, 'demo');

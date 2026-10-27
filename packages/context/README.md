@@ -1,4 +1,4 @@
-# head-context 0.8.0 — 작업 세션·작업 브랜치·저장
+# head-context 0.8.1 — 작업 세션·작업 브랜치·저장
 
 작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 작업 맥락을 다시 불러온다.
 살아 있는 대화를 작업 세션·작업 브랜치와 묶어 보여 준다. 포크·새 대화·대화 사이 메시지는 호스트(Claude Code) 기능을 그대로 쓴다.
@@ -142,6 +142,11 @@ Row = {conversation_id,title,address,last_at,entrypoint,kind:'person'|'copy',par
 - /clear: Codex는 /clear 전 대화를 확정할 단서를 남기지 않아 이어받지 않는다(연결 안 됨 한 줄). 압축 뒤: Codex가 사용자 말 원문을 남기므로 최근 대화를 넣지 않고, 요약 지시(PreCompact)도 쓰지 않는다(Codex 서버 압축은 그 출력을 쓰지 않음).
 - 아직 없는 것: Codex 대화 목록(`session_conversations`는 Codex 대화를 보이지 않음), Codex 하위 작업의 읽기 전용, 대화 간 메시지.
 - 설치: `codex plugin marketplace add Won6314/head-agent-core` → `codex plugin add head-context@head-agent-core`, 첫 실행 때 훅 검토에서 신뢰.
+
+## 0.8.1에서 바뀐 것
+
+- 프로젝트 경로와 그 위쪽의 심볼릭 링크를 허용합니다(Mac `/tmp` 등). 저장 경로를 계산할 때 프로젝트 경계만 실제 경로로 바꾸며, `.head`·기록 폴더·기록 파일의 링크는 계속 거절합니다.
+- 호스트의 프로젝트 cwd와 Codex 대화 등록 형식은 바꾸지 않습니다. 0.8.0의 작업 세션·대화 연결을 그대로 이어 읽습니다.
 
 ## 0.8.0에서 바뀐 것
 

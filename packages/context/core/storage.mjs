@@ -5,10 +5,32 @@ export function validName(value) {
   if(typeof value!=='string'||!/^[A-Za-z0-9가-힣._-]+$/.test(value)||value.includes('..')||value==='.')throw new Error('이름은 영문·숫자·한글·._-만 허용하며 ..와 경로 구분자는 금지합니다.');return value;
 }
 export function optionalRead(file){try{return fs.readFileSync(file,'utf8');}catch(e){if(e.code==='ENOENT')return '';throw e;}}
+// Resolve only the trusted project boundary, never .head or a record path: resolving
+// those would hide the very links noSymlink must reject. Host cwd stays unchanged.
+export function projectRoot(project){if(!project||!path.isAbsolute(project))throw new Error('절대 프로젝트 경로가 필요합니다.');return fs.realpathSync(project);}
 export function noSymlink(file){for(let p=path.resolve(file);;p=path.dirname(p)){if(fs.lstatSync(p,{throwIfNoEntry:false})?.isSymbolicLink())throw new Error(`심볼릭 링크는 허용하지 않습니다: ${p}`);if(path.dirname(p)===p)break;}return file;}
 export function atomicText(file,text){noSymlink(file);fs.mkdirSync(path.dirname(file),{recursive:true});const temp=`${file}.${randomUUID()}.tmp`;try{fs.writeFileSync(temp,text,{flag:'wx'});fs.renameSync(temp,file);}finally{if(fs.existsSync(temp))fs.unlinkSync(temp);}}
 export const atomicJSON=(file,value)=>atomicText(file,JSON.stringify(value,null,2)+'\n');
-export function locations(project){if(!project||!path.isAbsolute(project))throw new Error('절대 프로젝트 경로가 필요합니다.');const root=noSymlink(path.join(project,'.head'));const config=JSON.parse(optionalRead(noSymlink(path.join(root,'config.json')))||'{}');if(config.sessions_dir!==undefined&&(typeof config.sessions_dir!=='string'||!config.sessions_dir))throw new Error('sessions_dir는 비어 있지 않은 경로여야 합니다.');if(config.standby_days!==undefined&&(typeof config.standby_days!=='number'||!(config.standby_days>=0)))throw new Error('standby_days는 0 이상의 숫자여야 합니다.');if(config.timezone!==undefined){try{if(typeof config.timezone!=='string')throw 0;new Intl.DateTimeFormat('en',{timeZone:config.timezone});}catch{throw new Error('timezone은 IANA 시간대 이름이어야 합니다 (예: Asia/Seoul).');}}return {root,topics:noSymlink(path.resolve(project,config.sessions_dir||'.head/sessions')),state:path.join(root,'state'),standbyDays:config.standby_days,timezone:config.timezone};}
+export function locations(project){
+  const actual=projectRoot(project),root=noSymlink(path.join(actual,'.head'));
+  const config=JSON.parse(optionalRead(noSymlink(path.join(root,'config.json')))||'{}');
+  if(config.sessions_dir!==undefined&&(typeof config.sessions_dir!=='string'||!config.sessions_dir))throw new Error('sessions_dir는 비어 있지 않은 경로여야 합니다.');
+  if(config.standby_days!==undefined&&(typeof config.standby_days!=='number'||!(config.standby_days>=0)))throw new Error('standby_days는 0 이상의 숫자여야 합니다.');
+  if(config.timezone!==undefined){try{if(typeof config.timezone!=='string')throw 0;new Intl.DateTimeFormat('en',{timeZone:config.timezone});}catch{throw new Error('timezone은 IANA 시간대 이름이어야 합니다 (예: Asia/Seoul).');}}
+  // An absolute sessions_dir may spell the host's original project path, or a
+  // sibling under the same shortcut. Resolve only their shared project ancestor;
+  // never the record folder or a path component below that trusted boundary.
+  let topics=path.resolve(actual,config.sessions_dir||'.head/sessions');
+  if(config.sessions_dir&&path.isAbsolute(config.sessions_dir)){
+    let ancestor=path.resolve(project),relative=path.relative(ancestor,topics);
+    while(relative==='..'||relative.startsWith('..'+path.sep)||path.isAbsolute(relative)){
+      const parent=path.dirname(ancestor);if(parent===ancestor)break;
+      ancestor=parent;relative=path.relative(ancestor,topics);
+    }
+    topics=path.resolve(projectRoot(ancestor),relative);
+  }
+  return {root,topics:noSymlink(topics),state:path.join(root,'state'),standbyDays:config.standby_days,timezone:config.timezone};
+}
 export function recordFile(state,kind,id,host){if(typeof host!=='string'||!/^[a-z][a-z0-9]*$/.test(host))throw new Error('호스트 이름이 유효하지 않습니다.');if(typeof id!=='string'||!/^[A-Za-z0-9_-]+$/.test(id))throw new Error('대화 ID가 유효하지 않습니다.');return noSymlink(path.join(state,kind,`${host}-${id}.json`));}
 // The folder is checked whole once; each file in it only for itself.
 const ownFile=file=>{if(fs.lstatSync(file,{throwIfNoEntry:false})?.isSymbolicLink())throw new Error(`심볼릭 링크는 허용하지 않습니다: ${file}`);return file;};

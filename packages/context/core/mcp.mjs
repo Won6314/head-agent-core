@@ -23,7 +23,7 @@ export const instructions = `일을 시작할 때는 먼저 start-job 스킬을 
 다른 대화
 - 무엇: 이 프로젝트에서 살아 있는 대화와, 각 대화가 일하는 작업 세션·작업 브랜치입니다.
 - 언제: 다른 대화에 말을 전하거나 그 대화가 무엇을 하는지 알아야 할 때 먼저 목록(session_conversations)을 봅니다. 보낼 때는 목록의 보낼 곳으로 SendMessage를 씁니다.`;
-export const VERSION = '0.8.0';
+export const VERSION = '0.8.1';
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
 const missing = { session_create: { context: CONTEXT_REQUIRED } };
