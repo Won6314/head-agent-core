@@ -73,6 +73,7 @@ export function refreshCore(project){
 // it). One hook output is cut at about 10,000 characters on Claude Code, so a core over the
 // budget is given in `count` parts, split before a numbered instruction near the middle; each
 // later part names itself, because the host does not keep the outputs in a fixed order.
+export const CORE_MARK='**Carry One Primary Flow End to End**';
 export function coreParts(project,count=1,budget=Infinity){
   if(firstRun(project).setup!=='done')return [];
   const body=fs.readFileSync(CORE_SOURCE,'utf8').trimEnd();

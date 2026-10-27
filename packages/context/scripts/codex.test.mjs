@@ -53,9 +53,15 @@ test('Claude: a 0.7 project loses its CLAUDE.md import on the next start, which 
   }
   const only = fresh(); setup(only); fs.writeFileSync(path.join(only, 'CLAUDE.md'), '@.head/core.md\n');
   claudeCore(only, { id: 'x' }); assert.equal(fs.existsSync(path.join(only, 'CLAUDE.md')), false);
-  // Resume and fork leave CLAUDE.md as it is.
-  fs.writeFileSync(path.join(only, 'CLAUDE.md'), '@.head/core.md\n');
-  assert.deepEqual(claudeCore(only, { id: 'y', source: 'resume' }), ['', '']); assert.ok(fs.existsSync(path.join(only, 'CLAUDE.md')));
+});
+test('Claude resume: a conversation whose records carry no core from the hook (begun under 0.7) gets it once; one that does gets nothing', () => {
+  const dir = fresh(); setup(dir);
+  const held = path.join(dir, 'held.jsonl'), old = path.join(dir, 'old.jsonl');
+  fs.writeFileSync(held, JSON.stringify({ attachment: { content: coreParts(dir, 2, 9000)[0] } }) + '\n'); fs.writeFileSync(old, '{"type":"user"}\n');
+  const run = (transcript, source = 'resume') => [1, 2].map(i => text(runHook({ hook_event_name: 'SessionStart', session_id: 'r', source, cwd: dir, transcript_path: transcript }, { env: { CLAUDE_PROJECT_DIR: dir }, args: ['core', String(i), '2'] })));
+  assert.deepEqual(run(held), ['', '']);
+  const [a, b] = run(old); assert.ok(a.startsWith('# HEAD Core') && b.startsWith('# HEAD Core (계속'));
+  assert.deepEqual(run(old, 'fork'), ['', '']);
 });
 test('Codex start: core whole, the server instructions, the work session and context; resume and fork add nothing', () => {
   const dir = fresh(), data = fresh(); setup(dir);
