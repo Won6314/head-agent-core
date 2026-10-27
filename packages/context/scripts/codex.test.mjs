@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { runHook } from './hook-run.mjs';
 import { sessions } from '../core/sessions.mjs';
 import { callTool, instructions, PROJECT_UNKNOWN } from '../core/mcp.mjs';
-import { CORE_SOURCE, coreParts } from '../core/project.mjs';
+import { CORE_SOURCE, coreParts, migrateImport, setupTool } from '../core/project.mjs';
 import { dataDir } from '../hosts/codex/register.mjs';
 const root = process.env.HEAD_CONTEXT_TEST_ROOT || os.tmpdir();
 const fresh = () => fs.mkdtempSync(path.join(root, 'codex-'));
@@ -48,7 +48,7 @@ test('Claude: a 0.7 project loses its CLAUDE.md import on the next start, which 
     const dir = fresh(); setup(dir);
     fs.writeFileSync(path.join(dir, 'CLAUDE.md'), '# Mine\n\nkeep this\n\n@.head/core.md\n');
     const [a, b] = claudeCore(dir, { id: 'old', order }); assert.ok(a && b);
-    assert.equal(fs.readFileSync(path.join(dir, 'CLAUDE.md'), 'utf8'), '# Mine\n\nkeep this\n');
+    assert.equal(fs.readFileSync(path.join(dir, 'CLAUDE.md'), 'utf8'), '# Mine\n\nkeep this\n\n');
     const [c, d] = claudeCore(dir, { id: 'new' }); assert.ok(c && d);
   }
   const only = fresh(); setup(only); fs.writeFileSync(path.join(only, 'CLAUDE.md'), '@.head/core.md\n');
@@ -112,4 +112,39 @@ test('one package carries both hosts: Codex manifest, hooks and a relative tool 
   assert.deepEqual(hooks.SessionStart[0].hooks.map(h => h.command.split(' ').at(-1)), ['core', 'instructions', 'session', 'context']);
   const claude = JSON.parse(fs.readFileSync('hooks/hooks.json', 'utf8')).hooks.SessionStart[0].hooks.map(h => h.args.slice(1).join(' '));
   assert.deepEqual(claude, ['core 1 2', 'core 2 2', 'session', 'context', 'recent']);
+});
+
+// Review findings (검수 B1 first branch, B2, I1, I2), each as the reviewer reproduced it.
+test('review B1: a conversation that got the core from project_setup does not get it again on resume', () => {
+  const dir = fresh(), out = setupTool(dir, { action: 'setup' }), transcript = path.join(dir, 'setup.jsonl');
+  assert.ok(out.includes(core));
+  fs.writeFileSync(transcript, JSON.stringify({ type: 'user', message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'setup', content: out }] } }) + '\n');
+  const got = [1, 2].map(i => text(runHook({ hook_event_name: 'SessionStart', source: 'resume', session_id: 'r', cwd: dir, transcript_path: transcript }, { env: { CLAUDE_PROJECT_DIR: dir }, args: ['core', String(i), '2'] })));
+  assert.deepEqual(got, ['', '']);
+});
+test('review B2: an unregistered Codex conversation stops at PROJECT_UNKNOWN even with CLAUDE_PROJECT_DIR set', () => {
+  const a = fresh(), data = fresh();
+  sessions(a, { host: 'codex' }).create({ name: 'PROJECT_A_ONLY', context: 'Project A', conversation_id: 'seed' });
+  const [reply] = mcp([call(1, 'session_list', {}, 'unregistered-B')], { CLAUDE_PROJECT_DIR: a, HEAD_CONTEXT_CODEX_DATA: data });
+  assert.equal(reply.result.isError, true); assert.equal(reply.result.content[0].text, PROJECT_UNKNOWN);
+  assert.doesNotMatch(reply.result.content[0].text, /PROJECT_A_ONLY/);
+});
+test('review I1: migrateImport takes only the import lines out and keeps every other byte', () => {
+  const dir = fresh(), file = path.join(dir, 'CLAUDE.md');
+  fs.writeFileSync(file, '# User\r\n\r\n\r\n\r\nkeep  \r\n\r\n@.head/core.md\r\n  @.head/core.md  \r\n\r\n');
+  assert.equal(migrateImport(dir), true);
+  assert.equal(fs.readFileSync(file, 'utf8'), '# User\r\n\r\n\r\n\r\nkeep  \r\n\r\n\r\n');
+  fs.writeFileSync(file, 'tail line\n@.head/core.md'); migrateImport(dir); assert.equal(fs.readFileSync(file, 'utf8'), 'tail line\n');
+  fs.writeFileSync(file, '\n@.head/core.md\n\n'); migrateImport(dir); assert.equal(fs.existsSync(file), false);
+  fs.writeFileSync(file, 'no import\r\n'); assert.equal(migrateImport(dir), false); assert.equal(fs.readFileSync(file, 'utf8'), 'no import\r\n');
+});
+test('review I2: on Codex the setup guide and result promise no Claude-only effect; the Claude settings are still written', () => {
+  const dir = fresh(), data = fresh();
+  const first = codex(dir, 'session', { id: 'g', data });
+  assert.match(first, /Claude Code로 열 때 쓰도록/); assert.match(first, /Codex에서는 이 설정이 쓰이지 않고/);
+  const [reply] = mcp([call(1, 'project_setup', { action: 'setup' }, 'g')], { HEAD_CONTEXT_CODEX_DATA: data });
+  const out = reply.result.content[0].text;
+  assert.doesNotMatch(out, /기본 포크가 켜지며|앱이 시작할 때 새 판을 받습니다/); assert.match(out, /Codex 설정은 바꾸지 않았습니다/); assert.match(out, /Claude Code용, Codex에서는 쓰이지 않음/);
+  assert.ok(fs.existsSync(path.join(dir, '.claude/settings.json')));
+  const claude = setupTool(fresh(), { action: 'setup' }); assert.match(claude, /기본 포크가 켜지며, 앱이 시작할 때 새 판을 받습니다/); assert.doesNotMatch(claude, /Codex/);
 });

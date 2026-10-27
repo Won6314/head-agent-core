@@ -30,7 +30,7 @@ try {
       register({ thread_id: id, cwd: project, transcript_path: input.transcript_path });
       const place = store.start({ ...where, info: { transcript_path: input.transcript_path } });
       let first = '';
-      try { refreshCore(project); if (source === 'startup' || source === 'clear') first = guide(project); }
+      try { refreshCore(project); if (source === 'startup' || source === 'clear') first = guide(project, { host: 'codex' }); }
       catch (error) { console.error(`head-context: ${error.message}`); }
       if (!quiet) out([place ? store.parts(place).head : UNCONNECTED, first].filter(Boolean).join('\n\n'));
     } else if (quiet) {

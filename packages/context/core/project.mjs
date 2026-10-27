@@ -86,26 +86,33 @@ export function coreParts(project,count=1,budget=Infinity){
   parts.push(body.slice(from).trimEnd());
   return parts.map((text,i)=>i?`# HEAD Core (계속 ${i+1}/${parts.length})\n\n${text}`:parts.length>1?`${text}\n\n(HEAD Core 1/${parts.length} — 이어지는 부분이 따로 들어옵니다)`:text);
 }
-// 0.7 setup imported the core from CLAUDE.md. The line is taken out once, and the file too
-// when nothing else is left in it. Returns true when it took the line out.
+// 0.7 setup imported the core from CLAUDE.md. Only the import line goes (with its own line
+// ending); every other byte stays as it was — line endings, blank lines, trailing spaces.
+// A file with nothing but blank space left goes too. Returns true when it took the line out.
 export function migrateImport(project){
   const {claude}=files(project),text=optionalRead(claude);
   if(!hasImport(text))return false;
-  const kept=text.split(/\r?\n/).filter(l=>l.trim()!==IMPORT_LINE).join('\n').replace(/\n{3,}/g,'\n\n').replace(/\s+$/,'');
-  if(kept)atomicText(claude,kept+'\n');else fs.rmSync(claude,{force:true});
+  const kept=(text.match(/[^\n]*\n|[^\n]+$/g)||[]).filter(l=>l.replace(/\r?\n$/,'').trim()!==IMPORT_LINE).join('');
+  if(kept.trim())atomicText(claude,kept);else fs.rmSync(claude,{force:true});
   return true;
 }
 export const claudeImports=project=>hasImport(optionalRead(files(project).claude));
 const surveyQuestion=()=>`"프로젝트 조사해볼까요?"를 물으세요. 예면 ${SURVEY_SOURCE} 절차를 따르고 끝나면 project_setup(action=survey_done). 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 project_setup(action=never_ask, step=survey).`;
 // Start-hook guide, kept short to stay inside the hook cap together with the identity.
-export function guide(project){
+// What setup writes, as told on each host. The .claude/settings.json lines are Claude Code
+// settings: on Codex they are written too (the same project may be opened with Claude Code
+// later) but take no effect there, and Codex's own settings are left alone.
+const settingsWhat=host=>host==='codex'
+  ?`나중에 같은 프로젝트를 Claude Code로 열 때 쓰도록 프로젝트 \`.claude/settings.json\`에 Claude Code용 설정(기본 포크, 이 플러그인의 마켓 GitHub ${MARKETPLACE_REPO}와 자동 업데이트, 플러그인 켜기)을 넣습니다(파일이 없으면 만들고 기존 내용은 그대로 둡니다). Codex에서는 이 설정이 쓰이지 않고, Codex 설정은 바꾸지 않습니다`
+  :`프로젝트 \`.claude/settings.json\`에 기본 포크를 켜는 env 한 줄과, 새 판을 자동으로 받도록 이 플러그인의 마켓(GitHub ${MARKETPLACE_REPO})과 플러그인 켜기를 넣습니다(파일이 없으면 만들고 기존 내용은 그대로 둡니다)`;
+export function guide(project,{host='claude'}={}){
   const s=firstRun(project);
-  if(!s.setup)return `# 프로젝트 첫 실행 (head-context)\n이 프로젝트는 초기설정 전입니다. 사용자의 첫 입력에 답하기 전에 먼저 짧게 "초기설정 해도 될까요?"를 물으세요. 초기설정은 HEAD 코어 지침을 이 프로젝트에서 켜고(시작할 때마다 들어가며, 사본을 \`.head/core.md\`에 둡니다), 프로젝트 \`.claude/settings.json\`에 기본 포크를 켜는 env 한 줄과, 새 판을 자동으로 받도록 이 플러그인의 마켓(GitHub ${MARKETPLACE_REPO})과 플러그인 켜기를 넣습니다(파일이 없으면 만들고 기존 내용은 그대로 둡니다).\n- 예: project_setup(action=setup)을 부르고, 돌려받은 코어 지침을 이 대화부터 따르세요.\n- 아니오: "다시는 묻지 않을까요?"를 물으세요. 예면 project_setup(action=never_ask, step=setup), 아니오면 아무것도 기록하지 않습니다(다음 시작에 다시 묻습니다).\n답을 받은 뒤 사용자의 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.`;
+  if(!s.setup)return `# 프로젝트 첫 실행 (head-context)\n이 프로젝트는 초기설정 전입니다. 사용자의 첫 입력에 답하기 전에 먼저 짧게 "초기설정 해도 될까요?"를 물으세요. 초기설정은 HEAD 코어 지침을 이 프로젝트에서 켜고(시작할 때마다 들어가며, 사본을 \`.head/core.md\`에 둡니다), ${settingsWhat(host)}.\n- 예: project_setup(action=setup)을 부르고, 돌려받은 코어 지침을 이 대화부터 따르세요.\n- 아니오: "다시는 묻지 않을까요?"를 물으세요. 예면 project_setup(action=never_ask, step=setup), 아니오면 아무것도 기록하지 않습니다(다음 시작에 다시 묻습니다).\n답을 받은 뒤 사용자의 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.`;
   if(s.setup==='done'&&!s.survey&&surveyReady())return `# 프로젝트 조사 (head-context)\n사용자의 첫 입력에 답하기 전에 먼저 짧게 ${surveyQuestion()} 답을 받은 뒤 원래 이야기로 이어가세요.`;
   return '';
 }
 // The one writer of the project files. The LLM guides; this code writes.
-export function setupTool(project,{action,step}){
+export function setupTool(project,{action,step},{host='claude'}={}){
   if(action==='never_ask'){if(!STEPS.includes(step))throw new Error('never_ask에는 step(setup 또는 survey)이 필요합니다.');mark(project,step,'never_ask');return `이 프로젝트에서는 ${step==='setup'?'초기설정':'프로젝트 조사'}을 다시 묻지 않습니다. 기록: .head/config.json first_run.${step}=never_ask`;}
   if(action==='survey_done'){mark(project,'survey','done');return '프로젝트 조사를 끝남으로 기록했습니다.';}
   if(action!=='setup')throw new Error('action은 setup, never_ask, survey_done 중 하나입니다.');
@@ -114,5 +121,11 @@ export function setupTool(project,{action,step}){
   const {fork,market}=projectSettings(f.settings);
   mark(project,'setup','done');
   const next=surveyReady()&&firstRun(project).survey===null?`\n\n이어서 ${surveyQuestion()}`:'';
-  return `초기설정을 마쳤습니다.\n- 코어 지침: 이 프로젝트에서 켰습니다(사본: .head/core.md).\n- .claude/settings.json의 env.${FORK_ENV}="1"(기본 포크 켜기): ${fork}.\n- .claude/settings.json의 마켓 ${MARKETPLACE}(GitHub ${MARKETPLACE_REPO}, 자동 업데이트)와 enabledPlugins."${PLUGIN_ID}": ${market}.\n- 다음 시작부터는 시작·/clear·압축 때 코어 지침이 들어가고 기본 포크가 켜지며, 앱이 시작할 때 새 판을 받습니다. 이 대화에서는 아래 코어 지침을 지금부터 따르세요.${next}\n\n${body}`;
+  const claudeOnly=host==='codex'?' (Claude Code용, Codex에서는 쓰이지 않음)':'';
+  const after=host==='codex'
+    ?'- 다음 시작부터는 시작·/clear·압축 때 코어 지침이 들어갑니다. Codex 설정은 바꾸지 않았습니다. .claude/settings.json은 이 프로젝트를 Claude Code로 열 때 쓰입니다.'
+    :'- 다음 시작부터는 시작·/clear·압축 때 코어 지침이 들어가고 기본 포크가 켜지며, 앱이 시작할 때 새 판을 받습니다.';
+  // The core given here carries the same tag as the start hook's, so a resume of this
+  // conversation knows it already holds the core.
+  return `초기설정을 마쳤습니다.\n- 코어 지침: 이 프로젝트에서 켰습니다(사본: .head/core.md).\n- .claude/settings.json의 env.${FORK_ENV}="1"(기본 포크 켜기)${claudeOnly}: ${fork}.\n- .claude/settings.json의 마켓 ${MARKETPLACE}(GitHub ${MARKETPLACE_REPO}, 자동 업데이트)와 enabledPlugins."${PLUGIN_ID}"${claudeOnly}: ${market}.\n${after} 이 대화에서는 아래 코어 지침을 지금부터 따르세요.${next}\n\n${body.trimEnd()}\n\n${CORE_MARK}1 — 초기설정이 돌려준 코어)`;
 }

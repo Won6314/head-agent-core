@@ -24,7 +24,7 @@ test('fresh project: start hook asks setup on startup/clear only, setup writes t
   assert.equal(guidePart(hook(dir,{source:'resume'})),'');assert.equal(guidePart(hook(dir,{source:'compact'})),'');
   assert.equal(fs.existsSync(path.join(dir,'CLAUDE.md')),false);
   const out=tool(dir,{action:'setup'});
-  assert.ok(out.endsWith(core));assert.match(out,/새로 만들었습니다/);
+  assert.ok(out.includes(core.trimEnd()));assert.match(out,/\(HEAD Core 1\/1 — 초기설정이 돌려준 코어\)$/);assert.match(out,/새로 만들었습니다/);
   assert.equal(read(dir,'.head/core.md'),core);assert.equal(fs.existsSync(path.join(dir,'CLAUDE.md')),false);
   assert.deepEqual(firstRun(dir),{setup:'done',survey:null});
   assert.equal(guidePart(hook(dir)),'');assert.equal(guide(dir),'');
@@ -102,6 +102,6 @@ test('real MCP process lists project_setup and runs it in CLAUDE_PROJECT_DIR',()
   assert.deepEqual(fs.readdirSync(path.resolve('skills')),['start-job']); // one skill the model loads; none for the user to type
   assert.doesNotMatch(fs.readFileSync(path.resolve('skills/start-job/SKILL.md'),'utf8'),/disable-model-invocation|argument-hint/);
   const def=list.result.tools.find(t=>t.name==='project_setup');assert.ok(def);assert.equal('conversation_id' in def.inputSchema.properties,false);
-  assert.equal(call.result.isError,undefined);assert.ok(call.result.content[0].text.endsWith(core));assert.equal(fs.existsSync(path.join(dir,'CLAUDE.md')),false);
+  assert.equal(call.result.isError,undefined);assert.ok(call.result.content[0].text.includes(core.trimEnd()));assert.equal(fs.existsSync(path.join(dir,'CLAUDE.md')),false);
 });
 

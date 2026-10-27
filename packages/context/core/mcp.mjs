@@ -59,7 +59,7 @@ definitions.push({ name: 'project_setup', description: '프로젝트 첫 실행�
 const METHODS = { session_read: 'inspect', session_conversations: 'conversations' };
 // readOnly: the host says this conversation is run by a program (a fork or worker started
 // with claude -p); it may read but not write, like a task inside a conversation.
-export function callTool(store, name, args, conversation_id, project, readOnly = false) {
+export function callTool(store, name, args, conversation_id, project, readOnly = false, host = 'claude') {
   const tool = definitions.find(t => t.name === name);
   if (!tool) throw new Error(`알 수 없는 도구: ${name}`);
   for (const [key, value] of Object.entries(args)) {
@@ -67,7 +67,7 @@ export function callTool(store, name, args, conversation_id, project, readOnly =
     if (!schema || (schema.type === 'string' ? typeof value !== 'string' : schema.type==='boolean'?typeof value!=='boolean':!Number.isInteger(value)) || (schema.enum&&!schema.enum.includes(value)) || (schema.minimum!==undefined&&value<schema.minimum)) throw new Error(`유효하지 않은 인자: ${key}`);
   }
   for (const key of tool.inputSchema.required) if (!(key in args)) throw new Error(missing[name]?.[key] || `필수 인자: ${key}`);
-  if (name === 'project_setup') return setupTool(project, args);
+  if (name === 'project_setup') return setupTool(project, args, { host });
   const { agent_id, ...rest } = args;
   const writes = WRITES[name];
   if ((agent_id || readOnly) && (typeof writes === 'function' ? writes(rest) : writes)) throw new Error(FORK_WRITE_REFUSED);
@@ -94,7 +94,7 @@ export async function serve({ project, projectOf, host, conversationOf, options 
       try {
         const dir = projectOf ? projectOf(request) : project;
         if (!dir) throw new Error(PROJECT_UNKNOWN);
-        send({ id, result: { content: [{ type: 'text', text: callTool(storeOf(dir), params.name, params.arguments || {}, conversationOf(request), dir, readOnly(request)) }] } });
+        send({ id, result: { content: [{ type: 'text', text: callTool(storeOf(dir), params.name, params.arguments || {}, conversationOf(request), dir, readOnly(request), host) }] } });
       }
       catch (error) { send({ id, result: { isError: true, content: [{ type: 'text', text: error.message }] } }); }
     } else send({ id, error: { code: -32601, message: 'Method not found' } });
