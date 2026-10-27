@@ -9,7 +9,7 @@ import { hostInfo } from './process.mjs';
 import { recentPart } from './recent.mjs';
 import { compactInstruction } from './compact.mjs';
 import { SUBAGENT_NOTICE } from '../../core/mcp.mjs';
-import { guide, refreshCore } from '../../core/project.mjs';
+import { guide, refreshCore, coreParts, migrateImport, claudeImports } from '../../core/project.mjs';
 
 // PreToolUse fills the host fields of the head-context tools: the conversation, and
 // for a task running inside it (fork, subagent) its agent id (writes are refused there).
@@ -22,6 +22,11 @@ import { guide, refreshCore } from '../../core/project.mjs';
 //   context — open work branches, to-dos, the record map, this branch's newest saves;
 //     over the cap it is cut down (fewer saves, shorter bodies, a shorter map).
 //   recent  — after a compact or /clear only: the last exchanges as they were said.
+//   core    — the core instructions, run as `core <i> <n>`: part i of n (one output holds
+//     about 10,000 characters). Not on resume or fork: the conversation already holds it.
+//     A project set up by 0.7 imported the core from CLAUDE.md; on a start or /clear the
+//     first core part takes that line out (migrateImport). The CLAUDE.md the host read for
+//     this start still had the import, so this start gives no core part of its own.
 const TOOL = /^mcp__plugin_head-context_context__session_/;
 const part = process.argv[2];
 const out = (event, text) => { if (text) console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: event, additionalContext: text } })); };
@@ -74,6 +79,18 @@ try {
         // Cut down in order to fit; the open branches, the to-dos and the last next stay.
         out('SessionStart', store.parts(place, { budget: HOOK_BUDGET }).context);
       }
+    } else if (part === 'core' && !quiet) {
+      const index = Number(process.argv[3]) || 1, count = Number(process.argv[4]) || 1;
+      const moved = path.join(locations(project).state, 'core-import', `claude-${String(input.session_id).replace(/[^A-Za-z0-9_-]/g, '')}`);
+      const fresh = source === 'startup' || source === 'clear';
+      let given = !claudeImports(project) && !(fresh && fs.existsSync(moved));
+      if (index === 1 && fresh && claudeImports(project)) {
+        // The marker goes first, so a part running alongside that no longer sees the line still knows.
+        fs.mkdirSync(path.dirname(moved), { recursive: true }); fs.writeFileSync(moved, new Date().toISOString());
+        migrateImport(project); given = false;
+        for (const f of fs.readdirSync(path.dirname(moved))) { const p = path.join(path.dirname(moved), f); try { if (Date.now() - fs.statSync(p).mtimeMs > 2 * 86400000) fs.rmSync(p); } catch { } }
+      }
+      if (given) out('SessionStart', coreParts(project, count, HOOK_BUDGET)[index - 1] || '');
     } else if (part === 'recent' && (source === 'compact' || source === 'clear')) {
       // After /clear the exchanges are in the conversation /clear replaced.
       let transcript = input.transcript_path;

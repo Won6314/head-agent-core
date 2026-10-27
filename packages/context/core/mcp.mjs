@@ -23,6 +23,7 @@ export const instructions = `일을 시작할 때는 먼저 start-job 스킬을 
 다른 대화
 - 무엇: 이 프로젝트에서 살아 있는 대화와, 각 대화가 일하는 작업 세션·작업 브랜치입니다.
 - 언제: 다른 대화에 말을 전하거나 그 대화가 무엇을 하는지 알아야 할 때 먼저 목록(session_conversations)을 봅니다. 보낼 때는 목록의 보낼 곳으로 SendMessage를 씁니다.`;
+export const VERSION = '0.8.0';
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
 const missing = { session_create: { context: CONTEXT_REQUIRED } };
@@ -53,7 +54,7 @@ export const definitions = [
 ].map(([name, description, properties, required]) => ({ name, description,
   inputSchema: { type: 'object', properties: { ...properties, conversation_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' }, agent_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' } }, required, additionalProperties: false } }));
 // Project-level, not conversation-level: no conversation_id.
-definitions.push({ name: 'project_setup', description: '프로젝트 첫 실행의 유일한 쓰기 도구. 사용자가 동의했을 때만 부릅니다. action=setup: 코어 지침을 .head/core.md에 쓰고 프로젝트 CLAUDE.md에 @.head/core.md 한 줄을 넣고(없으면 만들고, 있으면 중복 없이, 기존 내용 보존), 프로젝트 .claude/settings.json에 기본 포크를 켜는 env.CLAUDE_CODE_FORK_SUBAGENT="1"과 이 플러그인의 마켓(extraKnownMarketplaces, 자동 업데이트)·enabledPlugins를 더하고(다른 설정은 그대로, 이미 있으면 그대로) 초기설정을 끝남으로 기록한 뒤 코어 지침 본문을 돌려줍니다. 이 대화부터 그 지침을 따르세요. action=never_ask: 사용자가 다시 묻지 말라고 한 단계(step=setup 또는 survey)를 기록합니다. action=survey_done: 프로젝트 조사를 끝남으로 기록합니다.',
+definitions.push({ name: 'project_setup', description: '프로젝트 첫 실행의 유일한 쓰기 도구. 사용자가 동의했을 때만 부릅니다. action=setup: 이 프로젝트에서 코어 지침을 켜고(다음 시작부터 시작·/clear·압축 때 들어감, 사본은 .head/core.md), 프로젝트 .claude/settings.json에 기본 포크를 켜는 env.CLAUDE_CODE_FORK_SUBAGENT="1"과 이 플러그인의 마켓(extraKnownMarketplaces, 자동 업데이트)·enabledPlugins를 더하고(다른 설정은 그대로, 이미 있으면 그대로) 초기설정을 끝남으로 기록한 뒤 코어 지침 본문을 돌려줍니다. 이 대화부터 그 지침을 따르세요. action=never_ask: 사용자가 다시 묻지 말라고 한 단계(step=setup 또는 survey)를 기록합니다. action=survey_done: 프로젝트 조사를 끝남으로 기록합니다.',
   inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['setup', 'never_ask', 'survey_done'] }, step: { type: 'string', enum: ['setup', 'survey'] } }, required: ['action'], additionalProperties: false } });
 const METHODS = { session_read: 'inspect', session_conversations: 'conversations' };
 // readOnly: the host says this conversation is run by a program (a fork or worker started
@@ -72,8 +73,13 @@ export function callTool(store, name, args, conversation_id, project, readOnly =
   if ((agent_id || readOnly) && (typeof writes === 'function' ? writes(rest) : writes)) throw new Error(FORK_WRITE_REFUSED);
   return store[METHODS[name] || name.slice('session_'.length)]({ ...rest, conversation_id });
 }
-export async function serve({ project, host, conversationOf, options = {}, readOnly = () => false }) {
-  const store = sessions(project, { host, ...options });
+// project: the one project of this server (Claude: CLAUDE_PROJECT_DIR). projectOf(request):
+// the project of each call, for a host that starts its server outside the project (Codex);
+// options may then be a function of the project.
+export const PROJECT_UNKNOWN = '이 대화의 프로젝트를 알 수 없습니다. 대화를 새로 시작하거나 다시 열어 주세요(시작할 때 프로젝트를 등록합니다).';
+export async function serve({ project, projectOf, host, conversationOf, options = {}, readOnly = () => false }) {
+  const stores = new Map();
+  const storeOf = dir => { if (!stores.has(dir)) stores.set(dir, sessions(dir, { host, ...(typeof options === 'function' ? options(dir) : options) })); return stores.get(dir); };
   const send = message => process.stdout.write(`${JSON.stringify({ jsonrpc: '2.0', ...message })}\n`);
   for await (const line of readline.createInterface({ input: process.stdin, crlfDelay: Infinity })) {
     let request;
@@ -81,11 +87,15 @@ export async function serve({ project, host, conversationOf, options = {}, readO
     catch { send({ id: null, error: { code: -32700, message: 'Parse error' } }); continue; }
     if (request.id === undefined) continue;
     const { id, method, params = {} } = request;
-    if (method === 'initialize') send({ id, result: { protocolVersion: params.protocolVersion, capabilities: { tools: {} }, serverInfo: { name: 'head-context', version: '0.7.1' }, instructions } });
+    if (method === 'initialize') send({ id, result: { protocolVersion: params.protocolVersion, capabilities: { tools: {} }, serverInfo: { name: 'head-context', version: VERSION }, instructions } });
     else if (method === 'ping') send({ id, result: {} });
     else if (method === 'tools/list') send({ id, result: { tools: definitions } });
     else if (method === 'tools/call') {
-      try { send({ id, result: { content: [{ type: 'text', text: callTool(store, params.name, params.arguments || {}, conversationOf(request), project, readOnly()) }] } }); }
+      try {
+        const dir = projectOf ? projectOf(request) : project;
+        if (!dir) throw new Error(PROJECT_UNKNOWN);
+        send({ id, result: { content: [{ type: 'text', text: callTool(storeOf(dir), params.name, params.arguments || {}, conversationOf(request), dir, readOnly(request)) }] } });
+      }
       catch (error) { send({ id, result: { isError: true, content: [{ type: 'text', text: error.message }] } }); }
     } else send({ id, error: { code: -32601, message: 'Method not found' } });
   }

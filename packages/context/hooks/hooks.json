@@ -8,6 +8,28 @@
             "command": "node",
             "args": [
               "${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs",
+              "core",
+              "1",
+              "2"
+            ],
+            "timeout": 20
+          },
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs",
+              "core",
+              "2",
+              "2"
+            ],
+            "timeout": 20
+          },
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs",
               "session"
             ],
             "timeout": 20

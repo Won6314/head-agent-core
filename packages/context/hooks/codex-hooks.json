@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/codex-hook.mjs\" core",
+            "additionalContextLimit": 0
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/codex-hook.mjs\" instructions",
+            "additionalContextLimit": 0
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/codex-hook.mjs\" session",
+            "additionalContextLimit": 0
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/codex-hook.mjs\" context",
+            "additionalContextLimit": 0
+          }
+        ]
+      }
+    ]
+  }
+}

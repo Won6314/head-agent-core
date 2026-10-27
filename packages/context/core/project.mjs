@@ -2,13 +2,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {optionalRead,atomicText,atomicJSON,noSymlink,locked} from './storage.mjs';
-// Project first run. Two steps, each asked once per project: setup (core instructions
-// into the project) and survey (asked only when the plugin carries its procedure).
+// Project first run. Two steps, each asked once per project: setup (the core instructions
+// turned on for the project) and survey (asked only when the plugin carries its procedure).
 // State lives in .head/config.json under first_run: {setup, survey}, each 'done' or 'never_ask'.
-// Everything CLAUDE.md depends on is copied into the project, never pointed at the plugin path.
+// From 0.8 the core reaches the model through the start hook of every host (corePart), not
+// through a CLAUDE.md import: Claude Code puts imported files back after a compaction, so
+// an import arrived twice. .head/core.md stays as the project copy for hosts and tools that
+// read instruction files themselves.
 const plugin=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 export const CORE_SOURCE=path.join(plugin,'instructions','HEAD_CORE.md');
 export const SURVEY_SOURCE=path.join(plugin,'instructions','survey.md');
+// The line 0.7 setup put in CLAUDE.md; the Claude start hook takes it out again (migrateImport).
 export const IMPORT_LINE='@.head/core.md';
 export const STEPS=['setup','survey'];
 const VALUES=['done','never_ask'];
@@ -59,18 +63,40 @@ function mark(project,step,value){
 }
 const surveyReady=()=>fs.existsSync(SURVEY_SOURCE);
 const hasImport=text=>text.split(/\r?\n/).some(l=>l.trim()===IMPORT_LINE);
-// Keeps the project copy equal to the plugin's core. CLAUDE.md is read before the
-// start hook runs, so a refresh written here applies from the next start.
+// Keeps the project copy equal to the plugin's core.
 export function refreshCore(project){
   if(firstRun(project).setup!=='done')return false;
   const {core}=files(project),body=fs.readFileSync(CORE_SOURCE,'utf8');
   if(optionalRead(core)===body)return false;atomicText(core,body);return true;
 }
+// The core as the start hook gives it, after setup only (setup is where the user agrees to
+// it). One hook output is cut at about 10,000 characters on Claude Code, so a core over the
+// budget is given in `count` parts, split before a numbered instruction near the middle; each
+// later part names itself, because the host does not keep the outputs in a fixed order.
+export function coreParts(project,count=1,budget=Infinity){
+  if(firstRun(project).setup!=='done')return [];
+  const body=fs.readFileSync(CORE_SOURCE,'utf8').trimEnd();
+  if(count<=1||body.length<=budget)return [body];
+  const starts=[...body.matchAll(/\n(?=\d+\. \*\*)/g)].map(m=>m.index+1),parts=[];let from=0;
+  for(let i=1;i<count;i++){const want=Math.round(body.length*i/count),at=starts.filter(x=>x>from).sort((a,b)=>Math.abs(a-want)-Math.abs(b-want))[0];if(!at)break;parts.push(body.slice(from,at).trimEnd());from=at;}
+  parts.push(body.slice(from).trimEnd());
+  return parts.map((text,i)=>i?`# HEAD Core (계속 ${i+1}/${parts.length})\n\n${text}`:parts.length>1?`${text}\n\n(HEAD Core 1/${parts.length} — 이어지는 부분이 따로 들어옵니다)`:text);
+}
+// 0.7 setup imported the core from CLAUDE.md. The line is taken out once, and the file too
+// when nothing else is left in it. Returns true when it took the line out.
+export function migrateImport(project){
+  const {claude}=files(project),text=optionalRead(claude);
+  if(!hasImport(text))return false;
+  const kept=text.split(/\r?\n/).filter(l=>l.trim()!==IMPORT_LINE).join('\n').replace(/\n{3,}/g,'\n\n').replace(/\s+$/,'');
+  if(kept)atomicText(claude,kept+'\n');else fs.rmSync(claude);
+  return true;
+}
+export const claudeImports=project=>hasImport(optionalRead(files(project).claude));
 const surveyQuestion=()=>`"프로젝트 조사해볼까요?"를 물으세요. 예면 ${SURVEY_SOURCE} 절차를 따르고 끝나면 project_setup(action=survey_done). 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 project_setup(action=never_ask, step=survey).`;
 // Start-hook guide, kept short to stay inside the hook cap together with the identity.
 export function guide(project){
   const s=firstRun(project);
-  if(!s.setup)return `# 프로젝트 첫 실행 (head-context)\n이 프로젝트는 초기설정 전입니다. 사용자의 첫 입력에 답하기 전에 먼저 짧게 "초기설정 해도 될까요?"를 물으세요. 초기설정은 HEAD 코어 지침을 \`.head/core.md\`에 두고, 프로젝트 CLAUDE.md에 \`${IMPORT_LINE}\` 한 줄을 넣고, 프로젝트 \`.claude/settings.json\`에 기본 포크를 켜는 env 한 줄과, 새 판을 자동으로 받도록 이 플러그인의 마켓(GitHub ${MARKETPLACE_REPO})과 플러그인 켜기를 넣습니다(파일이 없으면 만들고 기존 내용은 그대로 둡니다).\n- 예: project_setup(action=setup)을 부르고, 돌려받은 코어 지침을 이 대화부터 따르세요.\n- 아니오: "다시는 묻지 않을까요?"를 물으세요. 예면 project_setup(action=never_ask, step=setup), 아니오면 아무것도 기록하지 않습니다(다음 시작에 다시 묻습니다).\n답을 받은 뒤 사용자의 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.`;
+  if(!s.setup)return `# 프로젝트 첫 실행 (head-context)\n이 프로젝트는 초기설정 전입니다. 사용자의 첫 입력에 답하기 전에 먼저 짧게 "초기설정 해도 될까요?"를 물으세요. 초기설정은 HEAD 코어 지침을 이 프로젝트에서 켜고(시작할 때마다 들어가며, 사본을 \`.head/core.md\`에 둡니다), 프로젝트 \`.claude/settings.json\`에 기본 포크를 켜는 env 한 줄과, 새 판을 자동으로 받도록 이 플러그인의 마켓(GitHub ${MARKETPLACE_REPO})과 플러그인 켜기를 넣습니다(파일이 없으면 만들고 기존 내용은 그대로 둡니다).\n- 예: project_setup(action=setup)을 부르고, 돌려받은 코어 지침을 이 대화부터 따르세요.\n- 아니오: "다시는 묻지 않을까요?"를 물으세요. 예면 project_setup(action=never_ask, step=setup), 아니오면 아무것도 기록하지 않습니다(다음 시작에 다시 묻습니다).\n답을 받은 뒤 사용자의 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.`;
   if(s.setup==='done'&&!s.survey&&surveyReady())return `# 프로젝트 조사 (head-context)\n사용자의 첫 입력에 답하기 전에 먼저 짧게 ${surveyQuestion()} 답을 받은 뒤 원래 이야기로 이어가세요.`;
   return '';
 }
@@ -81,11 +107,8 @@ export function setupTool(project,{action,step}){
   if(action!=='setup')throw new Error('action은 setup, never_ask, survey_done 중 하나입니다.');
   const f=files(project),body=fs.readFileSync(CORE_SOURCE,'utf8');
   fs.mkdirSync(f.root,{recursive:true});atomicText(f.core,body);
-  const before=optionalRead(f.claude);let claude;
-  if(hasImport(before))claude='이미 있어 그대로 두었습니다';
-  else{atomicText(f.claude,before?`${before}${before.endsWith('\n')?'':'\n'}\n${IMPORT_LINE}\n`:`${IMPORT_LINE}\n`);claude=before?'기존 내용 끝에 한 줄을 더했습니다':'새로 만들었습니다';}
   const {fork,market}=projectSettings(f.settings);
   mark(project,'setup','done');
   const next=surveyReady()&&firstRun(project).survey===null?`\n\n이어서 ${surveyQuestion()}`:'';
-  return `초기설정을 마쳤습니다.\n- .head/core.md: 코어 지침을 썼습니다.\n- CLAUDE.md의 \`${IMPORT_LINE}\`: ${claude}.\n- .claude/settings.json의 env.${FORK_ENV}="1"(기본 포크 켜기): ${fork}.\n- .claude/settings.json의 마켓 ${MARKETPLACE}(GitHub ${MARKETPLACE_REPO}, 자동 업데이트)와 enabledPlugins."${PLUGIN_ID}": ${market}.\n- 다음 시작부터는 CLAUDE.md로 코어 지침이 들어가고 기본 포크가 켜지며, 앱이 시작할 때 새 판을 받습니다. 이 대화에서는 아래 코어 지침을 지금부터 따르세요.${next}\n\n${body}`;
+  return `초기설정을 마쳤습니다.\n- 코어 지침: 이 프로젝트에서 켰습니다(사본: .head/core.md).\n- .claude/settings.json의 env.${FORK_ENV}="1"(기본 포크 켜기): ${fork}.\n- .claude/settings.json의 마켓 ${MARKETPLACE}(GitHub ${MARKETPLACE_REPO}, 자동 업데이트)와 enabledPlugins."${PLUGIN_ID}": ${market}.\n- 다음 시작부터는 시작·/clear·압축 때 코어 지침이 들어가고 기본 포크가 켜지며, 앱이 시작할 때 새 판을 받습니다. 이 대화에서는 아래 코어 지침을 지금부터 따르세요.${next}\n\n${body}`;
 }

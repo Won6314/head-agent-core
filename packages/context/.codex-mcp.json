@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "context": {
+      "command": "node",
+      "args": ["scripts/codex-mcp.mjs"],
+      "cwd": "."
+    }
+  }
+}
