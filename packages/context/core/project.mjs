@@ -88,7 +88,7 @@ export function migrateImport(project){
   const {claude}=files(project),text=optionalRead(claude);
   if(!hasImport(text))return false;
   const kept=text.split(/\r?\n/).filter(l=>l.trim()!==IMPORT_LINE).join('\n').replace(/\n{3,}/g,'\n\n').replace(/\s+$/,'');
-  if(kept)atomicText(claude,kept+'\n');else fs.rmSync(claude);
+  if(kept)atomicText(claude,kept+'\n');else fs.rmSync(claude,{force:true});
   return true;
 }
 export const claudeImports=project=>hasImport(optionalRead(files(project).claude));

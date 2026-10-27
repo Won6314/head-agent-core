@@ -43,20 +43,19 @@ test('Claude: the core comes from the start hook after setup, in two named parts
   for (const source of ['resume', 'fork']) assert.deepEqual(claudeCore(dir, { source, id: `q-${source}` }), ['', '']);
   assert.deepEqual(coreParts(dir, 1), [core]);
 });
-test('Claude: a 0.7 project loses its CLAUDE.md import on the next start, which gives no core of its own; later starts and compactions do', () => {
+test('Claude: a 0.7 project loses its CLAUDE.md import on the next start, which gives the core once from the hook', () => {
   for (const order of [[1, 2], [2, 1]]) {
     const dir = fresh(); setup(dir);
     fs.writeFileSync(path.join(dir, 'CLAUDE.md'), '# Mine\n\nkeep this\n\n@.head/core.md\n');
-    assert.deepEqual(claudeCore(dir, { id: 'old', order }), ['', '']);
+    const [a, b] = claudeCore(dir, { id: 'old', order }); assert.ok(a && b);
     assert.equal(fs.readFileSync(path.join(dir, 'CLAUDE.md'), 'utf8'), '# Mine\n\nkeep this\n');
-    const [a, b] = claudeCore(dir, { id: 'old', source: 'compact' }); assert.ok(a && b);
     const [c, d] = claudeCore(dir, { id: 'new' }); assert.ok(c && d);
   }
   const only = fresh(); setup(only); fs.writeFileSync(path.join(only, 'CLAUDE.md'), '@.head/core.md\n');
   claudeCore(only, { id: 'x' }); assert.equal(fs.existsSync(path.join(only, 'CLAUDE.md')), false);
-  // A CLAUDE.md that still imports (the line put back by hand) gives no second copy.
+  // Resume and fork leave CLAUDE.md as it is.
   fs.writeFileSync(path.join(only, 'CLAUDE.md'), '@.head/core.md\n');
-  assert.deepEqual(claudeCore(only, { id: 'y', source: 'compact' }), ['', '']);
+  assert.deepEqual(claudeCore(only, { id: 'y', source: 'resume' }), ['', '']); assert.ok(fs.existsSync(path.join(only, 'CLAUDE.md')));
 });
 test('Codex start: core whole, the server instructions, the work session and context; resume and fork add nothing', () => {
   const dir = fresh(), data = fresh(); setup(dir);

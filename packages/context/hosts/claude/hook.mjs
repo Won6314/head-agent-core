@@ -24,9 +24,8 @@ import { guide, refreshCore, coreParts, migrateImport, claudeImports } from '../
 //   recent  — after a compact or /clear only: the last exchanges as they were said.
 //   core    — the core instructions, run as `core <i> <n>`: part i of n (one output holds
 //     about 10,000 characters). Not on resume or fork: the conversation already holds it.
-//     A project set up by 0.7 imported the core from CLAUDE.md; on a start or /clear the
-//     first core part takes that line out (migrateImport). The CLAUDE.md the host read for
-//     this start still had the import, so this start gives no core part of its own.
+//     A project set up by 0.7 imported the core from CLAUDE.md; the core parts take that
+//     line out (migrateImport) before giving the core.
 const TOOL = /^mcp__plugin_head-context_context__session_/;
 const part = process.argv[2];
 const out = (event, text) => { if (text) console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: event, additionalContext: text } })); };
@@ -81,16 +80,11 @@ try {
       }
     } else if (part === 'core' && !quiet) {
       const index = Number(process.argv[3]) || 1, count = Number(process.argv[4]) || 1;
-      const moved = path.join(locations(project).state, 'core-import', `claude-${String(input.session_id).replace(/[^A-Za-z0-9_-]/g, '')}`);
-      const fresh = source === 'startup' || source === 'clear';
-      let given = !claudeImports(project) && !(fresh && fs.existsSync(moved));
-      if (index === 1 && fresh && claudeImports(project)) {
-        // The marker goes first, so a part running alongside that no longer sees the line still knows.
-        fs.mkdirSync(path.dirname(moved), { recursive: true }); fs.writeFileSync(moved, new Date().toISOString());
-        migrateImport(project); given = false;
-        for (const f of fs.readdirSync(path.dirname(moved))) { const p = path.join(path.dirname(moved), f); try { if (Date.now() - fs.statSync(p).mtimeMs > 2 * 86400000) fs.rmSync(p); } catch { } }
-      }
-      if (given) out('SessionStart', coreParts(project, count, HOOK_BUDGET)[index - 1] || '');
+      // Every part takes the 0.7 line out (the same result whichever runs first), then gives
+      // its part unless the line is still there (it could not be taken out): the host reads
+      // CLAUDE.md after the start hooks (2.1.311), so the core arrives once either way.
+      try { migrateImport(project); } catch (error) { if (error.code !== 'ENOENT') console.error(`head-context: ${error.message}`); }
+      if (!claudeImports(project)) out('SessionStart', coreParts(project, count, HOOK_BUDGET)[index - 1] || '');
     } else if (part === 'recent' && (source === 'compact' || source === 'clear')) {
       // After /clear the exchanges are in the conversation /clear replaced.
       let transcript = input.transcript_path;
