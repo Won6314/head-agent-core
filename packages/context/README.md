@@ -1,8 +1,8 @@
-# head-context 0.7.1 — 작업 세션·작업 브랜치·저장
+# head-context 0.8.0 — 작업 세션·작업 브랜치·저장
 
 작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 작업 맥락을 다시 불러온다.
 살아 있는 대화를 작업 세션·작업 브랜치와 묶어 보여 준다. 포크·새 대화·대화 사이 메시지는 호스트(Claude Code) 기능을 그대로 쓴다.
-기준 환경은 이 플러그인만 붙은 Claude Code 데스크톱 앱이다. 상주 프로세스는 없다(도구 호출 때만 도는 MCP 하나와 훅 둘). 사용자가 직접 치는 명령(스킬)은 두지 않는다: 모든 것은 자연어로 하고 모델이 도구를 부른다.
+기준 환경은 이 플러그인만 붙은 Claude Code와 Codex(데스크톱 앱 포함)다. 한 패키지에 두 앱의 포장이 있다(`.claude-plugin`, `.codex-plugin`). 두 앱은 프로젝트의 같은 기록을 같이 읽고 쓴다. 상주 프로세스는 없다(도구 호출 때만 도는 MCP 하나와 훅 둘). 사용자가 직접 치는 명령(스킬)은 두지 않는다: 모든 것은 자연어로 하고 모델이 도구를 부른다.
 스킬은 모델이 부르는 `start-job` 하나다(`skills/start-job`, 호스트 목록에는 `head-context:start-job`). 일을 시작할 때 부르라는 지침은 서버 안내문 첫 줄과 코어 지침 둘 다에 있다.
 첫 실행 초기설정은 프로젝트 `.claude/settings.json`에 `env.CLAUDE_CODE_FORK_SUBAGENT="1"`도 넣는다(기본 포크 켜기, 다른 설정은 그대로, 이미 값이 있거나 JSON이 깨졌으면 손대지 않고 알린다).
 현황판·채널·대화 상태 표시는 코어 밖(추가기능)이다.
@@ -43,7 +43,7 @@
 | session_read | overview(둘러보기: 연결 없이 작업 맥락을 읽기 전용으로, 최근 기록은 작업 세션 전체에서)/map/recent/entry/find/files, 연결을 바꾸지 않음. files는 기록(id) 또는 작업 브랜치(branch)가 가리킨 파일과 그 파일들이 링크·백틱 경로로 가리킨 파일을 나무 모양으로(depth 1~3, 기본 2, 50개까지) |
 | session_todo | add/list/done |
 | session_conversations | 살아 있는 대화: 작업 세션 → 작업 브랜치 → 대화, 안 붙은 대화 묶음. 대화마다 제목·주소·종류·마지막 활동·하는 일. 포크·워커는 띄운 대화가 살아 있으면 그 아래에 한 번만 |
-| project_setup | 첫 실행 초기설정(.head/core.md + CLAUDE.md 한 줄) |
+| project_setup | 첫 실행 초기설정(코어 지침 켜기와 사본 .head/core.md, .claude/settings.json) |
 
 ## 작업 맥락 (시작 훅·session_load)
 
@@ -59,6 +59,10 @@
 ## 흐름 (최신이 위)                    ← git 그래프 모양 지도, 최대 30줄
 ## 이 작업 브랜치의 최근 기록: <이름>  ← 작업 브랜치에 있을 때만: 정리(있으면), 최근 3개 본문, 마지막 다음
 ```
+
+코어 지침(`instructions/HEAD_CORE.md`)도 시작 훅이 넣는다(초기설정 뒤, 시작·/clear·압축 때. 재개·포크 때는 넣지 않음). 0.7은 CLAUDE.md의 `@.head/core.md` import로 넣었는데, Claude Code가 압축 뒤 import한 파일을 Read 결과로 다시 붙여 두 번 들어갔다. Claude에서는 출력 상한에 맞춰 두 출력(`core 1 2`, `core 2 2`)으로 나누고, 순서가 섞여 들어와도 알도록 앞부분 끝과 뒷부분 머리에 꼬리표를 단다.
+- 0.7 프로젝트: 코어 출력이 CLAUDE.md의 import 줄을 빼고(그 줄만 있던 CLAUDE.md는 지움) 코어를 넣는다. 2.1.311은 시작 훅 뒤에 CLAUDE.md를 읽으므로 이 시작부터 한 번만 들어간다.
+- 0.7에서 시작한 대화를 다시 열 때: 호스트가 "지침 파일이 더 이상 없다"를 붙이므로, 그 대화의 기록에 훅이 넣은 코어(꼬리표)가 없으면 한 번 넣는다.
 
 시작 훅은 세 출력으로 나눠 넣는다(시작·/clear·압축 모두, 재개는 아무것도 넣지 않음).
 - 작업 세션: 9,000자를 넘으면 context.md 앞부분과 전문 파일 경로. 연결이 없으면 연결 안 됨 한 줄. 첫 실행 안내도 여기.
@@ -98,7 +102,7 @@ Row = {conversation_id,title,address,last_at,entrypoint,kind:'person'|'copy',par
 
 ## 훅
 
-`hooks/hooks.json`: SessionStart 세 명령(`hook.mjs session|context|recent`), PreCompact 하나(요약 지시), SubagentStart 하나(대화 안 작업에 안내), PreToolUse 하나(`session_*` 도구). 하위 에이전트의 SessionStart는 건너뛴다. 파일 다시 붙이기 막기·스킬 목록 되살리기는 넣지 않았다(지금 버전에서 시험 뒤 정함).
+`hooks/hooks.json`: SessionStart 다섯 명령(`hook.mjs core 1 2|core 2 2|session|context|recent`), PreCompact 하나(요약 지시), SubagentStart 하나(대화 안 작업에 안내), PreToolUse 하나(`session_*` 도구). 하위 에이전트의 SessionStart는 건너뛴다. 파일 다시 붙이기 막기·스킬 목록 되살리기는 넣지 않았다(지금 버전에서 시험 뒤 정함).
 
 ## 파일·색인
 
@@ -119,7 +123,7 @@ Row = {conversation_id,title,address,last_at,entrypoint,kind:'person'|'copy',par
 2. 새 판 설치: 아래 [배포·업데이트](#배포업데이트)의 설치 명령.
 3. 기록 정리: 아래 스크립트를 미리 보기로 돌려 보고 `--apply`. 스크립트는 설치된 플러그인 폴더(`~/.claude/plugins/cache/head-agent-core/head-context/<판>/scripts/`)에 있다.
 4. 자동 업데이트 붙이기: 0.6에서 초기설정을 마친 프로젝트는 초기설정을 다시 묻지 않는다. Claude Code를 다시 연 뒤 모델에게 `project_setup`(action=setup)을 한 번 부르게 한다. 이미 있는 것은 그대로 두고 빠진 것(마켓 `autoUpdate`, 플러그인 켜기, 기본 포크 env)만 더한다.
-5. 한 번 더 다시 연다. 프로젝트의 `.head/core.md`(코어 지침 사본)는 시작할 때마다 새 판의 지침으로 맞춰지지만, `CLAUDE.md`가 그보다 먼저 읽히므로 새 지침은 그다음 시작부터 들어간다.
+5. 한 번 더 다시 연다. 0.8부터 코어 지침은 시작 훅이 새 판 그대로 넣는다(`.head/core.md`는 다른 도구가 읽는 사본).
 
 작업 기록(`.head/sessions/` 등)은 그대로 읽힌다. 지우지 않는다.
 
@@ -128,6 +132,22 @@ Row = {conversation_id,title,address,last_at,entrypoint,kind:'person'|'copy',par
 - 저장 없는 0.6 자동 브랜치(`branch-<시각>-<16진>`, 열림·멈춤, 다른 브랜치가 갈라져 나오지 않은 것). 그 브랜치를 가리키던 대화는 메인으로.
 - 이름표에 ` (fork)`가 반복되면 하나만 남긴다.
 다시 돌려도 더 할 일이 없다.
+
+## Codex 포장
+
+- `.codex-plugin/plugin.json`이 스킬(`skills/`), 도구 서버(`.codex-mcp.json`, 상대 경로 `scripts/codex-mcp.mjs` — Codex는 도구 서버 인자의 `${CLAUDE_PLUGIN_ROOT}`를 풀지 않는다), 훅(`hooks/codex-hooks.json`)을 가리킨다. Codex는 `hooks` 필드의 파일만 읽어서 Claude용 `hooks/hooks.json`과 섞이지 않는다.
+- SessionStart 네 명령(`codex-hook.mjs core|instructions|session|context`, 출력 상한 끔): 코어 지침 전체, 서버 안내문(Codex는 서버 안내문을 시작 때 모델에 주지 않는다), 작업 세션(+ 첫 실행 안내), 작업 맥락. `source`가 resume·fork면 아무것도 넣지 않는다.
+- 대화 ID: 도구 서버가 도구 호출마다 오는 `_meta.threadId`를 읽는다(훅으로 인자를 바꾸지 않는다). 연결 파일은 `.head/state/conversations/codex-<대화ID>.json`.
+- 프로젝트: Codex는 도구 서버를 플러그인 폴더에서 띄우고 프로젝트를 알려 주지 않는다. 시작 훅이 대화 ID와 작업 폴더(cwd)를 플러그인 데이터 폴더의 `threads/<대화ID>.json`에 남기고, 도구 서버가 그것으로 프로젝트를 찾는다. 데이터 폴더는 두 쪽 모두 설치 경로(`<home>/plugins/cache/<마켓>/<플러그인>/<판>` → `<home>/plugins/data/<플러그인>-<마켓>`)에서 구한다.
+- /clear: Codex는 /clear 전 대화를 확정할 단서를 남기지 않아 이어받지 않는다(연결 안 됨 한 줄). 압축 뒤: Codex가 사용자 말 원문을 남기므로 최근 대화를 넣지 않고, 요약 지시(PreCompact)도 쓰지 않는다(Codex 서버 압축은 그 출력을 쓰지 않음).
+- 아직 없는 것: Codex 대화 목록(`session_conversations`는 Codex 대화를 보이지 않음), Codex 하위 작업의 읽기 전용, 대화 간 메시지.
+- 설치: `codex plugin marketplace add Won6314/head-agent-core` → `codex plugin add head-context@head-agent-core`, 첫 실행 때 훅 검토에서 신뢰.
+
+## 0.8.0에서 바뀐 것
+
+- 코어 지침을 두 앱 모두 시작 훅으로 넣는다. 초기설정은 CLAUDE.md를 건드리지 않는다. 0.7 프로젝트의 import 줄은 다음 시작에 빠진다.
+- Codex 포장(위).
+- 도구 서버가 호출마다 프로젝트를 받을 수 있다(`serve({projectOf})`).
 
 ## 0.7.1에서 바뀐 것
 
