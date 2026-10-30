@@ -70,8 +70,9 @@ export function callTool(store, name, args, conversation_id, project, readOnly =
     if (!schema || (schema.type === 'string' ? typeof value !== 'string' : schema.type==='boolean'?typeof value!=='boolean':!Number.isInteger(value)) || (schema.enum&&!schema.enum.includes(value)) || (schema.minimum!==undefined&&value<schema.minimum)) throw new Error(`유효하지 않은 인자: ${key}`);
   }
   for (const key of tool.inputSchema.required) if (!(key in args)) throw new Error(missing[name]?.[key] || `필수 인자: ${key}`);
-  if (name === 'setup') return setupTool(project, args, { host });
   const { agent_id, ...rest } = args;
+  // First-run setup writes project settings: the calling conversation does it, not a task inside it.
+  if (name === 'setup') { if (agent_id || readOnly) throw new Error(FORK_WRITE_REFUSED); return setupTool(project, args, { host }); }
   const writes = WRITES[name];
   if ((agent_id || readOnly) && (typeof writes === 'function' ? writes(rest) : writes)) throw new Error(FORK_WRITE_REFUSED);
   return store[METHODS[name] || name]({ ...rest, conversation_id });

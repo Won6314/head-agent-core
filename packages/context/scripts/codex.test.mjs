@@ -105,11 +105,12 @@ test('Codex subagent: a thread the conversation spawned reads through its conver
   codex(dir, 'session', { id: 'root1', data });
   // Codex names the spawned thread (threadId) and its tree's root (sessionId) on each call.
   const sub = (id, name, args) => ({ jsonrpc: '2.0', id, method: 'tools/call', params: { _meta: { threadId: 'child1', sessionId: 'root1' }, name, arguments: args } });
-  const [load, read, todo, save] = mcp([call(1, 'load', { name: 'demo' }, 'root1'), sub(2, 'read', { action: 'overview', name: 'demo' }), sub(3, 'todo', { action: 'list', name: 'demo' }), sub(4, 'save', { summary: 's', history: 'h' })], { HEAD_CONTEXT_CODEX_DATA: data });
+  const [load, read, todo, save, setupCall] = mcp([call(1, 'load', { name: 'demo' }, 'root1'), sub(2, 'read', { action: 'overview', name: 'demo' }), sub(3, 'todo', { action: 'list', name: 'demo' }), sub(4, 'save', { summary: 's', history: 'h' }), sub(5, 'setup', { action: 'setup' })], { HEAD_CONTEXT_CODEX_DATA: data });
   assert.equal(load.result.isError, undefined);
   assert.equal(read.result.isError, undefined); assert.match(read.result.content[0].text, /SUB DIRECTION/);
   assert.equal(todo.result.isError, undefined);
   assert.equal(save.result.isError, true); assert.equal(save.result.content[0].text, FORK_WRITE_REFUSED);
+  assert.equal(setupCall.result.isError, true); assert.equal(setupCall.result.content[0].text, FORK_WRITE_REFUSED);
   assert.equal(fs.existsSync(path.join(dir, '.head/state/conversations/codex-child1.json')), false);
   // SubagentStart gives the task notice; its prompt hook does not empty the conversation's inbox.
   const hook = (input, part) => spawnSync(process.execPath, [codexScript, part], { input: JSON.stringify(input), env: { PATH: process.env.PATH, HOME: process.env.HOME, HEAD_CONTEXT_CODEX_DATA: data }, encoding: 'utf8' });
