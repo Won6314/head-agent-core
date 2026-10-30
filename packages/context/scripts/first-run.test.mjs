@@ -11,12 +11,12 @@ import {CORE_SOURCE,SURVEY_SOURCE,firstRun,guide,refreshCore} from '../core/proj
 const root=process.env.HEAD_CONTEXT_TEST_ROOT||os.tmpdir();
 const fresh=()=>fs.mkdtempSync(path.join(root,'first-run-'));
 const core=fs.readFileSync(CORE_SOURCE,'utf8');
-const tool=(dir,args)=>callTool(sessions(dir),'project_setup',args,undefined,dir);
+const tool=(dir,args)=>callTool(sessions(dir),'setup',args,undefined,dir);
 const read=(dir,f)=>fs.readFileSync(path.join(dir,f),'utf8');
 const hook=(dir,{id='c1',source='startup',session}={})=>runStart({session_id:id,source,cwd:dir},{env:{CLAUDE_PROJECT_DIR:dir,HEAD_CONTEXT_SESSION:session||''}}).text;
 // An unconnected conversation gets one line first; the first-run guide follows it.
 const guidePart=s=>s.replace('이 대화는 아직 작업 세션에 연결되지 않았습니다.','').trim();
-const mcp=(dir,args)=>{const r=spawnSync(process.execPath,[path.resolve('scripts/mcp.mjs')],{env:{...process.env,CLAUDE_PROJECT_DIR:dir},input:[{jsonrpc:'2.0',id:1,method:'tools/list'},{jsonrpc:'2.0',id:2,method:'tools/call',params:{name:'project_setup',arguments:args}}].map(m=>JSON.stringify(m)).join('\n')+'\n',encoding:'utf8'});return r.stdout.trim().split('\n').map(l=>JSON.parse(l));};
+const mcp=(dir,args)=>{const r=spawnSync(process.execPath,[path.resolve('scripts/mcp.mjs')],{env:{...process.env,CLAUDE_PROJECT_DIR:dir},input:[{jsonrpc:'2.0',id:1,method:'tools/list'},{jsonrpc:'2.0',id:2,method:'tools/call',params:{name:'setup',arguments:args}}].map(m=>JSON.stringify(m)).join('\n')+'\n',encoding:'utf8'});return r.stdout.trim().split('\n').map(l=>JSON.parse(l));};
 
 test('fresh project: start hook asks setup on startup/clear only, setup writes the core copy, leaves CLAUDE.md alone and returns the core',()=>{
   const dir=fresh();
@@ -97,11 +97,11 @@ test('setup turns the built-in fork on in the project settings, keeping what is 
   const four=fresh();fs.mkdirSync(path.join(four,'.claude'));fs.writeFileSync(path.join(four,'.claude/settings.json'),'{ broken');
   assert.match(tool(four,{action:'setup'}),/읽을 수 없는 JSON이라 고치지 않았습니다[^\n]*\n[^\n]*읽을 수 없는 JSON이라 고치지 않았습니다\. 자동 업데이트를 받으려면/);assert.equal(read(four,'.claude/settings.json'),'{ broken');assert.equal(firstRun(four).setup,'done');
 });
-test('real MCP process lists project_setup and runs it in CLAUDE_PROJECT_DIR',()=>{
+test('real MCP process lists setup and runs it in CLAUDE_PROJECT_DIR',()=>{
   const dir=fresh(),[list,call]=mcp(dir,{action:'setup'});
   assert.deepEqual(fs.readdirSync(path.resolve('skills')),['start-job']); // one skill the model loads; none for the user to type
   assert.doesNotMatch(fs.readFileSync(path.resolve('skills/start-job/SKILL.md'),'utf8'),/disable-model-invocation|argument-hint/);
-  const def=list.result.tools.find(t=>t.name==='project_setup');assert.ok(def);assert.equal('conversation_id' in def.inputSchema.properties,false);
+  const def=list.result.tools.find(t=>t.name==='setup');assert.ok(def);assert.equal('conversation_id' in def.inputSchema.properties,false);
   assert.equal(call.result.isError,undefined);assert.ok(call.result.content[0].text.includes(core.trimEnd()));assert.equal(fs.existsSync(path.join(dir,'CLAUDE.md')),false);
 });
 

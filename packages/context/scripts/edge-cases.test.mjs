@@ -23,18 +23,18 @@ test('broken session is reported while valid sources continue; archive/work arti
   assert.deepEqual(data.branches.map(b=>b.name),[]); // the artifact folder is not a branch, and no branch is opened on its own
   assert.equal(data.errors[0].name,'broken');assert.match(s.list(),/broken: 읽기 실패/);
 });
-test('session_create requires a purpose: missing/blank context is refused before any folder exists, for MCP and direct callers',()=>{
+test('create requires a purpose: missing/blank context is refused before any folder exists, for MCP and direct callers',()=>{
   const dir=fs.mkdtempSync(path.join(root,'purpose-')),s=sessions(dir),topics=path.join(dir,'.head/sessions'),reason=/방향\(context\)이 필요합니다\. 목적 없는 작업 세션은 만들지 않습니다/;
   const absent=name=>{assert.equal(fs.existsSync(path.join(topics,name)),false);assert.equal(s.connection('c'),null);};
   assert.throws(()=>s.create({name:'none',conversation_id:'c'}),reason);absent('none');
   assert.throws(()=>s.create({name:'empty',context:'',conversation_id:'c'}),reason);absent('empty');
   assert.throws(()=>s.create({name:'blank',context:' \n\t ',conversation_id:'c'}),reason);absent('blank');
   assert.throws(()=>s.create({name:'typed',context:7,conversation_id:'c'}),/context는 문자열이어야 합니다/);absent('typed');
-  assert.throws(()=>callTool(s,'session_create',{name:'mcp-none'},'c'),reason);absent('mcp-none');
-  assert.throws(()=>callTool(s,'session_create',{name:'mcp-blank',context:'   '},'c'),reason);absent('mcp-blank');
+  assert.throws(()=>callTool(s,'create',{name:'mcp-none'},'c'),reason);absent('mcp-none');
+  assert.throws(()=>callTool(s,'create',{name:'mcp-blank',context:'   '},'c'),reason);absent('mcp-blank');
   assert.deepEqual(withGraph(dir,g=>g.names()),[]);
-  assert.deepEqual(definitions.find(t=>t.name==='session_create').inputSchema.required,['name','context']);
-  assert.match(callTool(s,'session_create',{name:'real',context:'  PURPOSE-LINE  '},'c'),/PURPOSE-LINE/);
+  assert.deepEqual(definitions.find(t=>t.name==='create').inputSchema.required,['name','context']);
+  assert.match(callTool(s,'create',{name:'real',context:'  PURPOSE-LINE  '},'c'),/PURPOSE-LINE/);
   assert.equal(fs.readFileSync(path.join(topics,'real/context.md'),'utf8'),'  PURPOSE-LINE  ');assert.equal(s.connection('c').session,'real');
   assert.match(s.create({name:'real',context:'again',conversation_id:'c2'}),/이미 있습니다/);
 });

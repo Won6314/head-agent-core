@@ -101,7 +101,7 @@ test('to-dos belong to the work session: add, list, done, and the open ones ride
   assert.match(read(dir,'demo','todo.md'),/둘째/);
   s.save({summary:'닫음',history:'x',recap:'r',conversation_id:'a'});
   const loaded=s.load({name:'demo',conversation_id:'b'});
-  assert.match(loaded,/## 할 일 \(열린 4개, 기한 임박 1개\)\n- 기한 2020-01-02 · 메일 '보내기' 확인\n- 넷째\n- 셋째\n\(전체: session_todo list\)/);
+  assert.match(loaded,/## 할 일 \(열린 4개, 기한 임박 1개\)\n- 기한 2020-01-02 · 메일 '보내기' 확인\n- 넷째\n- 셋째\n\(전체: todo list\)/);
   assert.match(s.todo({action:'done',match:'째',conversation_id:'b'}),/3개라 바꾸지 않았습니다/);
   assert.match(s.todo({action:'done',match:'둘째',conversation_id:'b'}),/끝냄: 둘째/);
   assert.match(read(dir,'demo','todo.md'),/- \[x\] [^\n]+ "둘째"/);
@@ -112,15 +112,15 @@ test('to-dos belong to the work session: add, list, done, and the open ones ride
 });
 test('a fork or subagent (agent_id) may read but not write; the tool surface carries the rules',()=>{
   const {s}=setup();s.save({summary:'메인',history:'본문',conversation_id:'a'});
-  for(const [name,args] of [['session_save',{summary:'x',history:'y'}],['session_branch',{action:'create',branch:'f'}],['session_load',{name:'demo'}],
-    ['session_create',{name:'other',context:'c'}],['session_todo',{action:'add',text:'t'}],['session_todo',{action:'done',match:'t'}]])
+  for(const [name,args] of [['save',{summary:'x',history:'y'}],['branch',{action:'create',branch:'f'}],['load',{name:'demo'}],
+    ['create',{name:'other',context:'c'}],['todo',{action:'add',text:'t'}],['todo',{action:'done',match:'t'}]])
     assert.throws(()=>callTool(s,name,{...args,agent_id:'fork-1'},'a'),new RegExp(FORK_WRITE_REFUSED.slice(0,20)));
-  assert.match(callTool(s,'session_read',{action:'recent',agent_id:'fork-1'},'a'),/본문/);
-  assert.match(callTool(s,'session_list',{agent_id:'fork-1'},'a'),/demo/);
-  assert.match(callTool(s,'session_todo',{action:'list',agent_id:'fork-1'},'a'),/열린 할 일이 없습니다/);
+  assert.match(callTool(s,'read',{action:'recent',agent_id:'fork-1'},'a'),/본문/);
+  assert.match(callTool(s,'list',{agent_id:'fork-1'},'a'),/demo/);
+  assert.match(callTool(s,'todo',{action:'list',agent_id:'fork-1'},'a'),/열린 할 일이 없습니다/);
   assert.equal(definitions.some(t=>t.name==='session_finish'),false);
-  assert.throws(()=>callTool(s,'session_branch',{action:'create',branch:'x',label:'y'},'a'),/유효하지 않은 인자: label/);
-  assert.throws(()=>callTool(s,'session_branch',{action:'main'},'a'),/유효하지 않은 인자: action/);
+  assert.throws(()=>callTool(s,'branch',{action:'create',branch:'x',label:'y'},'a'),/유효하지 않은 인자: label/);
+  assert.throws(()=>callTool(s,'branch',{action:'main'},'a'),/유효하지 않은 인자: action/);
   for(const word of ['작업 세션','작업 브랜치','저장'])assert.match(instructions,new RegExp(word));
   assert.doesNotMatch(instructions,/기본 포크|저장하지 않습니다|부모 대화/); // no fork save rule in the instructions: the tools refuse, the start notice tells
   assert.doesNotMatch(FORK_WRITE_REFUSED,/포크|하위 에이전트/);
@@ -133,9 +133,9 @@ test('a fork or subagent (agent_id) may read but not write; the tool surface car
   assert.doesNotMatch(core,/\[forked\]|graph-selected/);assert.match(core,/the canon it names, and the records and files it names/);
   assert.doesNotMatch(skill,/기본 포크와 같지만|확인하고 저장한다/);assert.match(skill,/\| 사이드 포크 \(데스크톱\) \| 사용자가 따로 이어서 대화하며 진행할 일 \|/);assert.match(skill,/- 포크·에이전트의 결과는 받은 쪽이 확인한다\.\n/);
   for(const old of ['자리','이름표','작업 주제','지금까지 요약','체크포인트'])assert.doesNotMatch(instructions,new RegExp(old));
-  assert.match(instructions,/\n\n할 일\n- 무엇: 작업 세션에 남는 나중에 할 일입니다\. 작업 브랜치가 닫혀도 남습니다\.\n- 언제: [^\n]+session_todo add[^\n]+session_todo done/);
-  assert.match(instructions,/\n\n다른 대화\n- 무엇: 이 프로젝트에서 살아 있는 대화와[^\n]+\n- 언제: [^\n]+session_conversations[^\n]+목록의 보낼 곳으로 SendMessage를 씁니다\.$/);
-  const save=definitions.find(t=>t.name==='session_save').description;
+  assert.match(instructions,/\n\n할 일\n- 무엇: 작업 세션에 남는 나중에 할 일입니다\. 작업 브랜치가 닫혀도 남습니다\.\n- 언제: [^\n]+todo add[^\n]+todo done/);
+  assert.match(instructions,/\n\n다른 대화\n- 무엇: 이 프로젝트에서 살아 있는 대화와[^\n]+\n- 언제: [^\n]+conversations[^\n]+목록의 보낼 곳으로 SendMessage를 씁니다\.$/);
+  const save=definitions.find(t=>t.name==='save').description;
   assert.match(instructions,/- 작업 파일: 작업 세션 폴더의 work\/YYYY-MM\/YYYY-MM-DD-<이름>\.md[^\n]+work\/<작업명>\/[^\n]+결과 파일 경로를 이 규칙대로 정해 줍니다\./);
   for(const rule of ['근거 파일 링크와 그 내용','work\\/YYYY-MM\\/YYYY-MM-DD-<이름>\\.md','먼저 파일로 남기고 링크','실행 증거\\(ID·명령·로그\\)는 넣지 않습니다','같은 경계의 일은 모아 한 번에'])assert.match(save,new RegExp(rule));
 });

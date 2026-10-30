@@ -8,7 +8,9 @@ import { instructionLine } from '../../core/instruction.mjs';
 // <pid>.json with {pid, sessionId, cwd, entrypoint, name, hostSessionId (desktop), ...}.
 // It is removed when the process ends and leftovers from a crash are cleared on the next
 // run. That file is the witness of a running conversation: no /proc, no process tree.
-export const registryDir = () => process.env.HEAD_CONTEXT_CLAUDE_SESSIONS || path.join(os.homedir(), '.claude', 'sessions');
+// Claude Code's own folder: CLAUDE_CONFIG_DIR when set, else ~/.claude.
+export const claudeDir = () => process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
+export const registryDir = () => process.env.HEAD_CONTEXT_CLAUDE_SESSIONS || path.join(claudeDir(), 'sessions');
 export const registryOf = pid => (Number.isInteger(Number(pid)) ? readJSON(path.join(registryDir(), `${Number(pid)}.json`)) : null);
 export const conversationOfPid = pid => registryOf(pid)?.sessionId || null;
 export function registry() {
@@ -42,7 +44,7 @@ export const RECENT_DAYS = 7;
 // Claude Code writes each conversation's records under ~/.claude/projects/<folder>, the
 // folder being the project path with every other character than a letter or digit
 // turned into '-'.
-export const projectsDir = () => process.env.HEAD_CONTEXT_CLAUDE_PROJECTS || path.join(os.homedir(), '.claude', 'projects');
+export const projectsDir = () => process.env.HEAD_CONTEXT_CLAUDE_PROJECTS || path.join(claudeDir(), 'projects');
 export const transcriptsOf = project => path.join(projectsDir(), path.resolve(project).replace(/[^A-Za-z0-9]/g, '-'));
 // The desktop app keeps its own record of each conversation it hosts:
 // <root>/<account>/<org>/local_<id>.json, naming the engine conversation (cliSessionId).
@@ -100,6 +102,8 @@ export function recentPrompts(file) {
 //   The desktop app stops idle processes on its own and starts them again when a message
 //   arrives, so a desktop conversation has no "ended": there, one whose records changed
 //   within RECENT_DAYS counts as alive. That window is what is shown, not a liveness test.
+//   reachable: whether a message from outside Claude (a Codex conversation) can reach it now —
+//   only a running process with its inbox socket takes one.
 export function liveConversations(project, known = new Map(), { now = Date.now(), days = RECENT_DAYS } = {}) {
   const out = new Map(), root = path.resolve(project), recent = now - days * 86400000;
   const dir = transcriptsOf(project), stamp = id => { try { return fs.statSync(path.join(dir, `${id}.jsonl`)).mtimeMs; } catch { return null; } };
@@ -110,7 +114,7 @@ export function liveConversations(project, known = new Map(), { now = Date.now()
     const k = known.get(r.sessionId) || {};
     out.set(r.sessionId, { conversation_id: r.sessionId, title: r.name || k.title,
       address: r.messagingSocketPath ? `uds:${r.messagingSocketPath}` : r.hostSessionId || r.name || k.host_session_id,
-      last_at: stamp(r.sessionId) || r.updatedAt || null, entrypoint: r.entrypoint, ...prompts(r.sessionId, r.entrypoint) });
+      last_at: stamp(r.sessionId) || r.updatedAt || null, entrypoint: r.entrypoint, reachable: Boolean(r.messagingSocketPath), ...prompts(r.sessionId, r.entrypoint) });
   }
   let files = [];
   try { files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl')); } catch { }
@@ -122,7 +126,7 @@ export function liveConversations(project, known = new Map(), { now = Date.now()
     const k = known.get(id) || {}, d = app().get(id);
     const entrypoint = k.entrypoint || (d ? DESKTOP : entrypointOf(path.join(dir, f)));
     if (entrypoint !== DESKTOP || d?.archived) continue;
-    out.set(id, { conversation_id: id, title: k.title || d?.title, address: k.host_session_id || d?.host_session_id, last_at: at, entrypoint, ...prompts(id, entrypoint) });
+    out.set(id, { conversation_id: id, title: k.title || d?.title, address: k.host_session_id || d?.host_session_id, last_at: at, entrypoint, reachable: false, ...prompts(id, entrypoint) });
   }
   return [...out.values()].sort((a, b) => (b.last_at || 0) - (a.last_at || 0));
 }

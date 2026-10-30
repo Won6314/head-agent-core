@@ -1,6 +1,8 @@
 {
-  "context": {
+  "session": {
     "command": "node",
-    "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/mcp.mjs"]
+    "args": [
+      "${CLAUDE_PLUGIN_ROOT}/scripts/mcp.mjs"
+    ]
   }
 }

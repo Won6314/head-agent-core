@@ -90,11 +90,11 @@ test('the start hook: a fork or subagent start is skipped, a tool call gets the 
   assert.equal(runStart({session_id:'c',agent_id:'a1',source:'startup',cwd:st.dir},env).text,'');
   assert.equal(runStart({session_id:'c',source:'resume',cwd:st.dir},env).text,''); // a resume already holds its context
   assert.match(run({hook_event_name:'PreCompact',session_id:'c',cwd:st.dir}).stdout,/^OVERRIDE FOR THIS SUMMARY[\s\S]*이전 대화는 요약하지 않는다\. 압축 직전의 최근 대화/);
-  const plain=JSON.parse(run({hook_event_name:'PreToolUse',session_id:'c',tool_name:'mcp__plugin_head-context_context__session_save',tool_input:{summary:'s',agent_id:'forged'},cwd:st.dir}).stdout).hookSpecificOutput.updatedInput;
+  const plain=JSON.parse(run({hook_event_name:'PreToolUse',session_id:'c',tool_name:'mcp__plugin_head-context_session__save',tool_input:{summary:'s',agent_id:'forged'},cwd:st.dir}).stdout).hookSpecificOutput.updatedInput;
   assert.deepEqual(plain,{summary:'s',conversation_id:'c'});
-  const fork=JSON.parse(run({hook_event_name:'PreToolUse',session_id:'c',agent_id:'abb2338b',agent_type:'fork',tool_name:'mcp__plugin_head-context_context__session_read',tool_input:{action:'map'},cwd:st.dir}).stdout).hookSpecificOutput.updatedInput;
+  const fork=JSON.parse(run({hook_event_name:'PreToolUse',session_id:'c',agent_id:'abb2338b',agent_type:'fork',tool_name:'mcp__plugin_head-context_session__read',tool_input:{action:'map'},cwd:st.dir}).stdout).hookSpecificOutput.updatedInput;
   assert.deepEqual(fork,{action:'map',conversation_id:'c',agent_id:'abb2338b'});
-  assert.equal(run({hook_event_name:'PreToolUse',session_id:'c',tool_name:'mcp__plugin_head-context_context__project_setup',tool_input:{action:'setup'},cwd:st.dir}).stdout,'');
+  assert.equal(run({hook_event_name:'PreToolUse',session_id:'c',tool_name:'mcp__plugin_head-context_session__setup',tool_input:{action:'setup'},cwd:st.dir}).stdout,'');
   for(const e of ['Stop','SessionEnd','UserPromptSubmit'])assert.equal(run({hook_event_name:e,session_id:'c',cwd:st.dir}).stdout,'');
   for(const agent_type of ['fork','general-purpose']){
     const sub=JSON.parse(run({hook_event_name:'SubagentStart',session_id:'c',agent_id:'a9',agent_type,cwd:st.dir}).stdout).hookSpecificOutput;
@@ -119,8 +119,8 @@ test('alive conversations: a running process anywhere, a desktop conversation ac
   const ids=liveConversations(st.dir).map(c=>c.conversation_id).sort();
   assert.deepEqual(ids,['cli-on','desk','desk-loose']);
   const out=s.conversations({conversation_id:'cli-on'});
-  assert.match(out,/## demo\n- 메인\n  - 이름 앱 제목 desk · 보낼 곳 local_desk · 사람 · 마지막 [^\n]+\n    하는 일: [^\n]+\n- 작업 브랜치 job\n  - 이름 name-cli-on · 보낼 곳 name-cli-on · [^\n]*마지막 [^\n]+ \(이 대화\)\n    하는 일: 주제: job/);
-  assert.match(out,/## 작업 세션 없음\n- 보낼 곳 \(모름\) · 사람/);
+  assert.match(out,/## demo\n- 메인\n  - 이름 앱 제목 desk · 보낼 곳 local_desk · Claude · 사람 · 마지막 [^\n]+\n    하는 일: [^\n]+\n- 작업 브랜치 job\n  - 이름 name-cli-on · 보낼 곳 name-cli-on · [^\n]*마지막 [^\n]+ \(이 대화\)\n    하는 일: 주제: job/);
+  assert.match(out,/## 작업 세션 없음\n- 보낼 곳 \(모름\) · Claude · 사람/);
   assert.match(s.conversations({name:'demo'}),/## demo/);assert.doesNotMatch(s.conversations({name:'demo'}),/작업 세션 없음/);
   // After the branch closes its conversations show under the session.
   s.save({summary:'끝',history:'x',recap:'r',conversation_id:'cli-on'});
@@ -190,9 +190,9 @@ test('one work session with several live conversations: each has its own inbox a
   st.transcript('b',[user('<pasted_content id="x">\n기억 기능 보강 계획을 세워 보자\n</pasted_content id="x">')]);
   st.transcript('f',[user('부모의 오래된 첫 말입니다 길게'),user('[forked] 처음 맡은 일'),user('[forked] 지금 맡은 일입니다\n자세히'),user('[quick_task completed] cqt-x 끝남 알림')]);
   const out=s.conversations({conversation_id:'a'});
-  assert.match(out,/- 메인\n  - 이름 head-2b · 보낼 곳 uds:\/run\/x\/a\.sock · 사람 · [^\n]+\(이 대화\)\n    하는 일: 최근 지시: "herdr에 새 pane 열어서 네가 해봐라"/);
-  assert.match(out,/- 작업 브랜치 기억기능-보강\n  - 이름 head-2b · 보낼 곳 uds:\/run\/x\/b\.sock · 사람[^\n]*\n    하는 일: 주제: 기억기능-보강 · 최근 지시: "기억 기능 보강 계획을 세워 보자"/);
-  assert.match(out,/이름 head-03 · 보낼 곳 uds:\/run\/x\/f\.sock · 포크·워커[^\n]*\n    하는 일: 맡은 일: "지금 맡은 일입니다"\n/);
+  assert.match(out,/- 메인\n  - 이름 head-2b · 보낼 곳 uds:\/run\/x\/a\.sock · Claude · 사람 · [^\n]+\(이 대화\)\n    하는 일: 최근 지시: "herdr에 새 pane 열어서 네가 해봐라"/);
+  assert.match(out,/- 작업 브랜치 기억기능-보강\n  - 이름 head-2b · 보낼 곳 uds:\/run\/x\/b\.sock · Claude · 사람[^\n]*\n    하는 일: 주제: 기억기능-보강 · 최근 지시: "기억 기능 보강 계획을 세워 보자"/);
+  assert.match(out,/이름 head-03 · 보낼 곳 uds:\/run\/x\/f\.sock · Claude · 포크·워커[^\n]*\n    하는 일: 맡은 일: "지금 맡은 일입니다"\n/);
   assert.match(out,/보내기: SendMessage\(to: 보낼 곳\)/);
 });
 test('0.7.1: a copy run by a program sits once, under the live conversation that started it; summaries ride on main and branches',t=>{
@@ -219,7 +219,7 @@ test('0.7.1: a copy run by a program sits once, under the live conversation that
   const a=demo.conversations[0];assert.equal(a.kind,'person');assert.deepEqual(a.children.map(c=>c.conversation_id),['f']);
   assert.equal(a.children[0].kind,'copy');assert.equal(a.children[0].parent,'a');assert.match(a.children[0].doing,/^맡은 일: "포크가 맡은 일입니다"/);
   const out=s.conversations({conversation_id:'a'});
-  assert.match(out,/  - 이름 head-a · [^\n]+\(이 대화\)\n    하는 일: 최근 지시: "사람이 시킨 말입니다 길게" · 마지막 저장: MAIN-OWN\n      - 이름 head-f · 보낼 곳 uds:\/run\/x\/f\.sock · 포크·워커[^\n]*\n        하는 일: 맡은 일: "포크가 맡은 일입니다"/);
+  assert.match(out,/  - 이름 head-a · [^\n]+\(이 대화\)\n    하는 일: 최근 지시: "사람이 시킨 말입니다 길게" · 마지막 저장: MAIN-OWN\n      - 이름 head-f · 보낼 곳 uds:\/run\/x\/f\.sock · Claude · 포크·워커[^\n]*\n        하는 일: 맡은 일: "포크가 맡은 일입니다"/);
   assert.equal(out.match(/head-f/g).length,1);
   assert.doesNotMatch(job.conversations[0].doing,/마지막 저장/); // a branch has its topic instead
 });
@@ -244,12 +244,12 @@ test('0.7.1: a conversation run by claude -p reads records but its writes are re
   t.after(after);const st=stage(),s=api(st.dir);s.create({name:'demo',context:'D',conversation_id:'p'});
   st.running(process.pid,'p');s.start({conversation_id:'k',origins:[{conversation_id:'p',kind:'parent'}]});
   const call=(entry,name,args)=>{const r=spawnSync(process.execPath,[path.resolve(path.dirname(new URL(import.meta.url).pathname),'../hosts/claude/mcp.mjs')],{env:{...process.env,CLAUDE_PROJECT_DIR:st.dir,CLAUDE_CODE_ENTRYPOINT:entry},input:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:{conversation_id:'k',...args}}})+'\n',encoding:'utf8'});return JSON.parse(r.stdout).result;};
-  const refused=call('sdk-cli','session_save',{summary:'x',history:'y'});assert.equal(refused.isError,true);assert.match(refused.content[0].text,/읽기만 됩니다/);
-  assert.equal(call('sdk-cli','session_todo',{action:'add',text:'t'}).isError,true);
-  assert.equal(call('sdk-cli','session_list',{}).isError,undefined);
-  assert.equal(call('sdk-cli','session_todo',{action:'list'}).isError,undefined);
-  assert.equal(call('cli','session_save',{summary:'x',history:'y'}).isError,undefined);
-  assert.equal(call('claude-vscode','session_save',{summary:'x2',history:'y'}).isError,undefined);
+  const refused=call('sdk-cli','save',{summary:'x',history:'y'});assert.equal(refused.isError,true);assert.match(refused.content[0].text,/읽기만 됩니다/);
+  assert.equal(call('sdk-cli','todo',{action:'add',text:'t'}).isError,true);
+  assert.equal(call('sdk-cli','list',{}).isError,undefined);
+  assert.equal(call('sdk-cli','todo',{action:'list'}).isError,undefined);
+  assert.equal(call('cli','save',{summary:'x',history:'y'}).isError,undefined);
+  assert.equal(call('claude-vscode','save',{summary:'x2',history:'y'}).isError,undefined);
 });
 test('0.7.1: a branch save climbs back up in its links, and its files still resolve',t=>{
   t.after(after);const st=stage(),s=api(st.dir);s.create({name:'demo',context:'D',conversation_id:'c'});

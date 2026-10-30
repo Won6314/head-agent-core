@@ -17,7 +17,7 @@ const fixture = t => {
   return { base, real: path.join(real, 'project'), project: path.join(alias, 'project'), data: path.join(base, 'data') };
 };
 const run = (script, args, input, env = {}) => {
-  const r = spawnSync(process.execPath, [path.resolve('scripts', script), ...args], { input, encoding: 'utf8', env });
+  const r = spawnSync(process.execPath, [path.resolve('scripts', script), ...args], { input, encoding: 'utf8', env: { CODEX_HOME: path.join(os.tmpdir(), 'head-context-test-codex-home'), ...env } });
   assert.equal(r.status, 0); assert.equal(r.stderr.replace(/\(node:\d+\) ExperimentalWarning:[^\n]*\n/g, '').replace(/\(Use `node --trace-warnings[^\n]*\n/g, ''), '');
   return r.stdout;
 };
@@ -26,20 +26,20 @@ const hook = (host, f, part, id = 'new', source = 'startup') => {
   return out ? JSON.parse(out).hookSpecificOutput.additionalContext : '';
 };
 const tool = (host, f, name, args, id = 'new') => {
-  const out = run(host === 'claude' ? 'mcp.mjs' : 'codex-mcp.mjs', [], JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: { ...args, ...(name.startsWith('session_') ? { conversation_id: id } : {}) }, _meta: { threadId: id } } }) + '\n', { CLAUDE_PROJECT_DIR: f.project, HEAD_CONTEXT_CODEX_DATA: f.data });
+  const out = run(host === 'claude' ? 'mcp.mjs' : 'codex-mcp.mjs', [], JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: { ...args, ...(name !== 'setup' ? { conversation_id: id } : {}) }, _meta: { threadId: id } } }) + '\n', { CLAUDE_PROJECT_DIR: f.project, HEAD_CONTEXT_CODEX_DATA: f.data });
   const result = JSON.parse(out).result;
   assert.notEqual(result.isError, true, JSON.stringify(result));
   return result.content[0].text;
 };
 
-test('ancestor links: both hosts set up, start and session_load through the original cwd', t => {
+test('ancestor links: both hosts set up, start and load through the original cwd', t => {
   for (const host of ['claude', 'codex']) {
     const f = fixture(t);
     assert.match(hook(host, f, ['session']), /초기설정/);
-    assert.match(tool(host, f, 'project_setup', { action: 'setup' }), /초기설정을 마쳤습니다/);
+    assert.match(tool(host, f, 'setup', { action: 'setup' }), /초기설정을 마쳤습니다/);
     sessions(f.real).create({ name: 'demo', context: 'LINK CONTEXT', conversation_id: 'seed' });
     assert.match(hook(host, f, host === 'claude' ? ['core', '1', '2'] : ['core']), /# HEAD Core/);
-    assert.match(tool(host, f, 'session_load', { name: 'demo' }), /LINK CONTEXT/);
+    assert.match(tool(host, f, 'load', { name: 'demo' }), /LINK CONTEXT/);
     assert.match(hook(host, f, ['session'], 'new', 'compact'), /LINK CONTEXT/);
     assert.equal(sessions(f.real, { host }).connection('new').session, 'demo');
     if (host === 'codex') assert.equal(JSON.parse(fs.readFileSync(path.join(f.data, 'threads/new.json'))).cwd, f.project);
@@ -81,7 +81,7 @@ test('0.8.0 connection records survive alias/real cwd changes, including old Cod
   for (const host of ['claude', 'codex']) {
     const id = `old-${host}`;
     assert.equal(sessions(f.project, { host }).connection(id).branch, 'ongoing');
-    const out = tool(host, f, 'session_load', {}, id);
+    const out = tool(host, f, 'load', {}, id);
     assert.match(out, /LEGACY 0.8.0 CONTEXT/); assert.match(out, /LEGACY NEXT/);
     assert.match(hook(host, f, ['session'], id, 'compact'), /LEGACY 0.8.0 CONTEXT/);
     assert.equal(sessions(f.real, { host }).connection(id).branch, 'ongoing');

@@ -31,11 +31,11 @@ test('work context: data only — the work session part, then open branches, to-
   assert.doesNotMatch(text,/BODY-2|NEXT-4|요약:|demo\/main@|MAIN FULL BODY/);
   // No reading guide in the data: the meaning lives in the server instructions.
   assert.doesNotMatch(text,/읽는 법|이어 가거나|자리|이름표|남은 일/);
-  assert.match(s.load({conversation_id:'seed',map_limit:3}),/그 앞 4개 — session_read map/);
+  assert.match(s.load({conversation_id:'seed',map_limit:3}),/그 앞 4개 — read map/);
   const main=s.load({name:'demo',conversation_id:'other'});assert.match(main,/이 대화의 작업 브랜치: 없음\(메인\)/);assert.doesNotMatch(main,/BODY-/);
 });
 test('Claude start hook: each part is its own output; the work context over the cap is cut down to fit while the work session part still arrives',()=>{
-  const {dir,s}=fixture();callTool(s,'project_setup',{action:'never_ask',step:'setup'},undefined,dir); // the first-run guide is covered in first-run.test
+  const {dir,s}=fixture();callTool(s,'setup',{action:'never_ask',step:'setup'},undefined,dir); // the first-run guide is covered in first-run.test
   const start=(id,source='startup')=>runStart({session_id:id,source,cwd:dir},{env:{CLAUDE_PROJECT_DIR:dir,HEAD_CONTEXT_SESSION:'demo'}});
   const small=start('small');assert.equal(small.text,s.load({conversation_id:'small'}));assert.equal(small.parts.recent,'');
   assert.equal(start('small','resume').text,'');
@@ -43,7 +43,7 @@ test('Claude start hook: each part is its own output; the work context over the 
   for(let i=0;i<5;i++)s.save({summary:'BIG-'+i,history:'긴 본문 '.repeat(800),next:'더',conversation_id:'seed'});
   const big=start('seed','compact').parts;
   assert.match(big.session,/^# 작업 세션: demo\nFLOW DIRECTION\n\n이 대화의 작업 브랜치: big$/);
-  assert.ok(big.context.length<=9000);assert.doesNotMatch(big.context,/session_load를 불러/);
+  assert.ok(big.context.length<=9000);assert.doesNotMatch(big.context,/load를 불러/);
   assert.match(big.context,/## 열린 작업 브랜치 \(1\)\n- big \(이 대화\) · 마지막 [^\n]+ · 다음: 더/);assert.match(big.context,/BIG-4\n[\s\S]*\n\n다음: 더$/);assert.doesNotMatch(big.context,/### [^\n]+BIG-2/);
   assert.equal(fs.existsSync(path.join(dir,'.head/state/pending-load')),false);
 });
@@ -53,14 +53,14 @@ test('the work context is cut down in order: fewer saves, then bodies to their f
   const fit=budget=>withGraph(dir,g=>fittedContext(g,{name:'demo',stem:'job',todos:[{text:'TODO-STAYS',due:'',created:'2026-10-19'}],today:'2026-10-19'},budget));
   const one=fit(9000);assert.ok(one.length<=9000);
   const id=/### ([0-9a-f]{5}) [^\n]+ HUGE-2\n/.exec(one)[1];
-  assert.match(one,new RegExp(`### ${id} [^\\n]+ HUGE-2\\nHEAD-OF-BODY [^\\n]* …\\(전문: session_read entry ${id}\\)\\n\\n다음: NEXT-2$`));
+  assert.match(one,new RegExp(`### ${id} [^\\n]+ HUGE-2\\nHEAD-OF-BODY [^\\n]* …\\(전문: read entry ${id}\\)\\n\\n다음: NEXT-2$`));
   assert.doesNotMatch(one,/### [^\n]+ HUGE-1\n/);assert.match(one,/## 열린 작업 브랜치 \(1\)\n- job \(이 대화\)[^\n]+다음: NEXT-2/);assert.match(one,/TODO-STAYS/);
   // A long map goes to 15 lines once the bodies are short.
   for(let i=0;i<40;i++)s.save({summary:`LONG-${i} `+'요약 '.repeat(120),history:'b',next:'NEXT-LAST',conversation_id:'seed'});
   const two=fit(9000);assert.ok(two.length<=9000);
-  assert.equal((/## 흐름 \(최신이 위\)\n([\s\S]*?)\n그 앞 \d+개 — session_read map/.exec(two)[1]).split('\n').length,15);
+  assert.equal((/## 흐름 \(최신이 위\)\n([\s\S]*?)\n그 앞 \d+개 — read map/.exec(two)[1]).split('\n').length,15);
   assert.match(two,/\n\n다음: NEXT-LAST$/);assert.match(two,/TODO-STAYS/);
-  // session_load is not cut.
+  // load is not cut.
   assert.match(s.load({conversation_id:'seed'}),/## 흐름 \(최신이 위\)\n(?:[^\n]*\n){30}그 앞/);
 });
 test('overview: a work session read without connecting — context.md whole, open branches, to-dos, the map, the newest saves of the whole session',()=>{
@@ -73,8 +73,8 @@ test('overview: a work session read without connecting — context.md whole, ope
   assert.match(out,/## 할 일 \(열린 1개\)\n- TODO-X/);assert.match(out,/## 흐름 \(최신이 위\)\n\| \* [0-9a-f]{5} [^\n]+ JOB-2 \(job\)\n/);
   assert.match(out,/## 최근 기록 \(작업 세션 전체, 3개\)\n\n### [^\n]+ MAIN SUMMARY\nMAIN FULL BODY\n\n### [^\n]+ JOB-1\nJOB-BODY-1\n\n### [^\n]+ JOB-2\nJOB-BODY-2\n\n다음: JOB-NEXT-2$/);
   assert.doesNotMatch(out,/이 대화|HEAD ->/);
-  assert.equal(callTool(s,'session_read',{action:'overview',name:'demo',agent_id:'f'},'x'),out);
-  assert.match(callTool(s,'session_read',{action:'overview'},'seed'),/^# 작업 세션: demo/); // a connected conversation may leave the name out
+  assert.equal(callTool(s,'read',{action:'overview',name:'demo',agent_id:'f'},'x'),out);
+  assert.match(callTool(s,'read',{action:'overview'},'seed'),/^# 작업 세션: demo/); // a connected conversation may leave the name out
 });
 test('OpenCode pushes the work context with the instructions and fills the tool ids; a native child may only read',async()=>{
   const {dir,s}=fixture();const before=process.env.HEAD_CONTEXT_SESSION;
@@ -86,7 +86,7 @@ test('OpenCode pushes the work context with the instructions and fills the tool 
     assert.deepEqual(args,{action:'map',conversation_id:'ses_parent'});
     const child={summary:'x',history:'y'};await hooks['tool.execute.before']({sessionID:'ses_child',tool:'head_context_session_save'},{args:child});
     assert.deepEqual(child,{summary:'x',history:'y',conversation_id:'ses_parent',agent_id:'ses_child'});
-    assert.throws(()=>callTool(sessions(dir,{host:'opencode'}),'session_save',{summary:'x',history:'y',agent_id:'ses_child'},'ses_parent'),/저장합니다/);
+    assert.throws(()=>callTool(sessions(dir,{host:'opencode'}),'save',{summary:'x',history:'y',agent_id:'ses_child'},'ses_parent'),/저장합니다/);
     const again={system:[]};await hooks['experimental.chat.system.transform']({sessionID:'ses_parent'},again);assert.match(again.system.join('\n'),/FLOW DIRECTION/);
   }finally{if(before===undefined)delete process.env.HEAD_CONTEXT_SESSION;else process.env.HEAD_CONTEXT_SESSION=before;}
 });

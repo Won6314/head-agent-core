@@ -1,9 +1,15 @@
 {
   "mcpServers": {
-    "context": {
+    "session": {
       "command": "node",
-      "args": ["scripts/codex-mcp.mjs"],
-      "cwd": "."
+      "args": [
+        "scripts/codex-mcp.mjs"
+      ],
+      "cwd": ".",
+      "env_vars": [
+        "CODEX_HOME",
+        "CLAUDE_CONFIG_DIR"
+      ]
     }
   }
 }

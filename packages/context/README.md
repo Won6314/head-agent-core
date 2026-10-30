@@ -1,4 +1,4 @@
-# head-context 0.8.1 — 작업 세션·작업 브랜치·저장
+# head-context 0.9.0 — 작업 세션·작업 브랜치·저장
 
 작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 작업 맥락을 다시 불러온다.
 살아 있는 대화를 작업 세션·작업 브랜치와 묶어 보여 준다. 포크·새 대화·대화 사이 메시지는 호스트(Claude Code) 기능을 그대로 쓴다.
@@ -21,7 +21,7 @@
 ## 동작
 
 - 대화는 처음에 아무 작업 세션에도 붙지 않는다. 작업 세션을 불러오거나 만들면 그 메인에 붙는다. 작업 브랜치를 자동으로 만들지 않는다.
-- 작업 브랜치는 이름을 주고 연다(`session_branch create`). 다른 작업 브랜치로 옮기거나 대화가 끝나도 떠난 작업 브랜치는 열린 채 남는다.
+- 작업 브랜치는 이름을 주고 연다(`branch create`). 다른 작업 브랜치로 옮기거나 대화가 끝나도 떠난 작업 브랜치는 열린 채 남는다.
   한 작업 브랜치를 여러 대화가 이어도 되고(attach), 작업 브랜치 없이 메인에 바로 기록해도 된다.
 - 작업 브랜치는 next 없는 저장으로만 닫힌다. 그 저장은 recap(전체 정리)이 필수이고, 메인에 합침 항목 하나를 쓰며, 저장한 대화는 메인으로 돌아온다.
   닫힌 작업 브랜치에 붙어 있던 다른 대화는 메인에 기록한다. 닫힌 작업 브랜치에 attach하면 다시 열린다. 사용자가 그만둔 일은 abandon(이유 필수).
@@ -31,23 +31,26 @@
 - 작업 브랜치 저장의 상대 링크(`[이름](work/…)`)는 브랜치 파일 자리에서도 열리게 `../../`을 붙여 적는다. 색인은 기록 파일 폴더 → 작업 세션 폴더 순으로 찾는다.
 - 할 일은 작업 세션의 `todo.md`(작업 브랜치가 닫혀도 남는다). 줄 형식은 앞선 도구와 같다: `- [ ] 2026-09-18 기한 2026-09-23(수) "원문"`.
 
-## 도구 (호스트가 conversation_id·agent_id를 채움)
+## 도구 (도구 서버 이름 `session`, 호스트가 conversation_id·agent_id를 채움)
+
+Claude Code에서는 `mcp__plugin_head-context_session__<도구>`, Codex에서는 `mcp__session__<도구>`로 보인다.
 
 | 도구 | 하는 일 |
 |---|---|
-| session_list | 작업 세션 목록: 이름, context.md 첫 문장, 메인 최신 요약, 열린 작업 브랜치 수 |
-| session_load | 작업 세션 불러오기·연결, 작업 맥락 반환. branch로 작업 브랜치 이어 가기, branch=main은 메인 |
-| session_create | 새 작업 세션(context 필수), 메인에 연결 |
-| session_save | 기록. next 없으면 작업 브랜치를 닫음(recap 필수) |
-| session_branch | create(이름 필수)/attach/abandon(reason 필수) |
-| session_read | overview(둘러보기: 연결 없이 작업 맥락을 읽기 전용으로, 최근 기록은 작업 세션 전체에서)/map/recent/entry/find/files, 연결을 바꾸지 않음. files는 기록(id) 또는 작업 브랜치(branch)가 가리킨 파일과 그 파일들이 링크·백틱 경로로 가리킨 파일을 나무 모양으로(depth 1~3, 기본 2, 50개까지) |
-| session_todo | add/list/done |
-| session_conversations | 살아 있는 대화: 작업 세션 → 작업 브랜치 → 대화, 안 붙은 대화 묶음. 대화마다 제목·주소·종류·마지막 활동·하는 일. 포크·워커는 띄운 대화가 살아 있으면 그 아래에 한 번만 |
-| project_setup | 첫 실행 초기설정(코어 지침 켜기와 사본 .head/core.md, .claude/settings.json) |
+| list | 작업 세션 목록: 이름, context.md 첫 문장, 메인 최신 요약, 열린 작업 브랜치 수 |
+| load | 작업 세션 불러오기·연결, 작업 맥락 반환. branch로 작업 브랜치 이어 가기, branch=main은 메인 |
+| create | 새 작업 세션(context 필수), 메인에 연결 |
+| save | 기록. next 없으면 작업 브랜치를 닫음(recap 필수) |
+| branch | create(이름 필수)/attach/abandon(reason 필수) |
+| read | overview(둘러보기: 연결 없이 작업 맥락을 읽기 전용으로, 최근 기록은 작업 세션 전체에서)/map/recent/entry/find/files, 연결을 바꾸지 않음. files는 기록(id) 또는 작업 브랜치(branch)가 가리킨 파일과 그 파일들이 링크·백틱 경로로 가리킨 파일을 나무 모양으로(depth 1~3, 기본 2, 50개까지) |
+| todo | add/list/done |
+| conversations | 살아 있는 대화: 작업 세션 → 작업 브랜치 → 대화, 안 붙은 대화 묶음. 대화마다 제목·주소·종류·마지막 활동·하는 일. 포크·워커는 띄운 대화가 살아 있으면 그 아래에 한 번만 |
+| setup | 첫 실행 초기설정(코어 지침 켜기와 사본 .head/core.md, .claude/settings.json) |
+| send (Codex만) | 다른 대화에 메시지 보내기. threadId에 대화 목록의 보낼 곳(`claude:<ID>`·`codex:<ID>`), prompt에 보낼 말. Claude Code는 원래 SendMessage를 쓴다 |
 
-## 작업 맥락 (시작 훅·session_load)
+## 작업 맥락 (시작 훅·load)
 
-데이터만 담는다. 무슨 뜻인지는 서버 안내문(`core/mcp.mjs` instructions)에 한 번만 있다. session_load는 두 부분을 이어서 돌려준다.
+데이터만 담는다. 무슨 뜻인지는 서버 안내문(`core/mcp.mjs` instructions)에 한 번만 있다. load는 두 부분을 이어서 돌려준다.
 
 ```
 # 작업 세션: <이름>                    ← 작업 세션 부분: 반드시 들어온다
@@ -66,7 +69,7 @@
 
 시작 훅은 세 출력으로 나눠 넣는다(시작·/clear·압축 모두, 재개는 아무것도 넣지 않음).
 - 작업 세션: 9,000자를 넘으면 context.md 앞부분과 전문 파일 경로. 연결이 없으면 연결 안 됨 한 줄. 첫 실행 안내도 여기.
-- 작업 맥락: 9,000자를 넘으면 이 순서로 줄여 맞춘다: 최근 본문 3→2→1개, 본문 앞부분 + `(전문: session_read entry <ID>)`, 지도 30→15줄. 열린 작업 브랜치·할 일·마지막 다음은 끝까지 남는다(session_load 결과는 줄이지 않음).
+- 작업 맥락: 9,000자를 넘으면 이 순서로 줄여 맞춘다: 최근 본문 3→2→1개, 본문 앞부분 + `(전문: read entry <ID>)`, 지도 30→15줄. 열린 작업 브랜치·할 일·마지막 다음은 끝까지 남는다(load 결과는 줄이지 않음).
 - 최근 대화(압축·/clear 직후만): 직전 주고받기 5번의 원문(사용자가 친 말·작업 중에 보낸 말·질문 창 답, 모델 답 중 보이는 글). 도구 호출·결과·생각·훅/시스템 알림·명령 줄은 빼고, 그 앞 사용자 말은 버린다. /clear 뒤에는 /clear 전 대화의 기록 파일에서 읽는다. 넘치면 앞쪽 주고받기부터 빼고 기록 파일 경로를 적는다.
 
 상한은 출력 하나마다 따로다(2.1.303 실측: 한 출력이 10,000자를 넘으면 2KB 미리보기와 파일 경로로 바뀌고, 9,000자 출력 넷은 합계 36,000자로 전부 들어옴). 출력들은 나란히 돌아 들어오는 순서가 정해져 있지 않다.
@@ -87,12 +90,12 @@
 
 ## 현황 데이터 (추가기능용)
 
-현황판·폰 화면 같은 코어 밖 도구는 `hosts/claude/tree.mjs`의 `claudeTree(project, {name})`로 `session_conversations`와 같은 데이터를 받는다. 부를 때마다 등록 파일과 기록 끝을 읽어 만들고 저장하지 않는다.
+현황판·폰 화면 같은 코어 밖 도구는 `hosts/claude/tree.mjs`의 `claudeTree(project, {name})`로 `conversations`와 같은 데이터(Claude Code·Codex 대화 함께)를 받는다. 부를 때마다 등록 파일과 기록 끝을 읽어 만들고 저장하지 않는다.
 
 ```
 {timezone, sessions:[{name, main:{last_summary,last_at}, conversations:[Row],
   branches:[{name,title,next,last_at,last_summary,conversations:[Row]}]}], loose:[Row]}
-Row = {conversation_id,title,address,last_at,entrypoint,kind:'person'|'copy',parent,said,task,doing,session,stem,children:[Row]}
+Row = {conversation_id,host:'claude'|'codex',title,address,reachable,last_at,entrypoint,kind:'person'|'copy',parent,said,task,doing,session,stem,children:[Row]}
 ```
 
 - `kind:'copy'`이고 부모가 살아 있으면 부모의 `children`에만 들어간다. 부모가 없으면 자기 줄기의 맨 뒤(사람 다음)에 남는다.
@@ -102,14 +105,14 @@ Row = {conversation_id,title,address,last_at,entrypoint,kind:'person'|'copy',par
 
 ## 훅
 
-`hooks/hooks.json`: SessionStart 다섯 명령(`hook.mjs core 1 2|core 2 2|session|context|recent`), PreCompact 하나(요약 지시), SubagentStart 하나(대화 안 작업에 안내), PreToolUse 하나(`session_*` 도구). 하위 에이전트의 SessionStart는 건너뛴다. 파일 다시 붙이기 막기·스킬 목록 되살리기는 넣지 않았다(지금 버전에서 시험 뒤 정함).
+`hooks/hooks.json`: SessionStart 다섯 명령(`hook.mjs core 1 2|core 2 2|session|context|recent`), PreCompact 하나(요약 지시), SubagentStart 하나(대화 안 작업에 안내), PreToolUse 하나(`session` 서버 도구, setup 제외), 모드 하나(`hooks/conversations.mjs`: SendMessage의 `codex:` 대상). 하위 에이전트의 SessionStart는 건너뛴다. 파일 다시 붙이기 막기·스킬 목록 되살리기는 넣지 않았다(지금 버전에서 시험 뒤 정함).
 
 ## 파일·색인
 
 - `sessions/<이름>/context.md`, `history.md`(메인), `work/<작업 브랜치>/history.md`, `todo.md`. 파일이 원본이다.
 - `.head/index.sqlite`: 위치·구조만 담는 색인(files/nodes/edges, 스키마 2). 손상·버전 불일치면 파일에서 다시 만든다.
   `linkfiles`/`links`는 files가 물을 때만 채우는 파일→파일 링크 캐시다(수정 시각·크기가 바뀐 파일만 다시 읽음, 1MB 초과·글 아닌 파일·URL·없는 파일 제외).
-- 작업 파일 규칙: 작업 세션 폴더의 `work/YYYY-MM/YYYY-MM-DD-<이름>.md`(여러 개면 같은 이름 폴더), 커지면 `work/<작업명>/`으로 옮기고 가리키던 기록 링크도 고친다. 서버 안내문과 session_save 설명에 있다.
+- 작업 파일 규칙: 작업 세션 폴더의 `work/YYYY-MM/YYYY-MM-DD-<이름>.md`(여러 개면 같은 이름 폴더), 커지면 `work/<작업명>/`으로 옮기고 가리키던 기록 링크도 고친다. 서버 안내문과 save 설명에 있다.
 - 작업 브랜치 파일 머리의 `이름표:`·`갈래:`·`상태:` 줄과 메인의 색인 줄(`이름표: … · 본문: …`)은 파일 형식이라 그대로 둔다.
 - 지도는 `git log --graph`처럼 저장 하나가 한 줄(짧은 ID 5자, MM-DD HH:MM, 요약), 메인이 첫 열. 시각은 `.head/config.json`의 `timezone`, 없으면 컴퓨터 시간대.
   표기도 git 관례 그대로: 줄기 끝에 `(main)`·`(이름)`, 이 대화가 있는 줄기는 `(HEAD -> 이름)`, 닫힌 작업 브랜치의 합침은 `Merge branch '이름'`(0.6의 멈춤 합침도), 중단은 `Abandon branch '이름': 이유`. 줄기 끝에 상태 말은 붙이지 않는다.
@@ -122,7 +125,7 @@ Row = {conversation_id,title,address,last_at,entrypoint,kind:'person'|'copy',par
 1. 예전 판 떼기: `/plugin uninstall head-context@head-local`, `/plugin marketplace remove head-local`. 프로젝트·사용자 settings에 `head-local`이 남아 있으면(`extraKnownMarketplaces`, `enabledPlugins`) 지운다.
 2. 새 판 설치: 아래 [배포·업데이트](#배포업데이트)의 설치 명령.
 3. 기록 정리: 아래 스크립트를 미리 보기로 돌려 보고 `--apply`. 스크립트는 설치된 플러그인 폴더(`~/.claude/plugins/cache/head-agent-core/head-context/<판>/scripts/`)에 있다.
-4. 자동 업데이트 붙이기: 0.6에서 초기설정을 마친 프로젝트는 초기설정을 다시 묻지 않는다. Claude Code를 다시 연 뒤 모델에게 `project_setup`(action=setup)을 한 번 부르게 한다. 이미 있는 것은 그대로 두고 빠진 것(마켓 `autoUpdate`, 플러그인 켜기, 기본 포크 env)만 더한다.
+4. 자동 업데이트 붙이기: 0.6에서 초기설정을 마친 프로젝트는 초기설정을 다시 묻지 않는다. Claude Code를 다시 연 뒤 모델에게 `setup`(action=setup)을 한 번 부르게 한다. 이미 있는 것은 그대로 두고 빠진 것(마켓 `autoUpdate`, 플러그인 켜기, 기본 포크 env)만 더한다.
 5. 한 번 더 다시 연다. 0.8부터 코어 지침은 시작 훅이 새 판 그대로 넣는다(`.head/core.md`는 다른 도구가 읽는 사본).
 
 작업 기록(`.head/sessions/` 등)은 그대로 읽힌다. 지우지 않는다.
@@ -140,8 +143,33 @@ Row = {conversation_id,title,address,last_at,entrypoint,kind:'person'|'copy',par
 - 대화 ID: 도구 서버가 도구 호출마다 오는 `_meta.threadId`를 읽는다(훅으로 인자를 바꾸지 않는다). 연결 파일은 `.head/state/conversations/codex-<대화ID>.json`.
 - 프로젝트: Codex는 도구 서버를 플러그인 폴더에서 띄우고 프로젝트를 알려 주지 않는다. 시작 훅이 대화 ID와 작업 폴더(cwd)를 플러그인 데이터 폴더의 `threads/<대화ID>.json`에 남기고, 도구 서버가 그것으로 프로젝트를 찾는다. 데이터 폴더는 두 쪽 모두 설치 경로(`<home>/plugins/cache/<마켓>/<플러그인>/<판>` → `<home>/plugins/data/<플러그인>-<마켓>`)에서 구한다.
 - /clear: Codex는 /clear 전 대화를 확정할 단서를 남기지 않아 이어받지 않는다(연결 안 됨 한 줄). 압축 뒤: Codex가 사용자 말 원문을 남기므로 최근 대화를 넣지 않고, 요약 지시(PreCompact)도 쓰지 않는다(Codex 서버 압축은 그 출력을 쓰지 않음).
-- 아직 없는 것: Codex 대화 목록(`session_conversations`는 Codex 대화를 보이지 않음), Codex 하위 작업의 읽기 전용, 대화 간 메시지.
+- UserPromptSubmit 한 명령(`codex-hook.mjs inbox`): 바로 깨우지 못한 동안 쌓인 메시지를 입력과 함께 넣는다.
+- 도구 서버는 Codex가 띄우는 동안만 돌고, 플러그인이 따로 띄우는 상주 프로그램은 없다. Codex 설정 파일은 쓰지 않는다.
+- 아직 없는 것: Codex 하위 작업의 읽기 전용.
 - 설치: `codex plugin marketplace add Won6314/head-agent-core` → `codex plugin add head-context@head-agent-core`, 첫 실행 때 훅 검토에서 신뢰.
+
+## 대화 간 메시지 (Claude Code ↔ Codex)
+
+LLM은 자기 앱의 보내기 도구에 대화 목록(`conversations`)의 보낼 곳을 그대로 준다. 두 앱의 대화가 한 목록에 함께 나온다.
+
+| 보내는 쪽 | 도구 | 받는 쪽 | 가는 길 |
+|---|---|---|---|
+| Claude Code | 원래 SendMessage(to) | Claude (`uds:…`) | 원래 그대로 |
+| Claude Code | 원래 SendMessage(to) | Codex (`codex:<ID>`) | 모드(`hooks/conversations.mjs`)가 가로채 `scripts/relay.mjs`로 넘기고 원래와 같이 보냄으로 답한다 |
+| Codex | 이 플러그인의 send(threadId, prompt) | Claude (`claude:<ID>`) | Claude의 받은 편지함 소켓(등록 파일 `messagingSocketPath`)에 Claude끼리 보내는 모양으로 넣는다(`hosts/claude/deliver.mjs`) |
+| Codex | 이 플러그인의 send | Codex (`codex:<ID>`) | 아래 받기 |
+
+- Codex에서 받기(`hosts/codex/deliver.mjs`): 받는 대화가 공용 엔진(`codex app-server --listen unix://`, 터미널 Codex가 스스로 띄우고 붙는다)에서 돌면 그 엔진에 `turn/start`를 보내 바로 깨운다. Codex 원래 send_message_to_thread와 같은 위임 모양이라 화면에 "Sent by Codex from task <보낸 곳>"이 뜬다. 창 안에서 엔진이 도는 창과 데스크톱 앱은 바깥에서 깨울 문이 없어 편지함(`.head/state/inbox/codex-<ID>/`)에 두고, 다음 입력 때 넣는다. 편지함은 이름 바꾸기로 가져갈 권리를 잡아 한 메시지를 한 번만 준다(가져간 쪽이 넣은 직후 지우기 전에 죽거나 10분 넘게 멈추면 한 번 더 들어갈 수 있다).
+- Codex의 원래 send_message_to_thread는 Codex 대화로만 가고, 플러그인이 끌 수 없다(끄려면 사용자 설정 파일을 고쳐야 한다). 그래서 남겨 두고, Codex 안내문에서 대화 간 메시지는 send를 쓰라고 안내한다.
+- 대화 목록의 Codex 대화: 시작 훅이 `.head/state/presence/codex-<ID>.json`에 어느 엔진에서 도는지 남기고, 입력 훅이 갱신한다. 살아 있음은 목록을 그릴 때 본다: 공용 엔진은 엔진이 들고 있는 대화(창을 닫아도 엔진이 30분쯤 들고 있다), 창 안 엔진은 그 프로세스, 데스크톱은 기록이 7일 안에 바뀐 것.
+- 실행 중이 아닌 Claude 대화(데스크톱이 내린 대화)는 Codex 목록에 "지금은 받지 못함"이 붙고, 보내면 실패를 돌려준다.
+- Claude 등록 파일과 기록은 `CLAUDE_CONFIG_DIR`을 따른다(없으면 `~/.claude`). Codex 도구 서버에는 `.codex-mcp.json`의 env_vars로 넘긴다.
+- 화면 없이 띄운 Claude 대화(`claude -p`)를 띄운 쪽이 `HEAD_CONTEXT_PERSON=1`로 띄우면 포크·워커가 아니라 사람 대화로 센다(기록 쓰기도 됨).
+
+## 0.9.0에서 바뀐 것
+
+- 도구 서버 이름을 `context`에서 `session`으로, 도구 이름에서 `session_`·`project_` 머리를 뗐다(`load`, `save`, `branch`, `todo`, `list`, `read`, `create`, `conversations`, `setup`). 플러그인 이름은 그대로다. 옛 이름을 적어 둔 권한 설정·지침은 고쳐야 한다.
+- 대화 간 메시지(위 절), 두 앱 통합 대화 목록, 화면 없는 Claude 사람 대화 표시.
 
 ## 0.8.1에서 바뀐 것
 
@@ -157,7 +185,7 @@ Row = {conversation_id,title,address,last_at,entrypoint,kind:'person'|'copy',par
 ## 0.7.1에서 바뀐 것
 
 - `claude -p`로 도는 대화: 띄운 대화 아래 하위로 묶고, 쓰기를 거절한다. 부모는 `HEAD_CONTEXT_PARENT` 또는 복사된 기록의 `forkedFrom`.
-- `session_conversations`: 하위 묶기, 메인 대화의 하는 일에 메인의 마지막 저장. 현황 데이터 `claudeTree()`·`doing()`을 내보냄.
+- `conversations`: 하위 묶기, 메인 대화의 하는 일에 메인의 마지막 저장. 현황 데이터 `claudeTree()`·`doing()`을 내보냄.
 - 작업 브랜치 저장의 상대 링크가 브랜치 파일에서도 열림.
 - 서버 안내문: 작업 세션은 사용자에게 물은 뒤 만든다.
 - `report()`: `child_conversation_id`, 이전 `kind` 유지.
@@ -178,6 +206,6 @@ Row = {conversation_id,title,address,last_at,entrypoint,kind:'person'|'copy',par
 ## 시험
 
 ```bash
-HEAD_CONTEXT_TEST_ROOT=<절대 시험 폴더> node --test scripts/*.test.mjs
+HEAD_CONTEXT_TEST_ROOT=<짧은 절대 시험 폴더(소켓 경로 길이 제한)> node --test scripts/*.test.mjs
 node scripts/map.mjs <절대 프로젝트> <작업 세션> 30
 ```

@@ -28,7 +28,8 @@ import { guide, refreshCore, coreParts, migrateImport, claudeImports, CORE_MARK 
 //     line out (migrateImport) before giving the core. A conversation begun under 0.7 held
 //     the core through that import only, and on resume the host swaps in the CLAUDE.md as
 //     it is now: such a conversation (its records carry no core from this hook) gets it once.
-const TOOL = /^mcp__plugin_head-context_context__session_/;
+// Every tool of this server but setup (a project's, not a conversation's).
+const TOOL = /^mcp__plugin_head-context_session__(?!setup$)/;
 // Whether a conversation's records already carry the core this hook gives (its first part's line).
 const heldCore = transcript => { try { return !transcript || fs.readFileSync(transcript, 'utf8').includes(CORE_MARK); } catch { return true; } };
 const part = process.argv[2];
@@ -58,11 +59,15 @@ try {
       // that conversation. Named by the starter, or read from the copied records.
       const entrypoint = process.env.CLAUDE_CODE_ENTRYPOINT;
       if (entrypoint) info.entrypoint = entrypoint;
-      if (isCopy(entrypoint)) {
+      // A headless conversation its starter marked as a person's is not a copy.
+      const person = process.env.HEAD_CONTEXT_PERSON === '1';
+      if (person) info.person = true;
+      if (isCopy(entrypoint) && !person) {
         const parent = process.env.HEAD_CONTEXT_PARENT || (input.transcript_path ? copiedFrom(input.transcript_path, input.session_id) : null);
         if (parent && parent !== input.session_id) info.parent = parent;
       }
       const place = store.start({ ...where(), info });
+      if (!place && person) store.note(input.session_id, { person: true, entrypoint });
       // First run: refresh the project copy of the core (applies next start, since CLAUDE.md
       // is read before this hook), and on a fresh start add the short setup/survey guide.
       let first = '';

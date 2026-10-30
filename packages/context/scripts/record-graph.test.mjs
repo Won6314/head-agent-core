@@ -79,11 +79,11 @@ test('legacy labels/fallback/connection and actual old 0.3 store append read as 
   fs.writeFileSync(path.join(dir,'.head/state/conversations/claude-c.json'),JSON.stringify({host:'claude',conversation_id:'c',session:'demo',work:'old'}));
   const {sessions:oldSessions}=await import(new URL('../core/sessions.mjs',import.meta.url).href);
   oldSessions(dir,{host:'claude'}).save({summary:'old MCP append',history:'old resident code',next:'cursor',conversation_id:'c'});
-  const oldMcp=spawnSync(process.execPath,[fileURLToPath(new URL('../hosts/claude/mcp.mjs',import.meta.url))],{env:{...process.env,CLAUDE_PROJECT_DIR:dir,CLAUDE_CODE_ENTRYPOINT:'cli'},input:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'session_save',arguments:{conversation_id:'c',summary:'real old MCP',history:'stdio old process body',next:'old cursor'}}})+'\n',encoding:'utf8'});
+  const oldMcp=spawnSync(process.execPath,[fileURLToPath(new URL('../hosts/claude/mcp.mjs',import.meta.url))],{env:{...process.env,CLAUDE_PROJECT_DIR:dir,CLAUDE_CODE_ENTRYPOINT:'cli'},input:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'save',arguments:{conversation_id:'c',summary:'real old MCP',history:'stdio old process body',next:'old cursor'}}})+'\n',encoding:'utf8'});
   assert.equal(oldMcp.status,0);assert.equal(JSON.parse(oldMcp.stdout).result.isError,undefined);
   const data=withGraph(dir,g=>g.recent('demo','main',0));assert.equal(data.length,3);assert.equal(data[0].summary,'context_run old summary');assert.equal(data[1].summary,'old MCP append');assert.equal(data[2].summary,'real old MCP');
   assert.equal(withGraph(dir,g=>g.branches('demo').length),0);
-  assert.throws(()=>callTool(s,'session_save',{summary:'x',history:'y',work:'old'},'c'),/유효하지 않은 인자: work/);
+  assert.throws(()=>callTool(s,'save',{summary:'x',history:'y',work:'old'},'c'),/유효하지 않은 인자: work/);
   // A record from before branches existed keeps its session and works on main.
   const started=s.start({conversation_id:'c'});assert.equal(started.session,'demo');assert.equal(started.stem,'main');
   assert.match(s.identity({conversation_id:'c'}),/## 흐름 \(최신이 위\)[\s\S]*real old MCP/);
@@ -92,7 +92,7 @@ test('other-session map does not rebind, load returns direction/map/body, MCP su
   const {dir,s}=fixture();save(s,'main');s.create({name:'other',context:'OTHER',conversation_id:'other'});save(s,'other','other');
   assert.match(s.inspect({action:'map',name:'other',conversation_id:'c'}),/^# 지도: other\n\* [0-9a-f]{5} [^\n]+ other/);assert.equal(s.connection('c').session,'demo');
   const loaded=s.load({conversation_id:'c'});assert.match(loaded,/DIRECTION_SECRET_19/);assert.match(loaded,/## 흐름/);assert.doesNotMatch(loaded,/# 지도:|BODY_SECRET/);
-  assert.match(callTool(s,'session_read',{action:'recent',count:1},'c'),/BODY_SECRET/);assert.throws(()=>callTool(s,'session_read',{action:'oops'},'c'));
+  assert.match(callTool(s,'read',{action:'recent',count:1},'c'),/BODY_SECRET/);assert.throws(()=>callTool(s,'read',{action:'oops'},'c'));
   const hook=runStart({session_id:'c',source:'compact',cwd:dir},{env:{CLAUDE_PROJECT_DIR:dir}});
   assert.match(hook.parts.session,/DIRECTION_SECRET_19/);assert.match(hook.parts.context,/## 흐름/);assert.ok(hook.parts.session.length<10000&&hook.parts.context.length<10000);
 });
@@ -133,6 +133,6 @@ test('files: a record’s files and the files they link, as a tree — each once
   assert.match(s.inspect({action:'files',id:many,name:'demo'}),/^# 파일: /);
   assert.throws(()=>s.inspect({action:'files',id:short,depth:4,conversation_id:'c'}),/depth는 1~3/);
   assert.throws(()=>s.inspect({action:'files',conversation_id:'c'}),/id\(기록 지도 ID\) 또는 branch/);
-  assert.throws(()=>callTool(s,'session_read',{action:'files',id:short,depth:0},'c'),/유효하지 않은 인자: depth/);
-  assert.match(callTool(s,'session_read',{action:'files',id:short,agent_id:'fork'},'c'),/a\.md/); // a read: allowed in a fork
+  assert.throws(()=>callTool(s,'read',{action:'files',id:short,depth:0},'c'),/유효하지 않은 인자: depth/);
+  assert.match(callTool(s,'read',{action:'files',id:short,agent_id:'fork'},'c'),/a\.md/); // a read: allowed in a fork
 });

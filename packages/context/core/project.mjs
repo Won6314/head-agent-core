@@ -97,7 +97,7 @@ export function migrateImport(project){
   return true;
 }
 export const claudeImports=project=>hasImport(optionalRead(files(project).claude));
-const surveyQuestion=()=>`"프로젝트 조사해볼까요?"를 물으세요. 예면 ${SURVEY_SOURCE} 절차를 따르고 끝나면 project_setup(action=survey_done). 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 project_setup(action=never_ask, step=survey).`;
+const surveyQuestion=()=>`"프로젝트 조사해볼까요?"를 물으세요. 예면 ${SURVEY_SOURCE} 절차를 따르고 끝나면 setup(action=survey_done). 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=survey).`;
 // Start-hook guide, kept short to stay inside the hook cap together with the identity.
 // What setup writes, as told on each host. The .claude/settings.json lines are Claude Code
 // settings: on Codex they are written too (the same project may be opened with Claude Code
@@ -107,7 +107,7 @@ const settingsWhat=host=>host==='codex'
   :`프로젝트 \`.claude/settings.json\`에 기본 포크를 켜는 env 한 줄과, 새 판을 자동으로 받도록 이 플러그인의 마켓(GitHub ${MARKETPLACE_REPO})과 플러그인 켜기를 넣습니다(파일이 없으면 만들고 기존 내용은 그대로 둡니다)`;
 export function guide(project,{host='claude'}={}){
   const s=firstRun(project);
-  if(!s.setup)return `# 프로젝트 첫 실행 (head-context)\n이 프로젝트는 초기설정 전입니다. 사용자의 첫 입력에 답하기 전에 먼저 짧게 "초기설정 해도 될까요?"를 물으세요. 초기설정은 HEAD 코어 지침을 이 프로젝트에서 켜고(시작할 때마다 들어가며, 사본을 \`.head/core.md\`에 둡니다), ${settingsWhat(host)}.\n- 예: project_setup(action=setup)을 부르고, 돌려받은 코어 지침을 이 대화부터 따르세요.\n- 아니오: "다시는 묻지 않을까요?"를 물으세요. 예면 project_setup(action=never_ask, step=setup), 아니오면 아무것도 기록하지 않습니다(다음 시작에 다시 묻습니다).\n답을 받은 뒤 사용자의 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.`;
+  if(!s.setup)return `# 프로젝트 첫 실행 (head-context)\n이 프로젝트는 초기설정 전입니다. 사용자의 첫 입력에 답하기 전에 먼저 짧게 "초기설정 해도 될까요?"를 물으세요. 초기설정은 HEAD 코어 지침을 이 프로젝트에서 켜고(시작할 때마다 들어가며, 사본을 \`.head/core.md\`에 둡니다), ${settingsWhat(host)}.\n- 예: setup(action=setup)을 부르고, 돌려받은 코어 지침을 이 대화부터 따르세요.\n- 아니오: "다시는 묻지 않을까요?"를 물으세요. 예면 setup(action=never_ask, step=setup), 아니오면 아무것도 기록하지 않습니다(다음 시작에 다시 묻습니다).\n답을 받은 뒤 사용자의 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.`;
   if(s.setup==='done'&&!s.survey&&surveyReady())return `# 프로젝트 조사 (head-context)\n사용자의 첫 입력에 답하기 전에 먼저 짧게 ${surveyQuestion()} 답을 받은 뒤 원래 이야기로 이어가세요.`;
   return '';
 }

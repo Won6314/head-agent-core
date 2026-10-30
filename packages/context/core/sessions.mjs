@@ -47,7 +47,9 @@ function lastOwn(g,session,stem){
 //     conversation can be addressed when its process is gone.
 //   live(known) — the conversations alive now ([{conversation_id, title, address,
 //     last_at}]); `known` is the connection records, for what only they remember.
-export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],now=()=>Date.now()}={}){
+//   peers — the other apps' conversations of this project ([{host, live}], live as above),
+//     listed beside this host's own: one list for Claude Code and Codex alike.
+export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],peers=[],now=()=>Date.now()}={}){
   const {topics,state,timezone}=locations(project);
   const directory=name=>{validName(name);if(name.startsWith('_'))throw new Error('보관 폴더는 작업 세션이 아닙니다.');return noSymlink(path.join(topics,name));};
   const connection=id=>id?JSON.parse(optionalRead(recordFile(state,'conversations',id,host))||'null'):null;
@@ -106,8 +108,8 @@ export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],no
       else if(MAIN.includes(branch))stem='main';
       else{
         validName(branch);const header=g.header(selected,branch);
-        if(!header)throw new Error(`작업 브랜치 '${branch}'이 없습니다. 새로 열려면 session_branch create입니다.`);
-        if(header.status===ABANDONED)throw new Error('중단한 작업 브랜치입니다. 기록은 session_read로 읽으세요.');
+        if(!header)throw new Error(`작업 브랜치 '${branch}'이 없습니다. 새로 열려면 branch create입니다.`);
+        if(header.status===ABANDONED)throw new Error('중단한 작업 브랜치입니다. 기록은 read로 읽으세요.');
         stem=branch;
       }
       bind(selected,stem,conversation_id);
@@ -175,11 +177,17 @@ export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],no
   // A copy run by a program (a fork or worker, kind 'copy') whose parent is alive is shown
   // once, under that parent (children), not again on its own line.
   const tree=({name}={})=>withGraph(project,g=>{
-    const known=new Map(records(path.join(state,'conversations')).filter(c=>c.host===host).map(c=>[c.conversation_id,c]));
+    const all=records(path.join(state,'conversations'));
     const titles=new Map();
-    const rows=live(known).map(c=>{const bound=known.get(c.conversation_id),inSession=bound?.session&&g.names().includes(bound.session);
-      const kind=kindKey(c.entrypoint||bound?.entrypoint);
-      return {...c,kind,parent:kind==='copy'?(c.parent||bound?.parent||null):null,session:inSession?bound.session:null,stem:inSession?effective(bound,g):'main',children:[]};});
+    // A conversation its starter marked as a person's (HEAD_CONTEXT_PERSON) is one, whatever
+    // runs it (a headless claude -p behind a phone app).
+    const rows=[{host,live},...peers].flatMap(source=>{
+      const known=new Map(all.filter(c=>c.host===source.host).map(c=>[c.conversation_id,c]));
+      let list=[];try{list=source.live(known)||[];}catch{list=[];}
+      return list.map(c=>{const bound=known.get(c.conversation_id),inSession=bound?.session&&g.names().includes(bound.session);
+        const kind=bound?.person?'person':kindKey(c.entrypoint||bound?.entrypoint);
+        return {...c,host:source.host,kind,parent:kind==='copy'?(c.parent||bound?.parent||null):null,session:inSession?bound.session:null,stem:inSession?effective(bound,g):'main',children:[]};});
+    });
     const byId=new Map(rows.map(r=>[r.conversation_id,r]));
     // Nest copies under a live parent; a loop or a missing parent leaves the copy where it is.
     const top=[];
@@ -200,17 +208,27 @@ export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],no
       loose:name?[]:top.filter(r=>!r.session)};
     const fill=(r,last)=>{r.doing=doing(r,r.stem!=='main'?titles.get(`${r.session}\0${r.stem}`):undefined,r.kind==='copy'?null:last);r.children.forEach(k=>fill(k));};
     for(const s of out.sessions){s.conversations.forEach(r=>fill(r,s.main.last_summary));for(const b of s.branches)b.conversations.forEach(r=>fill(r));}
-    out.loose.forEach(fill);
+    out.loose.forEach(r=>fill(r));
     return out;
   });
+  // Where to send, as the calling app's send tool takes it: a Claude conversation's inbox
+  // (uds:…) for Claude's SendMessage, claude:<id> for Codex's send; a Codex conversation is
+  // codex:<id> for both.
+  const addressOf=c=>{
+    if(c.host==='codex')return `codex:${c.conversation_id}`;
+    if(c.host==='claude'&&host==='codex')return `claude:${c.conversation_id}`;
+    return c.address||'(모름)';
+  };
+  const APP={claude:'Claude',codex:'Codex'};
   const conversations=({name,conversation_id}={})=>{
     const data=tree({name}),time=clock(data.timezone);
     // One conversation and, indented under it, the copies it started.
     const show=(c,pad='  ')=>{
-      const head=[c.title&&`이름 ${c.title}`,`보낼 곳 ${c.address||'(모름)'}`,kindOf(c.entrypoint),c.last_at&&`마지막 ${time(new Date(c.last_at).toISOString())}`].filter(Boolean).join(' · ');
+      const head=[c.title&&`이름 ${c.title}`,`보낼 곳 ${addressOf(c)}`,APP[c.host]||c.host,c.kind==='person'?'사람':kindOf(c.entrypoint),c.last_at&&`마지막 ${time(new Date(c.last_at).toISOString())}`,host!==c.host&&c.reachable===false&&'지금은 받지 못함(실행 중이 아님)'].filter(Boolean).join(' · ');
       return [`${pad}- ${head}${c.conversation_id===conversation_id?' (이 대화)':''}`,`${pad||'  '}  하는 일: ${c.doing}`,...(c.children||[]).flatMap(k=>show(k,`${pad}    `))];
     };
-    const lines=['# 살아 있는 대화 (작업 세션 → 작업 브랜치 → 대화)','보내기: SendMessage(to: 보낼 곳). 이름은 여러 대화가 같을 수 있어 보낼 곳을 그대로 씁니다. 보낼 곳은 대화가 다시 시작하면 바뀌므로 방금 읽은 이 목록의 것을 씁니다.'];
+    const how=host==='codex'?'send(threadId: 보낼 곳, prompt)':'SendMessage(to: 보낼 곳)';
+    const lines=['# 살아 있는 대화 (작업 세션 → 작업 브랜치 → 대화)',`보내기: ${how}. 이름은 여러 대화가 같을 수 있어 보낼 곳을 그대로 씁니다. 보낼 곳은 대화가 다시 시작하면 바뀌므로 방금 읽은 이 목록의 것을 씁니다.`];
     for(const s of data.sessions){
       const has=s.conversations.length||s.branches.some(b=>b.conversations.length);
       lines.push('',`## ${s.name}`);
@@ -243,8 +261,11 @@ export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],no
       return place&&{session:place.session,stem:effective(place,g),from:place.from||null};
     });
   };
+  // Facts about a conversation that are not its place (a person's mark), kept on its
+  // connection file whether or not it works in a session.
+  const note=(id,info)=>{if(!id)return;const previous=connection(id)||{};atomicJSON(recordFile(state,'conversations',id,host),{...previous,...info,host,conversation_id:id});};
   return {
-    connection,load,save,todo,conversations,tree,
+    connection,load,save,todo,conversations,tree,note,
     names:()=>withGraph(project,g=>g.names()),
     list:()=>withGraph(project,g=>[topicList(g),...g.errors.map(e=>`${e.name}: 읽기 실패 — ${e.error}`)].join('\n')),
     // One work session's open branches, for adapters outside the core.

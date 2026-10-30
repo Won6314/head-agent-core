@@ -36,7 +36,7 @@ const linked=body=>[...[...body.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map(m=>m[1])
 function references(body,dirs){
   return [...new Set(linked(body).map(value=>resolveRef(value,dirs)).filter(Boolean))];
 }
-// What a file points at, for session_read files: only links and backtick paths, resolved
+// What a file points at, for read files: only links and backtick paths, resolved
 // against the file's own folder and then its session folder. Over 1MB or not text: none.
 export const LINK_BYTES=1024*1024;
 function fileReferences(file,text,sessionDir){

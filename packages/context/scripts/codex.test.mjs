@@ -6,13 +6,13 @@ import os from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { runHook } from './hook-run.mjs';
 import { sessions } from '../core/sessions.mjs';
-import { callTool, instructions, PROJECT_UNKNOWN } from '../core/mcp.mjs';
+import { callTool, instructionsFor, PROJECT_UNKNOWN } from '../core/mcp.mjs';
 import { CORE_SOURCE, coreParts, migrateImport, setupTool } from '../core/project.mjs';
 import { dataDir } from '../hosts/codex/register.mjs';
 const root = process.env.HEAD_CONTEXT_TEST_ROOT || os.tmpdir();
 const fresh = () => fs.mkdtempSync(path.join(root, 'codex-'));
 const core = fs.readFileSync(CORE_SOURCE, 'utf8').trimEnd();
-const setup = dir => callTool(sessions(dir), 'project_setup', { action: 'setup' }, undefined, dir);
+const setup = dir => callTool(sessions(dir), 'setup', { action: 'setup' }, undefined, dir);
 const text = out => (out ? JSON.parse(out).hookSpecificOutput.additionalContext : '');
 // Claude: the core arrives as `core <i> 2`.
 const claudeCore = (dir, { id = 'c1', source = 'startup', order = [1, 2] } = {}) => {
@@ -68,7 +68,7 @@ test('Codex start: core whole, the server instructions, the work session and con
   const s = sessions(dir, { host: 'codex' }); s.create({ name: 'demo', context: 'CODEX DIRECTION', conversation_id: 'seed' });
   s.branch({ action: 'create', branch: 'work', conversation_id: 'seed' }); s.save({ summary: 'S1', history: 'B1', next: 'N1', conversation_id: 'seed' });
   const first = codexStart(dir, { id: 't1', data });
-  assert.equal(first.core, core); assert.equal(first.instructions, instructions);
+  assert.equal(first.core, core); assert.equal(first.instructions, instructionsFor('codex')); assert.match(first.instructions, /send\(threadId/);
   assert.match(first.session, UNCONNECTED_FIRST); assert.equal(first.context, '');
   const reg = JSON.parse(fs.readFileSync(path.join(data, 'threads', 't1.json'), 'utf8'));
   assert.equal(reg.cwd, dir); assert.equal(reg.transcript_path, '/x/rollout-t1.jsonl');
@@ -90,8 +90,8 @@ test('Codex tool server: the conversation from _meta.threadId, the project from 
   const dir = fresh(), data = fresh(); setup(dir);
   sessions(dir, { host: 'codex' }).create({ name: 'demo', context: 'MCP DIRECTION', conversation_id: 'seed' });
   codex(dir, 'session', { id: 'th1', data });
-  const [init, load, unknown] = mcp([{ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18' } }, call(2, 'session_load', { name: 'demo' }, 'th1'), call(3, 'session_list', {}, 'nobody')], { HEAD_CONTEXT_CODEX_DATA: data });
-  assert.equal(init.result.serverInfo.version, '0.8.1');
+  const [init, load, unknown] = mcp([{ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18' } }, call(2, 'load', { name: 'demo' }, 'th1'), call(3, 'list', {}, 'nobody')], { HEAD_CONTEXT_CODEX_DATA: data });
+  assert.equal(init.result.serverInfo.version, '0.9.0');
   assert.equal(load.result.isError, undefined); assert.match(load.result.content[0].text, /MCP DIRECTION/);
   const bound = JSON.parse(fs.readFileSync(path.join(dir, '.head/state/conversations/codex-th1.json'), 'utf8'));
   assert.equal(bound.host, 'codex'); assert.equal(bound.session, 'demo');
@@ -105,17 +105,18 @@ test('Codex data folder: worked out from the installed plugin folder, the same f
 test('one package carries both hosts: Codex manifest, hooks and a relative tool server path', () => {
   const m = JSON.parse(fs.readFileSync('.codex-plugin/plugin.json', 'utf8')), c = JSON.parse(fs.readFileSync('.claude-plugin/plugin.json', 'utf8'));
   assert.equal(m.version, c.version); assert.equal(m.name, c.name);
-  const server = JSON.parse(fs.readFileSync(m.mcpServers, 'utf8')).mcpServers.context;
+  const server = JSON.parse(fs.readFileSync(m.mcpServers, 'utf8')).mcpServers.session;
   assert.deepEqual(server.args, ['scripts/codex-mcp.mjs']); assert.equal(server.cwd, '.');
   const hooks = JSON.parse(fs.readFileSync(m.hooks, 'utf8')).hooks;
-  assert.deepEqual(Object.keys(hooks), ['SessionStart']);
+  assert.deepEqual(Object.keys(hooks), ['SessionStart', 'UserPromptSubmit']);
+  assert.deepEqual(hooks.UserPromptSubmit[0].hooks.map(h => h.command.split(' ').at(-1)), ['inbox']);
   assert.deepEqual(hooks.SessionStart[0].hooks.map(h => h.command.split(' ').at(-1)), ['core', 'instructions', 'session', 'context']);
   const claude = JSON.parse(fs.readFileSync('hooks/hooks.json', 'utf8')).hooks.SessionStart[0].hooks.map(h => h.args.slice(1).join(' '));
   assert.deepEqual(claude, ['core 1 2', 'core 2 2', 'session', 'context', 'recent']);
 });
 
 // Review findings (검수 B1 first branch, B2, I1, I2), each as the reviewer reproduced it.
-test('review B1: a conversation that got the core from project_setup does not get it again on resume', () => {
+test('review B1: a conversation that got the core from setup does not get it again on resume', () => {
   const dir = fresh(), out = setupTool(dir, { action: 'setup' }), transcript = path.join(dir, 'setup.jsonl');
   assert.ok(out.includes(core));
   fs.writeFileSync(transcript, JSON.stringify({ type: 'user', message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'setup', content: out }] } }) + '\n');
@@ -125,7 +126,7 @@ test('review B1: a conversation that got the core from project_setup does not ge
 test('review B2: an unregistered Codex conversation stops at PROJECT_UNKNOWN even with CLAUDE_PROJECT_DIR set', () => {
   const a = fresh(), data = fresh();
   sessions(a, { host: 'codex' }).create({ name: 'PROJECT_A_ONLY', context: 'Project A', conversation_id: 'seed' });
-  const [reply] = mcp([call(1, 'session_list', {}, 'unregistered-B')], { CLAUDE_PROJECT_DIR: a, HEAD_CONTEXT_CODEX_DATA: data });
+  const [reply] = mcp([call(1, 'list', {}, 'unregistered-B')], { CLAUDE_PROJECT_DIR: a, HEAD_CONTEXT_CODEX_DATA: data });
   assert.equal(reply.result.isError, true); assert.equal(reply.result.content[0].text, PROJECT_UNKNOWN);
   assert.doesNotMatch(reply.result.content[0].text, /PROJECT_A_ONLY/);
 });
@@ -142,7 +143,7 @@ test('review I2: on Codex the setup guide and result promise no Claude-only effe
   const dir = fresh(), data = fresh();
   const first = codex(dir, 'session', { id: 'g', data });
   assert.match(first, /Claude Code로 열 때 쓰도록/); assert.match(first, /Codex에서는 이 설정이 쓰이지 않고/);
-  const [reply] = mcp([call(1, 'project_setup', { action: 'setup' }, 'g')], { HEAD_CONTEXT_CODEX_DATA: data });
+  const [reply] = mcp([call(1, 'setup', { action: 'setup' }, 'g')], { HEAD_CONTEXT_CODEX_DATA: data });
   const out = reply.result.content[0].text;
   assert.doesNotMatch(out, /기본 포크가 켜지며|앱이 시작할 때 새 판을 받습니다/); assert.match(out, /Codex 설정은 바꾸지 않았습니다/); assert.match(out, /Claude Code용, Codex에서는 쓰이지 않음/);
   assert.ok(fs.existsSync(path.join(dir, '.claude/settings.json')));
