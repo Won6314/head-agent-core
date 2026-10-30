@@ -1,5 +1,5 @@
 // Claude Code side of messages between Claude Code and Codex conversations. The model keeps
-// its own SendMessage; a message addressed codex:<thread id> (the address session_conversations
+// its own SendMessage; a message addressed codex:<thread id> (the address conversations
 // shows for a Codex conversation) goes to that Codex conversation instead of a Claude inbox,
 // and the send answers as delivered. Everything else goes on as the host sends it.
 // The module has no Node of its own: the relay script does the work (scripts/relay.mjs).

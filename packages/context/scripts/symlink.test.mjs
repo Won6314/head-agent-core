@@ -1,3 +1,4 @@
+import './test-env.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -16,8 +17,10 @@ const fixture = t => {
   fs.symlinkSync(real, alias, 'dir');
   return { base, real: path.join(real, 'project'), project: path.join(alias, 'project'), data: path.join(base, 'data') };
 };
+// Children never reach the user's own homes (passwd HOME, ~/.claude sessions, ~/.codex).
+const TEST_HOME = fs.mkdtempSync(path.join(process.env.HEAD_CONTEXT_TEST_ROOT || os.tmpdir(), 'symlink-home-'));
 const run = (script, args, input, env = {}) => {
-  const r = spawnSync(process.execPath, [path.resolve('scripts', script), ...args], { input, encoding: 'utf8', env: { CODEX_HOME: path.join(os.tmpdir(), 'head-context-test-codex-home'), ...env } });
+  const r = spawnSync(process.execPath, [path.resolve('scripts', script), ...args], { input, encoding: 'utf8', env: { HOME: TEST_HOME, CLAUDE_CONFIG_DIR: path.join(TEST_HOME, '.claude'), CODEX_HOME: path.join(TEST_HOME, '.codex'), ...env } });
   assert.equal(r.status, 0); assert.equal(r.stderr.replace(/\(node:\d+\) ExperimentalWarning:[^\n]*\n/g, '').replace(/\(Use `node --trace-warnings[^\n]*\n/g, ''), '');
   return r.stdout;
 };

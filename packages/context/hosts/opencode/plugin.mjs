@@ -41,7 +41,7 @@ export default { id: 'head-context', server: async ({ directory, client }) => {
       if (context) output.system.push(context);
     }),
     'tool.execute.before': (input, output) => safe(async () => {
-      if (!/^head_context_session_/.test(input.tool)) return;
+      if (!/^head_context_/.test(input.tool)) return;
       await info(input.sessionID);
       delete output.args.agent_id;
       if (child(input.sessionID)) { let root = input.sessionID; for (let d = 0; child(root) && d < 20; d++) { root = parents.get(root); await info(root); } output.args.conversation_id = root; output.args.agent_id = input.sessionID; }

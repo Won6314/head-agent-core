@@ -168,7 +168,7 @@ LLM은 자기 앱의 보내기 도구에 대화 목록(`conversations`)의 보�
 
 ## 0.9.0에서 바뀐 것
 
-- 도구 서버 이름을 `context`에서 `session`으로, 도구 이름에서 `session_`·`project_` 머리를 뗐다(`load`, `save`, `branch`, `todo`, `list`, `read`, `create`, `conversations`, `setup`). 플러그인 이름은 그대로다. 옛 이름을 적어 둔 권한 설정·지침은 고쳐야 한다.
+- 도구 서버 이름을 `context`에서 `session`으로, 도구 이름에서 `session_`·`project_` 머리를 뗐다(`load`, `save`, `branch`, `todo`, `list`, `read`, `create`, `conversations`, `setup`). 플러그인 이름은 그대로다. 옛 이름을 적어 둔 권한 설정·지침은 고쳐야 한다. 업데이트 전에 열려 있던 대화는 옛 이름을 기억하고 있어 옛 이름으로 부르면 '알 수 없는 도구'가 난다. Claude Code·Codex를 다시 열면 새 이름과 새 지침으로 시작한다(옛 이름 별칭은 두지 않는다).
 - 대화 간 메시지(위 절), 두 앱 통합 대화 목록, 화면 없는 Claude 사람 대화 표시.
 
 ## 0.8.1에서 바뀐 것

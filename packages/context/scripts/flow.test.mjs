@@ -1,3 +1,4 @@
+import './test-env.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -82,9 +83,9 @@ test('OpenCode pushes the work context with the instructions and fills the tool 
     const hooks=await opencode.server({directory:dir,client:{session:{get:async({path})=>({data:{id:path.id,parentID:path.id==='ses_child'?'ses_parent':undefined}})}}});
     const out={system:[]};await hooks['experimental.chat.system.transform']({sessionID:'ses_parent'},out);
     assert.match(out.system.join('\n'),/작업 세션\n- 무엇/);assert.match(out.system.join('\n'),/FLOW DIRECTION/);
-    const args={action:'map',agent_id:'forged'};await hooks['tool.execute.before']({sessionID:'ses_parent',tool:'head_context_session_read'},{args});
+    const args={action:'map',agent_id:'forged'};await hooks['tool.execute.before']({sessionID:'ses_parent',tool:'head_context_read'},{args});
     assert.deepEqual(args,{action:'map',conversation_id:'ses_parent'});
-    const child={summary:'x',history:'y'};await hooks['tool.execute.before']({sessionID:'ses_child',tool:'head_context_session_save'},{args:child});
+    const child={summary:'x',history:'y'};await hooks['tool.execute.before']({sessionID:'ses_child',tool:'head_context_save'},{args:child});
     assert.deepEqual(child,{summary:'x',history:'y',conversation_id:'ses_parent',agent_id:'ses_child'});
     assert.throws(()=>callTool(sessions(dir,{host:'opencode'}),'save',{summary:'x',history:'y',agent_id:'ses_child'},'ses_parent'),/저장합니다/);
     const again={system:[]};await hooks['experimental.chat.system.transform']({sessionID:'ses_parent'},again);assert.match(again.system.join('\n'),/FLOW DIRECTION/);
