@@ -1,5 +1,5 @@
 import { serve } from '../../core/mcp.mjs';
-import { registered, callerOf } from './register.mjs';
+import { registered, callerOf, UNREGISTERED } from './register.mjs';
 import { codexLive, readPresence } from './threads.mjs';
 import { deliverToCodex } from './deliver.mjs';
 import { liveConversations } from '../claude/process.mjs';
@@ -37,5 +37,5 @@ const send = {
   },
 };
 // The list of other conversations holds this project's Claude Code conversations beside its own.
-await serve({ projectOf, host: 'codex', conversationOf: request => callerOf(request).conversation || request.params?.arguments?.conversation_id, agentOf: request => callerOf(request).agent,
+await serve({ projectOf, unknownProject: UNREGISTERED, host: 'codex', conversationOf: request => callerOf(request).conversation || request.params?.arguments?.conversation_id, agentOf: request => callerOf(request).agent,
   options: dir => ({ live: known => codexLive(dir, known), peers: [{ host: 'claude', live: known => liveConversations(dir, known) }] }), tools: [send] });

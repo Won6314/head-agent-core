@@ -1,4 +1,4 @@
-# head-context 0.9.0 — 작업 세션·작업 브랜치·저장
+# head-context 0.9.1 — 작업 세션·작업 브랜치·저장
 
 작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 작업 맥락을 다시 불러온다.
 살아 있는 대화를 작업 세션·작업 브랜치와 묶어 보여 준다. 포크·새 대화·대화 사이 메시지는 호스트(Claude Code) 기능을 그대로 쓴다.
@@ -148,7 +148,23 @@ Row = {conversation_id,host:'claude'|'codex',title,address,reachable,last_at,ent
 - UserPromptSubmit 한 명령(`codex-hook.mjs inbox`): 바로 깨우지 못한 동안 쌓인 메시지를 입력과 함께 넣는다.
 - 도구 서버는 Codex가 띄우는 동안만 돌고, 플러그인이 따로 띄우는 상주 프로그램은 없다. Codex 설정 파일은 쓰지 않는다.
 - 하위 에이전트(spawn_agent, 포크든 새 컨텍스트든): Codex는 도구 호출마다 부른 스레드(`_meta.threadId`)와 그 트리의 뿌리(`_meta.sessionId`, 뿌리 스레드 자신의 ID)를 준다. 둘이 다르면 대화 안 작업이다. 대화는 뿌리, 작업은 그 스레드(agent)이고 기록은 읽기만 된다. SubagentStart 한 명령(`codex-hook.mjs subagent`)이 Claude와 같은 안내를 넣는다. Codex는 하위 에이전트에서 SessionStart를 돌리지 않으므로 등록·목록에 따로 오르지 않는다(Claude의 대화 안 작업과 같다). 그 안의 입력 훅은 부른 대화의 편지함을 비우지 않는다.
-- 설치: `codex plugin marketplace add Won6314/head-agent-core` → `codex plugin add head-context@head-agent-core`, 첫 실행 때 훅 검토에서 신뢰.
+- 설치: `codex plugin marketplace add Won6314/head-agent-core` → `codex plugin add head-context@head-agent-core`. 그다음 아래 훅 신뢰를 한 번 한다.
+- 훅 신뢰(한 번): Codex는 신뢰하지 않은 플러그인 훅을 묻지 않고 건너뛴다. 그동안 도구는 보이지만 코어 지침·안내·작업 맥락·초기설정 질문이 하나도 들어가지 않는다.
+  - 터미널 Codex: 설치 뒤 처음 열 때 뜨는 `Hooks need review — 6 hooks are new or changed`에서 `Trust all and continue`.
+  - Codex 앱: 왼쪽 아래 프로필 → 설정 → 맨 아래 `코딩` → `Hook` → `플러그인에서 제공` 아래 `Head Context` → `모두 신뢰`. 같은 화면의 `설정에서 → 사용자 구성`은 사용자 설정의 훅이라 이 플러그인과 무관하다.
+  - 신뢰한 뒤 새 대화를 연다.
+  - 훅 6개가 하는 일(화면에는 이름 없이 번호로만 보인다):
+
+    | 때 | 훅 | 하는 일 |
+    |---|---|---|
+    | 세션 시작 | 훅 1 `core` | HEAD 코어 지침(초기설정한 프로젝트만) |
+    | 세션 시작 | 훅 2 `instructions` | 플러그인 안내(공용 + 이 앱에서 부르는 도구) |
+    | 세션 시작 | 훅 3 `session` | 대화 등록(도구 서버가 이 대화의 프로젝트를 찾는 근거), 연결 상태·첫 실행 안내 |
+    | 세션 시작 | 훅 4 `context` | 연결된 작업 세션의 작업 맥락 |
+    | 사용자 프롬프트 제출 | 훅 1 `inbox` | 바로 깨우지 못한 동안 다른 대화가 보낸 메시지 |
+    | 하위 에이전트 시작 | 훅 1 `subagent` | 하위 에이전트에게 "기록은 읽기만" 안내 |
+
+  - 신뢰 전에 도구를 부르면 도구 결과가 이 신뢰 경로를 알려 준다(모델이 사용자에게 전한다).
 
 ## 대화 간 메시지 (Claude Code ↔ Codex)
 
@@ -167,6 +183,10 @@ LLM은 자기 앱의 보내기 도구에 대화 목록(`conversations`)의 보�
 - 실행 중이 아닌 Claude 대화(데스크톱이 내린 대화)는 Codex 목록에 "지금은 받지 못함"이 붙고, 보내면 실패를 돌려준다.
 - Claude 등록 파일과 기록은 `CLAUDE_CONFIG_DIR`을 따른다(없으면 `~/.claude`). Codex 도구 서버에는 `.codex-mcp.json`의 env_vars로 넘긴다.
 - 화면 없이 띄운 Claude 대화(`claude -p`)를 띄운 쪽이 `HEAD_CONTEXT_PERSON=1`로 띄우면 포크·워커가 아니라 사람 대화로 센다(기록 쓰기도 됨).
+
+## 0.9.1에서 바뀐 것
+
+- Codex 훅 신뢰 안내: 설치 안내에 신뢰 경로와 훅 6개가 하는 일을 적었다. 훅이 돌지 않은 Codex 대화에서 도구를 부르면 결과가 신뢰 경로를 알려 준다(전에는 "대화를 새로 시작하거나 다시 열어 주세요"만 나왔다).
 
 ## 0.9.0에서 바뀐 것
 

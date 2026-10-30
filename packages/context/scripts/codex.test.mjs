@@ -7,6 +7,7 @@ import os from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { runHook } from './hook-run.mjs';
 import { sessions } from '../core/sessions.mjs';
+import { UNREGISTERED } from '../hosts/codex/register.mjs';
 import { callTool, instructionsFor, PROJECT_UNKNOWN, FORK_WRITE_REFUSED, SUBAGENT_NOTICE } from '../core/mcp.mjs';
 import { CORE_SOURCE, coreParts, migrateImport, setupTool } from '../core/project.mjs';
 import { dataDir } from '../hosts/codex/register.mjs';
@@ -93,11 +94,11 @@ test('Codex tool server: the conversation from _meta.threadId, the project from 
   sessions(dir, { host: 'codex' }).create({ name: 'demo', context: 'MCP DIRECTION', conversation_id: 'seed' });
   codex(dir, 'session', { id: 'th1', data });
   const [init, load, unknown] = mcp([{ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18' } }, call(2, 'load', { name: 'demo' }, 'th1'), call(3, 'list', {}, 'nobody')], { HEAD_CONTEXT_CODEX_DATA: data });
-  assert.equal(init.result.serverInfo.version, '0.9.0');
+  assert.equal(init.result.serverInfo.version, '0.9.1');
   assert.equal(load.result.isError, undefined); assert.match(load.result.content[0].text, /MCP DIRECTION/);
   const bound = JSON.parse(fs.readFileSync(path.join(dir, '.head/state/conversations/codex-th1.json'), 'utf8'));
   assert.equal(bound.host, 'codex'); assert.equal(bound.session, 'demo');
-  assert.equal(unknown.result.isError, true); assert.equal(unknown.result.content[0].text, PROJECT_UNKNOWN);
+  assert.equal(unknown.result.isError, true); assert.equal(unknown.result.content[0].text, UNREGISTERED); assert.match(UNREGISTERED, /Hook → 플러그인에서 제공 → Head Context → 모두 신뢰/); assert.match(UNREGISTERED, /Trust all and continue/);
 });
 test('Codex subagent: a thread the conversation spawned reads through its conversation and writes nothing; its hooks keep to it', () => {
   const dir = fresh(), data = fresh(); setup(dir);
@@ -150,7 +151,7 @@ test('review B2: an unregistered Codex conversation stops at PROJECT_UNKNOWN eve
   const a = fresh(), data = fresh();
   sessions(a, { host: 'codex' }).create({ name: 'PROJECT_A_ONLY', context: 'Project A', conversation_id: 'seed' });
   const [reply] = mcp([call(1, 'list', {}, 'unregistered-B')], { CLAUDE_PROJECT_DIR: a, HEAD_CONTEXT_CODEX_DATA: data });
-  assert.equal(reply.result.isError, true); assert.equal(reply.result.content[0].text, PROJECT_UNKNOWN);
+  assert.equal(reply.result.isError, true); assert.equal(reply.result.content[0].text, UNREGISTERED);
   assert.doesNotMatch(reply.result.content[0].text, /PROJECT_A_ONLY/);
 });
 test('review I1: migrateImport takes only the import lines out and keeps every other byte', () => {

@@ -38,7 +38,7 @@ export const APP_INSTRUCTIONS = {
 // The instructions one app's model reads: the shared part, then that app's part (none for a
 // host without one, e.g. OpenCode).
 export const instructionsFor = host => (APP_INSTRUCTIONS[host] ? `${instructions}\n\n${APP_INSTRUCTIONS[host]}` : instructions);
-export const VERSION = '0.9.0';
+export const VERSION = '0.9.1';
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
 const missing = { create: { context: CONTEXT_REQUIRED } };
@@ -97,7 +97,7 @@ export const PROJECT_UNKNOWN = '이 대화의 프로젝트를 알 수 없습니�
 // request}) → text}], awaited): Codex's send.
 // agentOf(request): the task inside the conversation that makes this call, when the host names
 // it on the call itself (Codex); it makes the call read-only like a host-filled agent_id.
-export async function serve({ project, projectOf, host, conversationOf, agentOf = () => null, options = {}, readOnly = () => false, tools = [] }) {
+export async function serve({ project, projectOf, host, conversationOf, agentOf = () => null, options = {}, readOnly = () => false, tools = [], unknownProject = PROJECT_UNKNOWN }) {
   const stores = new Map();
   const storeOf = dir => { if (!stores.has(dir)) stores.set(dir, sessions(dir, { host, ...(typeof options === 'function' ? options(dir) : options) })); return stores.get(dir); };
   const send = message => process.stdout.write(`${JSON.stringify({ jsonrpc: '2.0', ...message })}\n`);
@@ -113,7 +113,7 @@ export async function serve({ project, projectOf, host, conversationOf, agentOf 
     else if (method === 'tools/call') {
       try {
         const dir = projectOf ? projectOf(request) : project;
-        if (!dir) throw new Error(PROJECT_UNKNOWN);
+        if (!dir) throw new Error(unknownProject);
         const own = tools.find(t => t.definition.name === params.name);
         const text = own ? await own.call({ project: dir, args: params.arguments || {}, conversation_id: conversationOf(request), request })
           : callTool(storeOf(dir), params.name, params.arguments || {}, conversationOf(request), dir, readOnly(request) || Boolean(agentOf(request)), host);
