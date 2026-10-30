@@ -50,7 +50,9 @@ Claude Code에서는 `mcp__plugin_head-context_session__<도구>`, Codex에서�
 
 ## 작업 맥락 (시작 훅·load)
 
-데이터만 담는다. 무슨 뜻인지는 서버 안내문(`core/mcp.mjs` instructions)에 한 번만 있다. load는 두 부분을 이어서 돌려준다.
+데이터만 담는다. 무슨 뜻인지는 서버 안내문(`core/mcp.mjs` instructions)에 한 번만 있다.
+
+서버 안내문은 공용 부분과 앱별 부분으로 나뉜다. 공용 부분(`instructions`)과 `start-job` 스킬, 도구 설명은 앱의 도구 이름을 쓰지 않고 "이 앱의 보내기 도구", "하위 에이전트를 이 대화의 컨텍스트를 이어받게 부르기(기본 포크)", "하위 에이전트를 새 컨텍스트로 부르기(에이전트)"처럼 쓴다. 앱별 부분(`APP_INSTRUCTIONS`의 "이 앱에서 부르는 도구")이 그 앱에서 실제로 부르는 도구를 적는다: Claude Code는 SendMessage(to)·Agent 도구 subagent_type "fork"·다른 subagent_type(브리프는 prompt), Codex는 이 플러그인의 send(threadId, prompt)·spawn_agent fork_turns "all"·"none"(브리프는 message). 각 앱은 공용 부분 뒤에 자기 앱 부분만 받는다(`instructionsFor`; Claude Code는 서버 안내문, Codex는 시작 훅). OpenCode는 공용 부분만 받는다. load는 두 부분을 이어서 돌려준다.
 
 ```
 # 작업 세션: <이름>                    ← 작업 세션 부분: 반드시 들어온다
@@ -170,6 +172,7 @@ LLM은 자기 앱의 보내기 도구에 대화 목록(`conversations`)의 보�
 
 - 도구 서버 이름을 `context`에서 `session`으로, 도구 이름에서 `session_`·`project_` 머리를 뗐다(`load`, `save`, `branch`, `todo`, `list`, `read`, `create`, `conversations`, `setup`). 플러그인 이름은 그대로다. 옛 이름을 적어 둔 권한 설정·지침은 고쳐야 한다. 업데이트 전에 열려 있던 대화는 옛 이름을 기억하고 있어 옛 이름으로 부르면 '알 수 없는 도구'가 난다. 새 대화로 열면 새 이름과 새 지침으로 시작한다. Codex에서 옛 대화를 이어 열기(resume)는 시작 지침을 다시 넣지 않으므로, 그 대화의 옛 지침은 그대로 남는다(도구는 새 이름으로 바뀐다). 옛 이름 별칭은 두지 않는다.
 - 대화 간 메시지(위 절), 두 앱 통합 대화 목록, 화면 없는 Claude 사람 대화 표시.
+- 지침을 공용 부분과 앱별 부분으로 나눴다. 공용 지침·start-job·도구 설명에는 앱의 도구 이름이 없고, 각 앱은 "이 앱에서 부르는 도구"로 자기 앱 도구만 받는다.
 
 ## 0.8.1에서 바뀐 것
 

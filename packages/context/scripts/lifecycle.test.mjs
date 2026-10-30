@@ -128,14 +128,14 @@ test('a fork or subagent (agent_id) may read but not write; the tool surface car
   assert.ok(instructions.startsWith('일을 시작할 때는 먼저 start-job 스킬을 불러옵니다.\n\n작업 세션\n'));
   const skill=fs.readFileSync(new URL('../skills/start-job/SKILL.md',import.meta.url),'utf8');
   assert.match(skill,/^---\nname: start-job\ndescription: 일을 시작하기 전에 불러온다\./);assert.doesNotMatch(skill,/disable-model-invocation|delegate-once|context_run|plan-run/);
-  for(const step of ['## 1. 문제를 파악한다','## 2. 기존 자료를 먼저 찾는다','## 3. 문제·목표·조건을 맞춘다','## 4. 진행 방식을 고른다','subagent_type "fork"'])assert.ok(skill.includes(step),step);
+  for(const step of ['## 1. 문제를 파악한다','## 2. 기존 자료를 먼저 찾는다','## 3. 문제·목표·조건을 맞춘다','## 4. 진행 방식을 고른다','이 앱에서 부르는 도구'])assert.ok(skill.includes(step),step);
   const core=fs.readFileSync(new URL('../instructions/HEAD_CORE.md',import.meta.url),'utf8');
   assert.match(core,/load the `start-job` skill first/);assert.doesNotMatch(core,/durable Run/);
   assert.doesNotMatch(core,/\[forked\]|graph-selected/);assert.match(core,/the canon it names, and the records and files it names/);
   assert.doesNotMatch(skill,/기본 포크와 같지만|확인하고 저장한다/);assert.match(skill,/\| 사이드 포크 \(데스크톱\) \| 사용자가 따로 이어서 대화하며 진행할 일 \|/);assert.match(skill,/- 포크·에이전트의 결과는 받은 쪽이 확인한다\.\n/);
   for(const old of ['자리','이름표','작업 주제','지금까지 요약','체크포인트'])assert.doesNotMatch(instructions,new RegExp(old));
   assert.match(instructions,/\n\n할 일\n- 무엇: 작업 세션에 남는 나중에 할 일입니다\. 작업 브랜치가 닫혀도 남습니다\.\n- 언제: [^\n]+todo add[^\n]+todo done/);
-  assert.match(instructions,/\n\n다른 대화\n- 무엇: 이 프로젝트에서 살아 있는 대화와[^\n]+\n- 언제: [^\n]+conversations[^\n]+목록의 보낼 곳으로 SendMessage를 씁니다\.$/);
+  assert.match(instructions,/\n\n다른 대화\n- 무엇: 이 프로젝트에서 살아 있는 대화와[^\n]+\n- 언제: [^\n]+conversations[^\n]+목록의 보낼 곳을 이 앱의 보내기 도구에 그대로 줍니다\.$/);
   const save=definitions.find(t=>t.name==='save').description;
   assert.match(instructions,/- 작업 파일: 작업 세션 폴더의 work\/YYYY-MM\/YYYY-MM-DD-<이름>\.md[^\n]+work\/<작업명>\/[^\n]+결과 파일 경로를 이 규칙대로 정해 줍니다\./);
   for(const rule of ['근거 파일 링크와 그 내용','work\\/YYYY-MM\\/YYYY-MM-DD-<이름>\\.md','먼저 파일로 남기고 링크','실행 증거\\(ID·명령·로그\\)는 넣지 않습니다','같은 경계의 일은 모아 한 번에'])assert.match(save,new RegExp(rule));

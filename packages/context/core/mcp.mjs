@@ -22,10 +22,22 @@ export const instructions = `일을 시작할 때는 먼저 start-job 스킬을 
 
 다른 대화
 - 무엇: 이 프로젝트에서 살아 있는 대화와, 각 대화가 일하는 작업 세션·작업 브랜치입니다.
-- 언제: 다른 대화에 말을 전하거나 그 대화가 무엇을 하는지 알아야 할 때 먼저 목록(conversations)을 봅니다. 보낼 때는 목록의 보낼 곳으로 SendMessage를 씁니다.`;
-// Codex has its own send_message_to_thread, but it reaches Codex conversations only: there the
-// plugin's own send reaches both apps. The rest is the same for both apps.
-export const instructionsFor = host => (host === 'codex' ? instructions.replace('보낼 때는 목록의 보낼 곳으로 SendMessage를 씁니다.', '보낼 때는 목록의 보낼 곳을 이 플러그인의 send(threadId: 보낼 곳, prompt)에 줍니다. Codex의 send_message_to_thread는 Claude 대화로 보내지 못하니 대화 간 메시지에는 send를 씁니다.') : instructions);
+- 언제: 다른 대화에 말을 전하거나 그 대화가 무엇을 하는지 알아야 할 때 먼저 목록(conversations)을 봅니다. 보낼 때는 목록의 보낼 곳을 이 앱의 보내기 도구에 그대로 줍니다.`;
+// Per app: which of the app's own tools does what the shared instructions and the start-job
+// skill describe in the app's terms. Each app gets the shared part and its own part only.
+export const APP_INSTRUCTIONS = {
+  claude: `이 앱(Claude Code)에서 부르는 도구
+- 다른 대화에 보내기: SendMessage(to: 보낼 곳)
+- 기본 포크(하위 에이전트를 이 대화의 컨텍스트를 이어받게 부르기): Agent 도구에 subagent_type "fork". 같은 모델이 이 대화를 이어받으므로 앱을 넘지 않습니다.
+- 에이전트(하위 에이전트를 새 컨텍스트로 부르기): Agent 도구에 다른 subagent_type. 브리프는 prompt에 줍니다.`,
+  codex: `이 앱(Codex)에서 부르는 도구
+- 다른 대화에 보내기: 이 플러그인의 send(threadId: 보낼 곳, prompt). Codex의 send_message_to_thread는 Claude Code 대화로 보내지 못하니 대화 간 메시지에는 send를 씁니다.
+- 기본 포크(하위 에이전트를 이 대화의 컨텍스트를 이어받게 부르기): spawn_agent에 fork_turns "all"(기본값). 같은 모델이 이 대화를 이어받으므로 앱을 넘지 않습니다.
+- 에이전트(하위 에이전트를 새 컨텍스트로 부르기): spawn_agent에 fork_turns "none". 브리프는 message에 줍니다.`,
+};
+// The instructions one app's model reads: the shared part, then that app's part (none for a
+// host without one, e.g. OpenCode).
+export const instructionsFor = host => (APP_INSTRUCTIONS[host] ? `${instructions}\n\n${APP_INSTRUCTIONS[host]}` : instructions);
 export const VERSION = '0.9.0';
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
@@ -52,7 +64,7 @@ export const definitions = [
     {action:{type:'string',enum:['overview','map','recent','entry','find','files']},name:string,branch:string,limit:{type:'integer',minimum:0,default:30},count:{type:'integer',minimum:0,default:5},id:string,file:string,query:string,depth:{type:'integer',minimum:1,default:2}},['action']],
   ['todo','작업 세션의 할 일(todo.md). 사용자가 나중에 할 일을 말하면 add, 할 일을 물으면 list, 끝났다고 하면 done. add의 text는 나중에 오해가 없도록 할 일과 범위를 분명히 쓰고 사용자 원문을 근거로 인용합니다. 사용자가 정하지 않은 것을 확정사항으로 쓰지 않습니다. 기한이 있으면 상대 날짜를 실제 날짜로 바꿔 due(YYYY-MM-DD)에 넣습니다. done은 match가 열린 항목 하나에만 맞을 때 끝냅니다. name 생략은 이 대화의 작업 세션입니다.',
     {action:{type:'string',enum:['add','list','done']},text:string,due:string,match:string,name:string},['action']],
-  ['conversations','다른 대화에 말을 전하기 전에 받을 대화를 고르는 목록입니다. 살아 있는 대화를 작업 세션 → 작업 브랜치 → 대화로 보여 주고(작업 세션에 안 붙은 대화는 따로), 대화마다 이름, 보낼 곳, 종류(사람 / 포크·워커), 마지막 활동, 하는 일 한 줄을 붙입니다. 포크·워커는 띄운 대화가 살아 있으면 그 대화 아래에 들여 써서 한 번만 보입니다. 하는 일은 포크·워커면 맡은 일, 작업 브랜치면 그 이름(주제), 그리고 사람이 마지막으로 시킨 말이고, 메인이면 메인의 마지막 저장이 붙습니다. 고르는 법: 1) 전할 내용과 맞는 작업 세션·작업 브랜치(주제) 아래의 대화를 고릅니다. 2) 같은 곳에 여럿이면 사람 대화 가운데 하는 일이 맞고 마지막 활동이 가장 최근인 것을 고릅니다. 포크·워커에는 그 대화가 맡은 일에 관한 말만 보냅니다. 3) 그래도 하나로 좁혀지지 않으면 보내지 말고 후보(작업 브랜치·이름·하는 일)를 사용자에게 보여 고르게 합니다. 같은 말을 여러 대화에 한꺼번에 보내지 않습니다. 보내기는 이 앱의 보내기 도구(Claude Code는 SendMessage(to), Codex는 이 플러그인의 send(threadId))에 목록의 보낼 곳을 그대로 줍니다. Claude Code와 Codex 대화가 한 목록에 함께 나옵니다. 이름(head-2b 같은 것)은 여러 대화가 같을 수 있으니 보낼 곳을 씁니다. 보낼 곳은 대화가 다시 시작하면 바뀌므로 방금 읽은 목록의 것을 씁니다. name을 주면 그 작업 세션만.',
+  ['conversations','다른 대화에 말을 전하기 전에 받을 대화를 고르는 목록입니다. 살아 있는 대화를 작업 세션 → 작업 브랜치 → 대화로 보여 주고(작업 세션에 안 붙은 대화는 따로), 대화마다 이름, 보낼 곳, 종류(사람 / 포크·워커), 마지막 활동, 하는 일 한 줄을 붙입니다. 포크·워커는 띄운 대화가 살아 있으면 그 대화 아래에 들여 써서 한 번만 보입니다. 하는 일은 포크·워커면 맡은 일, 작업 브랜치면 그 이름(주제), 그리고 사람이 마지막으로 시킨 말이고, 메인이면 메인의 마지막 저장이 붙습니다. 고르는 법: 1) 전할 내용과 맞는 작업 세션·작업 브랜치(주제) 아래의 대화를 고릅니다. 2) 같은 곳에 여럿이면 사람 대화 가운데 하는 일이 맞고 마지막 활동이 가장 최근인 것을 고릅니다. 포크·워커에는 그 대화가 맡은 일에 관한 말만 보냅니다. 3) 그래도 하나로 좁혀지지 않으면 보내지 말고 후보(작업 브랜치·이름·하는 일)를 사용자에게 보여 고르게 합니다. 같은 말을 여러 대화에 한꺼번에 보내지 않습니다. 보내기는 이 앱의 보내기 도구(서버 지침의 「이 앱에서 부르는 도구」)에 목록의 보낼 곳을 그대로 줍니다. Claude Code와 Codex 대화가 한 목록에 함께 나옵니다. 이름(head-2b 같은 것)은 여러 대화가 같을 수 있으니 보낼 곳을 씁니다. 보낼 곳은 대화가 다시 시작하면 바뀌므로 방금 읽은 목록의 것을 씁니다. name을 주면 그 작업 세션만.',
     {name:string},[]]
 ].map(([name, description, properties, required]) => ({ name, description,
   inputSchema: { type: 'object', properties: { ...properties, conversation_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' }, agent_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' } }, required, additionalProperties: false } }));
