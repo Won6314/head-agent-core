@@ -7,9 +7,10 @@ import os from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { runHook } from './hook-run.mjs';
 import { sessions } from '../core/sessions.mjs';
-import { callTool, instructionsFor, PROJECT_UNKNOWN } from '../core/mcp.mjs';
+import { callTool, instructionsFor, PROJECT_UNKNOWN, FORK_WRITE_REFUSED, SUBAGENT_NOTICE } from '../core/mcp.mjs';
 import { CORE_SOURCE, coreParts, migrateImport, setupTool } from '../core/project.mjs';
 import { dataDir } from '../hosts/codex/register.mjs';
+import { queue } from '../hosts/codex/threads.mjs';
 const root = process.env.HEAD_CONTEXT_TEST_ROOT || os.tmpdir();
 const fresh = () => fs.mkdtempSync(path.join(root, 'codex-'));
 const core = fs.readFileSync(CORE_SOURCE, 'utf8').trimEnd();
@@ -98,6 +99,25 @@ test('Codex tool server: the conversation from _meta.threadId, the project from 
   assert.equal(bound.host, 'codex'); assert.equal(bound.session, 'demo');
   assert.equal(unknown.result.isError, true); assert.equal(unknown.result.content[0].text, PROJECT_UNKNOWN);
 });
+test('Codex subagent: a thread the conversation spawned reads through its conversation and writes nothing; its hooks keep to it', () => {
+  const dir = fresh(), data = fresh(); setup(dir);
+  sessions(dir, { host: 'codex' }).create({ name: 'demo', context: 'SUB DIRECTION', conversation_id: 'seed' });
+  codex(dir, 'session', { id: 'root1', data });
+  // Codex names the spawned thread (threadId) and its tree's root (sessionId) on each call.
+  const sub = (id, name, args) => ({ jsonrpc: '2.0', id, method: 'tools/call', params: { _meta: { threadId: 'child1', sessionId: 'root1' }, name, arguments: args } });
+  const [load, read, todo, save] = mcp([call(1, 'load', { name: 'demo' }, 'root1'), sub(2, 'read', { action: 'overview', name: 'demo' }), sub(3, 'todo', { action: 'list', name: 'demo' }), sub(4, 'save', { summary: 's', history: 'h' })], { HEAD_CONTEXT_CODEX_DATA: data });
+  assert.equal(load.result.isError, undefined);
+  assert.equal(read.result.isError, undefined); assert.match(read.result.content[0].text, /SUB DIRECTION/);
+  assert.equal(todo.result.isError, undefined);
+  assert.equal(save.result.isError, true); assert.equal(save.result.content[0].text, FORK_WRITE_REFUSED);
+  assert.equal(fs.existsSync(path.join(dir, '.head/state/conversations/codex-child1.json')), false);
+  // SubagentStart gives the task notice; its prompt hook does not empty the conversation's inbox.
+  const hook = (input, part) => spawnSync(process.execPath, [codexScript, part], { input: JSON.stringify(input), env: { PATH: process.env.PATH, HOME: process.env.HOME, HEAD_CONTEXT_CODEX_DATA: data }, encoding: 'utf8' });
+  assert.equal(text(hook({ hook_event_name: 'SubagentStart', session_id: 'root1', agent_id: 'child1', agent_type: 'default', cwd: dir }, 'subagent').stdout), SUBAGENT_NOTICE);
+  queue(dir, 'root1', { from: 'claude:x', text: 'FOR ROOT' });
+  assert.equal(hook({ hook_event_name: 'UserPromptSubmit', session_id: 'root1', agent_id: 'child1', cwd: dir, prompt: 'go' }, 'inbox').stdout, '');
+  assert.match(hook({ hook_event_name: 'UserPromptSubmit', session_id: 'root1', cwd: dir, prompt: 'hi' }, 'inbox').stdout, /FOR ROOT/);
+});
 test('Codex data folder: worked out from the installed plugin folder, the same for the hook and the server', () => {
   assert.equal(dataDir({ env: {}, root: '/h/.codex/plugins/cache/head-agent-core/head-context/0.8.0' }), '/h/.codex/plugins/data/head-context-head-agent-core');
   assert.equal(dataDir({ env: { PLUGIN_DATA: '/d' }, root: '/src/packages/context' }), '/d');
@@ -109,7 +129,8 @@ test('one package carries both hosts: Codex manifest, hooks and a relative tool 
   const server = JSON.parse(fs.readFileSync(m.mcpServers, 'utf8')).mcpServers.session;
   assert.deepEqual(server.args, ['scripts/codex-mcp.mjs']); assert.equal(server.cwd, '.');
   const hooks = JSON.parse(fs.readFileSync(m.hooks, 'utf8')).hooks;
-  assert.deepEqual(Object.keys(hooks), ['SessionStart', 'UserPromptSubmit']);
+  assert.deepEqual(Object.keys(hooks), ['SessionStart', 'UserPromptSubmit', 'SubagentStart']);
+  assert.deepEqual(hooks.SubagentStart[0].hooks.map(h => h.command.split(' ').at(-1)), ['subagent']);
   assert.deepEqual(hooks.UserPromptSubmit[0].hooks.map(h => h.command.split(' ').at(-1)), ['inbox']);
   assert.deepEqual(hooks.SessionStart[0].hooks.map(h => h.command.split(' ').at(-1)), ['core', 'instructions', 'session', 'context']);
   const claude = JSON.parse(fs.readFileSync('hooks/hooks.json', 'utf8')).hooks.SessionStart[0].hooks.map(h => h.args.slice(1).join(' '));

@@ -38,3 +38,13 @@ export function threadOf(request) {
   const meta = request?.params?._meta || {};
   return meta.threadId || meta.sessionId || meta['x-codex-turn-metadata']?.thread_id || null;
 }
+// Who calls: Codex names the calling thread (threadId) and the root of its tree (sessionId,
+// which is the root thread's own id). A thread its conversation spawned (spawn_agent, a fork
+// or a fresh agent) has a different root: it is a task inside that conversation — the
+// conversation is the root, the task its own thread (agent), and records are read, not written.
+export function callerOf(request) {
+  const meta = request?.params?._meta || {};
+  const thread = threadOf(request), root = meta.sessionId;
+  if (thread && root && root !== thread && ID.test(String(root))) return { conversation: root, agent: thread };
+  return { conversation: thread, agent: null };
+}

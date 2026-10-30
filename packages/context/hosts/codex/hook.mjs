@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { sessions } from '../../core/sessions.mjs';
 import { HOOK_BUDGET, UNCONNECTED } from '../../core/recovery.mjs';
-import { instructionsFor } from '../../core/mcp.mjs';
+import { instructionsFor, SUBAGENT_NOTICE } from '../../core/mcp.mjs';
 import { guide, refreshCore, coreParts } from '../../core/project.mjs';
 import { register } from './register.mjs';
 import { engineOf } from './mode.mjs';
@@ -20,6 +20,10 @@ import { writePresence, readPresence, take, asMessage } from './threads.mjs';
 // UserPromptSubmit:
 //   inbox        — messages other conversations left for this one while it could not be
 //     woken (its engine is not the shared one), given with the prompt.
+// SubagentStart:
+//   subagent     — a thread the conversation spawned (spawn_agent, fork or fresh) is a task
+//     inside it: one notice. Codex runs no SessionStart there, and its other hooks carry the
+//     task's agent_id with the conversation's session_id; the inbox is the conversation's own.
 // resume and fork give nothing: the conversation already holds it. /clear starts
 // unconnected: Codex leaves no sure trace of the conversation /clear replaced. After a
 // compaction Codex keeps what the user said, so no recent exchanges are added.
@@ -30,7 +34,8 @@ try {
   const project = input.cwd || process.env.CLAUDE_PROJECT_DIR;
   const source = input.source || 'startup', id = input.session_id;
   const quiet = source === 'resume' || source === 'fork';
-  if (input.hook_event_name === 'UserPromptSubmit' && part === 'inbox' && id && project) {
+  if (input.hook_event_name === 'SubagentStart' && part === 'subagent') out(SUBAGENT_NOTICE, 'SubagentStart');
+  else if (input.hook_event_name === 'UserPromptSubmit' && part === 'inbox' && id && project && !input.agent_id) {
     const presence = readPresence(project, id);
     if (presence) writePresence(project, { thread_id: id, cwd: presence.cwd, engine: { mode: presence.mode, socket: presence.socket, pid: presence.pid, home: presence.codex_home }, transcript_path: presence.transcript_path });
     // Given first, then removed from the inbox (threads.mjs take).

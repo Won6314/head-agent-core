@@ -82,7 +82,9 @@ export function callTool(store, name, args, conversation_id, project, readOnly =
 export const PROJECT_UNKNOWN = '이 대화의 프로젝트를 알 수 없습니다. 대화를 새로 시작하거나 다시 열어 주세요(시작할 때 프로젝트를 등록합니다).';
 // tools: a host's own tools beside these ([{definition, call({project, args, conversation_id,
 // request}) → text}], awaited): Codex's send.
-export async function serve({ project, projectOf, host, conversationOf, options = {}, readOnly = () => false, tools = [] }) {
+// agentOf(request): the task inside the conversation that makes this call, when the host names
+// it on the call itself (Codex); it makes the call read-only like a host-filled agent_id.
+export async function serve({ project, projectOf, host, conversationOf, agentOf = () => null, options = {}, readOnly = () => false, tools = [] }) {
   const stores = new Map();
   const storeOf = dir => { if (!stores.has(dir)) stores.set(dir, sessions(dir, { host, ...(typeof options === 'function' ? options(dir) : options) })); return stores.get(dir); };
   const send = message => process.stdout.write(`${JSON.stringify({ jsonrpc: '2.0', ...message })}\n`);
@@ -101,7 +103,7 @@ export async function serve({ project, projectOf, host, conversationOf, options 
         if (!dir) throw new Error(PROJECT_UNKNOWN);
         const own = tools.find(t => t.definition.name === params.name);
         const text = own ? await own.call({ project: dir, args: params.arguments || {}, conversation_id: conversationOf(request), request })
-          : callTool(storeOf(dir), params.name, params.arguments || {}, conversationOf(request), dir, readOnly(request), host);
+          : callTool(storeOf(dir), params.name, params.arguments || {}, conversationOf(request), dir, readOnly(request) || Boolean(agentOf(request)), host);
         send({ id, result: { content: [{ type: 'text', text }] } });
       }
       catch (error) { send({ id, result: { isError: true, content: [{ type: 'text', text: error.message }] } }); }

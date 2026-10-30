@@ -140,12 +140,12 @@ Row = {conversation_id,host:'claude'|'codex',title,address,reachable,last_at,ent
 
 - `.codex-plugin/plugin.json`이 스킬(`skills/`), 도구 서버(`.codex-mcp.json`, 상대 경로 `scripts/codex-mcp.mjs` — Codex는 도구 서버 인자의 `${CLAUDE_PLUGIN_ROOT}`를 풀지 않는다), 훅(`hooks/codex-hooks.json`)을 가리킨다. Codex는 `hooks` 필드의 파일만 읽어서 Claude용 `hooks/hooks.json`과 섞이지 않는다.
 - SessionStart 네 명령(`codex-hook.mjs core|instructions|session|context`, 출력 상한 끔): 코어 지침 전체, 서버 안내문(Codex는 서버 안내문을 시작 때 모델에 주지 않는다), 작업 세션(+ 첫 실행 안내), 작업 맥락. `source`가 resume·fork면 아무것도 넣지 않는다.
-- 대화 ID: 도구 서버가 도구 호출마다 오는 `_meta.threadId`를 읽는다(훅으로 인자를 바꾸지 않는다). 연결 파일은 `.head/state/conversations/codex-<대화ID>.json`.
+- 대화 ID: 도구 서버가 도구 호출마다 오는 `_meta.threadId`·`_meta.sessionId`를 읽는다(훅으로 인자를 바꾸지 않는다). 연결 파일은 `.head/state/conversations/codex-<대화ID>.json`.
 - 프로젝트: Codex는 도구 서버를 플러그인 폴더에서 띄우고 프로젝트를 알려 주지 않는다. 시작 훅이 대화 ID와 작업 폴더(cwd)를 플러그인 데이터 폴더의 `threads/<대화ID>.json`에 남기고, 도구 서버가 그것으로 프로젝트를 찾는다. 데이터 폴더는 두 쪽 모두 설치 경로(`<home>/plugins/cache/<마켓>/<플러그인>/<판>` → `<home>/plugins/data/<플러그인>-<마켓>`)에서 구한다.
 - /clear: Codex는 /clear 전 대화를 확정할 단서를 남기지 않아 이어받지 않는다(연결 안 됨 한 줄). 압축 뒤: Codex가 사용자 말 원문을 남기므로 최근 대화를 넣지 않고, 요약 지시(PreCompact)도 쓰지 않는다(Codex 서버 압축은 그 출력을 쓰지 않음).
 - UserPromptSubmit 한 명령(`codex-hook.mjs inbox`): 바로 깨우지 못한 동안 쌓인 메시지를 입력과 함께 넣는다.
 - 도구 서버는 Codex가 띄우는 동안만 돌고, 플러그인이 따로 띄우는 상주 프로그램은 없다. Codex 설정 파일은 쓰지 않는다.
-- 아직 없는 것: Codex 하위 작업의 읽기 전용.
+- 하위 에이전트(spawn_agent, 포크든 새 컨텍스트든): Codex는 도구 호출마다 부른 스레드(`_meta.threadId`)와 그 트리의 뿌리(`_meta.sessionId`, 뿌리 스레드 자신의 ID)를 준다. 둘이 다르면 대화 안 작업이다. 대화는 뿌리, 작업은 그 스레드(agent)이고 기록은 읽기만 된다. SubagentStart 한 명령(`codex-hook.mjs subagent`)이 Claude와 같은 안내를 넣는다. Codex는 하위 에이전트에서 SessionStart를 돌리지 않으므로 등록·목록에 따로 오르지 않는다(Claude의 대화 안 작업과 같다). 그 안의 입력 훅은 부른 대화의 편지함을 비우지 않는다.
 - 설치: `codex plugin marketplace add Won6314/head-agent-core` → `codex plugin add head-context@head-agent-core`, 첫 실행 때 훅 검토에서 신뢰.
 
 ## 대화 간 메시지 (Claude Code ↔ Codex)
