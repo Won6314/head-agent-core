@@ -182,7 +182,7 @@ test('Codex tool server: the conversation from _meta.threadId, the project from 
     ],
     { HEAD_CONTEXT_CODEX_DATA: data },
   );
-  assert.equal(init.result.serverInfo.version, '0.9.4');
+  assert.equal(init.result.serverInfo.version, '0.9.5');
   assert.equal(load.result.isError, undefined);
   assert.match(load.result.content[0].text, /MCP DIRECTION/);
   const bound = JSON.parse(fs.readFileSync(path.join(dir, '.head/state/conversations/codex-th1.json'), 'utf8'));

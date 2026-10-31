@@ -40,7 +40,7 @@ export const APP_INSTRUCTIONS = {
 // host without one, e.g. OpenCode).
 export const instructionsFor = (host) =>
   APP_INSTRUCTIONS[host] ? `${INSTRUCTIONS}\n\n${APP_INSTRUCTIONS[host]}` : INSTRUCTIONS;
-export const VERSION = '0.9.4';
+export const VERSION = '0.9.5';
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
 const missing = { create: { context: CONTEXT_REQUIRED } };
