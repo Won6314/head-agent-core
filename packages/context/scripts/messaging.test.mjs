@@ -8,7 +8,8 @@ import net from 'node:net';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
 import { EventEmitter } from 'node:events';
-import { engineOf, splitCommandLine } from '../hosts/codex/mode.mjs';
+import { engineOf } from '../hosts/codex/mode.mjs';
+import { splitCommandLine } from '../core/platform.mjs';
 import { delegatedPrompt, deliverToCodex, queueToApp } from '../hosts/codex/deliver.mjs';
 import { writePresence, queue, drain, take, codexLive, STALE_MS } from '../hosts/codex/threads.mjs';
 import { packet, canonicalInbox } from '../hosts/claude/deliver.mjs';
@@ -181,10 +182,10 @@ test('to a Codex desktop app conversation: into Codex\'s own queue with the app 
 test('Codex queue on Mac also asks the app to pick the conversation up, in the background; elsewhere only the queue', async () => {
   const calls = [];
   const run = (cmd, args) => { calls.push([cmd, ...args]); const ee = new EventEmitter(); if (cmd !== 'open') setImmediate(() => ee.emit('close', 0)); ee.unref = () => { }; return ee; };
-  await queueToApp({ bin: '/app/codex', codex_home: '/h' }, 't-1', 'm', { platform: 'darwin', run });
+  await queueToApp({ bin: '/app/codex', home: '/h' }, 't-1', 'm', { wake: true, run });
   assert.deepEqual(calls, [['/app/codex', 'queue', '--thread', 't-1', '--message', 'm'], ['open', '-g', 'codex://threads/wake/t-1']]);
   calls.length = 0;
-  await queueToApp({ bin: 'C:\\app\\codex.exe' }, 't-2', 'm', { platform: 'win32', run });
+  await queueToApp({ bin: 'C:\\app\\codex.exe' }, 't-2', 'm', { wake: false, run });
   assert.deepEqual(calls, [['C:\\app\\codex.exe', 'queue', '--thread', 't-2', '--message', 'm']]);
 });
 

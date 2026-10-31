@@ -29,7 +29,7 @@ export function continuedInto(transcript) {
   if (!text.includes('continued-in')) return null;
   for (const line of text.split('\n').reverse()) {
     if (!line.includes('"continued-in"')) continue;
-    try { const row = JSON.parse(line); if (row.type === 'continued-in' && row.continuedInSessionId) return row.continuedInSessionId; } catch { }
+    try { const row = JSON.parse(line); if (row.type === 'continued-in' && row.continuedInSessionId) return row.continuedInSessionId; } catch { /* a cut or broken line of the host's records */ }
   }
   return null;
 }

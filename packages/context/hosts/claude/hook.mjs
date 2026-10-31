@@ -9,6 +9,7 @@ import { hostInfo } from './process.mjs';
 import { recentPart } from './recent.mjs';
 import { compactInstruction } from './compact.mjs';
 import { SUBAGENT_NOTICE } from '../../core/mcp.mjs';
+import { hookOutput } from '../../core/protocol.mjs';
 import { guide, refreshCore, coreParts, migrateImport, claudeImports, CORE_MARK } from '../../core/project.mjs';
 
 // PreToolUse fills the host fields of the head-context tools: the conversation, and
@@ -33,7 +34,7 @@ const TOOL = /^mcp__plugin_head-context_session__(?!setup$)/;
 // Whether a conversation's records already carry the core this hook gives (its first part's line).
 const heldCore = transcript => { try { return !transcript || fs.readFileSync(transcript, 'utf8').includes(CORE_MARK); } catch { return true; } };
 const part = process.argv[2];
-const out = (event, text) => { if (text) console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: event, additionalContext: text } })); };
+const out = (event, text) => { if (text) console.log(hookOutput(event, { additionalContext: text })); };
 const fit = (text, budget, shorter) => (text.length > budget ? shorter() : text);
 try {
   const input = JSON.parse(fs.readFileSync(0, 'utf8'));
@@ -42,7 +43,7 @@ try {
   if (event === 'PreToolUse' && TOOL.test(input.tool_name || '')) {
     const { agent_id: _ignored, ...rest } = input.tool_input || {};
     const updatedInput = { ...rest, conversation_id: input.session_id, ...(input.agent_id ? { agent_id: input.agent_id } : {}) };
-    console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', updatedInput } }));
+    console.log(hookOutput('PreToolUse', { updatedInput }));
   } else if (event === 'SubagentStart') {
     // A task inside this conversation (a fork or a subagent): one notice, nothing else.
     out('SubagentStart', SUBAGENT_NOTICE);

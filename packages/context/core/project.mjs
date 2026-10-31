@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {optionalRead,atomicText,atomicJSON,noSymlink,locked,projectRoot} from './storage.mjs';
+import {optionalRead,readState,atomicText,atomicJSON,noSymlink,locked,projectRoot} from './storage.mjs';
 // Project first run. Two steps, each asked once per project: setup (the core instructions
 // turned on for the project) and survey (asked only when the plugin carries its procedure).
 // State lives in .head/config.json under first_run: {setup, survey}, each 'done' or 'never_ask'.
@@ -54,7 +54,7 @@ function projectSettings(file){
   if(added.length)atomicJSON(file,next);
   return {fork,market};
 }
-const readConfig=file=>JSON.parse(optionalRead(file)||'{}');
+const readConfig=file=>readState(file,{});
 export function firstRun(project){const s=readConfig(files(project).config).first_run||{};return Object.fromEntries(STEPS.map(k=>[k,VALUES.includes(s[k])?s[k]:null]));}
 function mark(project,step,value){
   if(!STEPS.includes(step))throw new Error(`알 수 없는 단계: ${step}`);

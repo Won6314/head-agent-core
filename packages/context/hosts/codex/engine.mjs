@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { VERSION } from '../../core/mcp.mjs';
+import { isWindows } from '../../core/platform.mjs';
 
 // The Codex shared engine (`codex app-server --listen unix://`, what `codex app-server daemon
 // start` runs) takes JSON-RPC over a WebSocket on its control socket. Terminal Codex windows
@@ -27,11 +28,13 @@ function proxied(socket, bin) {
   child.once('spawn', () => sock.emit('connect'));
   child.once('error', error => sock.emit('error', error));
   child.once('exit', () => sock.destroy());
-  sock.once('close', () => { try { child.kill(); } catch { } });
+  sock.once('close', () => { try { child.kill(); } catch { /* already gone */ } });
   return sock;
 }
-export async function connect(socket, { timeoutMs = 10000, name = 'head_context', bin = null } = {}) {
-  const sock = process.platform === 'win32' ? proxied(socket, bin) : net.connect({ path: socket });
+// at: where the engine is — its control socket and, when known, its binary ({ socket, bin }:
+// a presence's engine, threads.mjs engineFrom).
+export async function connect({ socket, bin = null }, { timeoutMs = 10000, name = 'head_context' } = {}) {
+  const sock = isWindows ? proxied(socket, bin) : net.connect({ path: socket });
   sock.setNoDelay?.(true);
   let buffer = Buffer.alloc(0), upgraded = false, seq = 0, closed = false;
   const pending = new Map(), listeners = new Set();
@@ -100,7 +103,7 @@ export async function connect(socket, { timeoutMs = 10000, name = 'head_context'
     request,
     notify: (method, params) => write(Buffer.from(JSON.stringify(params === undefined ? { method } : { method, params }))),
     on: listener => { listeners.add(listener); return () => listeners.delete(listener); },
-    close: () => { closed = true; try { sock.end(); sock.destroy(); } catch { } },
+    close: () => { closed = true; try { sock.end(); sock.destroy(); } catch { /* already closed */ } },
     info: null,
   };
   try {
@@ -110,7 +113,7 @@ export async function connect(socket, { timeoutMs = 10000, name = 'head_context'
   return engine;
 }
 
-export async function withEngine(socket, job, options) {
-  const engine = await connect(socket, options);
+export async function withEngine(at, job, options) {
+  const engine = await connect(at, options);
   try { return await job(engine); } finally { engine.close(); }
 }

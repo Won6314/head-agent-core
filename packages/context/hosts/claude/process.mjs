@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { pidAlive, readJSON } from '../../core/liveness.mjs';
+import { pidAlive } from '../../core/liveness.mjs';
+import { readLoose } from '../../core/storage.mjs';
 import { instructionLine } from '../../core/instruction.mjs';
 
 // Claude Code keeps one small file per running conversation in ~/.claude/sessions:
@@ -11,7 +12,7 @@ import { instructionLine } from '../../core/instruction.mjs';
 // Claude Code's own folder: CLAUDE_CONFIG_DIR when set, else ~/.claude.
 export const claudeDir = () => process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
 export const registryDir = () => process.env.HEAD_CONTEXT_CLAUDE_SESSIONS || path.join(claudeDir(), 'sessions');
-export const registryOf = pid => (Number.isInteger(Number(pid)) ? readJSON(path.join(registryDir(), `${Number(pid)}.json`)) : null);
+export const registryOf = pid => (Number.isInteger(Number(pid)) ? readLoose(path.join(registryDir(), `${Number(pid)}.json`)) : null);
 export const conversationOfPid = pid => registryOf(pid)?.sessionId || null;
 export function registry() {
   let entries;
@@ -20,7 +21,7 @@ export function registry() {
   for (const name of entries) {
     const pid = /^(\d+)\.json$/.exec(name)?.[1];
     if (!pid) continue;
-    const row = readJSON(path.join(registryDir(), name));
+    const row = readLoose(path.join(registryDir(), name));
     if (row?.sessionId) out.push({ ...row, pid: Number(pid), file: path.join(registryDir(), name) });
   }
   return out;
@@ -58,7 +59,7 @@ export function desktopIndex() {
   for (const root of desktopRoots()) for (const account of dirs(root)) for (const org of dirs(account)) {
     let files; try { files = fs.readdirSync(org).filter(f => /^local_.*\.json$/.test(f)); } catch { continue; }
     for (const f of files) {
-      const r = readJSON(path.join(org, f));
+      const r = readLoose(path.join(org, f));
       if (r?.cliSessionId) out.set(r.cliSessionId, { host_session_id: path.basename(f, '.json'), title: r.title || r.name, archived: Boolean(r.isArchived || r.archived) });
     }
   }
@@ -117,7 +118,7 @@ export function liveConversations(project, known = new Map(), { now = Date.now()
       last_at: stamp(r.sessionId) || r.updatedAt || null, entrypoint: r.entrypoint, reachable: Boolean(r.messagingSocketPath), ...prompts(r.sessionId, r.entrypoint) });
   }
   let files = [];
-  try { files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl')); } catch { }
+  try { files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl')); } catch { /* no records folder for this project yet */ }
   for (const f of files) {
     const id = path.basename(f, '.jsonl');
     if (out.has(id)) continue;

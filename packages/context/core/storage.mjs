@@ -1,10 +1,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
+import {pidAlive} from './liveness.mjs';
 export function validName(value) {
   if(typeof value!=='string'||!/^[A-Za-z0-9가-힣._-]+$/.test(value)||value.includes('..')||value==='.')throw new Error('이름은 영문·숫자·한글·._-만 허용하며 ..와 경로 구분자는 금지합니다.');return value;
 }
 export function optionalRead(file){try{return fs.readFileSync(file,'utf8');}catch(e){if(e.code==='ENOENT')return '';throw e;}}
+// Two ways to read a JSON state file, by whose file it is:
+//   readState — this plugin's own records and settings: a missing (or empty) file is the
+//     fallback, a broken one stops with its error. Without a fallback the file must be there.
+//   readLoose — another app's files and files that live only a moment (registries,
+//     presence, keys): missing, broken or not an object is null.
+export function readState(file,fallback){if(fallback===undefined)return JSON.parse(fs.readFileSync(file,'utf8'));const text=optionalRead(file);return text?JSON.parse(text):fallback;}
+export function readLoose(file){try{const value=JSON.parse(fs.readFileSync(file,'utf8'));return value&&typeof value==='object'?value:null;}catch{return null;}} // missing or broken: null, by design
 // Resolve only the trusted project boundary, never .head or a record path: resolving
 // those would hide the very links noSymlink must reject. Host cwd stays unchanged.
 export function projectRoot(project){if(!project||!path.isAbsolute(project))throw new Error('절대 프로젝트 경로가 필요합니다.');return fs.realpathSync(project);}
@@ -13,7 +21,7 @@ export function atomicText(file,text){noSymlink(file);fs.mkdirSync(path.dirname(
 export const atomicJSON=(file,value)=>atomicText(file,JSON.stringify(value,null,2)+'\n');
 export function locations(project){
   const actual=projectRoot(project),root=noSymlink(path.join(actual,'.head'));
-  const config=JSON.parse(optionalRead(noSymlink(path.join(root,'config.json')))||'{}');
+  const config=readState(noSymlink(path.join(root,'config.json')),{});
   if(config.sessions_dir!==undefined&&(typeof config.sessions_dir!=='string'||!config.sessions_dir))throw new Error('sessions_dir는 비어 있지 않은 경로여야 합니다.');
   if(config.standby_days!==undefined&&(typeof config.standby_days!=='number'||!(config.standby_days>=0)))throw new Error('standby_days는 0 이상의 숫자여야 합니다.');
   if(config.timezone!==undefined){try{if(typeof config.timezone!=='string')throw 0;new Intl.DateTimeFormat('en',{timeZone:config.timezone});}catch{throw new Error('timezone은 IANA 시간대 이름이어야 합니다 (예: Asia/Seoul).');}}
@@ -40,20 +48,19 @@ export function line(value,label){if(typeof value!=='string'||!value.trim()||/[\
 // The lock is a directory holding its owner's pid. A lock whose owner has died
 // (a killed hook, a restarted server mid-read) is moved aside and removed, so it
 // can never hold every later writer and reader off for good.
-const alivePid=pid=>{try{process.kill(pid,0);return true;}catch(e){return e.code==='EPERM';}};
 function lockOwner(lock){try{return Number(fs.readFileSync(path.join(lock,'owner'),'utf8'))||null;}catch{return null;}}
 function clearStale(lock){
   let age;try{age=Date.now()-fs.statSync(lock).mtimeMs;}catch{return true;}
   const owner=lockOwner(lock);
   // Without an owner file the holder may be between mkdir and writing it.
-  if(owner?alivePid(owner):age<30000)return false;
+  if(owner?pidAlive(owner):age<30000)return false;
   const aside=`${lock}.stale-${process.pid}-${Date.now()}`;
   try{fs.renameSync(lock,aside);}catch{return true;}
   // Another process may have replaced the dead lock in between; give it back.
-  if(lockOwner(aside)!==owner){try{fs.renameSync(aside,lock);}catch{}return false;}
+  if(lockOwner(aside)!==owner){try{fs.renameSync(aside,lock);}catch{/* a newer lock already stands there: nothing to give back */}return false;}
   fs.rmSync(aside,{recursive:true,force:true});return true;
 }
-export function locked(file,fn){noSymlink(file);const lock=file+'.lock',until=Date.now()+10000;while(true){try{fs.mkdirSync(lock);try{fs.writeFileSync(path.join(lock,'owner'),String(process.pid));}catch{}break;}catch(e){if(e.code!=='EEXIST')throw e;if(clearStale(lock))continue;if(Date.now()>until)throw new Error(`잠금을 얻지 못했습니다: ${file}`);Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,20);}}try{return fn();}finally{fs.rmSync(lock,{recursive:true,force:true});}}
+export function locked(file,fn){noSymlink(file);const lock=file+'.lock',until=Date.now()+10000;while(true){try{fs.mkdirSync(lock);try{fs.writeFileSync(path.join(lock,'owner'),String(process.pid));}catch{/* the lock holds without its owner file; clearStale then goes by its age */}break;}catch(e){if(e.code!=='EEXIST')throw e;if(clearStale(lock))continue;if(Date.now()>until)throw new Error(`잠금을 얻지 못했습니다: ${file}`);Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,20);}}try{return fn();}finally{fs.rmSync(lock,{recursive:true,force:true});}}
 // A checkpoint is time, summary, body and an optional next line. Only branch
 // close/abandon entries carry the tool-written marker lines (status/branch/record/reason)
 // that the graph turns into merge edges and the map shows as one higher-level event, and

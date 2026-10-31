@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import {locations,records,optionalRead,atomicText,atomicJSON,locked} from './storage.mjs';
+import {locations,records,optionalRead,readState,atomicText,atomicJSON,locked} from './storage.mjs';
 import {withGraph} from './graph.mjs';
 import {branchPath,branchHeader} from './branch-format.mjs';
 import {isOpen} from './lifecycle.mjs';
@@ -45,7 +45,7 @@ export function migrate(project,{apply=false}={}){
   if(apply){
     for(const e of found.empty){const to=path.join(archive,'branches',e.session,e.branch);fs.mkdirSync(path.dirname(to),{recursive:true});if(fs.existsSync(to))fs.rmSync(to,{recursive:true,force:true});fs.renameSync(e.folder,to);}
     for(const l of found.labels){const file=branchPath(path.join(topics,l.session),l.branch);locked(file,()=>{const text=optionalRead(file);if(branchHeader(text))atomicText(file,text.replace(/^(이름표|주제): .*$/m,m=>m.replace(FORKS,' (fork)')));});}
-    for(const c of conns){const file=path.join(state,'conversations',`${c.host}-${c.conversation_id}.json`);const raw=JSON.parse(fs.readFileSync(file,'utf8'));atomicJSON(file,{...raw,branch:null});}
+    for(const c of conns){const file=path.join(state,'conversations',`${c.host}-${c.conversation_id}.json`);const raw=readState(file);atomicJSON(file,{...raw,branch:null});}
     withGraph(project,g=>g.names());
   }
   return report;

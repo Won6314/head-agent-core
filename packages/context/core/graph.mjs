@@ -23,9 +23,9 @@ export const checkpointId=(session,stem,time,occurrence=1)=>`${encodeURIComponen
 function resolveRef(value,dirs){
   value=value.replace(/^<|>$/g,'').replace(/\s+["'].*$/,'').split('#')[0].replace(/[,;。]+$/,'');
   if(!value||/^[a-z]+:\/\//i.test(value))return null;
-  try{value=decodeURIComponent(value);}catch{}
+  try{value=decodeURIComponent(value);}catch{/* not %-encoded: the link as written */}
   if(value.startsWith('~/'))value=path.join(os.homedir(),value.slice(2));
-  for(const dir of dirs){try{const file=path.resolve(dir,value);if(fs.statSync(file).isFile())return file;}catch{}}
+  for(const dir of dirs){try{const file=path.resolve(dir,value);if(fs.statSync(file).isFile())return file;}catch{/* not there: the next folder */}}
   return null;
 }
 const linked=body=>[...[...body.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map(m=>m[1]),...[...body.matchAll(/`([^`\n]+)`/g)].map(m=>m[1])];
@@ -60,7 +60,7 @@ export function withGraph(project,fn){
   return locked(file,()=> {
     let db;
     try {db=new DatabaseSync(file,{timeout:5000});db.exec('PRAGMA busy_timeout=5000;');db.prepare('PRAGMA user_version').get();}
-    catch(e){try{db?.close();}catch{};if(!/not a database|malformed/i.test(e.message))throw e;fs.unlinkSync(file);db=new DatabaseSync(file,{timeout:5000});}
+    catch(e){try{db?.close();}catch{/* already failing: the open error decides */};if(!/not a database|malformed/i.test(e.message))throw e;fs.unlinkSync(file);db=new DatabaseSync(file,{timeout:5000});}
     try {
       const shape={files:'path,mtime,size',nodes:'id,kind,session,stem,stamp,file,start,end,seq',edges:'src,dst,kind',linkfiles:'path,mtime,size',links:'src,dst'};
       if(db.prepare('PRAGMA user_version').get().user_version!==VERSION || Object.entries(shape).some(([table,columns])=>db.prepare(`PRAGMA table_info(${table})`).all().map(c=>c.name).join(',')!==columns)){
@@ -68,7 +68,7 @@ export function withGraph(project,fn){
       }
       db.exec('BEGIN IMMEDIATE');
       const g=new Graph(db,topics,timezone);g.sync();const result=fn(g);db.exec('COMMIT');return result;
-    }catch(e){try{db.exec('ROLLBACK');}catch{};throw e;}finally{db.close();}
+    }catch(e){try{db.exec('ROLLBACK');}catch{/* no transaction left to roll back */};throw e;}finally{db.close();}
   });
 }
 class Graph {

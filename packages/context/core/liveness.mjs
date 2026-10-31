@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
+import {readLoose} from './storage.mjs';
+import {isLinux,processStart} from './platform.mjs';
 // Liveness from what the host wrote down, not from the process tree. Two evidence
 // shapes, both checked with Node built-ins only (Mac·Windows·Linux alike):
 //   {registry, session_id, pid} — the host keeps one small file per running
@@ -11,16 +13,11 @@ export function pidAlive(pid){
   if(!Number.isInteger(pid)||pid<=0)return false;
   try{process.kill(pid,0);return true;}catch(error){return error.code==='EPERM';}
 }
-export function readJSON(file){try{const value=JSON.parse(fs.readFileSync(file,'utf8'));return value&&typeof value==='object'?value:null;}catch{return null;}}
-const bootId=()=>{try{return fs.readFileSync('/proc/sys/kernel/random/boot_id','utf8').trim();}catch{return null;}};
-function startTime(pid){
-  if(process.platform!=='linux')return null;
-  try{const stat=fs.readFileSync(`/proc/${pid}/stat`,'utf8');return stat.slice(stat.lastIndexOf(')')+2).split(' ')[19]||null;}catch{return null;}
-}
+const bootId=()=>{try{return fs.readFileSync('/proc/sys/kernel/random/boot_id','utf8').trim();}catch{return null;}}; // no /proc (not Linux): no boot id
 // Linux-only refinement: the same pid with a different start time is a different process.
-const sameStart=(pid,start)=>!start||process.platform!=='linux'||startTime(pid)===start;
+const sameStart=(pid,start)=>!start||!isLinux||processStart(pid)===start;
 export function processEvidence(pid=process.pid){
-  const boot=bootId(),start=startTime(pid);
+  const boot=bootId(),start=processStart(pid);
   return {type:'process',pid:Number(pid),...(start?{start}:{}),...(boot?{boot_id:boot}:{}),machine:os.hostname()};
 }
 export function evidenceAlive(record){
@@ -31,7 +28,7 @@ export function evidenceAlive(record){
   if(evidence.boot_id&&boot&&evidence.boot_id!==boot)return false;
   const pid=Number(evidence.pid);
   if(evidence.registry&&evidence.session_id){
-    const registry=readJSON(evidence.registry);
+    const registry=readLoose(evidence.registry);
     return Boolean(registry&&registry.sessionId===evidence.session_id)&&pidAlive(pid);
   }
   // A plain process, including the linux-process evidence earlier versions wrote.

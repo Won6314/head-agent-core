@@ -4,6 +4,9 @@ import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { registry, registryDir } from './process.mjs';
 import { pidAlive } from '../../core/liveness.mjs';
+import { readLoose } from '../../core/storage.mjs';
+import { envelope } from '../../core/protocol.mjs';
+import { isWindows } from '../../core/platform.mjs';
 
 // Hands a message to a running Claude Code conversation the way another Claude
 // conversation's SendMessage does: on its inbox socket (messagingSocketPath in
@@ -47,7 +50,7 @@ export function inboxToken(socket, pid) {
   if (!canonical) return null;
   const tail = `.${createHash('sha256').update(canonical).digest('hex')}.key`;
   let names;
-  try { names = fs.readdirSync(registryDir()); } catch { return null; }
+  try { names = fs.readdirSync(registryDir()); } catch { return null; } // no registry folder: no key
   const rank = owner => (owner === pid ? 0 : pidAlive(owner) ? 1 : 2);
   const keys = names.filter(n => n.endsWith(tail) && /^\d+\.[0-9a-f]{64}\.key$/.test(n))
     .map(n => ({ n, owner: Number(n.split('.')[0]) })).sort((a, b) => rank(a.owner) - rank(b.owner));
@@ -55,22 +58,20 @@ export function inboxToken(socket, pid) {
     try {
       const file = path.join(registryDir(), n);
       if (fs.statSync(file).size > 4096) continue;
-      const token = JSON.parse(fs.readFileSync(file, 'utf8')).peerToken;
+      const token = readLoose(file)?.peerToken;
       if (typeof token === 'string' && /^[0-9a-f]{32}$/.test(token)) return token;
     } catch { /* the next */ }
   }
   return null;
 }
 
-const attr = v => String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 export function packet(text, { from, fromName }) {
-  const head = `<cross-session-message from="${attr(from)}"${fromName ? ` from-name="${attr(fromName)}"` : ''}>`;
-  return { msgV: 1, msg_id: randomUUID(), type: 'user', message: { role: 'user', content: `${head}\n${text}\n</cross-session-message>` }, priority: 'next', from };
+  return { msgV: 1, msg_id: randomUUID(), type: 'user', message: { role: 'user', content: envelope({ from, fromName, text }) }, priority: 'next', from };
 }
 // Not there: no running conversation at that address (closed, or a desktop conversation whose
 // process the app stopped), or its socket refuses. Told apart from other failures (NotThere).
 export class NotThere extends Error { }
-export function deliverToClaude(target, text, { from, fromName, timeoutMs = 10000, requireAuth = process.platform === 'win32' } = {}) {
+export function deliverToClaude(target, text, { from, fromName, timeoutMs = 10000, requireAuth = isWindows } = {}) {
   const inbox = inboxOf(target);
   if (!inbox) return Promise.reject(new NotThere(`No running Claude conversation at ${target}`));
   const token = inboxToken(inbox.socket, inbox.pid);

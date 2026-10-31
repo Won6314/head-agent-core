@@ -5,7 +5,8 @@ import { instructionsFor, SUBAGENT_NOTICE } from '../../core/mcp.mjs';
 import { guide, refreshCore, coreParts } from '../../core/project.mjs';
 import { register } from './register.mjs';
 import { engineOf } from './mode.mjs';
-import { writePresence, readPresence, take, asMessage } from './threads.mjs';
+import { hookOutput } from '../../core/protocol.mjs';
+import { writePresence, readPresence, engineFrom, take, asMessage } from './threads.mjs';
 
 // Codex hooks, one process per part like the Claude hook. Codex says which start it is
 // (source: startup, resume, clear, compact, fork); hooks.json turns its output cap off.
@@ -28,7 +29,7 @@ import { writePresence, readPresence, take, asMessage } from './threads.mjs';
 // unconnected: Codex leaves no sure trace of the conversation /clear replaced. After a
 // compaction Codex keeps what the user said, so no recent exchanges are added.
 const part = process.argv[2];
-const out = (text, event = 'SessionStart') => { if (text) console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: event, additionalContext: text } })); };
+const out = (text, event = 'SessionStart') => { if (text) console.log(hookOutput(event, { additionalContext: text })); };
 try {
   const input = JSON.parse(fs.readFileSync(0, 'utf8'));
   const project = input.cwd || process.env.CLAUDE_PROJECT_DIR;
@@ -37,10 +38,10 @@ try {
   if (input.hook_event_name === 'SubagentStart' && part === 'subagent') out(SUBAGENT_NOTICE, 'SubagentStart');
   else if (input.hook_event_name === 'UserPromptSubmit' && part === 'inbox' && id && project && !input.agent_id) {
     const presence = readPresence(project, id);
-    if (presence) writePresence(project, { thread_id: id, cwd: presence.cwd, engine: { mode: presence.mode, socket: presence.socket, bin: presence.bin, pid: presence.pid, home: presence.codex_home }, transcript_path: presence.transcript_path });
+    if (presence) writePresence(project, { thread_id: id, cwd: presence.cwd, engine: engineFrom(presence), transcript_path: presence.transcript_path });
     // Given first, then removed from the inbox (threads.mjs take).
     const waiting = take(project, id);
-    if (waiting.messages.length) fs.writeSync(1, `${JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: waiting.messages.map(asMessage).join('\n\n') } })}\n`);
+    if (waiting.messages.length) fs.writeSync(1, `${hookOutput('UserPromptSubmit', { additionalContext: waiting.messages.map(asMessage).join('\n\n') })}\n`);
     waiting.done();
   } else if (input.hook_event_name === 'SessionStart' && id && project) {
     const store = sessions(project, { host: 'codex' });

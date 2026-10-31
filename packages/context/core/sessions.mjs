@@ -8,7 +8,7 @@ import {clock} from './map-view.mjs';
 import {branchPath,branchText,branchHeader,withStatus,withRecap} from './branch-format.mjs';
 import {mergeArgs,isOpen,OPEN,CLOSED,ABANDONED} from './lifecycle.mjs';
 import {openTodos,addTodo,doneTodo,todoLine,today} from './todo.mjs';
-import {validName,optionalRead,noSymlink,locations,recordFile,atomicJSON,atomicText,records,locked,entry,line} from './storage.mjs';
+import {validName,optionalRead,readState,noSymlink,locations,recordFile,atomicJSON,atomicText,records,locked,entry,line} from './storage.mjs';
 export * from './storage.mjs';
 
 export const CONTEXT_REQUIRED='방향(context)이 필요합니다. 목적 없는 작업 세션은 만들지 않습니다. 사용자와 이 작업 세션의 목적을 정한 뒤 그 내용을 context로 주세요. 작업 세션은 만들어지지 않았습니다.';
@@ -52,7 +52,7 @@ function lastOwn(g,session,stem){
 export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],peers=[],now=()=>Date.now()}={}){
   const {topics,state,timezone}=locations(project);
   const directory=name=>{validName(name);if(name.startsWith('_'))throw new Error('보관 폴더는 작업 세션이 아닙니다.');return noSymlink(path.join(topics,name));};
-  const connection=id=>id?JSON.parse(optionalRead(recordFile(state,'conversations',id,host))||'null'):null;
+  const connection=id=>id?readState(recordFile(state,'conversations',id,host),null):null;
   // The work branch a conversation saves to: the one it is attached to while that one
   // exists and is open. A closed or dropped branch sends its conversations back to main.
   const effective=(bound,g)=>{
@@ -63,7 +63,7 @@ export function sessions(project,{host='claude',hostInfo=()=>({}),live=()=>[],pe
   const bind=(name,stem,id,extra={})=>{
     if(!id)throw new Error('conversation_id가 필요합니다 (호스트 연결이 채웁니다).');
     const previous=connection(id)||{};let info={};
-    try{info=hostInfo(id)||{};}catch{}
+    try{info=hostInfo(id)||{};}catch{/* the host's files cannot be read now: the connection keeps what it had */}
     const clean=Object.fromEntries(Object.entries({...info,...extra}).filter(([,v])=>v!==undefined&&v!==null&&v!==''));
     atomicJSON(recordFile(state,'conversations',id,host),{...previous,...clean,host,conversation_id:id,session:name,branch:stem==='main'?null:stem,bound_at:new Date(now()).toISOString()});
   };

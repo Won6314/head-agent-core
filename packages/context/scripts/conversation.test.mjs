@@ -244,7 +244,7 @@ test('0.7.1: an SDK copy names its parent in forkedFrom; HEAD_CONTEXT_PARENT com
 test('0.7.1: a conversation run by claude -p reads records but its writes are refused (real MCP process)',t=>{
   t.after(after);const st=stage(),s=api(st.dir);s.create({name:'demo',context:'D',conversation_id:'p'});
   st.running(process.pid,'p');s.start({conversation_id:'k',origins:[{conversation_id:'p',kind:'parent'}]});
-  const call=(entry,name,args)=>{const r=spawnSync(process.execPath,[path.resolve(path.dirname(new URL(import.meta.url).pathname),'../hosts/claude/mcp.mjs')],{env:{...process.env,CLAUDE_PROJECT_DIR:st.dir,CLAUDE_CODE_ENTRYPOINT:entry},input:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:{conversation_id:'k',...args}}})+'\n',encoding:'utf8'});return JSON.parse(r.stdout).result;};
+  const call=(entry,name,args)=>{const r=spawnSync(process.execPath,[path.resolve(path.dirname(new URL(import.meta.url).pathname),'../scripts/mcp.mjs')],{env:{...process.env,CLAUDE_PROJECT_DIR:st.dir,CLAUDE_CODE_ENTRYPOINT:entry},input:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:{conversation_id:'k',...args}}})+'\n',encoding:'utf8'});return JSON.parse(r.stdout).result;};
   const refused=call('sdk-cli','save',{summary:'x',history:'y'});assert.equal(refused.isError,true);assert.match(refused.content[0].text,/읽기만 됩니다/);
   assert.equal(call('sdk-cli','todo',{action:'add',text:'t'}).isError,true);
   assert.equal(call('sdk-cli','list',{}).isError,undefined);
