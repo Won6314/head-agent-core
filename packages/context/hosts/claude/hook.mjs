@@ -32,19 +32,33 @@ import { guide, refreshCore, coreParts, migrateImport, claudeImports, CORE_MARK 
 // Every tool of this server but setup (a project's, not a conversation's).
 const TOOL = /^mcp__plugin_head-context_session__(?!setup$)/;
 // Whether a conversation's records already carry the core this hook gives (its first part's line).
-const heldCore = transcript => { try { return !transcript || fs.readFileSync(transcript, 'utf8').includes(CORE_MARK); } catch { return true; } };
+const heldCore = (transcript) => {
+  try {
+    return !transcript || fs.readFileSync(transcript, 'utf8').includes(CORE_MARK);
+  } catch {
+    return true;
+  }
+};
 const part = process.argv[2];
 // What was set right on the way (a broken record moved aside) goes with the output.
-const out = (event, text) => { text = [text, ...takeNotices()].filter(Boolean).join('\n\n'); if (text) console.log(hookOutput(event, { additionalContext: text })); };
+const out = (event, text) => {
+  text = [text, ...takeNotices()].filter(Boolean).join('\n\n');
+  if (text) console.log(hookOutput(event, { additionalContext: text }));
+};
 let event = null;
 const fit = (text, budget, shorter) => (text.length > budget ? shorter() : text);
 try {
   const input = JSON.parse(fs.readFileSync(0, 'utf8'));
   const project = process.env.CLAUDE_PROJECT_DIR || input.cwd;
-  event = input.hook_event_name; const source = input.source || 'startup';
+  event = input.hook_event_name;
+  const source = input.source || 'startup';
   if (event === 'PreToolUse' && TOOL.test(input.tool_name || '')) {
     const { agent_id: _ignored, ...rest } = input.tool_input || {};
-    const updatedInput = { ...rest, conversation_id: input.session_id, ...(input.agent_id ? { agent_id: input.agent_id } : {}) };
+    const updatedInput = {
+      ...rest,
+      conversation_id: input.session_id,
+      ...(input.agent_id ? { agent_id: input.agent_id } : {}),
+    };
     console.log(hookOutput('PreToolUse', { updatedInput }));
   } else if (event === 'SubagentStart') {
     // A task inside this conversation (a fork or a subagent): one notice, nothing else.
@@ -54,10 +68,16 @@ try {
   } else if (event === 'SessionStart' && !input.agent_id) {
     const store = sessions(project, { host: 'claude', hostInfo });
     const quiet = source === 'resume' || source === 'fork'; // the conversation already holds its context
-    const where = () => ({ conversation_id: input.session_id, session_name: process.env.HEAD_CONTEXT_SESSION,
-      origins: store.connection(input.session_id) ? [] : ancestry(project, input) });
+    const where = () => ({
+      conversation_id: input.session_id,
+      session_name: process.env.HEAD_CONTEXT_SESSION,
+      origins: store.connection(input.session_id) ? [] : ancestry(project, input),
+    });
     if (part === 'session') {
-      const info = { transcript_path: input.transcript_path, ...(input.session_title ? { title: input.session_title } : {}) };
+      const info = {
+        transcript_path: input.transcript_path,
+        ...(input.session_title ? { title: input.session_title } : {}),
+      };
       // A conversation run by a program (claude -p): who started it, so a list shows it under
       // that conversation. Named by the starter, or read from the copied records.
       const entrypoint = process.env.CLAUDE_CODE_ENTRYPOINT;
@@ -66,7 +86,9 @@ try {
       const person = process.env.HEAD_CONTEXT_PERSON === '1';
       if (person) info.person = true;
       if (isCopy(entrypoint) && !person) {
-        const parent = process.env.HEAD_CONTEXT_PARENT || (input.transcript_path ? copiedFrom(input.transcript_path, input.session_id) : null);
+        const parent =
+          process.env.HEAD_CONTEXT_PARENT ||
+          (input.transcript_path ? copiedFrom(input.transcript_path, input.session_id) : null);
         if (parent && parent !== input.session_id) info.parent = parent;
       }
       const place = store.start({ ...where(), info });
@@ -74,14 +96,22 @@ try {
       // First run: refresh the project copy of the core (applies next start, since CLAUDE.md
       // is read before this hook), and on a fresh start add the short setup/survey guide.
       let first = '';
-      try { refreshCore(project); if (source === 'startup' || source === 'clear') first = guide(project); }
-      catch (error) { console.error(`head-context: ${error.message}`); }
+      try {
+        refreshCore(project);
+        if (source === 'startup' || source === 'clear') first = guide(project);
+      } catch (error) {
+        console.error(`head-context: ${error.message}`);
+      }
       let head = '';
       if (!place) head = UNCONNECTED;
       else if (!quiet) {
         const { head: text, contextFile } = store.parts(place);
         const tail = `\n…(context.md 뒷부분 생략 — 전문: ${contextFile})`;
-        head = fit(text, HOOK_BUDGET - first.length - 2, () => text.slice(0, Math.max(0, HOOK_BUDGET - first.length - tail.length - 2)) + tail);
+        head = fit(
+          text,
+          HOOK_BUDGET - first.length - 2,
+          () => text.slice(0, Math.max(0, HOOK_BUDGET - first.length - tail.length - 2)) + tail,
+        );
       }
       out('SessionStart', [head, first].filter(Boolean).join('\n\n'));
     } else if (part === 'context' && !quiet) {
@@ -91,25 +121,34 @@ try {
         out('SessionStart', store.parts(place, { budget: HOOK_BUDGET }).context);
       }
     } else if (part === 'core' && (!quiet || (source === 'resume' && !heldCore(input.transcript_path)))) {
-      const index = Number(process.argv[3]) || 1, count = Number(process.argv[4]) || 1;
+      const index = Number(process.argv[3]) || 1,
+        count = Number(process.argv[4]) || 1;
       // Every part takes the 0.7 line out (the same result whichever runs first), then gives
       // its part unless the line is still there (it could not be taken out): the host reads
       // CLAUDE.md after the start hooks (2.1.311), so the core arrives once either way.
-      try { migrateImport(project); } catch (error) { if (error.code !== 'ENOENT') console.error(`head-context: ${error.message}`); }
+      try {
+        migrateImport(project);
+      } catch (error) {
+        if (error.code !== 'ENOENT') console.error(`head-context: ${error.message}`);
+      }
       if (!claudeImports(project)) out('SessionStart', coreParts(project, count, HOOK_BUDGET)[index - 1] || '');
     } else if (part === 'recent' && (source === 'compact' || source === 'clear')) {
       // After /clear the exchanges are in the conversation /clear replaced.
       let transcript = input.transcript_path;
       if (source === 'clear') {
-        const before = ancestry(project, input).find(link => link.kind === 'clear')?.conversation_id;
+        const before = ancestry(project, input).find((link) => link.kind === 'clear')?.conversation_id;
         const known = before && store.connection(before);
-        transcript = known?.transcript_path || (before && input.transcript_path ? path.join(path.dirname(input.transcript_path), `${before}.jsonl`) : null);
+        transcript =
+          known?.transcript_path ||
+          (before && input.transcript_path ? path.join(path.dirname(input.transcript_path), `${before}.jsonl`) : null);
       }
-      if (transcript) out('SessionStart', recentPart(transcript, { timeZone: locations(project).timezone, budget: HOOK_BUDGET }));
+      if (transcript)
+        out('SessionStart', recentPart(transcript, { timeZone: locations(project).timezone, budget: HOOK_BUDGET }));
     }
   }
 } catch (error) {
   console.error(`head-context: ${error.message}`);
   // Hook failures never block a conversation; one that would have added to it says so instead.
-  if (event === 'SessionStart' || event === 'SubagentStart') out(event, `head-context: 이 훅(${part || event})이 작업 맥락을 넣지 못했습니다: ${error.message}`);
+  if (event === 'SessionStart' || event === 'SubagentStart')
+    out(event, `head-context: 이 훅(${part || event})이 작업 맥락을 넣지 못했습니다: ${error.message}`);
 }

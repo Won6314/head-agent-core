@@ -256,3 +256,11 @@ LLM은 자기 앱의 보내기 도구에 대화 목록(`conversations`)의 보�
 HEAD_CONTEXT_TEST_ROOT=<짧은 절대 시험 폴더(소켓 경로 길이 제한)> node --test scripts/*.test.mjs
 node scripts/map.mjs <절대 프로젝트> <작업 세션> 30
 ```
+
+## 코드 모양
+
+Prettier 기본에 작은따옴표·한 줄 120자(`.prettierrc.json`)로 맞춘다. 외부 패키지는 두지 않으므로 고친 뒤 이렇게 돌린다.
+
+```bash
+npx prettier@3 --write "**/*.mjs"
+```

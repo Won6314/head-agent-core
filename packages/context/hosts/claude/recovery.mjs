@@ -15,21 +15,36 @@ import { ownerOf } from './process.mjs';
 //     A copy made through the SDK (agent-task context_run) rewrites sessionId and marks
 //     each copied record with forkedFrom.sessionId instead.
 //   parent    — whoever started the conversation named its parent in HEAD_CONTEXT_PARENT.
-const TAIL = 4096, DEPTH = 32, LIMIT = 64 * 1024 * 1024;
+const TAIL = 4096,
+  DEPTH = 32,
+  LIMIT = 64 * 1024 * 1024;
 function tail(file, bytes = TAIL) {
   try {
-    const size = fs.statSync(file).size, length = Math.min(size, bytes), data = Buffer.alloc(length);
+    const size = fs.statSync(file).size,
+      length = Math.min(size, bytes),
+      data = Buffer.alloc(length);
     const fd = fs.openSync(file, 'r');
-    try { fs.readSync(fd, data, 0, length, size - length); } finally { fs.closeSync(fd); }
+    try {
+      fs.readSync(fd, data, 0, length, size - length);
+    } finally {
+      fs.closeSync(fd);
+    }
     return data.toString('utf8');
-  } catch { return ''; }
+  } catch {
+    return '';
+  }
 }
 function continuedInto(transcript) {
   const text = tail(transcript);
   if (!text.includes('continued-in')) return null;
   for (const line of text.split('\n').reverse()) {
     if (!line.includes('"continued-in"')) continue;
-    try { const row = JSON.parse(line); if (row.type === 'continued-in' && row.continuedInSessionId) return row.continuedInSessionId; } catch { /* a cut or broken line of the host's records */ }
+    try {
+      const row = JSON.parse(line);
+      if (row.type === 'continued-in' && row.continuedInSessionId) return row.continuedInSessionId;
+    } catch {
+      /* a cut or broken line of the host's records */
+    }
   }
   return null;
 }
@@ -37,7 +52,11 @@ function continuedInto(transcript) {
 function continuations(directory) {
   const map = new Map();
   let files;
-  try { files = fs.readdirSync(directory).filter(f => f.endsWith('.jsonl')); } catch { return map; }
+  try {
+    files = fs.readdirSync(directory).filter((f) => f.endsWith('.jsonl'));
+  } catch {
+    return map;
+  }
   for (const name of files) {
     const next = continuedInto(path.join(directory, name));
     if (next) map.set(next, path.basename(name, '.jsonl'));
@@ -46,7 +65,12 @@ function continuations(directory) {
 }
 export function copiedFrom(transcript, self) {
   let text;
-  try { if (fs.statSync(transcript).size > LIMIT) return null; text = fs.readFileSync(transcript, 'utf8'); } catch { return null; }
+  try {
+    if (fs.statSync(transcript).size > LIMIT) return null;
+    text = fs.readFileSync(transcript, 'utf8');
+  } catch {
+    return null;
+  }
   // A copy made through the SDK marks every copied record with forkedFrom.sessionId.
   const marked = /"forkedFrom":\{"sessionId":"([^"]+)"/.exec(text.slice(0, 64 * 1024))?.[1];
   if (marked && marked !== self) return marked;
@@ -64,19 +88,44 @@ function previousOfClear(project, self) {
   const owner = ownerOf(self);
   if (!owner) return null;
   let known;
-  try { known = records(path.join(locations(project).state, 'conversations')).filter(c => c.host === 'claude' && c.conversation_id !== self); } catch { return null; }
-  const same = c => (owner.hostSessionId && c.host_session_id === owner.hostSessionId) || (!owner.hostSessionId && c.pid === owner.pid);
-  return known.filter(same).sort((a, b) => String(b.bound_at || '').localeCompare(String(a.bound_at || '')))[0]?.conversation_id || null;
+  try {
+    known = records(path.join(locations(project).state, 'conversations')).filter(
+      (c) => c.host === 'claude' && c.conversation_id !== self,
+    );
+  } catch {
+    return null;
+  }
+  const same = (c) =>
+    (owner.hostSessionId && c.host_session_id === owner.hostSessionId) || (!owner.hostSessionId && c.pid === owner.pid);
+  return (
+    known.filter(same).sort((a, b) => String(b.bound_at || '').localeCompare(String(a.bound_at || '')))[0]
+      ?.conversation_id || null
+  );
 }
-export function ancestry(project, input, { directory = input.transcript_path ? path.dirname(input.transcript_path) : null, env = process.env } = {}) {
+export function ancestry(
+  project,
+  input,
+  { directory = input.transcript_path ? path.dirname(input.transcript_path) : null, env = process.env } = {},
+) {
   const self = input.session_id;
   if (!self) return [];
-  const links = [], seen = new Set([self]);
-  const add = (conversation_id, kind) => { if (conversation_id && !seen.has(conversation_id)) { links.push({ conversation_id, kind }); seen.add(conversation_id); return true; } return false; };
+  const links = [],
+    seen = new Set([self]);
+  const add = (conversation_id, kind) => {
+    if (conversation_id && !seen.has(conversation_id)) {
+      links.push({ conversation_id, kind });
+      seen.add(conversation_id);
+      return true;
+    }
+    return false;
+  };
   const named = env.HEAD_CONTEXT_PARENT;
   if (named) add(named, 'parent');
   const chain = directory ? continuations(directory) : new Map();
-  for (let current = self, depth = 0; depth < DEPTH; depth++) { if (!add(chain.get(current), 'continued')) break; current = chain.get(current); }
+  for (let current = self, depth = 0; depth < DEPTH; depth++) {
+    if (!add(chain.get(current), 'continued')) break;
+    current = chain.get(current);
+  }
   if (input.source === 'clear') add(previousOfClear(project, self), 'clear');
   if (input.transcript_path) add(copiedFrom(input.transcript_path, self), 'copy');
   return links;

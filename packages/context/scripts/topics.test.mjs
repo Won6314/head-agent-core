@@ -4,25 +4,34 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import {runStart} from './hook-run.mjs';
-import {sessions} from '../core/sessions.mjs';
-import {UNCONNECTED} from '../core/recovery.mjs';
-import {INSTRUCTIONS} from '../core/mcp.mjs';
-const root=process.env.HEAD_CONTEXT_TEST_ROOT||os.tmpdir();
-const hook=(dir,id)=>runStart({session_id:id,source:'startup',cwd:dir},{env:{CLAUDE_PROJECT_DIR:dir}}).text;
-test('unconnected conversation gets one line; list gives name, first sentence, newest summary, open branches; the rule is in the instructions',()=>{
-  const dir=fs.mkdtempSync(path.join(root,'topics-'));
-  assert.ok(hook(dir,'e1').startsWith(UNCONNECTED));assert.equal(sessions(dir).list(),'아직 작업 세션이 없습니다.');
-  const api=sessions(dir);
-  api.create({name:'login-fix',context:'# login-fix\n\n로그인이 가끔 풀리는 문제를 고친다. 둘째 문장은 목록에 안 나간다.\n\n## 범위\n- 웹만',conversation_id:'a'});
-  api.save({summary:'세션 만료 시간을 찾음',history:'본문',next:'고칠 자리 찾기',conversation_id:'a'});
-  api.create({name:'docs',context:'# docs\n\n## 작업 주제\n\n사용자 문서를 정리한다.',conversation_id:'b'});
-  const out=api.list();
-  assert.match(out,/- login-fix — 로그인이 가끔 풀리는 문제를 고친다\. \(최근: 세션 만료 시간을 찾음\)/);
-  assert.match(out,/- docs — 사용자 문서를 정리한다\./);assert.doesNotMatch(out,/둘째 문장/);
-  assert.ok(out.indexOf('login-fix')<out.indexOf('- docs'));
-  assert.ok(hook(dir,'n1').startsWith(UNCONNECTED));assert.doesNotMatch(hook(dir,'a'),/아직 작업 세션에 연결되지/);
-  assert.match(INSTRUCTIONS,/작업 세션이 없으면, 목록\(list\)에서 맞는 것을 찾아 사용자에게 묻고/);
-  assert.doesNotMatch(out,/열린 작업 브랜치/);api.branch({action:'create',branch:'fix',conversation_id:'a'});
-  assert.match(api.list(),/- login-fix — [^\n]+ \(열린 작업 브랜치 1개\)/);
+import { runStart } from './hook-run.mjs';
+import { sessions } from '../core/sessions.mjs';
+import { UNCONNECTED } from '../core/recovery.mjs';
+import { INSTRUCTIONS } from '../core/mcp.mjs';
+const root = process.env.HEAD_CONTEXT_TEST_ROOT || os.tmpdir();
+const hook = (dir, id) =>
+  runStart({ session_id: id, source: 'startup', cwd: dir }, { env: { CLAUDE_PROJECT_DIR: dir } }).text;
+test('unconnected conversation gets one line; list gives name, first sentence, newest summary, open branches; the rule is in the instructions', () => {
+  const dir = fs.mkdtempSync(path.join(root, 'topics-'));
+  assert.ok(hook(dir, 'e1').startsWith(UNCONNECTED));
+  assert.equal(sessions(dir).list(), '아직 작업 세션이 없습니다.');
+  const api = sessions(dir);
+  api.create({
+    name: 'login-fix',
+    context: '# login-fix\n\n로그인이 가끔 풀리는 문제를 고친다. 둘째 문장은 목록에 안 나간다.\n\n## 범위\n- 웹만',
+    conversation_id: 'a',
+  });
+  api.save({ summary: '세션 만료 시간을 찾음', history: '본문', next: '고칠 자리 찾기', conversation_id: 'a' });
+  api.create({ name: 'docs', context: '# docs\n\n## 작업 주제\n\n사용자 문서를 정리한다.', conversation_id: 'b' });
+  const out = api.list();
+  assert.match(out, /- login-fix — 로그인이 가끔 풀리는 문제를 고친다\. \(최근: 세션 만료 시간을 찾음\)/);
+  assert.match(out, /- docs — 사용자 문서를 정리한다\./);
+  assert.doesNotMatch(out, /둘째 문장/);
+  assert.ok(out.indexOf('login-fix') < out.indexOf('- docs'));
+  assert.ok(hook(dir, 'n1').startsWith(UNCONNECTED));
+  assert.doesNotMatch(hook(dir, 'a'), /아직 작업 세션에 연결되지/);
+  assert.match(INSTRUCTIONS, /작업 세션이 없으면, 목록\(list\)에서 맞는 것을 찾아 사용자에게 묻고/);
+  assert.doesNotMatch(out, /열린 작업 브랜치/);
+  api.branch({ action: 'create', branch: 'fix', conversation_id: 'a' });
+  assert.match(api.list(), /- login-fix — [^\n]+ \(열린 작업 브랜치 1개\)/);
 });

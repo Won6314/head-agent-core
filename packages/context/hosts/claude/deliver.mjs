@@ -22,7 +22,7 @@ function inboxOf(target) {
   if (target.startsWith('uds:')) return { socket: target.slice(4) };
   const id = target.startsWith('claude:') ? target.slice(7) : null;
   if (!id) return null;
-  const row = registry().find(r => r.sessionId === id && r.messagingSocketPath && pidAlive(r.pid));
+  const row = registry().find((r) => r.sessionId === id && r.messagingSocketPath && pidAlive(r.pid));
   return row ? { socket: row.messagingSocketPath, pid: row.pid } : null;
 }
 
@@ -32,9 +32,15 @@ function inboxOf(target) {
 export function canonicalInbox(socket) {
   const pipe = /^[\\/]{2}[.?][\\/]pipe[\\/](?:(LOCAL)[\\/])?([^\\/]+)$/i.exec(socket);
   if (pipe) {
-    if (pipe[2] === '.' || pipe[2] === '..' || /[. ]$/.test(pipe[2]) || (socket.startsWith('\\\\?\\') && socket.includes('/'))) return null;
+    if (
+      pipe[2] === '.' ||
+      pipe[2] === '..' ||
+      /[. ]$/.test(pipe[2]) ||
+      (socket.startsWith('\\\\?\\') && socket.includes('/'))
+    )
+      return null;
     const name = pipe[1] === undefined ? pipe[2] : `${pipe[1]}\\${pipe[2]}`;
-    return `\\\\.\\pipe\\${name.replace(/[A-Z]/g, c => c.toLowerCase())}`;
+    return `\\\\.\\pipe\\${name.replace(/[A-Z]/g, (c) => c.toLowerCase())}`;
   }
   if (/(^|[\\/])\.\.([\\/]|$)/.test(socket)) return null;
   return path.resolve(socket);
@@ -47,40 +53,71 @@ function inboxToken(socket, pid) {
   if (!canonical) return null;
   const tail = `.${createHash('sha256').update(canonical).digest('hex')}.key`;
   let names;
-  try { names = fs.readdirSync(registryDir()); } catch { return null; } // no registry folder: no key
-  const rank = owner => (owner === pid ? 0 : pidAlive(owner) ? 1 : 2);
-  const keys = names.filter(n => n.endsWith(tail) && /^\d+\.[0-9a-f]{64}\.key$/.test(n))
-    .map(n => ({ n, owner: Number(n.split('.')[0]) })).sort((a, b) => rank(a.owner) - rank(b.owner));
+  try {
+    names = fs.readdirSync(registryDir());
+  } catch {
+    return null;
+  } // no registry folder: no key
+  const rank = (owner) => (owner === pid ? 0 : pidAlive(owner) ? 1 : 2);
+  const keys = names
+    .filter((n) => n.endsWith(tail) && /^\d+\.[0-9a-f]{64}\.key$/.test(n))
+    .map((n) => ({ n, owner: Number(n.split('.')[0]) }))
+    .sort((a, b) => rank(a.owner) - rank(b.owner));
   for (const { n } of keys) {
     try {
       const file = path.join(registryDir(), n);
       if (fs.statSync(file).size > 4096) continue;
       const token = readLoose(file)?.peerToken;
       if (typeof token === 'string' && /^[0-9a-f]{32}$/.test(token)) return token;
-    } catch { /* the next */ }
+    } catch {
+      /* the next */
+    }
   }
   return null;
 }
 
 export function packet(text, { from, fromName }) {
-  return { msgV: 1, msg_id: randomUUID(), type: 'user', message: { role: 'user', content: envelope({ from, fromName, text }) }, priority: 'next', from };
+  return {
+    msgV: 1,
+    msg_id: randomUUID(),
+    type: 'user',
+    message: { role: 'user', content: envelope({ from, fromName, text }) },
+    priority: 'next',
+    from,
+  };
 }
 // Not there: no running conversation at that address (closed, or a desktop conversation whose
 // process the app stopped), or its socket refuses. Told apart from other failures (NotThereError).
-export class NotThereError extends Error { }
+export class NotThereError extends Error {}
 export function deliverToClaude(target, text, { from, fromName, timeoutMs = 10000, requireAuth = isWindows } = {}) {
   const inbox = inboxOf(target);
   if (!inbox) return Promise.reject(new NotThereError(`실행 중인 Claude 대화가 없습니다: ${target}`));
   const token = inboxToken(inbox.socket, inbox.pid);
-  if (!token && requireAuth) return Promise.reject(new Error(`받는 Claude 대화의 인증 키를 찾지 못해 보내지 않았습니다: ${target}`));
+  if (!token && requireAuth)
+    return Promise.reject(new Error(`받는 Claude 대화의 인증 키를 찾지 못해 보내지 않았습니다: ${target}`));
   const auth = token ? `${JSON.stringify({ type: 'auth', token })}\n` : '';
   return new Promise((resolve, reject) => {
     const sock = net.connect({ path: inbox.socket });
-    const timer = setTimeout(() => { sock.destroy(); reject(new Error(`Claude 대화가 응답하지 않습니다: ${target}`)); }, timeoutMs);
+    const timer = setTimeout(() => {
+      sock.destroy();
+      reject(new Error(`Claude 대화가 응답하지 않습니다: ${target}`));
+    }, timeoutMs);
     let reply = '';
-    sock.on('connect', () => { sock.write(`${auth}${JSON.stringify(packet(text, { from, fromName }))}\n`); sock.end(); });
-    sock.on('data', d => { reply += d; });
-    sock.on('error', error => { clearTimeout(timer); const E = ['ENOENT', 'ECONNREFUSED'].includes(error.code) ? NotThereError : Error; reject(new E(`Claude 대화에 닿지 못했습니다: ${target} (${error.message})`, { cause: error })); });
-    sock.on('close', () => { clearTimeout(timer); resolve({ socket: inbox.socket, reply, authenticated: Boolean(token) }); });
+    sock.on('connect', () => {
+      sock.write(`${auth}${JSON.stringify(packet(text, { from, fromName }))}\n`);
+      sock.end();
+    });
+    sock.on('data', (d) => {
+      reply += d;
+    });
+    sock.on('error', (error) => {
+      clearTimeout(timer);
+      const E = ['ENOENT', 'ECONNREFUSED'].includes(error.code) ? NotThereError : Error;
+      reject(new E(`Claude 대화에 닿지 못했습니다: ${target} (${error.message})`, { cause: error }));
+    });
+    sock.on('close', () => {
+      clearTimeout(timer);
+      resolve({ socket: inbox.socket, reply, authenticated: Boolean(token) });
+    });
   });
 }

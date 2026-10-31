@@ -31,21 +31,35 @@ import { writePresence, readPresence, engineFrom, take, asMessage } from './thre
 // compaction Codex keeps what the user said, so no recent exchanges are added.
 const part = process.argv[2];
 // What was set right on the way (a broken record moved aside) goes with the output.
-const out = (text, event = 'SessionStart') => { text = [text, ...takeNotices()].filter(Boolean).join('\n\n'); if (text) console.log(hookOutput(event, { additionalContext: text })); };
+const out = (text, event = 'SessionStart') => {
+  text = [text, ...takeNotices()].filter(Boolean).join('\n\n');
+  if (text) console.log(hookOutput(event, { additionalContext: text }));
+};
 let event = null;
 try {
   const input = JSON.parse(fs.readFileSync(0, 'utf8'));
   event = input.hook_event_name;
   const project = input.cwd || process.env.CLAUDE_PROJECT_DIR;
-  const source = input.source || 'startup', id = input.session_id;
+  const source = input.source || 'startup',
+    id = input.session_id;
   const quiet = source === 'resume' || source === 'fork';
   if (input.hook_event_name === 'SubagentStart' && part === 'subagent') out(SUBAGENT_NOTICE, 'SubagentStart');
   else if (input.hook_event_name === 'UserPromptSubmit' && part === 'inbox' && id && project && !input.agent_id) {
     const presence = readPresence(project, id);
-    if (presence) writePresence(project, { thread_id: id, cwd: presence.cwd, engine: engineFrom(presence), transcript_path: presence.transcript_path });
+    if (presence)
+      writePresence(project, {
+        thread_id: id,
+        cwd: presence.cwd,
+        engine: engineFrom(presence),
+        transcript_path: presence.transcript_path,
+      });
     // Given first, then removed from the inbox (threads.mjs take).
     const waiting = take(project, id);
-    const lost = waiting.broken.length ? [`head-context: 이 대화로 온 메시지 ${waiting.broken.length}개를 읽을 수 없어 전하지 못하고 따로 두었습니다: ${waiting.broken.join(', ')}`] : [];
+    const lost = waiting.broken.length
+      ? [
+          `head-context: 이 대화로 온 메시지 ${waiting.broken.length}개를 읽을 수 없어 전하지 못하고 따로 두었습니다: ${waiting.broken.join(', ')}`,
+        ]
+      : [];
     const given = [...waiting.messages.map(asMessage), ...lost, ...takeNotices()].join('\n\n');
     if (given) fs.writeSync(1, `${hookOutput('UserPromptSubmit', { additionalContext: given })}\n`);
     waiting.done();
@@ -54,12 +68,24 @@ try {
     const where = { conversation_id: id, session_name: process.env.HEAD_CONTEXT_SESSION, origins: [] };
     if (part === 'session') {
       register({ thread_id: id, cwd: project, transcript_path: input.transcript_path });
-      try { writePresence(project, { thread_id: id, cwd: project, engine: engineOf(), transcript_path: input.transcript_path }); }
-      catch (error) { console.error(`head-context: ${error.message}`); }
+      try {
+        writePresence(project, {
+          thread_id: id,
+          cwd: project,
+          engine: engineOf(),
+          transcript_path: input.transcript_path,
+        });
+      } catch (error) {
+        console.error(`head-context: ${error.message}`);
+      }
       const place = store.start({ ...where, info: { transcript_path: input.transcript_path } });
       let first = '';
-      try { refreshCore(project); if (source === 'startup' || source === 'clear') first = guide(project, { host: 'codex' }); }
-      catch (error) { console.error(`head-context: ${error.message}`); }
+      try {
+        refreshCore(project);
+        if (source === 'startup' || source === 'clear') first = guide(project, { host: 'codex' });
+      } catch (error) {
+        console.error(`head-context: ${error.message}`);
+      }
       if (!quiet) out([place ? store.parts(place).head : UNCONNECTED, first].filter(Boolean).join('\n\n'));
     } else if (quiet) {
       // nothing
@@ -73,5 +99,6 @@ try {
 } catch (error) {
   console.error(`head-context: ${error.message}`);
   // Hook failures never block a conversation; one that would have added to it says so instead.
-  if (event === 'SessionStart' || event === 'UserPromptSubmit' || event === 'SubagentStart') out(`head-context: 이 훅(${part || event})이 작업 맥락을 넣지 못했습니다: ${error.message}`, event);
+  if (event === 'SessionStart' || event === 'UserPromptSubmit' || event === 'SubagentStart')
+    out(`head-context: 이 훅(${part || event})이 작업 맥락을 넣지 못했습니다: ${error.message}`, event);
 }

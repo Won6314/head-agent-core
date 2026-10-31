@@ -6,11 +6,21 @@
 //
 // 멈춤 is what 0.6 wrote when a conversation ended with a next still pending. It was
 // closed by the old rule, not by the work, so it counts as open: still pending work.
-export const OPEN='열림',PAUSED='멈춤',CLOSED='끝남',ABANDONED='중단';
-export const isOpen=status=>status!==CLOSED&&status!==ABANDONED;
+export const OPEN = '열림',
+  PAUSED = '멈춤',
+  CLOSED = '끝남',
+  ABANDONED = '중단';
+export const isOpen = (status) => status !== CLOSED && status !== ABANDONED;
 // The one entry a closing branch leaves on main. The tool writes the marker lines
 // (상태/브랜치/기록) that the graph turns into a merge edge and the map shows as 합침.
-export function mergeArgs({branch,recap,entries}){
-  const last=entries.at(-1),record=`work/${branch}/history.md`;
-  return {summary:last?.summary||branch,history:recap||last?.summary||'저장 없이 닫혔습니다.',status:CLOSED,branch,record};
+export function mergeArgs({ branch, recap, entries }) {
+  const last = entries.at(-1),
+    record = `work/${branch}/history.md`;
+  return {
+    summary: last?.summary || branch,
+    history: recap || last?.summary || '저장 없이 닫혔습니다.',
+    status: CLOSED,
+    branch,
+    record,
+  };
 }

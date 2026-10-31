@@ -23,41 +23,82 @@ function linuxProcess(pid) {
     const stat = fs.readFileSync(`/proc/${pid}/stat`, 'utf8');
     const ppid = Number(stat.slice(stat.lastIndexOf(')') + 2).split(' ')[1]);
     return { argv, ppid };
-  } catch { return null; } // gone or not readable: no such process to report
+  } catch {
+    return null;
+  } // gone or not readable: no such process to report
 }
 function psProcess(pid) {
   try {
-    const out = execFileSync('ps', ['-o', 'ppid=', '-o', 'args=', '-p', String(pid)], { encoding: 'utf8', timeout: 2000 }).trim();
-    const m = /^(\d+)\s+(.*)$/.exec(out); if (!m) return null;
+    const out = execFileSync('ps', ['-o', 'ppid=', '-o', 'args=', '-p', String(pid)], {
+      encoding: 'utf8',
+      timeout: 2000,
+    }).trim();
+    const m = /^(\d+)\s+(.*)$/.exec(out);
+    if (!m) return null;
     return { ppid: Number(m[1]), argv: m[2].split(/\s+/) };
-  } catch { return null; } // ps exits non-zero for a pid that is gone
+  } catch {
+    return null;
+  } // ps exits non-zero for a pid that is gone
 }
 let windowsTable = null;
-export const splitCommandLine = line => [...String(line || '').matchAll(/"([^"]*)"|(\S+)/g)].map(m => m[1] ?? m[2]);
+export const splitCommandLine = (line) => [...String(line || '').matchAll(/"([^"]*)"|(\S+)/g)].map((m) => m[1] ?? m[2]);
 function windowsProcess(pid) {
   if (!windowsTable || Date.now() - windowsTable.at > 5000) {
     try {
-      const out = execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-        '[Console]::OutputEncoding=[Text.Encoding]::UTF8; Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,CommandLine | ConvertTo-Json -Compress'],
-        { encoding: 'utf8', timeout: 15000, windowsHide: true, maxBuffer: 64 * 1024 * 1024 });
+      const out = execFileSync(
+        'powershell.exe',
+        [
+          '-NoProfile',
+          '-NonInteractive',
+          '-Command',
+          '[Console]::OutputEncoding=[Text.Encoding]::UTF8; Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,CommandLine | ConvertTo-Json -Compress',
+        ],
+        { encoding: 'utf8', timeout: 15000, windowsHide: true, maxBuffer: 64 * 1024 * 1024 },
+      );
       const rows = [].concat(JSON.parse(out) || []);
-      windowsTable = { at: Date.now(), byPid: new Map(rows.map(r => [Number(r.ProcessId), { ppid: Number(r.ParentProcessId), argv: splitCommandLine(r.CommandLine) }])) };
-    } catch { windowsTable = { at: Date.now(), byPid: new Map() }; }
+      windowsTable = {
+        at: Date.now(),
+        byPid: new Map(
+          rows.map((r) => [
+            Number(r.ProcessId),
+            { ppid: Number(r.ParentProcessId), argv: splitCommandLine(r.CommandLine) },
+          ]),
+        ),
+      };
+    } catch {
+      windowsTable = { at: Date.now(), byPid: new Map() };
+    }
   }
   return windowsTable.byPid.get(Number(pid)) || null;
 }
-export const processOf = pid => (isLinux ? linuxProcess(pid) : isWindows ? windowsProcess(pid) : psProcess(pid));
+export const processOf = (pid) => (isLinux ? linuxProcess(pid) : isWindows ? windowsProcess(pid) : psProcess(pid));
 
 // A process's start time (clock ticks since boot), Linux only: elsewhere null.
 export function processStart(pid) {
   if (!isLinux) return null;
-  try { const stat = fs.readFileSync(`/proc/${pid}/stat`, 'utf8'); return stat.slice(stat.lastIndexOf(')') + 2).split(' ')[19] || null; } catch { return null; } // gone: no start time
+  try {
+    const stat = fs.readFileSync(`/proc/${pid}/stat`, 'utf8');
+    return stat.slice(stat.lastIndexOf(')') + 2).split(' ')[19] || null;
+  } catch {
+    return null;
+  } // gone: no start time
 }
 
 // A Unix socket file at an absolute path. On Windows (AF_UNIX) it is not reported as a
 // socket, so being there is enough.
-export const socketThere = file => {
+export const socketThere = (file) => {
   if (typeof file !== 'string' || !path.isAbsolute(file)) return false;
-  if (isWindows) { try { fs.lstatSync(file); return true; } catch (e) { return Boolean(e?.code) && e.code !== 'ENOENT' && e.code !== 'ENOTDIR'; } }
-  try { return fs.statSync(file).isSocket(); } catch { return false; } // not there
+  if (isWindows) {
+    try {
+      fs.lstatSync(file);
+      return true;
+    } catch (e) {
+      return Boolean(e?.code) && e.code !== 'ENOENT' && e.code !== 'ENOTDIR';
+    }
+  }
+  try {
+    return fs.statSync(file).isSocket();
+  } catch {
+    return false;
+  } // not there
 };

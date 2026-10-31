@@ -6,5 +6,10 @@ import { hostInfo, liveConversations } from './process.mjs';
 import { codexLive } from '../codex/threads.mjs';
 export { doing };
 export function claudeTree(project, { name } = {}) {
-  return sessions(project, { host: 'claude', hostInfo, live: known => liveConversations(project, known), peers: [{ host: 'codex', live: known => codexLive(project, known) }] }).tree({ name });
+  return sessions(project, {
+    host: 'claude',
+    hostInfo,
+    live: (known) => liveConversations(project, known),
+    peers: [{ host: 'codex', live: (known) => codexLive(project, known) }],
+  }).tree({ name });
 }

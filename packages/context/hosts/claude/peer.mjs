@@ -6,10 +6,13 @@ import { deliverToClaude, NotThereError } from './deliver.mjs';
 export const claudePeer = {
   host: 'claude',
   live: liveConversations,
-  accepts: target => target.startsWith('claude:') || target.startsWith('uds:'),
+  accepts: (target) => target.startsWith('claude:') || target.startsWith('uds:'),
   async send(target, text, { from, fromName }) {
-    try { await deliverToClaude(target, text, { from, fromName }); }
-    catch (error) { throw error instanceof NotThereError ? new Error(`받는 Claude 대화가 지금 실행 중이 아닙니다: ${target}`) : error; }
+    try {
+      await deliverToClaude(target, text, { from, fromName });
+    } catch (error) {
+      throw error instanceof NotThereError ? new Error(`받는 Claude 대화가 지금 실행 중이 아닙니다: ${target}`) : error;
+    }
     return 'sent';
   },
 };
