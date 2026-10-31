@@ -26,7 +26,7 @@ export async function deliverToCodex(project, threadId, text, { from, fromName }
   }
   if (at.mode === 'app' && at.bin) {
     try { await queueToApp(at, threadId, delegatedPrompt(from, text)); return 'app-queued'; }
-    catch (error) { console.error(`head-context: Codex queue failed, using the inbox: ${error.message}`); }
+    catch (error) { console.error(`head-context: Codex 대기열에 넣지 못해 편지함에 넣습니다: ${error.message}`); }
   }
   queue(project, threadId, { from, from_name: fromName, text });
   return 'queued';
@@ -40,13 +40,13 @@ export function queueToApp(at, threadId, message, { wake = isMac, run = spawn } 
     const env = { ...process.env, ...(at.home ? { CODEX_HOME: at.home } : {}) };
     const child = run(at.bin, ['queue', '--thread', threadId, '--message', message], { env, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
     let err = '';
-    const timer = setTimeout(() => { child.kill(); reject(new Error('codex queue did not finish')); }, 20000);
+    const timer = setTimeout(() => { child.kill(); reject(new Error('codex queue가 20초 안에 끝나지 않았습니다')); }, 20000);
     child.stderr?.on('data', d => { err += d; });
     child.stdout?.on('data', () => { });
     child.on('error', error => { clearTimeout(timer); reject(error); });
     child.on('close', code => {
       clearTimeout(timer);
-      if (code !== 0) { reject(new Error(err.trim().split('\n').pop() || `codex queue exited ${code}`)); return; }
+      if (code !== 0) { reject(new Error(`codex queue 실패(종료 코드 ${code})${err.trim() ? `: ${err.trim().split('\n').pop()}` : ''}`)); return; }
       if (wake) { try { const o = run('open', ['-g', `codex://threads/wake/${threadId}`], { stdio: 'ignore', detached: true }); o.on?.('error', () => { /* the queue already holds it; waking is a nicety */ }); o.unref?.(); } catch { /* the queue already holds it; waking is a nicety */ } }
       resolve();
     });
@@ -58,8 +58,8 @@ export function queueToApp(at, threadId, message, { wake = isMac, run = spawn } 
 const escape = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 export const delegatedPrompt = (source, prompt) => `<codex_delegation>\n  <source_thread_id>${escape(source)}</source_thread_id>\n  <input>${escape(prompt)}</input>\n</codex_delegation>`;
 const historyUnsupported = error => error?.code === -32601 || ((error?.code === -32600 || error?.code === -32602) && /history|exclude_?turns|excludeTurns|paginat|turns\/list|items\/list/i.test(error?.raw?.message || ''));
-export async function sendToThread(engine, { source, threadId, prompt }) {
-  if (!String(prompt).trim()) throw new Error('prompt must not be empty');
+async function sendToThread(engine, { source, threadId, prompt }) {
+  if (!String(prompt).trim()) throw new Error('prompt가 비어 있습니다.');
   const thread = (await engine.request('thread/read', { threadId, includeTurns: false })).thread;
   const excludeTurns = thread.historyMode === 'paginated';
   let resumed;
@@ -76,7 +76,7 @@ async function accessProgram(engine, threadId, model, provider, enabled) {
   const [account, models] = await Promise.allSettled([engine.request('account/read', { refreshToken: false }), engine.request('model/list', { includeHidden: true })]);
   let acct = null;
   if (account.status === 'fulfilled') acct = account.value.account;
-  else if (enabled && provider === 'openai') throw new Error(`Could not determine Daybreak account eligibility: ${account.reason.message}`);
+  else if (enabled && provider === 'openai') throw new Error(`Daybreak 계정 자격을 확인하지 못했습니다: ${account.reason.message}`, { cause: account.reason });
   const eligible = provider === 'openai' && (acct?.type === 'chatgpt' || acct?.type === 'apiKey');
   if (eligible && acct.type === 'apiKey') {
     const features = await engine.request('experimentalFeature/list', { threadId }).then(r => r.data || [], () => null);
@@ -87,6 +87,6 @@ async function accessProgram(engine, threadId, model, provider, enabled) {
   const programs = list.find(m => m.model === model)?.availableAccessPrograms;
   if (!programs || !programs.cyber?.length) return null;
   const daybreak = ['daybreakBlue', 'daybreakRed'].find(p => programs.cyber.includes(p)) ?? null;
-  if (enabled) { if (daybreak) return daybreak; throw new Error(`Daybreak support for model ${model} could not be confirmed by the connected server.`); }
+  if (enabled) { if (daybreak) return daybreak; throw new Error(`연결된 Codex 엔진에서 모델 ${model}의 Daybreak 지원을 확인하지 못했습니다.`); }
   return programs.cyber.includes('standard') ? 'standard' : null;
 }

@@ -37,7 +37,7 @@ export function registered(thread_id, options) {
   return file ? readLoose(file) : null;
 }
 // The conversation a tool call belongs to, as Codex names it on every call.
-export function threadOf(request) {
+function threadOf(request) {
   const meta = request?.params?._meta || {};
   return meta.threadId || meta.sessionId || meta['x-codex-turn-metadata']?.thread_id || null;
 }

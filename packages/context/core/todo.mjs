@@ -1,18 +1,19 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import {optionalRead,atomicText,locked,noSymlink} from './storage.mjs';
+import {optionalRead,atomicText,noSymlink} from './storage.mjs';
+import {locked} from './lock.mjs';
 // To-dos belong to the work session, not to a branch or a conversation: a branch closes,
 // the to-do stays. One line each in the session's todo.md, the format earlier tools wrote:
 //   - [ ] 2026-09-18 기한 2026-09-23(수) "사용자 원문"
 //   - [x] ...                                   (done)
 const WEEKDAY='일월화수목금토',DATE=/^\d{4}-\d{2}-\d{2}$/;
 const LINE=/^\s*-\s*\[( |x|X)\]\s*(\d{4}-\d{2}-\d{2})?(?:\s+기한\s+(\d{4}-\d{2}-\d{2})(?:\([^)]*\))?)?\s*(.*)$/;
-export const todoFile=dir=>noSymlink(path.join(dir,'todo.md'));
+const todoFile=dir=>noSymlink(path.join(dir,'todo.md'));
 // The calendar day in the project's time zone (the computer's when unset).
 export function today(timeZone,now=Date.now()){return new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(now));}
 const weekday=iso=>WEEKDAY[new Date(`${iso}T00:00:00Z`).getUTCDay()];
 const dayAfter=iso=>new Date(Date.parse(`${iso}T00:00:00Z`)+86400000).toISOString().slice(0,10);
-export function parseTodo(text){
+function parseTodo(text){
   return text.split('\n').map((line,index)=>{const m=LINE.exec(line);if(!m)return null;
     const body=m[4].trim();
     return {index,line,done:m[1]!==' ',created:m[2]||'',due:m[3]||'',text:body.replace(/^"(.*)"$/s,'$1')};}).filter(Boolean);

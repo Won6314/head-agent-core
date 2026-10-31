@@ -14,7 +14,7 @@ import { delegatedPrompt, deliverToCodex, queueToApp } from '../hosts/codex/deli
 import { writePresence, queue, drain, take, codexLive, STALE_MS } from '../hosts/codex/threads.mjs';
 import { packet, canonicalInbox } from '../hosts/claude/deliver.mjs';
 import { sessions } from '../core/sessions.mjs';
-import { definitions } from '../core/mcp.mjs';
+import { DEFINITIONS } from '../core/mcp.mjs';
 const root = process.env.HEAD_CONTEXT_TEST_ROOT || os.tmpdir();
 const fresh = name => fs.mkdtempSync(path.join(root, `${name}-`));
 // Children never reach the user's own Codex or Claude: their own homes.
@@ -93,12 +93,12 @@ function codexCall(dir, data, caller, name, args, env = {}) {
 const registerThread = (data, id, cwd) => { fs.mkdirSync(path.join(data, 'threads'), { recursive: true }); fs.writeFileSync(path.join(data, 'threads', `${id}.json`), JSON.stringify({ thread_id: id, cwd })); };
 
 test('names: the tools drop their session_/project_ heads; Codex alone gets send, shaped like its own', async () => {
-  assert.deepEqual(definitions.map(t => t.name), ['list', 'load', 'create', 'save', 'branch', 'read', 'todo', 'conversations', 'setup']);
+  assert.deepEqual(DEFINITIONS.map(t => t.name), ['list', 'load', 'create', 'save', 'branch', 'read', 'todo', 'conversations', 'setup']);
   const dir = fresh('names'), data = path.join(dir, '_data');
   const [list] = await codexCall(dir, data, 'th-x', 'list', {});
   const send = list.result.tools.find(t => t.name === 'send');
   assert.deepEqual(send.inputSchema.required, ['threadId', 'prompt']);
-  assert.equal(list.result.tools.length, definitions.length + 1);
+  assert.equal(list.result.tools.length, DEFINITIONS.length + 1);
   assert.deepEqual(JSON.parse(fs.readFileSync('.mcp.json', 'utf8')).session.args.at(-1), '${CLAUDE_PLUGIN_ROOT}/scripts/mcp.mjs');
   assert.match(JSON.parse(fs.readFileSync('hooks/hooks.json', 'utf8')).hooks.PreToolUse[0].matcher, /session__/);
 });
@@ -229,7 +229,7 @@ test('to a Claude conversation: the packet another Claude conversation sends, on
     const { deliverToClaude } = await import('../hosts/claude/deliver.mjs');
     await deliverToClaude('claude:c-1', '보냄', { from: 'codex:th1' });
     assert.equal(inbox.got[0].message.content, '<cross-session-message from="codex:th1">\n보냄\n</cross-session-message>');
-    await assert.rejects(deliverToClaude('claude:nobody', 'x', { from: 'codex:th1' }), /No running Claude conversation/);
+    await assert.rejects(deliverToClaude('claude:nobody', 'x', { from: 'codex:th1' }), /실행 중인 Claude 대화가 없습니다/);
     assert.equal(inbox.dropped, 0);
   } finally { delete process.env.HEAD_CONTEXT_CLAUDE_SESSIONS; await inbox.close(); }
 });

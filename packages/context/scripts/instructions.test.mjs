@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { instructions, instructionsFor, APP_INSTRUCTIONS, definitions, SUBAGENT_NOTICE, FORK_WRITE_REFUSED } from '../core/mcp.mjs';
+import { INSTRUCTIONS, instructionsFor, APP_INSTRUCTIONS, DEFINITIONS, SUBAGENT_NOTICE, FORK_WRITE_REFUSED } from '../core/mcp.mjs';
 
 // The app tools each app's own instructions name; the shared text names none of them.
 const TOOLS = {
@@ -23,10 +23,10 @@ const server = (script, env) => {
 
 test('shared instructions, the start-job skill and the shared notices name no app tool', () => {
   const all = [...TOOLS.claude, ...TOOLS.codex];
-  none(instructions, all, 'shared instructions');
+  none(INSTRUCTIONS, all, 'shared instructions');
   none(skill, all, 'start-job');
   none(SUBAGENT_NOTICE, all, 'subagent notice'); none(FORK_WRITE_REFUSED, all, 'write refused');
-  none(definitions.map(d => JSON.stringify(d)).join('\n'), all, 'shared tool descriptions');
+  none(DEFINITIONS.map(d => JSON.stringify(d)).join('\n'), all, 'shared tool descriptions');
   assert.match(skill, /이 앱에서 부르는 도구/);
 });
 
@@ -34,7 +34,7 @@ test('each app reads the shared part and its own part, never the other app\'s to
   const dir = fs.mkdtempSync(path.join(process.env.HEAD_CONTEXT_TEST_ROOT || os.tmpdir(), 'instr-'));
   const claude = server('mcp.mjs', { CLAUDE_PROJECT_DIR: dir });
   assert.equal(claude.instructions, instructionsFor('claude'));
-  assert.ok(claude.instructions.startsWith(instructions)); assert.ok(claude.instructions.endsWith(APP_INSTRUCTIONS.claude));
+  assert.ok(claude.instructions.startsWith(INSTRUCTIONS)); assert.ok(claude.instructions.endsWith(APP_INSTRUCTIONS.claude));
   assert.match(claude.instructions, /SendMessage\(to: 보낼 곳\)/); assert.match(claude.instructions, /subagent_type "fork"/);
   none(claude.instructions + claude.tools, TOOLS.codex, 'Claude');
   const codex = server('codex-mcp.mjs', { HEAD_CONTEXT_CODEX_DATA: dir });
@@ -44,5 +44,5 @@ test('each app reads the shared part and its own part, never the other app\'s to
   assert.match(codex.instructions, /send\(threadId: 보낼 곳, prompt\)/); assert.match(codex.instructions, /fork_turns "all"/);
   none(codex.instructions + codex.tools, TOOLS.claude, 'Codex');
   // A host without its own part (OpenCode) reads the shared part alone.
-  assert.equal(instructionsFor('opencode'), instructions);
+  assert.equal(instructionsFor('opencode'), INSTRUCTIONS);
 });

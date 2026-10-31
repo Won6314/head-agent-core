@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { sessions } from '../../core/sessions.mjs';
 import { HOOK_BUDGET, UNCONNECTED } from '../../core/recovery.mjs';
-import { locations } from '../../core/storage.mjs';
+import { locations, takeNotices } from '../../core/storage.mjs';
 import { ancestry, copiedFrom } from './recovery.mjs';
 import { isCopy } from '../../core/instruction.mjs';
 import { hostInfo } from './process.mjs';
@@ -34,12 +34,14 @@ const TOOL = /^mcp__plugin_head-context_session__(?!setup$)/;
 // Whether a conversation's records already carry the core this hook gives (its first part's line).
 const heldCore = transcript => { try { return !transcript || fs.readFileSync(transcript, 'utf8').includes(CORE_MARK); } catch { return true; } };
 const part = process.argv[2];
-const out = (event, text) => { if (text) console.log(hookOutput(event, { additionalContext: text })); };
+// What was set right on the way (a broken record moved aside) goes with the output.
+const out = (event, text) => { text = [text, ...takeNotices()].filter(Boolean).join('\n\n'); if (text) console.log(hookOutput(event, { additionalContext: text })); };
+let event = null;
 const fit = (text, budget, shorter) => (text.length > budget ? shorter() : text);
 try {
   const input = JSON.parse(fs.readFileSync(0, 'utf8'));
   const project = process.env.CLAUDE_PROJECT_DIR || input.cwd;
-  const event = input.hook_event_name, source = input.source || 'startup';
+  event = input.hook_event_name; const source = input.source || 'startup';
   if (event === 'PreToolUse' && TOOL.test(input.tool_name || '')) {
     const { agent_id: _ignored, ...rest } = input.tool_input || {};
     const updatedInput = { ...rest, conversation_id: input.session_id, ...(input.agent_id ? { agent_id: input.agent_id } : {}) };
@@ -108,5 +110,6 @@ try {
   }
 } catch (error) {
   console.error(`head-context: ${error.message}`);
-  // Hook failures never block a conversation.
+  // Hook failures never block a conversation; one that would have added to it says so instead.
+  if (event === 'SessionStart' || event === 'SubagentStart') out(event, `head-context: 이 훅(${part || event})이 작업 맥락을 넣지 못했습니다: ${error.message}`);
 }

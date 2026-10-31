@@ -7,7 +7,7 @@ import os from 'node:os';
 import {runStart} from './hook-run.mjs';
 import {sessions} from '../core/sessions.mjs';
 import {UNCONNECTED} from '../core/recovery.mjs';
-import {instructions} from '../core/mcp.mjs';
+import {INSTRUCTIONS} from '../core/mcp.mjs';
 const root=process.env.HEAD_CONTEXT_TEST_ROOT||os.tmpdir();
 const hook=(dir,id)=>runStart({session_id:id,source:'startup',cwd:dir},{env:{CLAUDE_PROJECT_DIR:dir}}).text;
 test('unconnected conversation gets one line; list gives name, first sentence, newest summary, open branches; the rule is in the instructions',()=>{
@@ -22,7 +22,7 @@ test('unconnected conversation gets one line; list gives name, first sentence, n
   assert.match(out,/- docs — 사용자 문서를 정리한다\./);assert.doesNotMatch(out,/둘째 문장/);
   assert.ok(out.indexOf('login-fix')<out.indexOf('- docs'));
   assert.ok(hook(dir,'n1').startsWith(UNCONNECTED));assert.doesNotMatch(hook(dir,'a'),/아직 작업 세션에 연결되지/);
-  assert.match(instructions,/작업 세션이 없으면, 목록\(list\)에서 맞는 것을 찾아 사용자에게 묻고/);
+  assert.match(INSTRUCTIONS,/작업 세션이 없으면, 목록\(list\)에서 맞는 것을 찾아 사용자에게 묻고/);
   assert.doesNotMatch(out,/열린 작업 브랜치/);api.branch({action:'create',branch:'fix',conversation_id:'a'});
   assert.match(api.list(),/- login-fix — [^\n]+ \(열린 작업 브랜치 1개\)/);
 });

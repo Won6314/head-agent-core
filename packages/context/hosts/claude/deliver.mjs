@@ -18,9 +18,6 @@ import { isWindows } from '../../core/platform.mjs';
 // a receipt. Receipts Claude Code has (held, refused, dropped) go to a sender's own inbox.
 // target: claude:<conversation id> (the address a Codex conversation is shown), or the
 // uds:<socket> a Claude conversation is shown to another Claude conversation.
-// Whether a Claude conversation can take a message now (it runs and has its inbox socket).
-export const claudeReachable = id => Boolean(claudeSocket(`claude:${id}`));
-export const claudeSocket = target => inboxOf(target)?.socket || null;
 function inboxOf(target) {
   if (target.startsWith('uds:')) return { socket: target.slice(4) };
   const id = target.startsWith('claude:') ? target.slice(7) : null;
@@ -45,7 +42,7 @@ export function canonicalInbox(socket) {
 // The peer token a running conversation published for its inbox:
 // <sessions>/<pid>.<sha256 of the canonical inbox path>.key, {"peerToken": 32 hex, ...}.
 // With several, the given owner's comes first, then a live owner's.
-export function inboxToken(socket, pid) {
+function inboxToken(socket, pid) {
   const canonical = canonicalInbox(socket);
   if (!canonical) return null;
   const tail = `.${createHash('sha256').update(canonical).digest('hex')}.key`;
@@ -69,21 +66,21 @@ export function packet(text, { from, fromName }) {
   return { msgV: 1, msg_id: randomUUID(), type: 'user', message: { role: 'user', content: envelope({ from, fromName, text }) }, priority: 'next', from };
 }
 // Not there: no running conversation at that address (closed, or a desktop conversation whose
-// process the app stopped), or its socket refuses. Told apart from other failures (NotThere).
-export class NotThere extends Error { }
+// process the app stopped), or its socket refuses. Told apart from other failures (NotThereError).
+export class NotThereError extends Error { }
 export function deliverToClaude(target, text, { from, fromName, timeoutMs = 10000, requireAuth = isWindows } = {}) {
   const inbox = inboxOf(target);
-  if (!inbox) return Promise.reject(new NotThere(`No running Claude conversation at ${target}`));
+  if (!inbox) return Promise.reject(new NotThereError(`실행 중인 Claude 대화가 없습니다: ${target}`));
   const token = inboxToken(inbox.socket, inbox.pid);
   if (!token && requireAuth) return Promise.reject(new Error(`받는 Claude 대화의 인증 키를 찾지 못해 보내지 않았습니다: ${target}`));
   const auth = token ? `${JSON.stringify({ type: 'auth', token })}\n` : '';
   return new Promise((resolve, reject) => {
     const sock = net.connect({ path: inbox.socket });
-    const timer = setTimeout(() => { sock.destroy(); reject(new Error(`Claude conversation at ${target} did not answer`)); }, timeoutMs);
+    const timer = setTimeout(() => { sock.destroy(); reject(new Error(`Claude 대화가 응답하지 않습니다: ${target}`)); }, timeoutMs);
     let reply = '';
     sock.on('connect', () => { sock.write(`${auth}${JSON.stringify(packet(text, { from, fromName }))}\n`); sock.end(); });
     sock.on('data', d => { reply += d; });
-    sock.on('error', error => { clearTimeout(timer); const E = ['ENOENT', 'ECONNREFUSED'].includes(error.code) ? NotThere : Error; reject(new E(`Could not reach the Claude conversation at ${target}: ${error.message}`)); });
+    sock.on('error', error => { clearTimeout(timer); const E = ['ENOENT', 'ECONNREFUSED'].includes(error.code) ? NotThereError : Error; reject(new E(`Claude 대화에 닿지 못했습니다: ${target} (${error.message})`, { cause: error })); });
     sock.on('close', () => { clearTimeout(timer); resolve({ socket: inbox.socket, reply, authenticated: Boolean(token) }); });
   });
 }

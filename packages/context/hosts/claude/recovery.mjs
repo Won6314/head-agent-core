@@ -24,7 +24,7 @@ function tail(file, bytes = TAIL) {
     return data.toString('utf8');
   } catch { return ''; }
 }
-export function continuedInto(transcript) {
+function continuedInto(transcript) {
   const text = tail(transcript);
   if (!text.includes('continued-in')) return null;
   for (const line of text.split('\n').reverse()) {
@@ -34,7 +34,7 @@ export function continuedInto(transcript) {
   return null;
 }
 // successor id -> the conversation it continues. One tail read per record file.
-export function continuations(directory) {
+function continuations(directory) {
   const map = new Map();
   let files;
   try { files = fs.readdirSync(directory).filter(f => f.endsWith('.jsonl')); } catch { return map; }
@@ -68,12 +68,12 @@ function previousOfClear(project, self) {
   const same = c => (owner.hostSessionId && c.host_session_id === owner.hostSessionId) || (!owner.hostSessionId && c.pid === owner.pid);
   return known.filter(same).sort((a, b) => String(b.bound_at || '').localeCompare(String(a.bound_at || '')))[0]?.conversation_id || null;
 }
-export function ancestry(project, input, { directory = input.transcript_path ? path.dirname(input.transcript_path) : null } = {}) {
+export function ancestry(project, input, { directory = input.transcript_path ? path.dirname(input.transcript_path) : null, env = process.env } = {}) {
   const self = input.session_id;
   if (!self) return [];
   const links = [], seen = new Set([self]);
   const add = (conversation_id, kind) => { if (conversation_id && !seen.has(conversation_id)) { links.push({ conversation_id, kind }); seen.add(conversation_id); return true; } return false; };
-  const named = process.env.HEAD_CONTEXT_PARENT;
+  const named = env.HEAD_CONTEXT_PARENT;
   if (named) add(named, 'parent');
   const chain = directory ? continuations(directory) : new Map();
   for (let current = self, depth = 0; depth < DEPTH; depth++) { if (!add(chain.get(current), 'continued')) break; current = chain.get(current); }

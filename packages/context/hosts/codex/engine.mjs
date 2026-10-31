@@ -14,9 +14,9 @@ import { isWindows } from '../../core/platform.mjs';
 export const codexHome = (env = process.env) => env.CODEX_HOME || path.join(os.homedir(), '.codex');
 export const controlSocket = home => path.join(home, 'app-server-control', 'app-server-control.sock');
 
-// `method failed: message (code n)`, the form Codex's own client gives a server error.
-export class EngineError extends Error {
-  constructor(method, error) { super(`${method} failed: ${error?.message ?? 'unknown error'} (code ${error?.code ?? 0})`); this.code = error?.code; this.raw = error; }
+// A server error, with the engine's own message and code (raw keeps the error as sent).
+class EngineError extends Error {
+  constructor(method, error) { super(`Codex 엔진 요청 실패(${method}): ${error?.message ?? '알 수 없는 오류'} (code ${error?.code ?? 0})`); this.code = error?.code; this.raw = error; }
 }
 
 // Node on Windows takes a path as a named pipe and cannot reach the engine's AF_UNIX socket;
@@ -33,14 +33,14 @@ function proxied(socket, bin) {
 }
 // at: where the engine is — its control socket and, when known, its binary ({ socket, bin }:
 // a presence's engine, threads.mjs engineFrom).
-export async function connect({ socket, bin = null }, { timeoutMs = 10000, name = 'head_context' } = {}) {
+async function connect({ socket, bin = null }, { timeoutMs = 10000, name = 'head_context' } = {}) {
   const sock = isWindows ? proxied(socket, bin) : net.connect({ path: socket });
   sock.setNoDelay?.(true);
   let buffer = Buffer.alloc(0), upgraded = false, seq = 0, closed = false;
   const pending = new Map(), listeners = new Set();
   const fail = error => { closed = true; for (const p of pending.values()) p.reject(error); pending.clear(); };
   const ready = new Promise((resolve, reject) => {
-    const timer = setTimeout(() => { reject(new Error(`Codex engine did not answer at ${socket}`)); sock.destroy(); }, timeoutMs);
+    const timer = setTimeout(() => { reject(new Error(`Codex 엔진이 응답하지 않습니다: ${socket}`)); sock.destroy(); }, timeoutMs);
     sock.once('error', error => { clearTimeout(timer); reject(error); });
     sock.once('connect', () => sock.write(`GET / HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: ${crypto.randomBytes(16).toString('base64')}\r\nSec-WebSocket-Version: 13\r\n\r\n`));
     sock.on('data', chunk => {
@@ -49,14 +49,14 @@ export async function connect({ socket, bin = null }, { timeoutMs = 10000, name 
         const end = buffer.indexOf('\r\n\r\n'); if (end < 0) return;
         const head = buffer.subarray(0, end).toString();
         buffer = buffer.subarray(end + 4);
-        if (!/^HTTP\/1\.1 101/.test(head)) { clearTimeout(timer); reject(new Error(`Codex engine refused the connection: ${head.split('\r\n')[0]}`)); sock.destroy(); return; }
+        if (!/^HTTP\/1\.1 101/.test(head)) { clearTimeout(timer); reject(new Error(`Codex 엔진이 연결을 거절했습니다: ${head.split('\r\n')[0]}`)); sock.destroy(); return; }
         upgraded = true; clearTimeout(timer); resolve();
       }
       frames();
     });
   });
   sock.on('error', error => fail(error));
-  sock.on('close', () => fail(new Error('Codex engine closed the connection')));
+  sock.on('close', () => fail(new Error('Codex 엔진이 연결을 닫았습니다')));
   let fragments = [];
   const frames = () => {
     while (buffer.length >= 2) {
@@ -92,9 +92,9 @@ export async function connect({ socket, bin = null }, { timeoutMs = 10000, name 
     sock.write(Buffer.concat([head, mask, body]));
   };
   const request = (method, params = {}, { timeout = 30000 } = {}) => new Promise((resolve, reject) => {
-    if (closed) { reject(new Error('Codex engine connection is closed')); return; }
+    if (closed) { reject(new Error('Codex 엔진 연결이 이미 닫혔습니다')); return; }
     const id = `head-context-${++seq}`;
-    const timer = setTimeout(() => { pending.delete(id); reject(new Error(`${method} timed out`)); }, timeout);
+    const timer = setTimeout(() => { pending.delete(id); reject(new Error(`Codex 엔진 요청 시간 초과: ${method}`)); }, timeout);
     pending.set(id, { method, resolve: v => { clearTimeout(timer); resolve(v); }, reject: e => { clearTimeout(timer); reject(e); } });
     write(Buffer.from(JSON.stringify({ id, method, params })));
   });

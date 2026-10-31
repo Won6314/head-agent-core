@@ -1,8 +1,7 @@
 import path from 'node:path';
 import {validName,line} from './storage.mjs';
-export const BRANCH_MARKER='<!-- head-context branch:1 -->';
-export const RECAP_HEADING='## 지금까지 요약';
-export const firstLine=value=>String(value||'').split(/\r?\n/)[0].trim();
+const BRANCH_MARKER='<!-- head-context branch:1 -->';
+const RECAP_HEADING='## 지금까지 요약';
 export function branchPath(dir,name){return path.join(dir,'work',validName(name),'history.md');}
 // A branch file: marker, name, the header fields, then — when the last save had no
 // next — the recap of everything done on this branch, then its own checkpoints.

@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {sessions} from '../core/sessions.mjs';
 import {withGraph} from '../core/graph.mjs';
-import {callTool,definitions} from '../core/mcp.mjs';
+import {callTool,DEFINITIONS} from '../core/mcp.mjs';
 const root=process.env.HEAD_CONTEXT_TEST_ROOT;
 test('exact anchor survives a later duplicate legacy timestamp and index rebuild',()=>{
   const dir=fs.mkdtempSync(path.join(root,'duplicates-')),s=sessions(dir);
@@ -34,7 +34,7 @@ test('create requires a purpose: missing/blank context is refused before any fol
   assert.throws(()=>callTool(s,'create',{name:'mcp-none'},'c'),reason);absent('mcp-none');
   assert.throws(()=>callTool(s,'create',{name:'mcp-blank',context:'   '},'c'),reason);absent('mcp-blank');
   assert.deepEqual(withGraph(dir,g=>g.names()),[]);
-  assert.deepEqual(definitions.find(t=>t.name==='create').inputSchema.required,['name','context']);
+  assert.deepEqual(DEFINITIONS.find(t=>t.name==='create').inputSchema.required,['name','context']);
   assert.match(callTool(s,'create',{name:'real',context:'  PURPOSE-LINE  '},'c'),/PURPOSE-LINE/);
   assert.equal(fs.readFileSync(path.join(topics,'real/context.md'),'utf8'),'  PURPOSE-LINE  ');assert.equal(s.connection('c').session,'real');
   assert.match(s.create({name:'real',context:'again',conversation_id:'c2'}),/이미 있습니다/);

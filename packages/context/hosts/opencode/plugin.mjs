@@ -1,5 +1,5 @@
 import { sessions } from '../../core/sessions.mjs';
-import { instructions } from '../../core/mcp.mjs';
+import { INSTRUCTIONS } from '../../core/mcp.mjs';
 
 // OpenCode V1 server hooks, kept to the core: the work context is pushed with the
 // instructions on every request, and the head-context tools get the conversation id.
@@ -37,7 +37,7 @@ export default { id: 'head-context', server: async ({ directory, client }) => {
     'experimental.chat.system.transform': (input, output) => safe(async () => {
       if (!input.sessionID?.startsWith('ses_')) return;
       const context = await start(input.sessionID);
-      output.system.push(instructions);
+      output.system.push(INSTRUCTIONS);
       if (context) output.system.push(context);
     }),
     'tool.execute.before': (input, output) => safe(async () => {

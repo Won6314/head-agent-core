@@ -4,14 +4,15 @@ import os from 'node:os';
 import { pidAlive } from '../../core/liveness.mjs';
 import { readLoose } from '../../core/storage.mjs';
 import { instructionLine } from '../../core/instruction.mjs';
+import { RECENT_DAYS } from '../../core/recovery.mjs';
 
 // Claude Code keeps one small file per running conversation in ~/.claude/sessions:
 // <pid>.json with {pid, sessionId, cwd, entrypoint, name, hostSessionId (desktop), ...}.
 // It is removed when the process ends and leftovers from a crash are cleared on the next
 // run. That file is the witness of a running conversation: no /proc, no process tree.
 // Claude Code's own folder: CLAUDE_CONFIG_DIR when set, else ~/.claude.
-export const claudeDir = () => process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
-export const registryDir = () => process.env.HEAD_CONTEXT_CLAUDE_SESSIONS || path.join(claudeDir(), 'sessions');
+export const claudeDir = (env = process.env) => env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
+export const registryDir = (env = process.env) => env.HEAD_CONTEXT_CLAUDE_SESSIONS || path.join(claudeDir(env), 'sessions');
 export const registryOf = pid => (Number.isInteger(Number(pid)) ? readLoose(path.join(registryDir(), `${Number(pid)}.json`)) : null);
 export const conversationOfPid = pid => registryOf(pid)?.sessionId || null;
 export function registry() {
@@ -41,18 +42,17 @@ export function hostInfo(conversation) {
   return { pid: owner.pid, host_session_id: owner.hostSessionId, title: owner.name, entrypoint: owner.entrypoint };
 }
 export const DESKTOP = 'claude-desktop';
-export const RECENT_DAYS = 7;
 // Claude Code writes each conversation's records under ~/.claude/projects/<folder>, the
 // folder being the project path with every other character than a letter or digit
 // turned into '-'.
-export const projectsDir = () => process.env.HEAD_CONTEXT_CLAUDE_PROJECTS || path.join(claudeDir(), 'projects');
+export const projectsDir = (env = process.env) => env.HEAD_CONTEXT_CLAUDE_PROJECTS || path.join(claudeDir(env), 'projects');
 export const transcriptsOf = project => path.join(projectsDir(), path.resolve(project).replace(/[^A-Za-z0-9]/g, '-'));
 // The desktop app keeps its own record of each conversation it hosts:
 // <root>/<account>/<org>/local_<id>.json, naming the engine conversation (cliSessionId).
-const desktopRoots = () => [process.env.HEAD_CONTEXT_DESKTOP_SESSIONS,
+const desktopRoots = (env = process.env) => [env.HEAD_CONTEXT_DESKTOP_SESSIONS,
   path.join(os.homedir(), 'Library', 'Application Support', 'Claude', 'claude-code-sessions'),
-  process.env.APPDATA && path.join(process.env.APPDATA, 'Claude', 'claude-code-sessions'),
-  process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'Packages', 'Claude_pzs8sxrjxfjjc', 'LocalCache', 'Roaming', 'Claude', 'claude-code-sessions')].filter(Boolean);
+  env.APPDATA && path.join(env.APPDATA, 'Claude', 'claude-code-sessions'),
+  env.LOCALAPPDATA && path.join(env.LOCALAPPDATA, 'Packages', 'Claude_pzs8sxrjxfjjc', 'LocalCache', 'Roaming', 'Claude', 'claude-code-sessions')].filter(Boolean);
 const dirs = dir => { try { return fs.readdirSync(dir, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => path.join(dir, e.name)); } catch { return []; } };
 export function desktopIndex() {
   const out = new Map();

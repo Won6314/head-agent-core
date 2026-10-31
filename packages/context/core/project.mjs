@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {optionalRead,readState,atomicText,atomicJSON,noSymlink,locked,projectRoot} from './storage.mjs';
+import {optionalRead,readSettings,atomicText,atomicJSON,noSymlink,projectRoot} from './storage.mjs';
+import {locked} from './lock.mjs';
 // Project first run. Two steps, each asked once per project: setup (the core instructions
 // turned on for the project) and survey (asked only when the plugin carries its procedure).
 // State lives in .head/config.json under first_run: {setup, survey}, each 'done' or 'never_ask'.
@@ -13,17 +14,17 @@ const plugin=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 export const CORE_SOURCE=path.join(plugin,'instructions','HEAD_CORE.md');
 export const SURVEY_SOURCE=path.join(plugin,'instructions','survey.md');
 // The line 0.7 setup put in CLAUDE.md; the Claude start hook takes it out again (migrateImport).
-export const IMPORT_LINE='@.head/core.md';
-export const STEPS=['setup','survey'];
+const IMPORT_LINE='@.head/core.md';
+const STEPS=['setup','survey'];
 const VALUES=['done','never_ask'];
 const files=project=>{project=projectRoot(project);const root=path.join(project,'.head');return {root,config:noSymlink(path.join(root,'config.json')),core:noSymlink(path.join(root,'core.md')),claude:noSymlink(path.join(project,'CLAUDE.md')),settings:noSymlink(path.join(project,'.claude','settings.json'))};};
 // The host's built-in fork (Agent tool, subagent_type "fork") is off unless this is set;
 // the desktop app does not list it among the agent types either.
-export const FORK_ENV='CLAUDE_CODE_FORK_SUBAGENT';
+const FORK_ENV='CLAUDE_CODE_FORK_SUBAGENT';
 // The marketplace this plugin is published from. Setup writes it into the project settings
 // with autoUpdate, so the host fetches new versions when it starts, and turns the plugin
 // on for the project.
-export const MARKETPLACE='head-agent-core',MARKETPLACE_REPO='Won6314/head-agent-core',PLUGIN_ID=`head-context@${MARKETPLACE}`;
+const MARKETPLACE='head-agent-core',MARKETPLACE_REPO='Won6314/head-agent-core',PLUGIN_ID=`head-context@${MARKETPLACE}`;
 const isObject=v=>Boolean(v)&&typeof v==='object'&&!Array.isArray(v);
 // Adds the fork switch, the marketplace (autoUpdate) and the plugin switch to the project
 // settings, keeping every other key. A settings file that is not a JSON object is left
@@ -54,7 +55,7 @@ function projectSettings(file){
   if(added.length)atomicJSON(file,next);
   return {fork,market};
 }
-const readConfig=file=>readState(file,{});
+const readConfig=readSettings;
 export function firstRun(project){const s=readConfig(files(project).config).first_run||{};return Object.fromEntries(STEPS.map(k=>[k,VALUES.includes(s[k])?s[k]:null]));}
 function mark(project,step,value){
   if(!STEPS.includes(step))throw new Error(`알 수 없는 단계: ${step}`);

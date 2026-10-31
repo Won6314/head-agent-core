@@ -4,7 +4,7 @@
 import { withEngine } from './engine.mjs';
 const [command, socket, bin] = process.argv.slice(2);
 try {
-  if (command !== 'loaded' || !socket) throw new Error('usage: query.mjs loaded <socket>');
+  if (command !== 'loaded' || !socket) throw new Error('사용법: query.mjs loaded <socket> [codex 실행 파일]');
   const threads = await withEngine({ socket, bin }, async engine => {
     const ids = (await engine.request('thread/loaded/list', {})).data || [];
     return Promise.all(ids.map(id => engine.request('thread/read', { threadId: id, includeTurns: false }).then(r => ({ id, name: r.thread.name ?? null, status: r.thread.status?.type ?? null }), () => ({ id, name: null, status: null }))));

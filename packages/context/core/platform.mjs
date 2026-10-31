@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process';
 // process.platform. What differs per app (a Claude inbox needing its auth line, the Mac
 // Codex app being woken, the Windows proxy to the Codex engine) stays with that app and
 // asks these names.
-export const OS = process.platform;
+const OS = process.platform;
 export const isWindows = OS === 'win32';
 export const isMac = OS === 'darwin';
 export const isLinux = OS === 'linux';

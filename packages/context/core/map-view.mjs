@@ -4,7 +4,7 @@ import {mapSummary} from './history.mjs';
 // line, newest on top, main always in the first column, each branch in its own column
 // from the save it forked at up to its newest save. Only the view is git-shaped; files,
 // saves and the index are unchanged.
-export const SHORT_LENGTH=5;
+const SHORT_LENGTH=5;
 const ENDED=['끝남','멈춤','중단'];
 const hex=id=>createHash('sha1').update(id).digest('hex');
 // Short ID: the first five hex digits of the full checkpoint ID's hash. Where two of a
@@ -25,7 +25,7 @@ export const matchShort=(ids,value)=>ids.filter(id=>hex(id).startsWith(value.toL
 // Branch name in the map: an automatic `branch-<time>-<hex>` name shows its first four
 // hex digits, longer only where two would collide; any other name is shown as it is.
 const AUTO=/^branch-\d{8}T\d{6}-([0-9a-f]+)$/;
-export function stemNames(stems){
+function stemNames(stems){
   const out=new Map();let pending=[];
   for(const stem of stems){if(AUTO.test(stem))pending.push(stem);else out.set(stem,stem);}
   for(let length=4;pending.length;length++){

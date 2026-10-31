@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { clock } from '../../core/map-view.mjs';
+import { HOOK_BUDGET } from '../../core/recovery.mjs';
 // The recent conversation a compact or /clear takes away, put back as it was said: the
 // last EXCHANGES exchanges before the cut. An exchange is one thing the user said (typed,
 // sent while the model was working, or answered in a question window) and the text the
@@ -7,7 +8,6 @@ import { clock } from '../../core/map-view.mjs';
 // command lines and everything the user said before those exchanges are left out — older
 // work is carried by the work context.
 export const EXCHANGES = 5;
-export const RECENT_BUDGET = 9000; // characters of one hook output; the host cuts one output at 10,000
 const SKIP = /^(<command-name>|<command-message>|<local-command|<task-notification|<system-reminder|<channel|<cross-session-message|\[Request interrupted|This session is being continued|Base directory for this skill|Caveat: The messages below)/;
 const COMMAND = /^\/[A-Za-z][\w:-]*(\s|$)/;
 const reminders = text => text.replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, '').trim();
@@ -57,7 +57,7 @@ export function exchanges(transcript) {
 const cut = (text, n) => text.length > n ? `${text.slice(0, n)} …(생략)` : text;
 // The recent exchanges as one hook output. Over the budget the oldest exchanges go first;
 // the record file is named for them. One exchange alone over the budget is shortened.
-export function recentPart(transcript, { timeZone, budget = RECENT_BUDGET } = {}) {
+export function recentPart(transcript, { timeZone, budget = HOOK_BUDGET } = {}) {
   const all = exchanges(transcript);
   if (!all.length) return '';
   const time = clock(timeZone);

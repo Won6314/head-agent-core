@@ -8,7 +8,8 @@ import {clock} from './map-view.mjs';
 import {branchPath,branchText,branchHeader,withStatus,withRecap} from './branch-format.mjs';
 import {mergeArgs,isOpen,OPEN,CLOSED,ABANDONED} from './lifecycle.mjs';
 import {openTodos,addTodo,doneTodo,todoLine,today} from './todo.mjs';
-import {validName,optionalRead,readState,noSymlink,locations,recordFile,atomicJSON,atomicText,records,locked,entry,line} from './storage.mjs';
+import {validName,optionalRead,readState,noSymlink,locations,recordFile,atomicJSON,atomicText,records,entry,line} from './storage.mjs';
+import {locked} from './lock.mjs';
 export * from './storage.mjs';
 
 export const CONTEXT_REQUIRED='방향(context)이 필요합니다. 목적 없는 작업 세션은 만들지 않습니다. 사용자와 이 작업 세션의 목적을 정한 뒤 그 내용을 context로 주세요. 작업 세션은 만들어지지 않았습니다.';

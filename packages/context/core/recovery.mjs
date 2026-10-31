@@ -5,6 +5,8 @@ import {todoLine,dueSoon} from './todo.mjs';
 export const RECENT_COUNT=3;
 export const SUMMARY_LIMIT=30;
 export const TODO_COUNT=3;
+// How long a conversation that cannot be told alive (a desktop app's) is shown in the list.
+export const RECENT_DAYS=7;
 export const HOOK_BUDGET=9000; // characters of one hook output; the host cuts each output at 10,000 (measured on 2.1.303).
 const marker=e=>e.branch?`브랜치 ${e.branch} ${e.status}${e.reason?` · 이유: ${e.reason}`:''}${e.record?` · 기록: ${e.record}`:''}`:'';
 const cut=(text,n)=>{const a=Array.from(String(text));return a.length>n?a.slice(0,n).join('')+'…':String(text);};

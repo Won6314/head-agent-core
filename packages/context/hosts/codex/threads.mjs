@@ -8,6 +8,7 @@ import { pidAlive } from '../../core/liveness.mjs';
 import { instructionLine } from '../../core/instruction.mjs';
 import { processOf } from '../../core/platform.mjs';
 import { envelope } from '../../core/protocol.mjs';
+import { RECENT_DAYS } from '../../core/recovery.mjs';
 
 // The Codex conversations of a project, as the project itself records them: the start hook
 // writes one file per conversation (.head/state/presence/codex-<id>.json) naming the engine
@@ -18,7 +19,6 @@ import { envelope } from '../../core/protocol.mjs';
 //              desktop Claude conversation is; a message waits in its inbox.
 // Messages that wait are given at the conversation's next prompt (UserPromptSubmit hook).
 const QUERY = path.join(path.dirname(fileURLToPath(import.meta.url)), 'query.mjs');
-export const RECENT_DAYS = 7;
 const presenceFile = (project, id) => recordFile(locations(project).state, 'presence', id, 'codex');
 export function writePresence(project, { thread_id, cwd, engine, transcript_path, title }) {
   const file = presenceFile(project, thread_id), previous = readPresence(project, thread_id) || {};
@@ -34,7 +34,8 @@ export const readPresence = (project, id) => readLoose(presenceFile(project, id)
 // The engine a presence names, in the form engineOf gives it: where to reach it (socket, its
 // binary) and what it is. Code that talks to the engine takes this one value.
 export const engineFrom = presence => ({ mode: presence.mode, socket: presence.socket, bin: presence.bin, pid: presence.pid, home: presence.codex_home });
-export function presences(project) { try { return records(path.join(locations(project).state, 'presence')).filter(r => r.host === 'codex'); } catch { return []; } } // unreadable presence folder: no Codex conversations
+// A broken presence file is skipped alone (it is written again at that conversation's next prompt).
+function presences(project) { try { return records(path.join(locations(project).state, 'presence'), { loose: true }).filter(r => r.host === 'codex'); } catch { return []; } } // unreadable presence folder: no Codex conversations
 
 const inboxDir = (project, id) => { recordFile(locations(project).state, 'inbox', id, 'codex'); return noSymlink(path.join(locations(project).state, 'inbox', `codex-${id}`)); };
 // File names sort oldest first: time, then a count kept by this process for one millisecond.
@@ -51,10 +52,12 @@ export function queue(project, id, { from, from_name, text }) {
 // taker puts those messages back first (its process is gone, or it is older than STALE_MS).
 // So a message is given once, or once more: if a taker dies between giving and done(), or if
 // a living taker is held past STALE_MS and another taker puts its messages back.
+// A message file that cannot be read is not given and not removed: it is moved to the
+// inbox's .broken folder, and its path is returned (broken) for the conversation to be told.
 export const STALE_MS = 10 * 60 * 1000;
 export function take(project, id, { now = Date.now() } = {}) {
   const dir = inboxDir(project, id); let names;
-  try { names = fs.readdirSync(dir); } catch { return { messages: [], done() { } }; } // no inbox yet: nothing waits
+  try { names = fs.readdirSync(dir); } catch { return { messages: [], broken: [], done() { } }; } // no inbox yet: nothing waits
   for (const name of names) {
     const m = /^\.taking-(\d+)-/.exec(name); if (!m) continue;
     const claim = path.join(dir, name);
@@ -63,29 +66,32 @@ export function take(project, id, { now = Date.now() } = {}) {
     try { for (const f of fs.readdirSync(claim)) if (f.endsWith('.json')) fs.renameSync(path.join(claim, f), path.join(dir, f)); fs.rmSync(claim, { recursive: true, force: true }); } catch { /* another taker is putting them back */ }
   }
   const files = fs.readdirSync(dir).filter(f => f.endsWith('.json')).sort();
-  if (!files.length) return { messages: [], done() { } };
+  if (!files.length) return { messages: [], broken: [], done() { } };
   const claim = path.join(dir, `.taking-${process.pid}-${randomUUID()}`);
   fs.mkdirSync(claim);
-  const messages = [];
+  const messages = [], broken = [];
   for (const f of files) {
     try { fs.renameSync(path.join(dir, f), path.join(claim, f)); } catch { continue; } // another taker has it
-    const message = readLoose(path.join(claim, f)); if (message) messages.push(message);
+    const message = readLoose(path.join(claim, f));
+    if (message) { messages.push(message); continue; }
+    const aside = path.join(dir, '.broken'); fs.mkdirSync(aside, { recursive: true });
+    fs.renameSync(path.join(claim, f), path.join(aside, f)); broken.push(path.join(aside, f));
   }
   const done = () => fs.rmSync(claim, { recursive: true, force: true });
   if (!messages.length) done();
-  return { messages, done };
+  return { messages, broken, done };
 }
 export function drain(project, id) { const t = take(project, id); t.done(); return t.messages; }
 // A waiting message as the conversation is given it (core/protocol.mjs envelope).
 export const asMessage = m => envelope({ from: m.from, fromName: m.from_name, text: m.text });
 
 // The threads a shared engine has loaded, with their names; null when it does not answer.
-export function loaded({ socket, bin }) {
+function loaded({ socket, bin }) {
   const r = spawnSync(process.execPath, [QUERY, 'loaded', socket, ...(bin ? [bin] : [])], { encoding: 'utf8', timeout: 8000, windowsHide: true });
   try { return r.status === 0 ? JSON.parse(r.stdout) : null; } catch { return null; } // a garbled answer is no answer
 }
 // From the end of a Codex conversation's records: the last thing a person typed.
-export function lastSaid(file) {
+function lastSaid(file) {
   let text = '';
   try { const fd = fs.openSync(file, 'r'); try { const size = fs.fstatSync(fd).size, n = Math.min(size, 4 * 1024 * 1024), b = Buffer.alloc(n); fs.readSync(fd, b, 0, n, size - n); text = b.toString('utf8'); } finally { fs.closeSync(fd); } } catch { return null; } // no records yet
   const lines = text.split('\n');

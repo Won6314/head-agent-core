@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { sessions } from '../../core/sessions.mjs';
+import { takeNotices } from '../../core/storage.mjs';
 import { HOOK_BUDGET, UNCONNECTED } from '../../core/recovery.mjs';
 import { instructionsFor, SUBAGENT_NOTICE } from '../../core/mcp.mjs';
 import { guide, refreshCore, coreParts } from '../../core/project.mjs';
@@ -29,9 +30,12 @@ import { writePresence, readPresence, engineFrom, take, asMessage } from './thre
 // unconnected: Codex leaves no sure trace of the conversation /clear replaced. After a
 // compaction Codex keeps what the user said, so no recent exchanges are added.
 const part = process.argv[2];
-const out = (text, event = 'SessionStart') => { if (text) console.log(hookOutput(event, { additionalContext: text })); };
+// What was set right on the way (a broken record moved aside) goes with the output.
+const out = (text, event = 'SessionStart') => { text = [text, ...takeNotices()].filter(Boolean).join('\n\n'); if (text) console.log(hookOutput(event, { additionalContext: text })); };
+let event = null;
 try {
   const input = JSON.parse(fs.readFileSync(0, 'utf8'));
+  event = input.hook_event_name;
   const project = input.cwd || process.env.CLAUDE_PROJECT_DIR;
   const source = input.source || 'startup', id = input.session_id;
   const quiet = source === 'resume' || source === 'fork';
@@ -41,7 +45,9 @@ try {
     if (presence) writePresence(project, { thread_id: id, cwd: presence.cwd, engine: engineFrom(presence), transcript_path: presence.transcript_path });
     // Given first, then removed from the inbox (threads.mjs take).
     const waiting = take(project, id);
-    if (waiting.messages.length) fs.writeSync(1, `${hookOutput('UserPromptSubmit', { additionalContext: waiting.messages.map(asMessage).join('\n\n') })}\n`);
+    const lost = waiting.broken.length ? [`head-context: 이 대화로 온 메시지 ${waiting.broken.length}개를 읽을 수 없어 전하지 못하고 따로 두었습니다: ${waiting.broken.join(', ')}`] : [];
+    const given = [...waiting.messages.map(asMessage), ...lost, ...takeNotices()].join('\n\n');
+    if (given) fs.writeSync(1, `${hookOutput('UserPromptSubmit', { additionalContext: given })}\n`);
     waiting.done();
   } else if (input.hook_event_name === 'SessionStart' && id && project) {
     const store = sessions(project, { host: 'codex' });
@@ -66,4 +72,6 @@ try {
   }
 } catch (error) {
   console.error(`head-context: ${error.message}`);
+  // Hook failures never block a conversation; one that would have added to it says so instead.
+  if (event === 'SessionStart' || event === 'UserPromptSubmit' || event === 'SubagentStart') out(`head-context: 이 훅(${part || event})이 작업 맥락을 넣지 못했습니다: ${error.message}`, event);
 }

@@ -1,7 +1,8 @@
 import readline from 'node:readline';
 import { sessions, CONTEXT_REQUIRED } from './sessions.mjs';
 import { setupTool } from './project.mjs';
-export const instructions = `일을 시작할 때는 먼저 start-job 스킬을 불러옵니다.
+import { takeNotices } from './storage.mjs';
+export const INSTRUCTIONS = `일을 시작할 때는 먼저 start-job 스킬을 불러옵니다.
 
 작업 세션
 - 무엇: 이어지는 큰 일의 묶음입니다. 목적은 context.md에 있습니다. 호스트가 말하는 "세션"은 이 대화이며 작업 세션과 다릅니다.
@@ -37,20 +38,20 @@ export const APP_INSTRUCTIONS = {
 };
 // The instructions one app's model reads: the shared part, then that app's part (none for a
 // host without one, e.g. OpenCode).
-export const instructionsFor = host => (APP_INSTRUCTIONS[host] ? `${instructions}\n\n${APP_INSTRUCTIONS[host]}` : instructions);
+export const instructionsFor = host => (APP_INSTRUCTIONS[host] ? `${INSTRUCTIONS}\n\n${APP_INSTRUCTIONS[host]}` : INSTRUCTIONS);
 export const VERSION = '0.9.4';
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
 const missing = { create: { context: CONTEXT_REQUIRED } };
 // Tools that change a record or a connection. A call made by a task running inside the
 // conversation that called it (the host fills agent_id) may read but not write.
-export const WRITES = { load: true, create: true, save: true, branch: true, todo: args => args.action !== 'list' };
+const WRITES = { load: true, create: true, save: true, branch: true, todo: args => args.action !== 'list' };
 export const FORK_WRITE_REFUSED = '이 작업에서는 작업 기록을 쓰지 않습니다(읽기만 됩니다). 결과를 돌려주면 부른 대화가 확인하고 저장합니다.';
 // Said once to a task that runs inside the conversation that called it (the host's
 // SubagentStart: a fork made with the Agent tool or a subagent). A copy that becomes a
 // conversation of its own (a desktop side session) gets nothing and saves like any other.
 export const SUBAGENT_NOTICE = '이 작업은 부른 대화 안에서 맡은 일 하나를 합니다. 끝나면 결과를 돌려주세요. 부른 대화가 결과를 확인하고 저장합니다. 작업 기록 도구(load, save 등)는 읽기만 됩니다.';
-export const definitions = [
+export const DEFINITIONS = [
   ['list', '작업 세션 목록을 읽습니다: 이름, context.md 첫 문장, 메인의 최신 요약, 열린 작업 브랜치 수를 최근 기록 순으로. 기록 지도는 read map입니다.', {}, []],
   ['load', '작업 세션을 불러와 이 대화를 연결하고 작업 맥락을 돌려줍니다: context.md, 이 대화의 작업 브랜치(최근 기록과 다음), 열린 작업 브랜치, 할 일, 흐름 지도(git 그래프 모양, 최신이 위). branch를 주면 그 작업 브랜치를 이어 갑니다(닫힌 것은 다시 열립니다). branch=main은 메인에서 일합니다. 생략하면 이 작업 세션에서 쓰던 작업 브랜치, 처음이면 메인입니다.',
     { name: string, branch: string, history_count: { type: 'integer', minimum: 0, default: 3 }, map_limit: { type: 'integer', minimum: 0, default: 30, description: '흐름 지도 줄 최대 수. 0은 전체.' } }, []],
@@ -69,13 +70,13 @@ export const definitions = [
 ].map(([name, description, properties, required]) => ({ name, description,
   inputSchema: { type: 'object', properties: { ...properties, conversation_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' }, agent_id: { type: 'string', description: '호스트 연결 전용. 모델은 지정하지 않습니다.' } }, required, additionalProperties: false } }));
 // Project-level, not conversation-level: no conversation_id.
-definitions.push({ name: 'setup', description: '프로젝트 첫 실행의 유일한 쓰기 도구. 사용자가 동의했을 때만 부릅니다. action=setup: 이 프로젝트에서 코어 지침을 켜고(다음 시작부터 시작·/clear·압축 때 들어감, 사본은 .head/core.md), 프로젝트 .claude/settings.json에 기본 포크를 켜는 env.CLAUDE_CODE_FORK_SUBAGENT="1"과 이 플러그인의 마켓(extraKnownMarketplaces, 자동 업데이트)·enabledPlugins를 더하고(다른 설정은 그대로, 이미 있으면 그대로) 초기설정을 끝남으로 기록한 뒤 코어 지침 본문을 돌려줍니다. 이 대화부터 그 지침을 따르세요. action=never_ask: 사용자가 다시 묻지 말라고 한 단계(step=setup 또는 survey)를 기록합니다. action=survey_done: 프로젝트 조사를 끝남으로 기록합니다.',
+DEFINITIONS.push({ name: 'setup', description: '프로젝트 첫 실행의 유일한 쓰기 도구. 사용자가 동의했을 때만 부릅니다. action=setup: 이 프로젝트에서 코어 지침을 켜고(다음 시작부터 시작·/clear·압축 때 들어감, 사본은 .head/core.md), 프로젝트 .claude/settings.json에 기본 포크를 켜는 env.CLAUDE_CODE_FORK_SUBAGENT="1"과 이 플러그인의 마켓(extraKnownMarketplaces, 자동 업데이트)·enabledPlugins를 더하고(다른 설정은 그대로, 이미 있으면 그대로) 초기설정을 끝남으로 기록한 뒤 코어 지침 본문을 돌려줍니다. 이 대화부터 그 지침을 따르세요. action=never_ask: 사용자가 다시 묻지 말라고 한 단계(step=setup 또는 survey)를 기록합니다. action=survey_done: 프로젝트 조사를 끝남으로 기록합니다.',
   inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['setup', 'never_ask', 'survey_done'] }, step: { type: 'string', enum: ['setup', 'survey'] } }, required: ['action'], additionalProperties: false } });
 const METHODS = { read: 'inspect' };
 // readOnly: the host says this conversation is run by a program (a fork or worker started
 // with claude -p); it may read but not write, like a task inside a conversation.
 export function callTool(store, name, args, conversation_id, project, readOnly = false, host = 'claude') {
-  const tool = definitions.find(t => t.name === name);
+  const tool = DEFINITIONS.find(t => t.name === name);
   if (!tool) throw new Error(`알 수 없는 도구: ${name}`);
   for (const [key, value] of Object.entries(args)) {
     const schema = tool.inputSchema.properties[key];
@@ -97,6 +98,8 @@ export const PROJECT_UNKNOWN = '이 대화의 프로젝트를 알 수 없습니�
 // request}) → text}], awaited): Codex's send.
 // agentOf(request): the task inside the conversation that makes this call, when the host names
 // it on the call itself (Codex); it makes the call read-only like a host-filled agent_id.
+// What was set right on the way (a broken record moved aside) goes with the answer.
+const withNotices = text => [text, ...takeNotices()].filter(Boolean).join('\n\n');
 export async function serve({ project, projectOf, host, conversationOf, agentOf = () => null, options = {}, readOnly = () => false, tools = [], unknownProject = PROJECT_UNKNOWN }) {
   const stores = new Map();
   const storeOf = dir => { if (!stores.has(dir)) stores.set(dir, sessions(dir, { host, ...(typeof options === 'function' ? options(dir) : options) })); return stores.get(dir); };
@@ -109,7 +112,7 @@ export async function serve({ project, projectOf, host, conversationOf, agentOf 
     const { id, method, params = {} } = request;
     if (method === 'initialize') send({ id, result: { protocolVersion: params.protocolVersion, capabilities: { tools: {} }, serverInfo: { name: 'head-context', version: VERSION }, instructions: instructionsFor(host) } });
     else if (method === 'ping') send({ id, result: {} });
-    else if (method === 'tools/list') send({ id, result: { tools: [...definitions, ...tools.map(t => t.definition)] } });
+    else if (method === 'tools/list') send({ id, result: { tools: [...DEFINITIONS, ...tools.map(t => t.definition)] } });
     else if (method === 'tools/call') {
       try {
         const dir = projectOf ? projectOf(request) : project;
@@ -117,9 +120,9 @@ export async function serve({ project, projectOf, host, conversationOf, agentOf 
         const own = tools.find(t => t.definition.name === params.name);
         const text = own ? await own.call({ project: dir, args: params.arguments || {}, conversation_id: conversationOf(request), request })
           : callTool(storeOf(dir), params.name, params.arguments || {}, conversationOf(request), dir, readOnly(request) || Boolean(agentOf(request)), host);
-        send({ id, result: { content: [{ type: 'text', text }] } });
+        send({ id, result: { content: [{ type: 'text', text: withNotices(text) }] } });
       }
-      catch (error) { send({ id, result: { isError: true, content: [{ type: 'text', text: error.message }] } }); }
+      catch (error) { send({ id, result: { isError: true, content: [{ type: 'text', text: withNotices(error.message) }] } }); }
     } else send({ id, error: { code: -32601, message: 'Method not found' } });
   }
 }

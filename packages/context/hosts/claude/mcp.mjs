@@ -4,7 +4,7 @@ import { isCopy } from '../../core/instruction.mjs';
 // A conversation run by claude -p (a fork or worker) reads records but does not write them,
 // unless its starter marked it a person's (HEAD_CONTEXT_PERSON=1: a headless conversation a
 // person talks to through another app).
-export const person = (env = process.env) => env.HEAD_CONTEXT_PERSON === '1';
+const person = (env = process.env) => env.HEAD_CONTEXT_PERSON === '1';
 // The Claude Code tool server. peers: the other apps whose conversations the list holds beside
 // this project's own ({ host, live(project, known) }); the entry (scripts/mcp.mjs) gives them.
 export function serveClaude({ peers = [] } = {}) {
