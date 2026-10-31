@@ -1,4 +1,6 @@
 import net from 'node:net';
+import { spawn } from 'node:child_process';
+import { Duplex } from 'node:stream';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -16,9 +18,21 @@ export class EngineError extends Error {
   constructor(method, error) { super(`${method} failed: ${error?.message ?? 'unknown error'} (code ${error?.code ?? 0})`); this.code = error?.code; this.raw = error; }
 }
 
-export async function connect(socket, { timeoutMs = 10000, name = 'head_context' } = {}) {
-  const sock = net.connect({ path: socket });
-  sock.setNoDelay(true);
+// Node on Windows takes a path as a named pipe and cannot reach the engine's AF_UNIX socket;
+// there the bytes go through Codex's own `codex app-server proxy --sock <socket>` (stdio to
+// the control socket), started from the engine's binary when it is known.
+function proxied(socket, bin) {
+  const child = spawn(bin || 'codex', ['app-server', 'proxy', '--sock', socket], { stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true });
+  const sock = Duplex.from({ readable: child.stdout, writable: child.stdin });
+  child.once('spawn', () => sock.emit('connect'));
+  child.once('error', error => sock.emit('error', error));
+  child.once('exit', () => sock.destroy());
+  sock.once('close', () => { try { child.kill(); } catch { } });
+  return sock;
+}
+export async function connect(socket, { timeoutMs = 10000, name = 'head_context', bin = null } = {}) {
+  const sock = process.platform === 'win32' ? proxied(socket, bin) : net.connect({ path: socket });
+  sock.setNoDelay?.(true);
   let buffer = Buffer.alloc(0), upgraded = false, seq = 0, closed = false;
   const pending = new Map(), listeners = new Set();
   const fail = error => { closed = true; for (const p of pending.values()) p.reject(error); pending.clear(); };

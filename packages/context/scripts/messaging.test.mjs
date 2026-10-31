@@ -7,7 +7,7 @@ import os from 'node:os';
 import net from 'node:net';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
-import { engineOf } from '../hosts/codex/mode.mjs';
+import { engineOf, splitCommandLine } from '../hosts/codex/mode.mjs';
 import { delegatedPrompt, deliverToCodex } from '../hosts/codex/deliver.mjs';
 import { writePresence, queue, drain, take, codexLive, STALE_MS } from '../hosts/codex/threads.mjs';
 import { packet, canonicalInbox } from '../hosts/claude/deliver.mjs';
@@ -105,11 +105,18 @@ test('engine mode from the process ancestors: shared engine (and its socket), a 
   const table = procs => pid => procs[pid] || null;
   const env = { CODEX_HOME: '/h' };
   assert.deepEqual(engineOf({ pid: 10, env, read: table({ 10: { argv: ['/bin/sh', '-c', 'node x'], ppid: 9 }, 9: { argv: ['/r/0.164.0/bin/codex', 'app-server', '--listen', 'unix://', '--analytics-default-enabled'], ppid: 1 } }) }),
-    { mode: 'shared', pid: 9, home: '/h', socket: '/h/app-server-control/app-server-control.sock' });
+    { mode: 'shared', pid: 9, home: '/h', socket: '/h/app-server-control/app-server-control.sock', bin: '/r/0.164.0/bin/codex' });
   assert.equal(engineOf({ pid: 9, env, read: table({ 9: { argv: ['codex', 'app-server', '--listen', 'unix:///tmp/x.sock'], ppid: 1 } }) }).socket, '/tmp/x.sock');
   assert.equal(engineOf({ pid: 9, env, read: table({ 9: { argv: ['/usr/local/bin/codex'], ppid: 1 } }) }).mode, 'embedded');
   assert.equal(engineOf({ pid: 9, env, read: table({ 9: { argv: ['/Applications/Codex.app/Contents/Resources/codex', 'app-server'], ppid: 1 } }) }).mode, 'app');
   assert.equal(engineOf({ pid: 9, env, read: table({ 9: { argv: ['bash'], ppid: 1 } }) }).mode, 'unknown');
+  // Windows: the command line as Win32_Process gives it, split as Windows quotes it.
+  const win = splitCommandLine('"C:\\Users\\u\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\vendor\\codex.exe" app-server --listen unix:// --analytics-default-enabled');
+  assert.deepEqual(win.slice(1), ['app-server', '--listen', 'unix://', '--analytics-default-enabled']);
+  const hook = splitCommandLine('"C:\\Program Files\\nodejs\\node.exe" "C:\\p\\scripts\\codex-hook.mjs" session');
+  const shared = engineOf({ pid: 30, env, read: table({ 30: { argv: hook, ppid: 20 }, 20: { argv: win, ppid: 4 } }) });
+  assert.deepEqual([shared.mode, shared.pid, shared.bin], ['shared', 20, win[0]]);
+  assert.equal(engineOf({ pid: 9, env, read: table({ 9: { argv: splitCommandLine('C:\\a\\codex.exe'), ppid: 1 } }) }).mode, 'embedded');
 });
 
 test('to a Codex conversation on the shared engine: its turn starts as a delegation, in the frame Codex itself uses', async () => {

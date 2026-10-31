@@ -9,6 +9,7 @@ import { codexHome, controlSocket } from './engine.mjs';
 //              attach to. Its own conversation tools (codex_tui) exist there.
 //   embedded — a `codex` window running its engine inside itself: no conversation tools.
 //   app      — any other `codex app-server` (the desktop app, an editor): no such tools.
+// On Windows the ancestors come from one PowerShell process list (no /proc, no ps).
 // The shared engine's socket is the --listen path, or the default one under CODEX_HOME.
 function linuxProcess(pid) {
   try {
@@ -25,7 +26,23 @@ function psProcess(pid) {
     return { ppid: Number(m[1]), argv: m[2].split(/\s+/) };
   } catch { return null; }
 }
-export const processOf = pid => (process.platform === 'linux' ? linuxProcess(pid) : psProcess(pid));
+// Windows has no ps: one PowerShell call lists every process (id, parent, command line), kept
+// for a few seconds so a walk up the ancestors costs one call.
+let windowsTable = null;
+export const splitCommandLine = line => [...String(line || '').matchAll(/"([^"]*)"|(\S+)/g)].map(m => m[1] ?? m[2]);
+function windowsProcess(pid) {
+  if (!windowsTable || Date.now() - windowsTable.at > 5000) {
+    try {
+      const out = execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
+        '[Console]::OutputEncoding=[Text.Encoding]::UTF8; Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,CommandLine | ConvertTo-Json -Compress'],
+        { encoding: 'utf8', timeout: 15000, windowsHide: true, maxBuffer: 64 * 1024 * 1024 });
+      const rows = [].concat(JSON.parse(out) || []);
+      windowsTable = { at: Date.now(), byPid: new Map(rows.map(r => [Number(r.ProcessId), { ppid: Number(r.ParentProcessId), argv: splitCommandLine(r.CommandLine) }])) };
+    } catch { windowsTable = { at: Date.now(), byPid: new Map() }; }
+  }
+  return windowsTable.byPid.get(Number(pid)) || null;
+}
+export const processOf = pid => (process.platform === 'linux' ? linuxProcess(pid) : process.platform === 'win32' ? windowsProcess(pid) : psProcess(pid));
 const isCodex = argv => argv.length && /(^|[\\/])codex(\.exe)?$/.test(argv[0]) || (argv[0] && /node/.test(argv[0]) && argv.some(a => /[\\/]codex(\.js)?$/.test(a)));
 export function engineOf({ pid = process.ppid, env = process.env, depth = 6, read = processOf } = {}) {
   const home = codexHome(env);
@@ -34,7 +51,7 @@ export function engineOf({ pid = process.ppid, env = process.env, depth = 6, rea
     const argv = p.argv, k = argv.indexOf('app-server');
     if (k >= 0 && isCodex(argv.slice(0, k))) {
       const listen = argv.indexOf('--listen'), value = listen >= 0 ? argv[listen + 1] || '' : argv.find(a => a.startsWith('--listen='))?.slice(9) || '';
-      if (value.startsWith('unix://')) return { mode: 'shared', pid: at, home, socket: value.slice(7) || controlSocket(home) };
+      if (value.startsWith('unix://')) return { mode: 'shared', pid: at, home, socket: value.slice(7) || controlSocket(home), bin: argv[0] };
       return { mode: 'app', pid: at, home };
     }
     if (isCodex(argv) && !argv.includes('app-server')) return { mode: 'embedded', pid: at, home };
@@ -42,4 +59,10 @@ export function engineOf({ pid = process.ppid, env = process.env, depth = 6, rea
   }
   return { mode: 'unknown', home };
 }
-export const pathOk = file => { try { return path.isAbsolute(file) && fs.statSync(file).isSocket(); } catch { return false; } };
+// A Unix socket file. On Windows (AF_UNIX) it is not reported as a socket, so being there is
+// enough.
+export const pathOk = file => {
+  if (typeof file !== 'string' || !path.isAbsolute(file)) return false;
+  if (process.platform === 'win32') { try { fs.lstatSync(file); return true; } catch (e) { return Boolean(e?.code) && e.code !== 'ENOENT' && e.code !== 'ENOTDIR'; } }
+  try { return fs.statSync(file).isSocket(); } catch { return false; }
+};

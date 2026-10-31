@@ -37,7 +37,7 @@ try {
   if (input.hook_event_name === 'SubagentStart' && part === 'subagent') out(SUBAGENT_NOTICE, 'SubagentStart');
   else if (input.hook_event_name === 'UserPromptSubmit' && part === 'inbox' && id && project && !input.agent_id) {
     const presence = readPresence(project, id);
-    if (presence) writePresence(project, { thread_id: id, cwd: presence.cwd, engine: { mode: presence.mode, socket: presence.socket, pid: presence.pid, home: presence.codex_home }, transcript_path: presence.transcript_path });
+    if (presence) writePresence(project, { thread_id: id, cwd: presence.cwd, engine: { mode: presence.mode, socket: presence.socket, bin: presence.bin, pid: presence.pid, home: presence.codex_home }, transcript_path: presence.transcript_path });
     // Given first, then removed from the inbox (threads.mjs take).
     const waiting = take(project, id);
     if (waiting.messages.length) fs.writeSync(1, `${JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: waiting.messages.map(asMessage).join('\n\n') } })}\n`);

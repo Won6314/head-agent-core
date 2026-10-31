@@ -12,7 +12,7 @@ export async function deliverToCodex(project, threadId, text, { from, fromName }
   const presence = readPresence(project, threadId);
   if (!presence) throw new Error(`이 프로젝트에서 연 Codex 대화가 아닙니다: codex:${threadId}`);
   if (presence.mode === 'shared' && pathOk(presence.socket)) {
-    await withEngine(presence.socket, engine => sendToThread(engine, { source: from, threadId, prompt: text }));
+    await withEngine(presence.socket, engine => sendToThread(engine, { source: from, threadId, prompt: text }), { bin: presence.bin });
     return 'started';
   }
   queue(project, threadId, { from, from_name: fromName, text });

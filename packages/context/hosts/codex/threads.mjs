@@ -22,9 +22,9 @@ const presenceFile = (project, id) => recordFile(locations(project).state, 'pres
 export function writePresence(project, { thread_id, cwd, engine, transcript_path, title }) {
   const file = presenceFile(project, thread_id), previous = readPresence(project, thread_id) || {};
   const value = { ...previous, host: 'codex', conversation_id: thread_id, cwd, mode: engine.mode,
-    ...(engine.socket ? { socket: engine.socket } : {}), ...(engine.pid ? { pid: engine.pid } : {}), codex_home: engine.home,
+    ...(engine.socket ? { socket: engine.socket } : {}), ...(engine.bin ? { bin: engine.bin } : {}), ...(engine.pid ? { pid: engine.pid } : {}), codex_home: engine.home,
     ...(transcript_path ? { transcript_path } : {}), ...(title ? { title } : {}), at: new Date().toISOString() };
-  if (engine.mode !== 'shared') delete value.socket;
+  if (engine.mode !== 'shared') { delete value.socket; delete value.bin; }
   atomicJSON(file, value);
   return value;
 }
@@ -75,8 +75,8 @@ const attr = v => String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').repla
 export const asMessage = m => `<cross-session-message from="${attr(m.from)}"${m.from_name ? ` from-name="${attr(m.from_name)}"` : ''}>\n${m.text}\n</cross-session-message>`;
 
 // The threads a shared engine has loaded, with their names; null when it does not answer.
-export function loaded(socket) {
-  const r = spawnSync(process.execPath, [QUERY, 'loaded', socket], { encoding: 'utf8', timeout: 5000 });
+export function loaded(socket, bin) {
+  const r = spawnSync(process.execPath, [QUERY, 'loaded', socket, ...(bin ? [bin] : [])], { encoding: 'utf8', timeout: 8000, windowsHide: true });
   try { return r.status === 0 ? JSON.parse(r.stdout) : null; } catch { return null; }
 }
 // From the end of a Codex conversation's records: the last thing a person typed.
@@ -98,7 +98,7 @@ const mtime = file => { try { return fs.statSync(file).mtimeMs; } catch { return
 const isCodexProcess = pid => { const p = processOf(pid); return Boolean(p && p.argv.some(a => /codex/.test(a))); };
 export function codexLive(project, known = new Map(), { now = Date.now(), days = RECENT_DAYS } = {}) {
   const rows = [], bySocket = new Map();
-  for (const p of presences(project)) if (p.mode === 'shared' && p.socket) { if (!bySocket.has(p.socket)) bySocket.set(p.socket, loaded(p.socket)); }
+  for (const p of presences(project)) if (p.mode === 'shared' && p.socket) { if (!bySocket.has(p.socket)) bySocket.set(p.socket, loaded(p.socket, p.bin)); }
   for (const p of presences(project)) {
     const id = p.conversation_id, k = known.get(id) || {};
     let alive = false, title = p.title || k.title;
