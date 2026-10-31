@@ -1,6 +1,6 @@
 // Claude Code side of a message to a Codex conversation: the plugin's SendMessage hook runs
 //   node relay.mjs <project> codex:<thread id> <from address> [<from name>]
-// with the message text on stdin, and prints {"delivered":true,"how":"started"|"queued"}
+// with the message text on stdin, and prints {"delivered":true,"how":"started"|"app-queued"|"queued"}
 // or {"delivered":false,"reason":"..."}.
 import fs from 'node:fs';
 import { deliverToCodex } from '../hosts/codex/deliver.mjs';

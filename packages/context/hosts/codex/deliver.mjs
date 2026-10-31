@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import { withEngine } from './engine.mjs';
 import { pathOk } from './mode.mjs';
 import { readPresence, queue } from './threads.mjs';
@@ -6,8 +7,15 @@ import { readPresence, queue } from './threads.mjs';
 // conversation's SendMessage, or a Codex conversation's send tool). On the shared engine its
 // turn starts now, in the frame Codex's own send_message_to_thread uses: the window shows
 // "Sent by Codex from task <from>" and the model reads it as a delegated input. Anywhere else
-// (a window with its engine inside, the desktop app) it waits in the conversation's inbox and
-// is given at its next prompt. Returns how it went: 'started' or 'queued'.
+// (a window with its engine inside) it waits in the conversation's inbox and is given at its
+// next prompt. A desktop app conversation gets it through Codex's own queue (`codex queue`,
+// run with the app engine's binary): the app's engine starts a turn with it within about 10
+// seconds while it holds that conversation, and when it does not, as soon as the conversation
+// is opened again; on Mac the app is also asked to pick the conversation up now
+// (codex://threads/wake/<id>, which leaves the screen as it is). The queue takes a user
+// message, so the text goes in the delegation frame Codex itself uses. When the queue cannot
+// take it (no binary, the command fails) it waits in the inbox as before.
+// Returns how it went: 'started', 'app-queued' or 'queued'.
 export async function deliverToCodex(project, threadId, text, { from, fromName } = {}) {
   const presence = readPresence(project, threadId);
   if (!presence) throw new Error(`이 프로젝트에서 연 Codex 대화가 아닙니다: codex:${threadId}`);
@@ -15,8 +23,32 @@ export async function deliverToCodex(project, threadId, text, { from, fromName }
     await withEngine(presence.socket, engine => sendToThread(engine, { source: from, threadId, prompt: text }), { bin: presence.bin });
     return 'started';
   }
+  if (presence.mode === 'app' && presence.bin) {
+    try { await queueToApp(presence, threadId, delegatedPrompt(from, text)); return 'app-queued'; }
+    catch (error) { console.error(`head-context: Codex queue failed, using the inbox: ${error.message}`); }
+  }
   queue(project, threadId, { from, from_name: fromName, text });
   return 'queued';
+}
+
+// `codex queue --thread <id> --message <text>` with the app engine's own binary and home. No
+// --resume: that would load the conversation into another engine than the app's.
+export function queueToApp(presence, threadId, message, { platform = process.platform, run = spawn } = {}) {
+  return new Promise((resolve, reject) => {
+    const env = { ...process.env, ...(presence.codex_home ? { CODEX_HOME: presence.codex_home } : {}) };
+    const child = run(presence.bin, ['queue', '--thread', threadId, '--message', message], { env, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+    let err = '';
+    const timer = setTimeout(() => { child.kill(); reject(new Error('codex queue did not finish')); }, 20000);
+    child.stderr?.on('data', d => { err += d; });
+    child.stdout?.on('data', () => { });
+    child.on('error', error => { clearTimeout(timer); reject(error); });
+    child.on('close', code => {
+      clearTimeout(timer);
+      if (code !== 0) { reject(new Error(err.trim().split('\n').pop() || `codex queue exited ${code}`)); return; }
+      if (platform === 'darwin') { try { const o = run('open', ['-g', `codex://threads/wake/${threadId}`], { stdio: 'ignore', detached: true }); o.on?.('error', () => { }); o.unref?.(); } catch { } }
+      resolve();
+    });
+  });
 }
 
 // What Codex 0.164's send_message_to_thread does after its checks (tui/src/dynamic_tools.rs):

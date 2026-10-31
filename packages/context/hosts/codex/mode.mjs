@@ -52,7 +52,7 @@ export function engineOf({ pid = process.ppid, env = process.env, depth = 6, rea
     if (k >= 0 && isCodex(argv.slice(0, k))) {
       const listen = argv.indexOf('--listen'), value = listen >= 0 ? argv[listen + 1] || '' : argv.find(a => a.startsWith('--listen='))?.slice(9) || '';
       if (value.startsWith('unix://')) return { mode: 'shared', pid: at, home, socket: value.slice(7) || controlSocket(home), bin: argv[0] };
-      return { mode: 'app', pid: at, home };
+      return { mode: 'app', pid: at, home, bin: argv[0] };
     }
     if (isCodex(argv) && !argv.includes('app-server')) return { mode: 'embedded', pid: at, home };
     at = p.ppid;

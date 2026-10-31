@@ -15,7 +15,7 @@ const projectOf = request => registered(callerOf(request).conversation)?.cwd || 
 // arguments are shaped like Codex's own (threadId, prompt). The answer comes back as a message
 // to this conversation (codex:<its id>), as a Claude conversation's does.
 const send = {
-  definition: { name: 'send', description: '다른 대화에 메시지를 보냅니다. Claude Code 대화와 Codex 대화 모두로 갑니다. threadId에는 대화 목록(conversations)의 보낼 곳(claude:<ID> 또는 codex:<ID>)을 그대로 줍니다. 받는 대화가 쉬고 있으면 깨어나서 읽습니다(창 안에서 엔진이 도는 Codex 대화와 데스크톱 앱 대화는 다음 입력 때 받습니다). 받는 대화의 답은 이 대화(codex:<이 대화 ID>)로 따로 옵니다. 결과의 delivery는 started(바로 깨움), queued(다음 입력 때 받음), sent(Claude 대화로 보냄. 받았다는 확인은 오지 않음)입니다.',
+  definition: { name: 'send', description: '다른 대화에 메시지를 보냅니다. Claude Code 대화와 Codex 대화 모두로 갑니다. threadId에는 대화 목록(conversations)의 보낼 곳(claude:<ID> 또는 codex:<ID>)을 그대로 줍니다. 받는 대화가 쉬고 있으면 깨어나서 읽습니다(Codex 데스크톱 앱 대화는 앱이 그 대화를 들고 있으면 몇 초 안에, 아니면 그 대화를 열 때 받고, 창 안에서 엔진이 도는 Codex 대화는 다음 입력 때 받습니다). 받는 대화의 답은 이 대화(codex:<이 대화 ID>)로 따로 옵니다. 결과의 delivery는 started(바로 깨움), app-queued(앱 대기열에 넣음), queued(다음 입력 때 받음), sent(Claude 대화로 보냄. 받았다는 확인은 오지 않음)입니다.',
     inputSchema: { type: 'object', properties: { threadId: { type: 'string', description: '받는 대화. 대화 목록의 보낼 곳 그대로.' }, prompt: { type: 'string', description: '보낼 말' } }, required: ['threadId', 'prompt'], additionalProperties: false } },
   async call({ project, args, conversation_id }) {
     const { threadId, prompt } = args;

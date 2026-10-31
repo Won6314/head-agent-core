@@ -24,7 +24,8 @@ export function writePresence(project, { thread_id, cwd, engine, transcript_path
   const value = { ...previous, host: 'codex', conversation_id: thread_id, cwd, mode: engine.mode,
     ...(engine.socket ? { socket: engine.socket } : {}), ...(engine.bin ? { bin: engine.bin } : {}), ...(engine.pid ? { pid: engine.pid } : {}), codex_home: engine.home,
     ...(transcript_path ? { transcript_path } : {}), ...(title ? { title } : {}), at: new Date().toISOString() };
-  if (engine.mode !== 'shared') { delete value.socket; delete value.bin; }
+  if (engine.mode !== 'shared') delete value.socket;
+  if (engine.mode === 'embedded') delete value.bin;
   atomicJSON(file, value);
   return value;
 }

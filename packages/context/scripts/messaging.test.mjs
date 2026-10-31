@@ -7,8 +7,9 @@ import os from 'node:os';
 import net from 'node:net';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import { engineOf, splitCommandLine } from '../hosts/codex/mode.mjs';
-import { delegatedPrompt, deliverToCodex } from '../hosts/codex/deliver.mjs';
+import { delegatedPrompt, deliverToCodex, queueToApp } from '../hosts/codex/deliver.mjs';
 import { writePresence, queue, drain, take, codexLive, STALE_MS } from '../hosts/codex/threads.mjs';
 import { packet, canonicalInbox } from '../hosts/claude/deliver.mjs';
 import { sessions } from '../core/sessions.mjs';
@@ -155,6 +156,36 @@ test('Codex send: to a Claude conversation, to a Codex one (woken or queued), an
     r = await result({ threadId: 'codex:caller', prompt: 'x' });
     assert.equal(r.isError, true);
   } finally { await eng.close(); await inbox.close(); }
+});
+
+test('to a Codex desktop app conversation: into Codex\'s own queue with the app engine\'s binary; if that fails, the inbox', async () => {
+  const dir = fresh('appq'), log = path.join(dir, 'args.json'), bin = path.join(dir, 'fake-codex');
+  // A stand-in for the app's codex: records its arguments and CODEX_HOME; fails when told to.
+  fs.writeFileSync(bin, `#!${process.execPath}\nconst fs=require('fs');if(process.env.FAKE_FAIL){console.error('no such thread');process.exit(1)}fs.writeFileSync(${JSON.stringify(log)},JSON.stringify({args:process.argv.slice(2),home:process.env.CODEX_HOME}))\n`);
+  fs.chmodSync(bin, 0o755);
+  writePresence(dir, { thread_id: 'app-1', cwd: dir, engine: { mode: 'app', pid: 1, home: '/h/.codex', bin } });
+  assert.equal(await deliverToCodex(dir, 'app-1', '확인해 줘', { from: 'claude:c-1' }), 'app-queued');
+  const got = JSON.parse(fs.readFileSync(log, 'utf8'));
+  assert.deepEqual(got.args, ['queue', '--thread', 'app-1', '--message', delegatedPrompt('claude:c-1', '확인해 줘')]);
+  assert.equal(got.home, '/h/.codex');
+  assert.deepEqual(drain(dir, 'app-1'), []);
+  process.env.FAKE_FAIL = '1';
+  try { assert.equal(await deliverToCodex(dir, 'app-1', '다시', { from: 'claude:c-1' }), 'queued'); }
+  finally { delete process.env.FAKE_FAIL; }
+  assert.deepEqual(drain(dir, 'app-1').map(m => m.text), ['다시']);
+  // An app conversation recorded before 0.9.4 has no binary: the inbox, as before.
+  writePresence(dir, { thread_id: 'app-2', cwd: dir, engine: { mode: 'app', pid: 1, home: '/h' } });
+  assert.equal(await deliverToCodex(dir, 'app-2', 'x', { from: 'claude:c-1' }), 'queued');
+});
+
+test('Codex queue on Mac also asks the app to pick the conversation up, in the background; elsewhere only the queue', async () => {
+  const calls = [];
+  const run = (cmd, args) => { calls.push([cmd, ...args]); const ee = new EventEmitter(); if (cmd !== 'open') setImmediate(() => ee.emit('close', 0)); ee.unref = () => { }; return ee; };
+  await queueToApp({ bin: '/app/codex', codex_home: '/h' }, 't-1', 'm', { platform: 'darwin', run });
+  assert.deepEqual(calls, [['/app/codex', 'queue', '--thread', 't-1', '--message', 'm'], ['open', '-g', 'codex://threads/wake/t-1']]);
+  calls.length = 0;
+  await queueToApp({ bin: 'C:\\app\\codex.exe' }, 't-2', 'm', { platform: 'win32', run });
+  assert.deepEqual(calls, [['C:\\app\\codex.exe', 'queue', '--thread', 't-2', '--message', 'm']]);
 });
 
 test('one list for both apps: each caller sees the other app\'s conversations, addressed for its own send tool', () => {
