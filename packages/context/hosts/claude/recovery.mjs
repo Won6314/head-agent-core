@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { records, locations } from '../../core/storage.mjs';
+import { records, locations, readTail } from '../../core/storage.mjs';
 import { ownerOf } from './process.mjs';
 
 // Where a new conversation came from, read from Claude Code's own records. Only asked
@@ -18,24 +18,8 @@ import { ownerOf } from './process.mjs';
 const TAIL = 4096,
   DEPTH = 32,
   LIMIT = 64 * 1024 * 1024;
-function tail(file, bytes = TAIL) {
-  try {
-    const size = fs.statSync(file).size,
-      length = Math.min(size, bytes),
-      data = Buffer.alloc(length);
-    const fd = fs.openSync(file, 'r');
-    try {
-      fs.readSync(fd, data, 0, length, size - length);
-    } finally {
-      fs.closeSync(fd);
-    }
-    return data.toString('utf8');
-  } catch {
-    return '';
-  }
-}
 function continuedInto(transcript) {
-  const text = tail(transcript);
+  const text = readTail(transcript, TAIL) ?? '';
   if (!text.includes('continued-in')) return null;
   for (const line of text.split('\n').reverse()) {
     if (!line.includes('"continued-in"')) continue;

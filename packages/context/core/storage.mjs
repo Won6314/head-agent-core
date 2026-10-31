@@ -58,6 +58,24 @@ export function readState(file, fallback) {
     return fallback;
   }
 }
+// The last bytes of a file (all of it when smaller), as text: an app's records grow long and
+// only their end is wanted. Its first line may be cut. null when the file cannot be read.
+export function readTail(file, bytes) {
+  try {
+    const fd = fs.openSync(file, 'r');
+    try {
+      const size = fs.fstatSync(fd).size,
+        length = Math.min(size, bytes),
+        data = Buffer.alloc(length);
+      fs.readSync(fd, data, 0, length, size - length);
+      return data.toString('utf8');
+    } finally {
+      fs.closeSync(fd);
+    }
+  } catch {
+    return null; // not there or not readable: the caller decides what that means
+  }
+}
 export function readLoose(file) {
   try {
     const value = JSON.parse(fs.readFileSync(file, 'utf8'));

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { locations, recordFile, records, atomicJSON, noSymlink, readLoose } from '../../core/storage.mjs';
+import { locations, recordFile, records, atomicJSON, noSymlink, readLoose, readTail } from '../../core/storage.mjs';
 import { pidAlive } from '../../core/liveness.mjs';
 import { instructionLine } from '../../core/instruction.mjs';
 import { processOf } from '../../core/platform.mjs';
@@ -169,21 +169,8 @@ function loaded({ socket, bin }) {
 }
 // From the end of a Codex conversation's records: the last thing a person typed.
 function lastSaid(file) {
-  let text = '';
-  try {
-    const fd = fs.openSync(file, 'r');
-    try {
-      const size = fs.fstatSync(fd).size,
-        n = Math.min(size, 4 * 1024 * 1024),
-        b = Buffer.alloc(n);
-      fs.readSync(fd, b, 0, n, size - n);
-      text = b.toString('utf8');
-    } finally {
-      fs.closeSync(fd);
-    }
-  } catch {
-    return null;
-  } // no records yet
+  const text = readTail(file, 4 * 1024 * 1024);
+  if (text === null) return null; // no records yet
   const lines = text.split('\n');
   for (let i = lines.length - 1; i >= 0; i--) {
     if (!lines[i].includes('"role":"user"')) continue;

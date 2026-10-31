@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { pidAlive } from '../../core/liveness.mjs';
-import { readLoose } from '../../core/storage.mjs';
+import { readLoose, readTail } from '../../core/storage.mjs';
 import { instructionLine } from '../../core/instruction.mjs';
 import { RECENT_DAYS } from '../../core/recovery.mjs';
 
@@ -133,21 +133,8 @@ const bodyOf = (row) => {
   return typeof c === 'string' ? c : Array.isArray(c) ? c.find((x) => x?.type === 'text')?.text || null : null;
 };
 export function recentPrompts(file) {
-  let text = '';
-  try {
-    const fd = fs.openSync(file, 'r');
-    try {
-      const size = fs.fstatSync(fd).size,
-        length = Math.min(size, TAIL),
-        data = Buffer.alloc(length);
-      fs.readSync(fd, data, 0, length, size - length);
-      text = data.toString('utf8');
-    } finally {
-      fs.closeSync(fd);
-    }
-  } catch {
-    return {};
-  }
+  const text = readTail(file, TAIL);
+  if (text === null) return {};
   const lines = text.split('\n');
   let said = null,
     task = null;
