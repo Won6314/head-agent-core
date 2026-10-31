@@ -38,7 +38,7 @@ export const APP_INSTRUCTIONS = {
 // The instructions one app's model reads: the shared part, then that app's part (none for a
 // host without one, e.g. OpenCode).
 export const instructionsFor = host => (APP_INSTRUCTIONS[host] ? `${instructions}\n\n${APP_INSTRUCTIONS[host]}` : instructions);
-export const VERSION = '0.9.3';
+export const VERSION = '0.9.4';
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
 const missing = { create: { context: CONTEXT_REQUIRED } };

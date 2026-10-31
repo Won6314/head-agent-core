@@ -1,4 +1,4 @@
-# head-context 0.9.3 — 작업 세션·작업 브랜치·저장
+# head-context 0.9.4 — 작업 세션·작업 브랜치·저장
 
 작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 작업 맥락을 다시 불러온다.
 살아 있는 대화를 작업 세션·작업 브랜치와 묶어 보여 준다. 포크·새 대화·대화 사이 메시지는 호스트(Claude Code) 기능을 그대로 쓴다.
@@ -177,12 +177,22 @@ LLM은 자기 앱의 보내기 도구에 대화 목록(`conversations`)의 보�
 | Codex | 이 플러그인의 send(threadId, prompt) | Claude (`claude:<ID>`) | Claude의 받은 편지함 소켓(등록 파일 `messagingSocketPath`)에 Claude끼리 보내는 모양으로 넣는다(`hosts/claude/deliver.mjs`). 받는 대화가 써 둔 인증 키(`sessions/<pid>.<경로 해시>.key`)로 인증 줄을 먼저 보낸다(Windows는 필수). 받았다는 확인은 오지 않아 결과는 `sent`다 |
 | Codex | 이 플러그인의 send | Codex (`codex:<ID>`) | 아래 받기 |
 
-- Codex에서 받기(`hosts/codex/deliver.mjs`): 받는 대화가 공용 엔진(`codex app-server --listen unix://`, 터미널 Codex가 스스로 띄우고 붙는다)에서 돌면 그 엔진에 `turn/start`를 보내 바로 깨운다. Codex 원래 send_message_to_thread와 같은 위임 모양이라 화면에 "Sent by Codex from task <보낸 곳>"이 뜬다. 창 안에서 엔진이 도는 창과 데스크톱 앱은 바깥에서 깨울 문이 없어 편지함(`.head/state/inbox/codex-<ID>/`)에 두고, 다음 입력 때 넣는다. 편지함은 이름 바꾸기로 가져갈 권리를 잡아 한 메시지를 한 번만 준다(가져간 쪽이 넣은 직후 지우기 전에 죽거나 10분 넘게 멈추면 한 번 더 들어갈 수 있다).
+- Codex에서 받기(`hosts/codex/deliver.mjs`): 받는 대화가 공용 엔진(`codex app-server --listen unix://`, 터미널 Codex가 스스로 띄우고 붙는다)에서 돌면 그 엔진에 `turn/start`를 보내 바로 깨운다. Codex 원래 send_message_to_thread와 같은 위임 모양이라 화면에 "Sent by Codex from task <보낸 곳>"이 뜬다. 데스크톱 앱 대화는 Codex 대기열로 넣는다(0.9.4 절). 창 안에서 엔진이 도는 창은 바깥에서 깨울 문이 없어 편지함(`.head/state/inbox/codex-<ID>/`)에 두고, 다음 입력 때 넣는다. 편지함은 이름 바꾸기로 가져갈 권리를 잡아 한 메시지를 한 번만 준다(가져간 쪽이 넣은 직후 지우기 전에 죽거나 10분 넘게 멈추면 한 번 더 들어갈 수 있다).
 - Codex의 원래 send_message_to_thread는 Codex 대화로만 가고, 플러그인이 끌 수 없다(끄려면 사용자 설정 파일을 고쳐야 한다). 그래서 남겨 두고, Codex 안내문에서 대화 간 메시지는 send를 쓰라고 안내한다.
 - 대화 목록의 Codex 대화: 시작 훅이 `.head/state/presence/codex-<ID>.json`에 어느 엔진에서 도는지 남기고, 입력 훅이 갱신한다. 살아 있음은 목록을 그릴 때 본다: 공용 엔진은 엔진이 들고 있는 대화(창을 닫아도 엔진이 30분쯤 들고 있다), 창 안 엔진은 그 프로세스, 데스크톱은 기록이 7일 안에 바뀐 것.
 - 실행 중이 아닌 Claude 대화(데스크톱이 내린 대화)는 Codex 목록에 "지금은 받지 못함"이 붙고, 보내면 실패를 돌려준다.
 - Claude 등록 파일과 기록은 `CLAUDE_CONFIG_DIR`을 따른다(없으면 `~/.claude`). Codex 도구 서버에는 `.codex-mcp.json`의 env_vars로 넘긴다.
 - 화면 없이 띄운 Claude 대화(`claude -p`)를 띄운 쪽이 `HEAD_CONTEXT_PERSON=1`로 띄우면 포크·워커가 아니라 사람 대화로 센다(기록 쓰기도 됨).
+
+## 0.9.4에서 바뀐 것
+
+- Codex 데스크톱 앱 대화로 가는 메시지를 Codex 자체 대기열로 넣는다(`codex queue --thread <ID> --message <글>`, 앱 엔진의 실행 파일과 CODEX_HOME으로 실행). 전에는 편지함에 두고 사용자가 다음에 입력할 때 넣었다.
+  - 앱의 엔진은 10초마다 대기열을 보고, 자기가 들고 있는 대화가 쉬고 있으면 턴을 연다. 사용자가 최근까지 쓰던 대화는 몇 초 안에 받고, 그렇지 않은 대화는 그 대화를 여는 순간 받는다(입력은 필요 없다). 진행 중인 턴은 끊지 않고 끝난 뒤 받는다.
+  - Mac은 넣은 뒤 `codex://threads/wake/<ID>`를 배경으로 열어(`open -g`) 앱이 그 대화를 바로 집게 한다. 화면은 옮기지 않는다. Windows 앱(26.930)에는 이 링크가 없어 대화를 열 때 받는다.
+  - 대기열은 사용자 메시지로만 받으므로 Codex 자체 위임 모양(`<codex_delegation>`)으로 싸서 넣는다.
+  - 대기열에 넣지 못하면(앱 엔진 실행 파일을 모름, 명령 실패) 전처럼 편지함에 둔다. 0.9.4 전에 기록된 앱 대화는 실행 파일 경로가 없으므로, 그 대화를 새로 열 때까지 편지함으로 간다.
+  - Codex send와 중계의 결과에 `app-queued`가 더해졌다.
+- Mac 실제 확인(ChatGPT 앱 26.1027, 번들 codex 0.166): 앱을 켠 직후 들고 있지 않던 대화로 보낸 메시지가 6초 만에 턴으로 열려 답했고 편지함은 비어 있었다.
 
 ## 0.9.3에서 바뀐 것
 
