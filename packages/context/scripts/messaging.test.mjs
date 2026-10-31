@@ -6,10 +6,11 @@ import path from 'node:path';
 import os from 'node:os';
 import net from 'node:net';
 import { spawn, spawnSync } from 'node:child_process';
+import { createHash, randomBytes } from 'node:crypto';
 import { engineOf } from '../hosts/codex/mode.mjs';
 import { delegatedPrompt, deliverToCodex } from '../hosts/codex/deliver.mjs';
 import { writePresence, queue, drain, take, codexLive, STALE_MS } from '../hosts/codex/threads.mjs';
-import { packet } from '../hosts/claude/deliver.mjs';
+import { packet, canonicalInbox } from '../hosts/claude/deliver.mjs';
 import { sessions } from '../core/sessions.mjs';
 import { definitions } from '../core/mcp.mjs';
 const root = process.env.HEAD_CONTEXT_TEST_ROOT || os.tmpdir();
@@ -56,14 +57,27 @@ const base = (method, params) => {
     default: return {};
   }
 };
-// A Claude conversation's inbox socket, registered as Claude Code registers a running one.
-async function claudeInbox(dir, id) {
+// A Claude conversation's inbox socket, registered as Claude Code registers a running one:
+// <pid>.json and the key file with its peer token. Like Claude Code on Windows, it takes a
+// message only after a first line {"type":"auth","token":<peer token>}; any other first line
+// closes the connection and the message is dropped (counted in `dropped`).
+async function claudeInbox(dir, id, { key = true } = {}) {
   const sock = path.join(dir, `${id}.sock`), reg = path.join(dir, '_claude', 'sessions'); fs.mkdirSync(reg, { recursive: true });
   fs.writeFileSync(path.join(reg, `${process.pid}.json`), JSON.stringify({ pid: process.pid, sessionId: id, cwd: dir, messagingSocketPath: sock }));
-  const got = [];
-  const server = net.createServer(s => { let d = ''; s.on('data', x => { d += x; }); s.on('end', () => { got.push(JSON.parse(d)); s.end(); }); });
+  const token = randomBytes(16).toString('hex');
+  if (key) fs.writeFileSync(path.join(reg, `${process.pid}.${createHash('sha256').update(path.resolve(sock)).digest('hex')}.key`), JSON.stringify({ peerToken: token }));
+  const got = [], state = { dropped: 0 };
+  const server = net.createServer(s => {
+    let d = '';
+    s.on('data', x => { d += x; });
+    s.on('end', () => {
+      const [first, ...rest] = d.split('\n').filter(Boolean).map(l => JSON.parse(l));
+      if (first?.type !== 'auth' || first.token !== token) { state.dropped += 1; s.destroy(); return; }
+      got.push(...rest); s.end();
+    });
+  });
   await new Promise(r => server.listen(sock, r));
-  return { got, reg, close: () => new Promise(r => server.close(r)) };
+  return { got, reg, token, get dropped() { return state.dropped; }, close: () => new Promise(r => server.close(r)) };
 }
 // One call to the Codex tool server, as Codex makes it (the calling thread in _meta).
 function codexCall(dir, data, caller, name, args, env = {}) {
@@ -120,7 +134,8 @@ test('Codex send: to a Claude conversation, to a Codex one (woken or queued), an
   try {
     const result = async (args) => (await codexCall(dir, data, 'caller', 'send', args))[1].result;
     let r = await result({ threadId: 'claude:c-1', prompt: '안녕' });
-    assert.deepEqual(JSON.parse(r.content[0].text), { threadId: 'claude:c-1', delivery: 'delivered' });
+    assert.deepEqual(JSON.parse(r.content[0].text), { threadId: 'claude:c-1', delivery: 'sent' });
+    assert.equal(inbox.dropped, 0);
     assert.equal(inbox.got[0].message.content, '<cross-session-message from="codex:caller" from-name="창 A">\n안녕\n</cross-session-message>');
     r = await result({ threadId: 'codex:shared-b', prompt: 'B에게' });
     assert.deepEqual(JSON.parse(r.content[0].text), { threadId: 'codex:shared-b', delivery: 'started' });
@@ -176,7 +191,38 @@ test('to a Claude conversation: the packet another Claude conversation sends, on
     await deliverToClaude('claude:c-1', '보냄', { from: 'codex:th1' });
     assert.equal(inbox.got[0].message.content, '<cross-session-message from="codex:th1">\n보냄\n</cross-session-message>');
     await assert.rejects(deliverToClaude('claude:nobody', 'x', { from: 'codex:th1' }), /No running Claude conversation/);
+    assert.equal(inbox.dropped, 0);
   } finally { delete process.env.HEAD_CONTEXT_CLAUDE_SESSIONS; await inbox.close(); }
+});
+
+test('to a Claude conversation on Windows: the auth line goes first, and with no key nothing is sent', async () => {
+  const dir = fresh('claude-auth'), inbox = await claudeInbox(dir, 'c-2', { key: false });
+  process.env.HEAD_CONTEXT_CLAUDE_SESSIONS = inbox.reg;
+  try {
+    const { deliverToClaude } = await import('../hosts/claude/deliver.mjs');
+    await assert.rejects(deliverToClaude('claude:c-2', 'x', { from: 'codex:th1', requireAuth: true }), /인증 키를 찾지 못해 보내지 않았습니다/);
+    assert.equal(inbox.dropped, 0);
+    // Without a key where auth is optional the message still goes, as before (this stand-in
+    // always asks for auth, so it drops it: the case the Windows fix is about).
+    await deliverToClaude('claude:c-2', 'x', { from: 'codex:th1', requireAuth: false });
+    await new Promise(r => setTimeout(r, 50));
+    assert.equal(inbox.dropped, 1);
+    // A key of a dead owner is passed over for the live one's.
+    const sock = path.join(dir, 'c-2.sock'), hash = createHash('sha256').update(path.resolve(sock)).digest('hex');
+    fs.writeFileSync(path.join(inbox.reg, `999999.${hash}.key`), JSON.stringify({ peerToken: 'f'.repeat(32) }));
+    fs.writeFileSync(path.join(inbox.reg, `${process.pid}.${hash}.key`), JSON.stringify({ peerToken: inbox.token }));
+    await deliverToClaude('claude:c-2', '인증함', { from: 'codex:th1', requireAuth: true });
+    assert.equal(inbox.got[0].message.content, '<cross-session-message from="codex:th1">\n인증함\n</cross-session-message>');
+    assert.equal(inbox.dropped, 1);
+  } finally { delete process.env.HEAD_CONTEXT_CLAUDE_SESSIONS; await inbox.close(); }
+});
+
+test('the inbox path Claude Code hashes for its key: Windows pipes lowered, other paths resolved', () => {
+  assert.equal(canonicalInbox('\\\\.\\pipe\\Claude-ABC'), '\\\\.\\pipe\\claude-abc');
+  assert.equal(canonicalInbox('//./pipe/LOCAL/Cc-Msg-1'), '\\\\.\\pipe\\local\\cc-msg-1');
+  assert.equal(canonicalInbox('\\\\.\\pipe\\bad.'), null);
+  assert.equal(canonicalInbox('/run/a/../b.sock'), null);
+  assert.equal(canonicalInbox('/run/x/./a.sock'), '/run/x/a.sock');
 });
 
 test('a headless conversation its starter marks as a person\'s: kept as a person in the list, not as a copy', async () => {

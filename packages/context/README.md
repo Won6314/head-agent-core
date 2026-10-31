@@ -1,4 +1,4 @@
-# head-context 0.9.1 — 작업 세션·작업 브랜치·저장
+# head-context 0.9.2 — 작업 세션·작업 브랜치·저장
 
 작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 작업 맥락을 다시 불러온다.
 살아 있는 대화를 작업 세션·작업 브랜치와 묶어 보여 준다. 포크·새 대화·대화 사이 메시지는 호스트(Claude Code) 기능을 그대로 쓴다.
@@ -174,7 +174,7 @@ LLM은 자기 앱의 보내기 도구에 대화 목록(`conversations`)의 보�
 |---|---|---|---|
 | Claude Code | 원래 SendMessage(to) | Claude (`uds:…`) | 원래 그대로 |
 | Claude Code | 원래 SendMessage(to) | Codex (`codex:<ID>`) | 모드(`hooks/conversations.mjs`)가 가로채 `scripts/relay.mjs`로 넘기고 원래와 같이 보냄으로 답한다 |
-| Codex | 이 플러그인의 send(threadId, prompt) | Claude (`claude:<ID>`) | Claude의 받은 편지함 소켓(등록 파일 `messagingSocketPath`)에 Claude끼리 보내는 모양으로 넣는다(`hosts/claude/deliver.mjs`) |
+| Codex | 이 플러그인의 send(threadId, prompt) | Claude (`claude:<ID>`) | Claude의 받은 편지함 소켓(등록 파일 `messagingSocketPath`)에 Claude끼리 보내는 모양으로 넣는다(`hosts/claude/deliver.mjs`). 받는 대화가 써 둔 인증 키(`sessions/<pid>.<경로 해시>.key`)로 인증 줄을 먼저 보낸다(Windows는 필수). 받았다는 확인은 오지 않아 결과는 `sent`다 |
 | Codex | 이 플러그인의 send | Codex (`codex:<ID>`) | 아래 받기 |
 
 - Codex에서 받기(`hosts/codex/deliver.mjs`): 받는 대화가 공용 엔진(`codex app-server --listen unix://`, 터미널 Codex가 스스로 띄우고 붙는다)에서 돌면 그 엔진에 `turn/start`를 보내 바로 깨운다. Codex 원래 send_message_to_thread와 같은 위임 모양이라 화면에 "Sent by Codex from task <보낸 곳>"이 뜬다. 창 안에서 엔진이 도는 창과 데스크톱 앱은 바깥에서 깨울 문이 없어 편지함(`.head/state/inbox/codex-<ID>/`)에 두고, 다음 입력 때 넣는다. 편지함은 이름 바꾸기로 가져갈 권리를 잡아 한 메시지를 한 번만 준다(가져간 쪽이 넣은 직후 지우기 전에 죽거나 10분 넘게 멈추면 한 번 더 들어갈 수 있다).
@@ -183,6 +183,11 @@ LLM은 자기 앱의 보내기 도구에 대화 목록(`conversations`)의 보�
 - 실행 중이 아닌 Claude 대화(데스크톱이 내린 대화)는 Codex 목록에 "지금은 받지 못함"이 붙고, 보내면 실패를 돌려준다.
 - Claude 등록 파일과 기록은 `CLAUDE_CONFIG_DIR`을 따른다(없으면 `~/.claude`). Codex 도구 서버에는 `.codex-mcp.json`의 env_vars로 넘긴다.
 - 화면 없이 띄운 Claude 대화(`claude -p`)를 띄운 쪽이 `HEAD_CONTEXT_PERSON=1`로 띄우면 포크·워커가 아니라 사람 대화로 센다(기록 쓰기도 됨).
+
+## 0.9.2에서 바뀐 것
+
+- Windows에서 Codex가 Claude 대화로 보낸 메시지가 들어가지 않던 문제를 고쳤다. Windows의 Claude Code는 첫 줄로 인증을 받은 연결의 메시지만 받는데, 플러그인이 인증 없이 보내고 연결이 닫힌 것을 성공으로 알렸다. 이제 받는 대화가 써 둔 인증 키로 인증 줄을 먼저 보낸다(Mac·Linux에서도 키가 있으면 보낸다). Windows에서 키를 찾지 못하면 보내지 않고 실패를 알린다.
+- Codex send의 Claude 쪽 결과를 `delivered`에서 `sent`로 바꿨다. 받는 쪽이 같은 연결로 받았다는 답을 주지 않으므로 보낸 것까지만 말한다.
 
 ## 0.9.1에서 바뀐 것
 
