@@ -337,7 +337,10 @@ def source(g, key, repo=None):
     if n["type"] == "코드" and n["file"]:
         p(f"{n['file']}:{n['line']}-{n['end_line']}  (head-agent-core 04e9328 packages/context)")
         if repo:
-            lines = open(os.path.join(repo, n["file"]), encoding="utf-8").read().splitlines()
+            path = os.path.join(repo, n["file"])
+            if not os.path.isfile(path):
+                sys.exit(f"--repo에 이 파일이 없습니다: {path}\n--repo에는 head-agent-core 04e9328의 packages/context 폴더를 줍니다.")
+            lines = open(path, encoding="utf-8").read().splitlines()
             for i in range(n["line"] - 1, min(n["end_line"], len(lines))):
                 p(f"{i + 1:5} {lines[i]}")
         return
