@@ -199,6 +199,7 @@ export const FIT_STEPS = [
   { count: 1, bodyChars: 0, limit: 5 },
   { count: 1, bodyChars: 0, limit: 5, lineChars: 300 },
   { count: 1, bodyChars: 0, map: false, lineChars: 200 },
+  { count: 1, bodyChars: 0, map: false, lineChars: 150, branchCount: 30, soonCount: 10 },
   { count: 1, bodyChars: 0, map: false, lineChars: 150, branchCount: 10, soonCount: 5 },
   { count: 1, bodyChars: 0, map: false, lineChars: 100, branchCount: 3, soonCount: 3 },
 ];
