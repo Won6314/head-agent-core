@@ -219,11 +219,15 @@ export function setupTool(project, { action, step }, { host = 'claude' } = {}) {
   fs.mkdirSync(f.root, { recursive: true });
   atomicText(f.core, body);
   // Two conversations started together may both ask and both get a yes: the second finds the
-  // first's settings and says so. The settings file is read and written under its lock.
-  const already = firstRun(project).setup === 'done';
+  // first's settings and says so. Under the settings lock: whether setup was done, the
+  // settings read and written, and setup marked done (the config lock inside it).
   fs.mkdirSync(path.dirname(f.settings), { recursive: true });
-  const { fork, market } = locked(f.settings, () => projectSettings(f.settings));
-  mark(project, 'setup', 'done');
+  const { already, fork, market } = locked(f.settings, () => {
+    const was = firstRun(project).setup === 'done',
+      result = projectSettings(f.settings);
+    mark(project, 'setup', 'done');
+    return { already: was, ...result };
+  });
   const next = surveyReady() && firstRun(project).survey === null ? `\n\n이어서 ${surveyQuestion()}` : '';
   const claudeOnly = host === 'codex' ? ' (Claude Code용, Codex에서는 쓰이지 않음)' : '';
   const after =

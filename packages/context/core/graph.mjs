@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { locations, validName, noSymlink, readError } from './storage.mjs';
 import { locked } from './lock.mjs';
 import { parseHistory } from './history.mjs';
-import { branchHeader, WORK_MONTH } from './branch-format.mjs';
+import { branchHeader } from './branch-format.mjs';
 import { renderMap, shortIds, matchShort } from './map-view.mjs';
 
 // 24.11.1 emits only this warning at require time. Do not mute other warnings.
@@ -432,9 +432,7 @@ class Graph {
           if (fs.existsSync(main)) sources.push({ file: main, session: e.name, stem: 'main', kind: 'history', dir });
           const work = noSymlink(path.join(dir, 'work'));
           if (fs.existsSync(work))
-            for (const b of fs
-              .readdirSync(work, { withFileTypes: true })
-              .filter((b) => b.isDirectory() && !WORK_MONTH.test(b.name))) {
+            for (const b of fs.readdirSync(work, { withFileTypes: true }).filter((b) => b.isDirectory())) {
               validName(b.name);
               const file = noSymlink(path.join(work, b.name, 'history.md'));
               if (fs.existsSync(file)) sources.push({ file, session: e.name, stem: b.name, kind: 'branch', dir });
