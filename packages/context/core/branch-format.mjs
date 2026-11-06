@@ -2,6 +2,10 @@ import path from 'node:path';
 import { validName, line } from './storage.mjs';
 const BRANCH_MARKER = '<!-- head-context branch:1 -->';
 const RECAP_HEADING = '## 지금까지 요약';
+// work/ holds both the branch records (work/<branch>/history.md) and the work files, whose
+// month folders are work/YYYY-MM/. A month-shaped name is the work files' place, never a
+// branch: it is refused as a branch name and not read as one.
+export const WORK_MONTH = /^\d{4}-\d{2}$/;
 export function branchPath(dir, name) {
   return path.join(dir, 'work', validName(name), 'history.md');
 }

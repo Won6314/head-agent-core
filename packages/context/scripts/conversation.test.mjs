@@ -397,7 +397,7 @@ test('the three start parts: the work session always, the work context, and afte
     { env: { CLAUDE_PROJECT_DIR: st.dir } },
   );
   assert.ok(parts.session.length <= 9000);
-  assert.match(parts.session, /^# 작업 세션: demo\n# demo\n\nCONTEXT-HEAD/);
+  assert.match(parts.session, /^# 작업 세션: demo\n작업 세션 폴더: [^\n]+\n\n# demo\n\nCONTEXT-HEAD/);
   assert.match(parts.session, /…\(context\.md 뒷부분 생략 — 전문: [^\n]+demo\/context\.md\)$/);
   assert.doesNotMatch(parts.session, /CONTEXT-TAIL/);
   assert.match(

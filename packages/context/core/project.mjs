@@ -218,7 +218,11 @@ export function setupTool(project, { action, step }, { host = 'claude' } = {}) {
     body = fs.readFileSync(CORE_SOURCE, 'utf8');
   fs.mkdirSync(f.root, { recursive: true });
   atomicText(f.core, body);
-  const { fork, market } = projectSettings(f.settings);
+  // Two conversations started together may both ask and both get a yes: the second finds the
+  // first's settings and says so. The settings file is read and written under its lock.
+  const already = firstRun(project).setup === 'done';
+  fs.mkdirSync(path.dirname(f.settings), { recursive: true });
+  const { fork, market } = locked(f.settings, () => projectSettings(f.settings));
   mark(project, 'setup', 'done');
   const next = surveyReady() && firstRun(project).survey === null ? `\n\n이어서 ${surveyQuestion()}` : '';
   const claudeOnly = host === 'codex' ? ' (Claude Code용, Codex에서는 쓰이지 않음)' : '';
@@ -228,5 +232,5 @@ export function setupTool(project, { action, step }, { host = 'claude' } = {}) {
       : '- 다음 시작부터는 시작·/clear·압축 때 코어 지침이 들어가고 기본 포크가 켜지며, 앱이 시작할 때 새 판을 받습니다.';
   // The core given here carries the same tag as the start hook's, so a resume of this
   // conversation knows it already holds the core.
-  return `초기설정을 마쳤습니다.\n- 코어 지침: 이 프로젝트에서 켰습니다(사본: .head/core.md).\n- .claude/settings.json의 env.${FORK_ENV}="1"(기본 포크 켜기)${claudeOnly}: ${fork}.\n- .claude/settings.json의 마켓 ${MARKETPLACE}(GitHub ${MARKETPLACE_REPO}, 자동 업데이트)와 enabledPlugins."${PLUGIN_ID}"${claudeOnly}: ${market}.\n${after} 이 대화에서는 아래 코어 지침을 지금부터 따르세요.${next}\n\n${body.trimEnd()}\n\n${CORE_MARK}1 — 초기설정이 돌려준 코어)`;
+  return `${already ? '이 프로젝트는 이미 초기설정되어 있었습니다(다른 대화가 먼저 했을 수 있습니다). 이미 있던 값은 그대로 두었습니다.\n' : ''}초기설정을 마쳤습니다.\n- 코어 지침: 이 프로젝트에서 켰습니다(사본: .head/core.md).\n- .claude/settings.json의 env.${FORK_ENV}="1"(기본 포크 켜기)${claudeOnly}: ${fork}.\n- .claude/settings.json의 마켓 ${MARKETPLACE}(GitHub ${MARKETPLACE_REPO}, 자동 업데이트)와 enabledPlugins."${PLUGIN_ID}"${claudeOnly}: ${market}.\n${after} 이 대화에서는 아래 코어 지침을 지금부터 따르세요.${next}\n\n${body.trimEnd()}\n\n${CORE_MARK}1 — 초기설정이 돌려준 코어)`;
 }

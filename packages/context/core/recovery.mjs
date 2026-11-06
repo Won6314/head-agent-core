@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { mapSummary, contentBody } from './history.mjs';
 import { renderMap, clock, shortStem } from './map-view.mjs';
 import { isOpen } from './lifecycle.mjs';
@@ -51,7 +52,7 @@ export function openBranches(g, name) {
 export function sessionPart(g, { name, stem, conversation = true }) {
   const s = g.session(name),
     b = stem === 'main' ? null : g.header(name, stem);
-  const lines = [`# 작업 세션: ${name}`, s.context.trim()];
+  const lines = [`# 작업 세션: ${name}`, `작업 세션 폴더: ${path.join(g.topics, name)}`, '', s.context.trim()];
   if (conversation)
     lines.push(
       '',
@@ -61,10 +62,13 @@ export function sessionPart(g, { name, stem, conversation = true }) {
 }
 // Saves shown with their body. bodyChars cuts a body to its first characters and points
 // at the whole one (read entry); 0 leaves the body out. The newest next stays.
-function saves(g, name, rows, { bodyChars = null } = {}) {
+// lineChars (fitting only) shortens the heading and marker lines, and the last next to five
+// times that.
+function saves(g, name, rows, { bodyChars = null, lineChars = null } = {}) {
   const time = clock(g.timezone),
     ids = g.shortIds(name),
-    lines = [];
+    lines = [],
+    fit = (text, n = lineChars) => (lineChars === null ? text : cut(text, n));
   rows.forEach((row, i) => {
     const e = g.detail(row),
       last = i === rows.length - 1,
@@ -76,10 +80,10 @@ function saves(g, name, rows, { bodyChars = null } = {}) {
         : `${bodyChars ? body.slice(0, bodyChars) + ' …' : ''}(전문: read entry ${id})`;
     lines.push(
       '',
-      `### ${id} ${time(row.stamp)} ${mapSummary(e).text}`,
-      ...(marker(e) ? [marker(e)] : []),
+      fit(`### ${id} ${time(row.stamp)} ${mapSummary(e).text}`),
+      ...(marker(e) ? [fit(marker(e))] : []),
       shown,
-      ...(last && e.next ? ['', `다음: ${e.next}`] : []),
+      ...(last && e.next ? ['', `다음: ${fit(e.next, lineChars * 5)}`] : []),
     );
   });
   return lines;
@@ -108,33 +112,54 @@ export function contextPart(
     today = '',
     bodyChars = null,
     overview = false,
+    // Only for fitting (fittedContext): each line to its first lineChars characters, at
+    // most branchCount open branches and soonCount due to-dos, the map left out (map:false).
+    lineChars = null,
+    branchCount = null,
+    soonCount = null,
+    map: withMap = true,
   },
 ) {
   const time = clock(g.timezone),
-    lines = [];
+    lines = [],
+    fit = (text) => (lineChars === null ? text : cut(text, lineChars));
   const open = openBranches(g, name);
   if (open.length) {
+    // This conversation's branch is always among the shown ones.
+    const shown =
+      branchCount === null || open.length <= branchCount
+        ? open
+        : [
+            ...open.filter((b) => b.name === stem),
+            ...open.filter((b) => b.name !== stem).slice(0, branchCount - (open.some((b) => b.name === stem) ? 1 : 0)),
+          ].sort((a, b) => open.indexOf(a) - open.indexOf(b));
     lines.push(`## 열린 작업 브랜치 (${open.length})`);
-    for (const b of open)
+    for (const b of shown)
       lines.push(
-        `- ${b.title}${!overview && b.name === stem ? ' (이 대화)' : ''} · 마지막 ${b.saves ? time(b.last_at) : '저장 없음'}${b.next ? ` · 다음: ${b.next}` : ''}`,
+        fit(
+          `- ${b.title}${!overview && b.name === stem ? ' (이 대화)' : ''} · 마지막 ${b.saves ? time(b.last_at) : '저장 없음'}${b.next ? ` · 다음: ${b.next}` : ''}`,
+        ),
       );
+    if (shown.length < open.length) lines.push(`(외 ${open.length - shown.length}개 — 전부는 load)`);
   }
   if (todos.length) {
-    const soon = todos.filter((t) => dueSoon(t, today)),
+    const due = todos.filter((t) => dueSoon(t, today)),
+      soon = soonCount === null ? due : due.slice(0, soonCount),
       rest = todos.filter((t) => !dueSoon(t, today)).slice(0, Math.max(0, TODO_COUNT - soon.length));
     lines.push(
       ...(lines.length ? [''] : []),
-      `## 할 일 (열린 ${todos.length}개${soon.length ? `, 기한 임박 ${soon.length}개` : ''})`,
+      `## 할 일 (열린 ${todos.length}개${due.length ? `, 기한 임박 ${due.length}개` : ''})`,
       ...[...soon, ...rest].map((t) => cut(todoLine(t), 120)),
     );
     if (todos.length > soon.length + rest.length) lines.push('(전체: todo list)');
   }
-  const { lines: map, omitted } = renderMap(g, name, { limit, current: overview ? undefined : stem });
-  if (map.length) {
-    lines.push(...(lines.length ? [''] : []), '## 흐름 (최신이 위)', ...map);
-    if (omitted) lines.push(`그 앞 ${omitted}개 — read map`);
-  }
+  if (withMap) {
+    const { lines: map, omitted } = renderMap(g, name, { limit, current: overview ? undefined : stem });
+    if (map.length) {
+      lines.push(...(lines.length ? [''] : []), '## 흐름 (최신이 위)', ...map.map(fit));
+      if (omitted) lines.push(`그 앞 ${omitted}개 — read map`);
+    }
+  } else lines.push(...(lines.length ? [''] : []), '## 흐름 — 줄여서 뺐습니다(read map)');
   if (overview) {
     const rows = count === 0 ? [] : sessionSaves(g, name, count);
     if (rows.length)
@@ -143,20 +168,26 @@ export function contextPart(
     const b = g.header(name, stem),
       own = g.own(name, stem),
       recent = count === 0 ? [] : own.slice(-count);
-    lines.push(...(lines.length ? [''] : []), `## 이 작업 브랜치의 최근 기록: ${branchTitle({ name: stem, ...b })}`);
+    lines.push(
+      ...(lines.length ? [''] : []),
+      fit(`## 이 작업 브랜치의 최근 기록: ${branchTitle({ name: stem, ...b })}`),
+    );
     if (b.recap)
       lines.push(
         '정리:',
         bodyChars !== null && b.recap.length > bodyChars ? `${b.recap.slice(0, bodyChars)} …` : b.recap,
       );
     if (!recent.length) lines.push('(아직 기록 없음)');
-    lines.push(...saves(g, name, recent, { bodyChars }));
+    lines.push(...saves(g, name, recent, { bodyChars, lineChars }));
   }
   return lines.join('\n');
 }
-// The work context cut down to fit one hook output, in this order: fewer newest saves
-// (3, 2, 1), then each body to its first part with a pointer to the whole, then the map
-// to 15 lines. The open work branches, the to-dos and the last next always stay.
+// The work context compressed to fit one hook output, never cut off, in this order: fewer
+// newest saves (3, 2, 1), each body to its first part with a pointer to the whole, the map
+// to 15 then 5 lines, then each line shortened and the map left out, then fewer open
+// branches (this conversation's stays) and due to-dos with a pointer to the rest. The open
+// work branches, the to-dos and the last next always stay. The last step is bounded by
+// its counts and line lengths, so it fits any budget the hooks use.
 export const FIT_STEPS = [
   { count: 3 },
   { count: 2 },
@@ -166,6 +197,10 @@ export const FIT_STEPS = [
   { count: 1, bodyChars: 500, limit: 15 },
   { count: 1, bodyChars: 0, limit: 15 },
   { count: 1, bodyChars: 0, limit: 5 },
+  { count: 1, bodyChars: 0, limit: 5, lineChars: 300 },
+  { count: 1, bodyChars: 0, map: false, lineChars: 200 },
+  { count: 1, bodyChars: 0, map: false, lineChars: 150, branchCount: 10, soonCount: 5 },
+  { count: 1, bodyChars: 0, map: false, lineChars: 100, branchCount: 3, soonCount: 3 },
 ];
 export function fittedContext(g, options, budget) {
   let text = '';
@@ -173,7 +208,7 @@ export function fittedContext(g, options, budget) {
     text = contextPart(g, { ...options, ...step });
     if (text.length <= budget) return text;
   }
-  return text.slice(0, Math.max(0, budget - 60)) + '\n…(상한에서 잘렸습니다. 전부는 load)';
+  return text;
 }
 export function identity(g, options) {
   return [sessionPart(g, options), contextPart(g, options)].filter(Boolean).join('\n\n');

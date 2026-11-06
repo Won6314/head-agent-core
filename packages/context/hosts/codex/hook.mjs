@@ -45,14 +45,25 @@ try {
   const quiet = source === 'resume' || source === 'fork';
   if (input.hook_event_name === 'SubagentStart' && part === 'subagent') out(SUBAGENT_NOTICE, 'SubagentStart');
   else if (input.hook_event_name === 'UserPromptSubmit' && part === 'inbox' && id && project && !input.agent_id) {
+    // Written again on every prompt. A conversation whose start hook wrote none (hooks
+    // trusted after it started, the engine not told at the start) or whose presence is
+    // broken gets one here, the way the start hook writes it, and so reaches the list.
     const presence = readPresence(project, id);
-    if (presence)
-      writePresence(project, {
-        thread_id: id,
-        cwd: presence.cwd,
-        engine: engineFrom(presence),
-        transcript_path: presence.transcript_path,
-      });
+    try {
+      writePresence(
+        project,
+        presence
+          ? {
+              thread_id: id,
+              cwd: presence.cwd,
+              engine: engineFrom(presence),
+              transcript_path: presence.transcript_path,
+            }
+          : { thread_id: id, cwd: project, engine: engineOf(), transcript_path: input.transcript_path },
+      );
+    } catch (error) {
+      console.error(`head-context: ${error.message}`);
+    }
     // Given first, then removed from the inbox (threads.mjs take).
     const waiting = take(project, id);
     const lost = waiting.broken.length

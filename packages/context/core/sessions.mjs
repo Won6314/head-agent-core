@@ -14,7 +14,7 @@ import {
 } from './recovery.mjs';
 import { withGraph } from './graph.mjs';
 import { clock } from './map-view.mjs';
-import { branchPath, branchText, branchHeader, withStatus, withRecap } from './branch-format.mjs';
+import { branchPath, branchText, branchHeader, withStatus, withRecap, WORK_MONTH } from './branch-format.mjs';
 import { mergeArgs, isOpen, OPEN, CLOSED, ABANDONED } from './lifecycle.mjs';
 import { openTodos, addTodo, doneTodo, todoLine, today } from './todo.mjs';
 import {
@@ -532,6 +532,10 @@ export function sessions(
       if (!branch) throw new Error('작업 브랜치 이름(branch)이 필요합니다. 그 일을 나타내는 짧은 이름을 주세요.');
       validName(branch);
       if (MAIN.includes(branch)) throw new Error('main/메인은 메인의 예약 이름입니다.');
+      if (WORK_MONTH.test(branch))
+        throw new Error(
+          `'${branch}'는 작업 파일의 달 폴더(work/YYYY-MM) 꼴이라 작업 브랜치 이름으로 쓸 수 없습니다. 그 일을 나타내는 이름을 주세요.`,
+        );
       withGraph(project, (g) => {
         const bound = resolve(conversation_id, g),
           from = parent === undefined ? bound.stem : MAIN.includes(parent) ? 'main' : parent;

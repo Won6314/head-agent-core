@@ -50,7 +50,7 @@ test("work context: data only — the work session part, then open branches, to-
   const text = s.load({ conversation_id: 'seed' });
   assert.ok(
     text.startsWith(
-      '# 작업 세션: demo\nFLOW DIRECTION\n\n이 대화의 작업 브랜치: job\n\n## 열린 작업 브랜치 (1)\n- job (이 대화) · 마지막 ',
+      `# 작업 세션: demo\n작업 세션 폴더: ${fs.realpathSync(dir)}/.head/sessions/demo\n\nFLOW DIRECTION\n\n이 대화의 작업 브랜치: job\n\n## 열린 작업 브랜치 (1)\n- job (이 대화) · 마지막 `,
     ),
   );
   assert.match(
@@ -83,7 +83,10 @@ test('Claude start hook: each part is its own output; the work context over the 
   for (let i = 0; i < 5; i++)
     s.save({ summary: 'BIG-' + i, history: '긴 본문 '.repeat(800), next: '더', conversation_id: 'seed' });
   const big = start('seed', 'compact').parts;
-  assert.match(big.session, /^# 작업 세션: demo\nFLOW DIRECTION\n\n이 대화의 작업 브랜치: big$/);
+  assert.match(
+    big.session,
+    /^# 작업 세션: demo\n작업 세션 폴더: [^\n]+\/\.head\/sessions\/demo\n\nFLOW DIRECTION\n\n이 대화의 작업 브랜치: big$/,
+  );
   assert.ok(big.context.length <= 9000);
   assert.doesNotMatch(big.context, /load를 불러/);
   assert.match(big.context, /## 열린 작업 브랜치 \(1\)\n- big \(이 대화\) · 마지막 [^\n]+ · 다음: 더/);
@@ -137,14 +140,18 @@ test('the work context is cut down in order: fewer saves, then bodies to their f
   assert.match(s.load({ conversation_id: 'seed' }), /## 흐름 \(최신이 위\)\n(?:[^\n]*\n){30}그 앞/);
 });
 test('overview: a work session read without connecting — context.md whole, open branches, to-dos, the map, the newest saves of the whole session', () => {
-  const { s } = fixture();
+  const { dir, s } = fixture();
   s.branch({ action: 'create', branch: 'job', conversation_id: 'seed' });
   s.save({ summary: 'JOB-1', history: 'JOB-BODY-1', next: 'JOB-NEXT', conversation_id: 'seed' });
   s.save({ summary: 'JOB-2', history: 'JOB-BODY-2', next: 'JOB-NEXT-2', conversation_id: 'seed' });
   s.todo({ action: 'add', text: 'TODO-X', conversation_id: 'seed' });
   const out = s.inspect({ action: 'overview', name: 'demo', conversation_id: 'stranger' });
   assert.equal(s.connection('stranger'), null);
-  assert.ok(out.startsWith('# 작업 세션: demo\nFLOW DIRECTION\n\n## 열린 작업 브랜치 (1)\n- job · 마지막 '));
+  assert.ok(
+    out.startsWith(
+      `# 작업 세션: demo\n작업 세션 폴더: ${fs.realpathSync(dir)}/.head/sessions/demo\n\nFLOW DIRECTION\n\n## 열린 작업 브랜치 (1)\n- job · 마지막 `,
+    ),
+  );
   assert.match(out, /## 할 일 \(열린 1개\)\n- TODO-X/);
   assert.match(out, /## 흐름 \(최신이 위\)\n\| \* [0-9a-f]{5} [^\n]+ JOB-2 \(job\)\n/);
   assert.match(

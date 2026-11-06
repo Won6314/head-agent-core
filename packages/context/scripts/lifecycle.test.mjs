@@ -246,7 +246,7 @@ test('a fork or subagent (agent_id) may read but not write; the tool surface car
   const save = DEFINITIONS.find((t) => t.name === 'save').description;
   assert.match(
     INSTRUCTIONS,
-    /- 작업 파일: 작업 세션 폴더의 work\/YYYY-MM\/YYYY-MM-DD-<이름>\.md[^\n]+work\/<작업명>\/[^\n]+결과 파일 경로를 이 규칙대로 정해 줍니다\./,
+    /- 작업 파일: 작업 세션 폴더\([^\n]+\)의 work\/YYYY-MM\/YYYY-MM-DD-<이름>\.md[^\n]+work\/<작업명>\/[^\n]+결과 파일 경로를 이 규칙대로 정해 줍니다\./,
   );
   for (const rule of [
     '근거 파일 링크와 그 내용',
