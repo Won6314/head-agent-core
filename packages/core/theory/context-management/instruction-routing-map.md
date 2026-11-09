@@ -54,7 +54,7 @@ The Accepted Plan Baseline selects Results and checkpoint meaning. The Runner au
 
 | Instruction surface | Role | Selection condition |
 |---|---|---|
-| `packages/skills/start-job/SKILL.md` | Problem → goal → solution | Before proposing or making a solution |
+| `packages/context/skills/start-job/SKILL.md` | Problem → goal → solution | Before proposing or making a solution |
 | `packages/skills/plan-run/SKILL.md` | Route durable Plan production | Dependent Results, checkpoints, or recovery are needed |
 | `packages/procedures/plan-run/planning/` | Planner: preserve Problem Baseline, form Plan Draft and Result Graph, accept Plan Baseline, activate Runner | Current planning transition |
 | `packages/procedures/plan-run/results/` | Runner: select horizon, prepare Execution Contract, dispatch horizon | Selected Result or horizon operation |

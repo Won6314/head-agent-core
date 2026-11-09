@@ -54,7 +54,7 @@ Accepted Plan Baseline이 Result와 checkpoint 의미를 선택한다. Runner는
 
 | 지침 표면 | 역할 | 선택 조건 |
 |---|---|---|
-| `packages/skills/start-job/SKILL.md` | 문제 → 목표 → 해결 | 해결책을 내놓거나 만들기 전 |
+| `packages/context/skills/start-job/SKILL.md` | 문제 → 목표 → 해결 | 해결책을 내놓거나 만들기 전 |
 | `packages/skills/plan-run/SKILL.md` | durable Plan production 라우팅 | Dependent Result, checkpoint, recovery가 필요할 때 |
 | `packages/procedures/plan-run/planning/` | Planner: Problem Baseline 보존, Plan Draft/Result Graph 형성, Plan Baseline 승인, Runner 활성화 | 현재 planning 전환 |
 | `packages/procedures/plan-run/results/` | Runner: horizon 선택, Execution Contract 준비, horizon dispatch | 선택된 Result 또는 horizon 동작 |
