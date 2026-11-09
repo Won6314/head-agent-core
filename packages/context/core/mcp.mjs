@@ -2,6 +2,7 @@ import readline from 'node:readline';
 import { sessions, CONTEXT_REQUIRED } from './sessions.mjs';
 import { setupTool } from './project.mjs';
 import { takeNotices } from './storage.mjs';
+import { runtimeProblem } from './platform.mjs';
 export const INSTRUCTIONS = `일을 시작할 때는 먼저 start-job 스킬을 불러옵니다.
 
 작업 세션
@@ -267,6 +268,9 @@ export async function serve({
       send({ id, result: { tools: [...DEFINITIONS, ...tools.map((t) => t.definition)] } });
     else if (method === 'tools/call') {
       try {
+        // An older Node starts this server (so the host keeps it) and answers every call with the reason.
+        const problem = runtimeProblem();
+        if (problem) throw new Error(problem);
         const dir = projectOf ? projectOf(request) : project;
         if (!dir) throw new Error(unknownProject);
         const own = tools.find((t) => t.definition.name === params.name);

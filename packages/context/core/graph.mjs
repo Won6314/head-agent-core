@@ -1,25 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { createRequire } from 'node:module';
 import { locations, validName, noSymlink, readError } from './storage.mjs';
 import { locked } from './lock.mjs';
 import { parseHistory } from './history.mjs';
 import { branchHeader } from './branch-format.mjs';
 import { renderMap, shortIds, matchShort } from './map-view.mjs';
+import { sqlite } from './platform.mjs';
 
-// 24.11.1 emits only this warning at require time. Do not mute other warnings.
-const emit = process.emitWarning;
-let DatabaseSync;
-try {
-  process.emitWarning = function (warning, ...args) {
-    if (String(warning).startsWith('SQLite is an experimental feature')) return;
-    return emit.call(this, warning, ...args);
-  };
-  ({ DatabaseSync } = createRequire(import.meta.url)('node:sqlite'));
-} finally {
-  process.emitWarning = emit;
-}
+// node:sqlite is loaded on first use (platform.mjs): an older Node gets the reason, not a crash at import.
+const database = (file) => new (sqlite().DatabaseSync)(file, { timeout: 5000 });
 const VERSION = 3; // 3: a record points only at links and backtick paths
 export const stemId = (session, stem) => `stem:${encodeURIComponent(session)}/${encodeURIComponent(stem)}`;
 export const checkpointId = (session, stem, time, occurrence = 1) =>
@@ -101,7 +91,7 @@ export function withGraph(project, fn) {
   return locked(file, () => {
     let db;
     try {
-      db = new DatabaseSync(file, { timeout: 5000 });
+      db = database(file);
       db.exec('PRAGMA busy_timeout=5000;');
       db.prepare('PRAGMA user_version').get();
     } catch (e) {
@@ -112,7 +102,7 @@ export function withGraph(project, fn) {
       }
       if (!/not a database|malformed/i.test(e.message)) throw e;
       fs.unlinkSync(file);
-      db = new DatabaseSync(file, { timeout: 5000 });
+      db = database(file);
     }
     try {
       const shape = {
@@ -135,7 +125,7 @@ export function withGraph(project, fn) {
       ) {
         db.close();
         fs.unlinkSync(file);
-        db = new DatabaseSync(file, { timeout: 5000 });
+        db = database(file);
         db.exec('BEGIN IMMEDIATE');
         schema(db);
         db.exec('COMMIT');

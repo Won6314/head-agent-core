@@ -10,6 +10,7 @@ import { recentPart } from './recent.mjs';
 import { compactInstruction } from './compact.mjs';
 import { SUBAGENT_NOTICE } from '../../core/mcp.mjs';
 import { hookOutput } from '../../core/protocol.mjs';
+import { runtimeProblem } from '../../core/platform.mjs';
 import { guide, refreshCore, coreParts, migrateImport, claudeImports, CORE_MARK } from '../../core/project.mjs';
 
 // PreToolUse fills the host fields of the head-context tools: the conversation, and
@@ -65,6 +66,9 @@ try {
     out('SubagentStart', SUBAGENT_NOTICE);
   } else if (event === 'PreCompact') {
     process.stdout.write(compactInstruction());
+  } else if (event === 'SessionStart' && !input.agent_id && part !== 'core' && runtimeProblem()) {
+    // An older Node cannot read the work session: one line says why (the core still goes in).
+    if (part === 'session') out('SessionStart', runtimeProblem());
   } else if (event === 'SessionStart' && !input.agent_id) {
     const store = sessions(project, { host: 'claude', hostInfo });
     const quiet = source === 'resume' || source === 'fork'; // the conversation already holds its context

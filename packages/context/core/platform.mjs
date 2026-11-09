@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 
 // Every operating-system difference of the plugin is asked here; no other file reads
 // process.platform. What differs per app (a Claude inbox needing its auth line, the Mac
@@ -102,3 +103,38 @@ export const socketThere = (file) => {
     return false;
   } // not there
 };
+
+// The record index needs node:sqlite: Node 22.13 and later (22.5 to 22.12 only behind a flag).
+// It is loaded on first use, so an older Node still starts the tool server and the hooks, and
+// they say what is wrong instead of failing: Claude Code remembers a server that failed to
+// start and skips it in every new conversation of the account for a while.
+let sqliteModule = null;
+export function sqlite() {
+  if (!sqliteModule) {
+    // 24.11.1 emits only this warning at require time. Do not mute other warnings.
+    const emit = process.emitWarning;
+    try {
+      process.emitWarning = function (warning, ...args) {
+        if (String(warning).startsWith('SQLite is an experimental feature')) return;
+        return emit.call(this, warning, ...args);
+      };
+      sqliteModule = createRequire(import.meta.url)('node:sqlite');
+    } catch {
+      throw new Error(runtimeNeed());
+    } finally {
+      process.emitWarning = emit;
+    }
+  }
+  return sqliteModule;
+}
+const runtimeNeed = () =>
+  `head-context는 Node 22.13 이상이 필요합니다(지금 ${process.version}, ${process.execPath}). PATH에서 먼저 잡히는 node를 22.13 이상으로 바꾼 뒤 대화를 다시 여세요.`;
+// What keeps this Node from running the plugin, or null.
+export function runtimeProblem() {
+  try {
+    sqlite();
+    return null;
+  } catch (error) {
+    return error.message;
+  }
+}

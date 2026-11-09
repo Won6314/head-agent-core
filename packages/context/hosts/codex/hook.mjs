@@ -7,6 +7,7 @@ import { guide, refreshCore, coreParts } from '../../core/project.mjs';
 import { register } from './register.mjs';
 import { engineOf } from './mode.mjs';
 import { hookOutput } from '../../core/protocol.mjs';
+import { runtimeProblem } from '../../core/platform.mjs';
 import { writePresence, readPresence, engineFrom, take, asMessage } from './threads.mjs';
 
 // Codex hooks, one process per part like the Claude hook. Codex says which start it is
@@ -74,6 +75,14 @@ try {
     const given = [...waiting.messages.map(asMessage), ...lost, ...takeNotices()].join('\n\n');
     if (given) fs.writeSync(1, `${hookOutput('UserPromptSubmit', { additionalContext: given })}\n`);
     waiting.done();
+  } else if (
+    input.hook_event_name === 'SessionStart' &&
+    part !== 'core' &&
+    part !== 'instructions' &&
+    runtimeProblem()
+  ) {
+    // An older Node cannot read the work session: one line says why (the core and the guide still go in).
+    if (part === 'session') out(runtimeProblem());
   } else if (input.hook_event_name === 'SessionStart' && id && project) {
     const store = sessions(project, { host: 'codex' });
     const where = { conversation_id: id, session_name: process.env.HEAD_CONTEXT_SESSION, origins: [] };
