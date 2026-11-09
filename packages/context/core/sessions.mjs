@@ -1,6 +1,7 @@
 import { kindOf, kindKey } from './instruction.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { parseHistory } from './history.mjs';
 import {
   identity,
@@ -12,7 +13,7 @@ import {
   RECENT_COUNT,
   SUMMARY_LIMIT,
 } from './recovery.mjs';
-import { withGraph } from './graph.mjs';
+import { withGraph, resolveRef } from './graph.mjs';
 import { clock } from './map-view.mjs';
 import { branchPath, branchText, branchHeader, withStatus, withRecap, WORK_MONTH } from './branch-format.mjs';
 import { mergeArgs, isOpen, OPEN, CLOSED, ABANDONED } from './lifecycle.mjs';
@@ -66,6 +67,63 @@ export function fromBranch(text) {
     if (/^(?:[a-z][a-z0-9+.-]*:|\/|#|~)/i.test(target)) return m;
     return `${open}${space}../../${target.replace(/^\.\//, '')}`;
   });
+}
+// A path under the home folder as `~/…`, the one form a record's files are written in: it
+// reads the same from any folder and on any computer with the same home layout.
+function tilde(file) {
+  const rel = path.relative(os.homedir(), file);
+  return rel && !rel.startsWith('..') && !path.isAbsolute(rel) ? `~/${rel.split(path.sep).join('/')}` : file;
+}
+// The files a save refers to (its 참조파일 line): each resolved as the graph resolves a
+// record's paths (`~/`, absolute, then the record file's folder and the work session folder)
+// and written as a `~/` path. What does not resolve to a file is written as given and named
+// back, so the model can see which would not be followed.
+export function referenceFiles(files, dirs) {
+  if (files === undefined) return { files: [], missing: [], folders: [] };
+  if (!Array.isArray(files) || files.some((f) => typeof f !== 'string'))
+    throw new Error('files는 경로 문자열의 목록이어야 합니다.');
+  const written = [],
+    missing = [],
+    folders = [];
+  for (const raw of files) {
+    const value = raw
+      .trim()
+      .replace(/^`(.*)`$/, '$1')
+      .trim();
+    if (!value) continue;
+    if (/[`\r\n]/.test(value)) throw new Error('files의 경로에는 백틱이나 줄바꿈을 넣을 수 없습니다.');
+    const found = resolveRef(value, dirs);
+    let shown = found ? tilde(found) : value;
+    if (!found) {
+      const plain = value.startsWith('~/') ? path.join(os.homedir(), value.slice(2)) : value;
+      const folder = [...(path.isAbsolute(plain) ? [plain] : dirs.map((d) => path.resolve(d, plain)))].find((f) => {
+        try {
+          return fs.statSync(f).isDirectory();
+        } catch {
+          return false;
+        }
+      });
+      if (folder) {
+        shown = tilde(folder);
+        folders.push(shown);
+      } else {
+        if (path.isAbsolute(plain)) shown = tilde(plain);
+        missing.push(shown);
+      }
+    }
+    if (!written.includes(shown)) written.push(shown);
+  }
+  return { files: written, missing, folders };
+}
+// What the answer to a save says about files that will not be followed.
+function referenceNotice({ missing, folders }) {
+  return [
+    missing.length && `참조파일 중 찾지 못한 경로(적은 그대로 남김): ${missing.join(', ')}`,
+    folders.length && `참조파일 중 폴더(기록에서 파일 찾기에는 걸리지 않음): ${folders.join(', ')}`,
+  ]
+    .filter(Boolean)
+    .map((l) => `\n${l}`)
+    .join('');
 }
 // The last save a stem made itself: on main, not the index line a branch save leaves
 // there nor the entry a closing branch merges in.
@@ -249,7 +307,7 @@ export function sessions(
     withGraph(project, (g) => g.branches(session));
     return true;
   };
-  const save = ({ summary, history, next, recap, conversation_id }) => {
+  const save = ({ summary, history, next, recap, files, conversation_id }) => {
     if (typeof history !== 'string' || !history.trim()) throw new Error('history(본문)가 필요합니다.');
     const bound = withGraph(project, (g) => resolve(conversation_id, g)),
       dir = directory(bound.session);
@@ -257,33 +315,35 @@ export function sessions(
     if (bound.stem === 'main') {
       if (recap !== undefined && String(recap).trim())
         throw new Error('메인 기록에는 recap을 받지 않습니다. 정리는 작업 브랜치를 닫는 저장에만 씁니다.');
-      const main = path.join(dir, 'history.md');
-      locked(main, () => fs.appendFileSync(main, uniqueEntry(main, { summary, history, next })));
+      const main = path.join(dir, 'history.md'),
+        refs = referenceFiles(files, [dir]);
+      locked(main, () => fs.appendFileSync(main, uniqueEntry(main, { summary, history, next, files: refs.files })));
       withGraph(project, (g) => g.recent(bound.session, 'main', 1));
-      return `작업 세션 '${bound.session}' 메인에 기록했습니다.\n요약: ${summary}${next ? `\n다음: ${next}` : ''}`;
+      return `작업 세션 '${bound.session}' 메인에 기록했습니다.\n요약: ${summary}${next ? `\n다음: ${next}` : ''}${referenceNotice(refs)}`;
     }
     if (next && recap !== undefined && String(recap).trim()) throw new Error(RECAP_REFUSED);
     if (!next && (recap === undefined || !String(recap).trim())) throw new Error(RECAP_REQUIRED);
     const file = branchPath(dir, bound.stem),
       main = path.join(dir, 'history.md'),
-      record = `work/${bound.stem}/history.md`;
+      record = `work/${bound.stem}/history.md`,
+      refs = referenceFiles(files, [path.dirname(file), dir]);
     locked(file, () => {
       const text = optionalRead(file),
         header = branchHeader(text);
       if (!header) throw new Error('작업 브랜치 파일을 읽지 못했습니다.');
       const updated = next ? text : withRecap(text, recap);
       if (updated !== text) atomicText(file, updated);
-      fs.appendFileSync(file, uniqueEntry(file, { summary, history: fromBranch(history), next }));
+      fs.appendFileSync(file, uniqueEntry(file, { summary, history: fromBranch(history), next, files: refs.files }));
       locked(main, () =>
         fs.appendFileSync(main, uniqueEntry(main, { summary, index: { label: header.label || bound.stem, record } })),
       );
     });
     withGraph(project, (g) => g.recent(bound.session, bound.stem, 1));
     if (next)
-      return `작업 세션 '${bound.session}' 작업 브랜치 '${bound.stem}'에 기록했습니다.\n요약: ${summary}\n다음: ${next}`;
+      return `작업 세션 '${bound.session}' 작업 브랜치 '${bound.stem}'에 기록했습니다.\n요약: ${summary}\n다음: ${next}${referenceNotice(refs)}`;
     closeBranch(bound.session, bound.stem);
     bind(bound.session, 'main', conversation_id);
-    return `작업 세션 '${bound.session}' 작업 브랜치 '${bound.stem}'에 기록하고, 다음이 없어 작업 브랜치를 닫아 메인에 합쳤습니다.\n요약: ${summary}\n이 대화는 이제 메인에 기록합니다.`;
+    return `작업 세션 '${bound.session}' 작업 브랜치 '${bound.stem}'에 기록하고, 다음이 없어 작업 브랜치를 닫아 메인에 합쳤습니다.\n요약: ${summary}\n이 대화는 이제 메인에 기록합니다.${referenceNotice(refs)}`;
   };
   const abandon = ({ branch, reason, conversation_id }) => {
     line(reason, 'reason');
@@ -562,7 +622,9 @@ export function sessions(
               .find({
                 file,
                 query,
-                session: name || (!path.isAbsolute(file || '') ? previous?.session : undefined),
+                session:
+                  name ||
+                  (!path.isAbsolute(file || '') && !(file || '').startsWith('~/') ? previous?.session : undefined),
                 limit,
               })
               .map((e) => `${e.id} · ${e.summary}`)

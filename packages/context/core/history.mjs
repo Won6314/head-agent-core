@@ -30,7 +30,7 @@ export function parseHistory(text) {
       ?.slice(3)
       .trim();
     const fallback = lines
-      .filter((l) => !/^(다음:|상태:|기록:|브랜치:|이유:|이름표:)/.test(l))
+      .filter((l) => !/^(다음:|상태:|기록:|브랜치:|이유:|이름표:|참조파일:)/.test(l))
       .map(summaryLine)
       .find(Boolean);
     const summary =

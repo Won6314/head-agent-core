@@ -189,7 +189,8 @@ export function line(value, label) {
     throw new Error(`${label}는 비어 있지 않은 한 줄이어야 합니다.`);
   return value.trim();
 }
-// A checkpoint is time, summary, body and an optional next line. Only branch
+// A checkpoint is time, summary, an optional 참조파일 line (the files it refers to, as
+// backtick paths the graph follows), body and an optional next line. Only branch
 // close/abandon entries carry the tool-written marker lines (status/branch/record/reason)
 // that the graph turns into merge edges and the map shows as one higher-level event, and
 // only a main-line index entry carries the tool-written 이름표/본문 line.
@@ -202,6 +203,7 @@ export function entry({
   record,
   reason,
   index,
+  files = [],
   timestamp = new Date().toISOString(),
 }) {
   summary = line(summary, 'summary');
@@ -210,10 +212,11 @@ export function entry({
   next = typeof next === 'string' ? next.trim() : '';
   if (
     typeof history !== 'string' ||
-    /^##[ \t]+\d{4}-\d{2}-\d{2}|^(요약:|상태:|다음:|브랜치:|기록:|이유:|이름표:)/m.test(history)
+    /^##[ \t]+\d{4}-\d{2}-\d{2}|^(요약:|상태:|다음:|브랜치:|기록:|이유:|이름표:|참조파일:)/m.test(history)
   )
-    throw new Error('본문에 기록 제목 또는 예약 줄을 넣을 수 없습니다.');
+    throw new Error('본문에 기록 제목 또는 예약 줄을 넣을 수 없습니다. 참조파일은 files로 줍니다.');
   // The main line keeps one index line per save: the label and the file holding the body.
   const marker = `${status ? `상태: ${status}\n${branch ? `브랜치: ${validName(branch)}\n` : ''}${record ? `기록: ${record}\n` : ''}${reason ? `이유: ${line(reason, 'reason')}\n` : ''}` : ''}${index ? `이름표: ${line(index.label, 'label')} · 본문: ${index.record}\n` : ''}`;
-  return `\n\n## ${timestamp}\n\n요약: ${summary}\n${marker}\n${history.trim()}\n${next ? `\n다음: ${next}\n` : ''}\n`;
+  const refs = files.length ? `참조파일: ${files.map((f) => `\`${f}\``).join(', ')}\n` : '';
+  return `\n\n## ${timestamp}\n\n요약: ${summary}\n${marker}${refs}\n${history.trim()}\n${next ? `\n다음: ${next}\n` : ''}\n`;
 }

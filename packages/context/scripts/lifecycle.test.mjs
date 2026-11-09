@@ -246,14 +246,20 @@ test('a fork or subagent (agent_id) may read but not write; the tool surface car
   const save = DEFINITIONS.find((t) => t.name === 'save').description;
   assert.match(
     INSTRUCTIONS,
-    /- 작업 파일: 작업 세션 폴더\([^\n]+\)의 work\/YYYY-MM\/YYYY-MM-DD-<이름>\.md[^\n]+work\/<작업명>\/[^\n]+결과 파일 경로를 이 규칙대로 정해 줍니다\./,
+    /- 작업 파일: 작업 내용을 파일로 남길 때는 작업 세션 폴더\([^\n]+\)의 work\/YYYY-MM\/YYYY-MM-DD-<이름>\.md[^\n]+work\/<작업명>\/[^\n]+결과 파일 경로를 이 규칙대로 정해 줍니다\./,
   );
+  // 0.9.7: what a record is for and its fields; what to keep is the saver's judgment.
+  assert.match(INSTRUCTIONS, /다음에 이 일을 이어 갈 대화가 이 기록을 읽고/);
+  assert.match(INSTRUCTIONS, /- 참조파일: [^\n]+save의 files[^\n]+`~\/`로 시작하는 전체 경로/);
   for (const rule of [
-    '근거 파일 링크와 그 내용',
-    'work\\/YYYY-MM\\/YYYY-MM-DD-<이름>\\.md',
-    '먼저 파일로 남기고 링크',
-    '실행 증거\\(ID·명령·로그\\)는 넣지 않습니다',
-    '같은 경계의 일은 모아 한 번에',
+    '다음에 이 일을 이어 갈 대화가 이 기록을 읽습니다',
+    'files는 이 기록이 기대는 파일',
+    '`~/`로 시작하는 전체 경로',
   ])
-    assert.match(save, new RegExp(rule));
+    assert.ok(save.includes(rule), rule);
+  for (const text of [save, INSTRUCTIONS])
+    for (const gone of ['넣지 않습니다', '먼저 파일로 남기', '근거 파일 링크', '파일에 빠진 내용'])
+      assert.ok(!text.includes(gone), gone);
+  const files = DEFINITIONS.find((t) => t.name === 'save').inputSchema.properties.files;
+  assert.deepEqual([files.type, files.items.type], ['array', 'string']);
 });

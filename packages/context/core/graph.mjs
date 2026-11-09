@@ -27,7 +27,7 @@ export const checkpointId = (session, stem, time, occurrence = 1) =>
 // One path as written in a record or a file, to an existing file: a link target or a
 // backtick path, without its title, anchor or trailing punctuation; URLs are not files;
 // `~/` is the home folder; a relative path is tried against each folder in turn.
-function resolveRef(value, dirs) {
+export function resolveRef(value, dirs) {
   value = value
     .replace(/^<|>$/g, '')
     .replace(/\s+["'].*$/, '')
@@ -403,6 +403,8 @@ class Graph {
     if (!Number.isInteger(limit) || limit < 0) throw new Error('limit는 0 이상의 정수입니다.');
     let rows;
     if (file) {
+      // `~/` is the home folder here too: records write their files that way.
+      if (file.startsWith('~/')) file = path.join(os.homedir(), file.slice(2));
       const target = path.resolve(session ? path.join(this.topics, session) : this.topics, file);
       if (!fs.existsSync(target)) return [];
       rows = this.db

@@ -13,9 +13,10 @@ export const INSTRUCTIONS = `일을 시작할 때는 먼저 start-job 스킬을 
 - 언제: 작업에 착수할 때 엽니다. 불러온 작업 맥락에 이어 갈 작업 브랜치가 있으면 골라 이어 갑니다.
 
 저장
-- 무엇: 작업 브랜치에 남기는 기록 한 번입니다. 작업 요약, 근거 파일 링크, 파일에 빠진 내용을 씁니다.
+- 무엇: 작업 브랜치에 남기는 기록 한 번입니다. 다음에 이 일을 이어 갈 대화가 이 기록을 읽고, 무엇을 했고 무엇이 정해졌는지 압니다. 무엇을 남길지는 그 대화에 무엇이 필요할지로 정합니다.
 - 언제: 결과나 결정이 생기면 남깁니다. 이어 갈 일이 있으면 다음을 적고, 끝났으면 다음 없이 정리를 줍니다. 그 저장으로 작업 브랜치가 닫힙니다.
-- 작업 파일: 작업 세션 폴더(작업 맥락 맨 위 '작업 세션 폴더' 줄)의 work/YYYY-MM/YYYY-MM-DD-<이름>.md에 둡니다(여러 개면 같은 이름 폴더). 커진 작업은 work/<작업명>/으로 옮기고 그 파일을 가리키던 기록의 링크도 고칩니다. work/<작업 브랜치 이름>/ 폴더는 플러그인이 그 작업 브랜치의 기록(history.md)을 쓰는 폴더이므로, 작업 파일은 거기에 두지 않고 작업명도 작업 브랜치 이름과 겹치지 않게 짓습니다. 포크·에이전트에 맡길 때는 결과 파일 경로를 이 규칙대로 정해 줍니다.
+- 참조파일: 기록이 기대는 파일은 save의 files에 줍니다. 다음 대화는 이 파일을 기록에서 찾아갑니다. 파일 경로는 기록 어디에서나 \`~/\`로 시작하는 전체 경로로 적습니다.
+- 작업 파일: 작업 내용을 파일로 남길 때는 작업 세션 폴더(작업 맥락 맨 위 '작업 세션 폴더' 줄)의 work/YYYY-MM/YYYY-MM-DD-<이름>.md에 둡니다(여러 개면 같은 이름 폴더). 커진 작업은 work/<작업명>/으로 옮기고 그 파일을 가리키던 기록의 경로도 고칩니다. work/<작업 브랜치 이름>/ 폴더는 플러그인이 그 작업 브랜치의 기록(history.md)을 쓰는 폴더라서, 작업 파일은 그 폴더 밖에 두고 작업명도 작업 브랜치 이름과 다르게 짓습니다. 포크·에이전트에 맡길 때는 결과 파일 경로를 이 규칙대로 정해 줍니다.
 
 할 일
 - 무엇: 작업 세션에 남는 나중에 할 일입니다. 작업 브랜치가 닫혀도 남습니다.
@@ -40,7 +41,7 @@ export const APP_INSTRUCTIONS = {
 // host without one, e.g. OpenCode).
 export const instructionsFor = (host) =>
   APP_INSTRUCTIONS[host] ? `${INSTRUCTIONS}\n\n${APP_INSTRUCTIONS[host]}` : INSTRUCTIONS;
-export const VERSION = '0.9.6';
+export const VERSION = '0.9.7';
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
 const missing = { create: { context: CONTEXT_REQUIRED } };
@@ -86,7 +87,7 @@ export const DEFINITIONS = [
   ],
   [
     'save',
-    '이 대화가 일하는 작업 브랜치(없으면 메인)에 기록 하나를 남깁니다. summary는 한 줄 요약, history는 본문, next는 이어 갈 일이 있을 때만 한 줄. 본문은 작업 요약, 근거 파일 링크와 그 내용, 파일에 빠진 내용입니다. 파일은 [이름](경로)나 백틱 경로(`경로`)로 적습니다. 그렇게 적은 것만 read의 find·files에 나옵니다. 상대 경로는 작업 세션 폴더 기준입니다(작업 브랜치에서 저장해도 같습니다. 플러그인이 작업 브랜치 기록 폴더에 맞게 고쳐 씁니다). 작업 내용이 아직 파일에 없으면 먼저 파일로 남기고 링크합니다(작업 세션 폴더의 work/YYYY-MM/YYYY-MM-DD-<이름>.md, 여러 개면 같은 이름 폴더, 커진 작업은 work/<작업명>/으로 옮기고 가리키던 기록 링크도 고침. work/<작업 브랜치 이름>/은 플러그인의 기록 폴더라 쓰지 않음). 사용자 원문, 진행 경과, 실행 증거(ID·명령·로그)는 넣지 않습니다. 저장할 때마다 최근 기록이 밀려나므로 잘게 나눠 저장하지 말고, 같은 경계의 일은 모아 한 번에 저장합니다. 작업 브랜치에서 next 없이 저장하면 recap(그 작업 브랜치에서 한 일 전체 정리)이 필수이고, 그 저장으로 작업 브랜치가 닫혀 메인에 합쳐집니다. next와 recap은 함께 줄 수 없습니다.',
+    '이 대화가 일하는 작업 브랜치(없으면 메인)에 기록 하나를 남깁니다. 다음에 이 일을 이어 갈 대화가 이 기록을 읽습니다. summary는 한 줄 요약으로, 흐름 지도에는 이 줄만 나옵니다. history는 본문입니다. next는 이어 갈 일이 있을 때만 한 줄로 줍니다. files는 이 기록이 기대는 파일의 목록이고, `~/`로 시작하는 전체 경로로 줍니다. 플러그인이 기록에 참조파일 줄로 쓰고, 홈 아래 절대경로나 작업 세션 폴더 기준 경로는 `~/` 경로로 바꿔 씁니다. 찾지 못한 경로는 적은 그대로 남기고 답에서 알려 줍니다. 본문에 파일을 적을 때도 `~/` 전체 경로를 링크([이름](경로))나 백틱(`경로`)으로 적습니다. read의 find·files는 참조파일과 이렇게 적은 파일을 따라갑니다. 작업 맥락에는 지금 작업 브랜치의 최근 기록 3개가 본문까지 나오고, 그보다 오래된 기록은 흐름 지도에 요약 한 줄로만 나옵니다. 작업 브랜치에서 next 없이 저장하면 recap(그 작업 브랜치에서 한 일 전체 정리)이 필수이고, 그 저장으로 작업 브랜치가 닫혀 메인에 합쳐집니다. next와 recap은 함께 줄 수 없습니다.',
     {
       summary: string,
       history: string,
@@ -94,6 +95,11 @@ export const DEFINITIONS = [
       recap: {
         type: 'string',
         description: '작업 브랜치를 닫는 저장(next 없음)에만. 그 작업 브랜치에서 한 일 전체 정리.',
+      },
+      files: {
+        type: 'array',
+        items: string,
+        description: '이 기록이 기대는 파일. `~/`로 시작하는 전체 경로. 없으면 생략.',
       },
     },
     ['summary', 'history'],
@@ -186,7 +192,9 @@ export function callTool(store, name, args, conversation_id, project, readOnly =
         ? typeof value !== 'string'
         : schema.type === 'boolean'
           ? typeof value !== 'boolean'
-          : !Number.isInteger(value)) ||
+          : schema.type === 'array'
+            ? !Array.isArray(value) || value.some((v) => typeof v !== 'string')
+            : !Number.isInteger(value)) ||
       (schema.enum && !schema.enum.includes(value)) ||
       (schema.minimum !== undefined && value < schema.minimum)
     )
