@@ -127,8 +127,9 @@ export function sqlite() {
   }
   return sqliteModule;
 }
+// Said as what is missing (node:sqlite), not only a version: 23.0 to 23.3 are past 22.13 and still lack it.
 const runtimeNeed = () =>
-  `head-context는 Node 22.13 이상이 필요합니다(지금 ${process.version}, ${process.execPath}). PATH에서 먼저 잡히는 node를 22.13 이상으로 바꾼 뒤 대화를 다시 여세요.`;
+  `head-context는 node:sqlite를 쓸 수 있는 Node(22.13 이상)가 필요합니다. 지금 node(${process.version}, ${process.execPath})는 node:sqlite를 불러오지 못합니다. PATH에서 먼저 잡히는 node를 바꾼 뒤 대화를 다시 여세요.`;
 // What keeps this Node from running the plugin, or null.
 export function runtimeProblem() {
   try {

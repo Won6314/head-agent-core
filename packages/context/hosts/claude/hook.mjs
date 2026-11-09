@@ -65,9 +65,12 @@ try {
     // A task inside this conversation (a fork or a subagent): one notice, nothing else.
     out('SubagentStart', SUBAGENT_NOTICE);
   } else if (event === 'PreCompact') {
-    process.stdout.write(compactInstruction());
-  } else if (event === 'SessionStart' && !input.agent_id && part !== 'core' && runtimeProblem()) {
-    // An older Node cannot read the work session: one line says why (the core still goes in).
+    // The one-line summary leans on the work context put back after the compact; an older Node
+    // cannot read it, so the host keeps its own summary there (the recent exchanges still come back).
+    if (!runtimeProblem()) process.stdout.write(compactInstruction());
+  } else if (event === 'SessionStart' && !input.agent_id && part !== 'core' && part !== 'recent' && runtimeProblem()) {
+    // An older Node cannot read the work session: one line says why. The core and the recent
+    // exchanges need no node:sqlite and still go in.
     if (part === 'session') out('SessionStart', runtimeProblem());
   } else if (event === 'SessionStart' && !input.agent_id) {
     const store = sessions(project, { host: 'claude', hostInfo });
