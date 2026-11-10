@@ -226,10 +226,10 @@ test('a fork or subagent (agent_id) may read but not write; the tool surface car
   ])
     assert.ok(skill.includes(step), step);
   const core = fs.readFileSync(new URL('../instructions/HEAD_CORE.md', import.meta.url), 'utf8');
-  assert.match(core, /load the `start-job` skill first/);
+  assert.match(core, /\n## How context works\n[\s\S]+\n## How HEAD works\n/);
+  assert.doesNotMatch(core, /start-job/); // the server instructions alone say when to load it
   assert.doesNotMatch(core, /durable Run/);
   assert.doesNotMatch(core, /\[forked\]|graph-selected/);
-  assert.match(core, /the canon it names, and the records and files it names/);
   assert.doesNotMatch(skill, /기본 포크와 같지만|확인하고 저장한다/);
   assert.match(skill, /\| 사이드 포크 \(데스크톱\) \| 사용자가 따로 이어서 대화하며 진행할 일 \|/);
   assert.match(skill, /- 포크·에이전트의 결과는 받은 쪽이 확인한다\.\n/);

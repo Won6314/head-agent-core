@@ -29,6 +29,12 @@ const claudeCore = (dir, { id = 'c1', source = 'startup', order = [1, 2] } = {})
     );
   return [got[1], got[2]];
 };
+// The parts put back together: the first without its tag, the later ones without their heading.
+const joinCore = (...parts) =>
+  parts
+    .map((t, i) => (i ? t.replace(/^# HEAD Core \(계속 \d+\/\d+\)\n\n/, '') : t.replace(/\n\n\(HEAD Core 1\/\d+[^\n]*\)$/, '')))
+    .filter(Boolean)
+    .join('\n\n');
 // Another test file may lay a survey procedure down for a moment; the guide line may follow.
 const UNCONNECTED_FIRST = /^이 대화는 아직 작업 세션에 연결되지 않았습니다\.(\n\n# 프로젝트 조사[\s\S]*)?$/;
 const codexScript = path.resolve('scripts/codex-hook.mjs');
@@ -51,18 +57,15 @@ const codex = (dir, part, { id = 't1', source = 'startup', data, env = {} } = {}
 const codexStart = (dir, opts) =>
   Object.fromEntries(['core', 'instructions', 'session', 'context'].map((p) => [p, codex(dir, p, opts)]));
 
-test('Claude: the core comes from the start hook after setup, in two named parts under the cap; not on resume or fork', () => {
+test('Claude: the core comes from the start hook after setup, whole across the named parts, each under the cap; not on resume or fork', () => {
   const dir = fresh();
   assert.deepEqual(claudeCore(dir), ['', '']);
   setup(dir);
   for (const source of ['startup', 'clear', 'compact']) {
     const [a, b] = claudeCore(dir, { source, id: `s-${source}` });
     assert.ok(a.startsWith('# HEAD Core'));
-    assert.match(b, /^# HEAD Core \(계속 2\/2\)/);
     assert.ok(a.length <= 9000 && b.length <= 9000);
-    const whole =
-      a.replace(/\n\n\(HEAD Core 1\/2[^\n]*\)$/, '') + '\n\n' + b.replace(/^# HEAD Core \(계속 2\/2\)\n\n/, '');
-    assert.equal(whole, core);
+    assert.equal(joinCore(a, b), core);
   }
   for (const source of ['resume', 'fork']) assert.deepEqual(claudeCore(dir, { source, id: `q-${source}` }), ['', '']);
   assert.deepEqual(coreParts(dir, 1), [core]);
@@ -76,10 +79,10 @@ test('Claude: a 0.7 project loses its CLAUDE.md import on the next start, which 
     setup(dir);
     fs.writeFileSync(path.join(dir, 'CLAUDE.md'), '# Mine\n\nkeep this\n\n@.head/core.md\n');
     const [a, b] = claudeCore(dir, { id: 'old', order });
-    assert.ok(a && b);
+    assert.equal(joinCore(a, b), core);
     assert.equal(fs.readFileSync(path.join(dir, 'CLAUDE.md'), 'utf8'), '# Mine\n\nkeep this\n\n');
     const [c, d] = claudeCore(dir, { id: 'new' });
-    assert.ok(c && d);
+    assert.equal(joinCore(c, d), core);
   }
   const only = fresh();
   setup(only);
@@ -105,7 +108,7 @@ test('Claude resume: a conversation whose records carry no core from the hook (b
     );
   assert.deepEqual(run(held), ['', '']);
   const [a, b] = run(old);
-  assert.ok(a.startsWith('# HEAD Core') && b.startsWith('# HEAD Core (계속'));
+  assert.equal(joinCore(a, b), core);
   assert.deepEqual(run(old, 'fork'), ['', '']);
 });
 test('Codex start: core whole, the server instructions, the work session and context; resume and fork add nothing', () => {

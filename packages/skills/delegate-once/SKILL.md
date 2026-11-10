@@ -10,8 +10,7 @@ Use this workflow only after HEAD has directly established and retained the whol
 
 ## One Kind of Work per Delegation
 
-- Never bundle investigation, design, implementation, and review into a sequence for one worker.
-- Instructions such as "investigate, then fix it" or "find the problem and resolve it yourself" are prohibited.
+- Give each worker one kind of work: investigation, design, implementation, or review.
 - If investigation is needed, delegate only investigation and have the findings returned.
 - HEAD reviews the findings, decides what to change and how, then delegates implementation separately.
 - If the assigned work requires a new decision, the worker returns the findings and decision needed to HEAD instead of proceeding to the next stage.
@@ -36,9 +35,9 @@ Local source inspection begins only inside this bounded result. Parent understan
    - **Context fork:** It is yourself with the source context. State only a clear goal; do not restate the background it already holds. `context_run` adds the `[forked]` marker automatically. This is a task to perform, not text to comment on. Do not fork `current` to review work you just produced. The Entry Contract is what HEAD must know, not a checklist to repeat in the prompt.
    - **Fresh worker:** Supply the context it lacks: required output, authoritative inputs, locked decisions, consumer, acceptance, mutation and preservation boundaries, and representative proof. Exact readable authority references may carry source content; HEAD's private context is not inherited.
 2. For a fresh specialist worker, load only its selected branch. For `developer`, read [developer.md](../../procedures/delegate-once/workers/developer.md). For `coder`, read [coder.md](../../procedures/plan-run/workers/coder.md) and supply its task-specific `context.md` specification.
-3. Express any boundaries that need communicating as behavior and state to preserve. Name a prohibited alternative only when it is a plausible material action; pair it with the behavior to perform instead.
+3. Write the brief as the behavior to perform, the criteria, and the result to return. Keep settled decisions explicit and leave open choices open. Prohibitions belong in review criteria, not in the brief.
 4. Dispatch only the decided task and require its result to be returned. Do not give the worker authority to choose and proceed to another kind of work.
 
 ## Return And Reintegration
 
-The worker returns the assigned result, direct evidence, and any decision needed or contract conflict. HEAD reintegrates it into the whole-outcome context, judges completion, and decides any next task before a separate delegation.
+The worker returns the assigned result packaged for HEAD's decision: the outcome, anything that could change that decision such as constraints, exceptions, and uncertainty, where the evidence is, and any decision needed or contract conflict. HEAD reintegrates it into the whole-outcome context, judges completion, and decides any next task before a separate delegation.

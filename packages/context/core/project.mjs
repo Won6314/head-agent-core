@@ -140,7 +140,7 @@ export function refreshCore(project) {
 }
 // The core as the start hook gives it, after setup only (setup is where the user agrees to
 // it). One hook output is cut at about 10,000 characters on Claude Code, so a core over the
-// budget is given in `count` parts, split before a numbered instruction near the middle; each
+// budget is given in `count` parts, split before a bold-headed paragraph or a section heading near the middle; each
 // later part names itself, because the host does not keep the outputs in a fixed order.
 // The tag the first core part carries when given in parts; a conversation's records holding
 // it got the core from the start hook.
@@ -150,7 +150,7 @@ export function coreParts(project, count = 1, budget = Infinity) {
   const body = fs.readFileSync(CORE_SOURCE, 'utf8').trimEnd();
   if (count <= 1) return [body];
   if (body.length <= budget - 40) return [`${body}\n\n${CORE_MARK}1)`];
-  const starts = [...body.matchAll(/\n(?=\d+\. \*\*)/g)].map((m) => m.index + 1),
+  const starts = [...body.matchAll(/\n(?=\*\*|## |\d+\. \*\*)/g)].map((m) => m.index + 1),
     parts = [];
   let from = 0;
   for (let i = 1; i < count; i++) {
