@@ -12,6 +12,8 @@ import { sqlite } from './platform.mjs';
 // node:sqlite is loaded on first use (platform.mjs): an older Node gets the reason, not a crash at import.
 const database = (file) => new (sqlite().DatabaseSync)(file, { timeout: 5000 });
 const VERSION = 4; // Rebuildable raw-text cache, separate from the v3 index.
+const NODE_FIELDS = 'id,kind,session,stem,stamp,file,hash,seq';
+const JOIN_NODE_FIELDS = NODE_FIELDS.split(',').map((field) => 'n.' + field).join(',');
 export const stemId = (session, stem) => `stem:${encodeURIComponent(session)}/${encodeURIComponent(stem)}`;
 export const checkpointId = (session, stem, time, occurrence = 1) =>
   `${encodeURIComponent(session)}/${encodeURIComponent(stem)}@${time}${occurrence > 1 ? '#' + occurrence : ''}`;
@@ -180,7 +182,8 @@ class Graph {
     this.db.prepare('INSERT OR IGNORE INTO edges VALUES(?,?,?)').run(src, dst, kind);
   }
   read(row) {
-    return row ? row.body : null;
+    if (!row) return null;
+    return Object.hasOwn(row, 'body') ? row.body : this.db.prepare('SELECT body FROM nodes WHERE id=?').get(row.id).body;
   }
   detail(row) {
     const e = parseHistory(this.read(row))[0];
@@ -188,12 +191,12 @@ class Graph {
     return { ...e, id: row.id, stem: row.stem, file: row.file };
   }
   header(session, stem) {
-    const row = this.db.prepare('SELECT * FROM nodes WHERE id=?').get(stemId(session, stem));
+    const row = this.db.prepare(`SELECT ${NODE_FIELDS} FROM nodes WHERE id=?`).get(stemId(session, stem));
     return row?.kind === 'branch' ? branchHeader(this.read(row)) : null;
   }
   session(name) {
     validName(name);
-    const row = this.db.prepare("SELECT * FROM nodes WHERE id=? AND kind='session'").get(stemId(name, 'main'));
+    const row = this.db.prepare(`SELECT ${NODE_FIELDS} FROM nodes WHERE id=? AND kind='session'`).get(stemId(name, 'main'));
     if (!row) throw new Error(`세션 '${name}'이 없습니다.`);
     return { name, context: this.read(row), file: row.file };
   }
@@ -205,13 +208,13 @@ class Graph {
   }
   branches(session) {
     return this.db
-      .prepare("SELECT * FROM nodes WHERE kind='branch' AND session=? ORDER BY stem")
+      .prepare(`SELECT ${NODE_FIELDS} FROM nodes WHERE kind='branch' AND session=? ORDER BY stem`)
       .all(session)
       .map((row) => ({ name: row.stem, ...this.header(session, row.stem) }));
   }
   own(session, stem) {
     return this.db
-      .prepare("SELECT * FROM nodes WHERE kind='checkpoint' AND session=? AND stem=? ORDER BY seq")
+      .prepare(`SELECT ${NODE_FIELDS} FROM nodes WHERE kind='checkpoint' AND session=? AND stem=? ORDER BY seq`)
       .all(session, stem);
   }
   lineage(session, stem = 'main', seen = new Set()) {
@@ -221,14 +224,14 @@ class Graph {
     seen.add(key);
     const parent = this.db
       .prepare(
-        "SELECT n.* FROM edges e JOIN nodes n ON n.id=e.src WHERE e.dst=? AND e.kind='fork' AND n.kind IN ('branch','session')",
+        `SELECT ${JOIN_NODE_FIELDS} FROM edges e JOIN nodes n ON n.id=e.src WHERE e.dst=? AND e.kind='fork' AND n.kind IN ('branch','session')`,
       )
       .get(key);
     if (!parent) throw new Error(`브랜치 부모를 찾지 못했습니다: ${stem}`);
     const prior = this.lineage(session, parent.stem, seen);
     const anchor = this.db
       .prepare(
-        "SELECT n.* FROM edges e JOIN nodes n ON n.id=e.src WHERE e.dst=? AND e.kind='fork' AND n.kind='checkpoint'",
+        `SELECT ${JOIN_NODE_FIELDS} FROM edges e JOIN nodes n ON n.id=e.src WHERE e.dst=? AND e.kind='fork' AND n.kind='checkpoint'`,
       )
       .get(key);
     const inherited = anchor ? prior.slice(0, prior.findIndex((r) => r.id === anchor.id) + 1) : [];
@@ -240,14 +243,14 @@ class Graph {
     return (count === 0 ? rows : rows.slice(-count)).map((row) => this.detail(row));
   }
   item(id) {
-    const row = this.db.prepare("SELECT * FROM nodes WHERE id=? AND kind='checkpoint'").get(id);
+    const row = this.db.prepare(`SELECT ${NODE_FIELDS} FROM nodes WHERE id=? AND kind='checkpoint'`).get(id);
     if (!row) throw new Error('체크포인트 식별자가 없습니다.');
     return this.detail(row);
   }
   // Every checkpoint of a session in time order, whichever line it is on.
   checkpoints(session) {
     return this.db
-      .prepare("SELECT * FROM nodes WHERE kind='checkpoint' AND session=?")
+      .prepare(`SELECT ${NODE_FIELDS} FROM nodes WHERE kind='checkpoint' AND session=?`)
       .all(session)
       .sort(
         (a, b) =>
@@ -404,10 +407,10 @@ class Graph {
       if (!fs.existsSync(target)) return [];
       rows = this.db
         .prepare(
-          "SELECT n.* FROM edges e JOIN nodes n ON n.id=e.src WHERE e.dst=? AND e.kind='points' ORDER BY n.stamp DESC,n.session,n.stem,n.seq DESC",
+          `SELECT ${JOIN_NODE_FIELDS} FROM edges e JOIN nodes n ON n.id=e.src WHERE e.dst=? AND e.kind='points' ORDER BY n.stamp DESC,n.session,n.stem,n.seq DESC`,
         )
         .all('file:' + target);
-    } else rows = this.db.prepare("SELECT * FROM nodes WHERE kind='checkpoint' ORDER BY stamp DESC,session,stem,seq DESC").all();
+    } else rows = this.db.prepare(`SELECT ${NODE_FIELDS} FROM nodes WHERE kind='checkpoint' ORDER BY stamp DESC,session,stem,seq DESC`).all();
     if (session) rows = rows.filter((r) => r.session === session);
     const results = rows
       .map((r) => this.detail(r))

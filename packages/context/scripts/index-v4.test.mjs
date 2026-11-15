@@ -92,9 +92,11 @@ test('v4 diff: duplicate occurrence shifts, seq changes, exact body/hash and unc
     assert.deepEqual(g.own('A', 'main').map((r) => r.seq), [0, 1]);
     fs.writeFileSync(file, rec('CRLF').replaceAll('\n', '\r\n') + '이어쓰기🙂'); g.sync();
     const row = g.own('A', 'main')[0];
-    assert.ok(row.body.includes('\r\n'));
-    assert.ok(row.body.endsWith('이어쓰기🙂'));
-    assert.equal(row.hash, createHash('sha256').update(row.body).digest('hex'));
+    assert.equal(Object.hasOwn(row, 'body'), false);
+    const body = g.read(row);
+    assert.ok(body.includes('\r\n'));
+    assert.ok(body.endsWith('이어쓰기🙂'));
+    assert.equal(row.hash, createHash('sha256').update(body).digest('hex'));
     assert.deepEqual(capture(g, 'B'), b);
   });
   assert.deepEqual(withGraphRead(project, (g) => g.reindexed), []);
@@ -111,6 +113,24 @@ test('v4 raw reads need no md access after sync; header recap, context and detai
     assert.equal(row.body, text.slice(0, branchHeader(text).end));
     assert.equal(row.hash, createHash('sha256').update(row.body).digest('hex'));
     const before = { session: g.session('A'), header: g.header('A', 'branch'), find: g.find({ query: '본문' }) };
+    const prepare = g.db.prepare.bind(g.db), queries = [];
+    g.db.prepare = (sql) => { queries.push(sql); return prepare(sql); };
+    try {
+      g.branches('A'); g.own('A', 'main'); g.lineage('A', 'branch');
+      g.checkpoints('A'); g.item(before.find[0].id);
+      g.header('A', 'branch'); g.session('A');
+      g.find({ query: '본문' });
+      g.find({ file: path.join(base, 'context.md'), query: '본문' });
+      assert.ok(queries.some((sql) => sql === 'SELECT body FROM nodes WHERE id=?'));
+      for (const sql of queries.filter((sql) => /\bFROM (nodes|edges)\b/.test(sql) && /JOIN nodes|FROM nodes/.test(sql))) {
+        assert.ok(!sql.includes('*'), sql);
+        if (sql !== 'SELECT body FROM nodes WHERE id=?') assert.doesNotMatch(sql, /\bbody\b/);
+      }
+      const count = queries.length;
+      assert.equal(g.read(row), row.body);
+      assert.equal(g.read({ body: '' }), '');
+      assert.equal(queries.length, count); // a supplied raw body needs no SELECT
+    } finally { g.db.prepare = prepare; }
     const read = fs.readFileSync, open = fs.openSync;
     fs.readFileSync = fs.openSync = () => { throw new Error('md access forbidden'); };
     try {
