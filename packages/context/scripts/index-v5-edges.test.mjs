@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { withGraph, checkpointId } from '../core/graph.mjs';
+import { withGraph, checkpointId, stemId } from '../core/graph.mjs';
 import { branchText } from '../core/branch-format.mjs';
 import { entry } from '../core/storage.mjs';
 
@@ -19,8 +19,11 @@ const capture = (g) => ({
   nodes: g.db.prepare('SELECT * FROM nodes ORDER BY id').all(),
   edges: g.db.prepare('SELECT * FROM edges ORDER BY src,dst,kind').all(),
 });
+// Orphan file nodes remain by policy. Consistency compares all edges and all
+// non-file nodes (including their raw bodies), not the retained file-node cache.
+const comparable = ({ nodes, edges }) => ({ nodes: nodes.filter((n) => n.kind !== 'file'), edges });
 
-test('v5 edges: each incremental edit equals a fresh index, including full raw nodes', async (t) => {
+test('v5 edges: each incremental edit equals a fresh index (all edges and non-file nodes including bodies)', async (t) => {
   const project = fs.mkdtempSync(path.join(process.env.HEAD_CONTEXT_TEST_ROOT || process.env.HOME, 'edges-'));
   const base = path.join(project, '.head/sessions/A');
   fs.mkdirSync(base, { recursive: true });
@@ -50,7 +53,7 @@ test('v5 edges: each incremental edit equals a fresh index, including full raw n
       );
       fs.unlinkSync(path.join(project, '.head/index-v5.sqlite'));
       const fresh = withGraph(project, capture);
-      assert.deepEqual(incremental, fresh);
+      assert.deepEqual(comparable(incremental), comparable(fresh));
       for (const file of oldFiles) assert.equal(fs.readFileSync(file, 'utf8'), 'older index sentinel');
       console.log(JSON.stringify({ edit: name, nodes: fresh.nodes.length, edges: fresh.edges.length, equal: true }));
     });
@@ -130,6 +133,75 @@ test('v5 edges: each incremental edit equals a fresh index, including full raw n
     write(b, header('B', 'C', '2026-01-09') + rec(7));
     write(c, header('C', 'B', '2026-01-07') + rec(9));
   });
+});
+
+test('v5 cumulative edits: all edges and non-file nodes equal one final rebuild, keeping orphan file nodes by policy', () => {
+  const project = fs.mkdtempSync(path.join(process.env.HEAD_CONTEXT_TEST_ROOT || process.env.HOME, 'cumulative-'));
+  const base = path.join(project, '.head/sessions/A');
+  const main = path.join(base, 'history.md');
+  const b = path.join(base, 'work/B/history.md'),
+    c = path.join(base, 'work/C/history.md');
+  const x = '2026-01-01';
+  const write = (file, text) => {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, text);
+  };
+  const bHeader = (anchor = x) =>
+    branchText({
+      name: 'B',
+      label: 'B',
+      session: 'A',
+      parent: 'main',
+      anchor,
+      anchorId: anchor ? checkpointId('A', 'main', anchor) : '',
+      started: '2026-01-01T00:00:00.000Z',
+    });
+  const cHeader = branchText({
+    name: 'C',
+    label: 'C',
+    session: 'A',
+    parent: 'B',
+    anchor: x,
+    started: '2026-01-01T00:00:00.000Z',
+  }).replace(/^갈래-ID:.*\n/m, '');
+  write(path.join(base, 'context.md'), 'direction');
+  write(main, rec(1, { summary: 'main X' }));
+  const ownX = rec(1, { summary: 'B own X' });
+  write(b, bHeader() + ownX);
+  write(c, cHeader + rec(2));
+  const sync = (file) =>
+    withGraph(
+      project,
+      (g) => {
+        assert.deepEqual(g.errors, []);
+        return capture(g);
+      },
+      file ? [file] : [],
+    );
+  const anchorOfC = (snapshot) =>
+    snapshot.edges.find((e) => e.kind === 'fork' && e.dst === stemId('A', 'C') && e.src.includes('@'))?.src;
+  assert.equal(anchorOfC(sync()), checkpointId('A', 'B', x));
+  // Keep the same index through all four edits: no intermediate rebuild.
+  write(b, bHeader());
+  assert.equal(anchorOfC(sync(b)), checkpointId('A', 'main', x));
+  write(b, bHeader() + ownX);
+  assert.equal(anchorOfC(sync(b)), checkpointId('A', 'B', x));
+  write(b, bHeader(null) + ownX);
+  sync(b);
+  fs.appendFileSync(c, rec(3));
+  const incremental = sync(c);
+  fs.unlinkSync(path.join(project, '.head/index-v5.sqlite'));
+  const fresh = withGraph(project, capture);
+  assert.deepEqual(comparable(incremental), comparable(fresh));
+  console.log(
+    JSON.stringify({
+      cumulativeEdits: 4,
+      rebuilds: 1,
+      nodes: comparable(fresh).nodes.length,
+      edges: fresh.edges.length,
+      equal: true,
+    }),
+  );
 });
 
 test('v5 append: one node and one next pair, no reread of the main line', () => {

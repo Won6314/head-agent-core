@@ -245,13 +245,15 @@ class Graph {
       .all(session)
       .map((row) => ({ name: row.stem, ...this.header(session, row.stem) }));
   }
-  own(session, stem) {
+  own(session, stem, candidates) {
+    const key = `${session}/${stem}`;
+    if (candidates?.has(key)) return candidates.get(key);
     return this.db
       .prepare(`SELECT ${NODE_FIELDS} FROM nodes WHERE kind='checkpoint' AND session=? AND stem=? ORDER BY seq`)
       .all(session, stem);
   }
-  lineage(session, stem = 'main', seen = new Set()) {
-    if (stem === 'main') return this.own(session, stem);
+  lineage(session, stem = 'main', seen = new Set(), candidates) {
+    if (stem === 'main') return this.own(session, stem, candidates);
     const key = stemId(session, stem);
     if (seen.has(key)) throw new Error('브랜치 갈래에 순환이 있습니다.');
     seen.add(key);
@@ -261,14 +263,14 @@ class Graph {
       )
       .get(key);
     if (!parent) throw new Error(`브랜치 부모를 찾지 못했습니다: ${stem}`);
-    const prior = this.lineage(session, parent.stem, seen);
+    const prior = this.lineage(session, parent.stem, seen, candidates);
     const anchor = this.db
       .prepare(
         `SELECT ${JOIN_NODE_FIELDS} FROM edges e JOIN nodes n ON n.id=e.src WHERE e.dst=? AND e.kind='fork' AND n.kind='checkpoint'`,
       )
       .get(key);
     const inherited = anchor ? prior.slice(0, prior.findIndex((r) => r.id === anchor.id) + 1) : [];
-    return [...inherited, ...this.own(session, stem)];
+    return [...inherited, ...this.own(session, stem, candidates)];
   }
   recent(session, stem = 'main', count = 5) {
     if (!Number.isInteger(count) || count < 0) throw new Error('count는 0 이상의 정수입니다.');
@@ -696,38 +698,36 @@ class Graph {
         this.db.prepare("DELETE FROM edges WHERE dst=? AND kind='fork'").run(stemId(name, b.name));
       }
       // Reuse this call's candidates rather than re-reading the changed line's rows.
-      const own = this.own;
-      this.own = (session, stem) =>
-        files.find((d) => session === name && d.source.stem === stem && d.source.kind !== 'session')?.after ??
-        own.call(this, session, stem);
-      try {
-        let progress = true;
-        while (pending.length && progress) {
-          progress = false;
-          for (let i = pending.length - 1; i >= 0; i--) {
-            const b = pending[i];
-            if (pending.some((x) => x.name === b.parent)) continue;
-            try {
-              const parentRows = b.parent === 'main' ? this.own(name, 'main') : this.lineage(name, b.parent);
-              const anchor = b.anchor
-                ? parentRows.findLast((r) => (b.anchor_id ? r.id === b.anchor_id : r.stamp === b.anchor))
-                : null;
-              if (b.anchor && !anchor) throw new Error(`갈래 체크포인트 없음: ${b.name} ← ${b.parent}@${b.anchor}`);
-              this.edge(stemId(name, b.parent), stemId(name, b.name), 'fork');
-              if (anchor) this.edge(anchor.id, stemId(name, b.name), 'fork');
-              const first = this.own(name, b.name)[0];
-              if (anchor && first) this.edge(anchor.id, first.id, 'next');
-            } catch (error) {
-              this.errors.push({ name, error: readError(error) });
-            }
-            pending.splice(i, 1);
-            progress = true;
+      const candidates = new Map(
+        files.filter((d) => d.source.kind !== 'session').map((d) => [`${d.source.session}/${d.source.stem}`, d.after]),
+      );
+      let progress = true;
+      while (pending.length && progress) {
+        progress = false;
+        for (let i = pending.length - 1; i >= 0; i--) {
+          const b = pending[i];
+          if (pending.some((x) => x.name === b.parent)) continue;
+          try {
+            const parentRows =
+              b.parent === 'main'
+                ? this.own(name, 'main', candidates)
+                : this.lineage(name, b.parent, new Set(), candidates);
+            const anchor = b.anchor
+              ? parentRows.findLast((r) => (b.anchor_id ? r.id === b.anchor_id : r.stamp === b.anchor))
+              : null;
+            if (b.anchor && !anchor) throw new Error(`갈래 체크포인트 없음: ${b.name} ← ${b.parent}@${b.anchor}`);
+            this.edge(stemId(name, b.parent), stemId(name, b.name), 'fork');
+            if (anchor) this.edge(anchor.id, stemId(name, b.name), 'fork');
+            const first = this.own(name, b.name, candidates)[0];
+            if (anchor && first) this.edge(anchor.id, first.id, 'next');
+          } catch (error) {
+            this.errors.push({ name, error: readError(error) });
           }
+          pending.splice(i, 1);
+          progress = true;
         }
-        if (pending.length) this.errors.push({ name, error: '브랜치 부모 순환 또는 부모 누락' });
-      } finally {
-        this.own = own;
       }
+      if (pending.length) this.errors.push({ name, error: '브랜치 부모 순환 또는 부모 누락' });
     }
   }
   merges(diffs) {

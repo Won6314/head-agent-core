@@ -60,7 +60,7 @@ const fixture = () => {
 
 for (const branch of ['', 'shared'])
   test(
-    `v4 processes: 4x8 ${branch ? 'branch+main' : 'main'} writers, four IPC readers, fixed timestamps and cross-host visibility`,
+    `v5 processes: 4x8 ${branch ? 'branch+main' : 'main'} writers, four IPC readers, fixed timestamps and cross-host visibility`,
     { timeout: 60000 },
     async (t) => {
       const { project, api } = fixture();
@@ -103,7 +103,7 @@ for (const branch of ['', 'shared'])
   );
 
 test(
-  'v4 process barriers: late refresh cannot delete a later commit; killed md-only writer is recovered on read',
+  'v5 process barriers: late refresh cannot delete a later commit; killed md-only writer is recovered on read',
   { timeout: 30000 },
   async (t) => {
     for (const kill of [false, true]) {
@@ -132,7 +132,7 @@ test(
   },
 );
 
-test('v4 branch create and save run without index/history nesting or deadlock', { timeout: 30000 }, async () => {
+test('v5 branch create and save run without index/history nesting or deadlock', { timeout: 30000 }, async () => {
   const { project } = fixture();
   await Promise.all([child(project, 'create', 31).done, child(project, 'writer', 30).done]);
   assert.equal(
@@ -141,7 +141,7 @@ test('v4 branch create and save run without index/history nesting or deadlock', 
   );
 });
 
-test('v4 concurrency evidence: latency differs from actual mkdir wait/hold; all graph reads acquire lock', () => {
+test('v5 concurrency evidence: latency differs from actual mkdir wait/hold; all graph reads acquire lock', () => {
   const stats = (values) => {
     const a = values.sort((a, b) => a - b);
     return {

@@ -545,7 +545,7 @@ test('v4 D1: schema rebuilds and corruption restore md; v3 sentinel is untouched
   assert.equal(fs.readFileSync(sentinel, 'utf8'), 'v3 sentinel');
   assert.equal(fs.statSync(sentinel).mtimeMs, stat.mtimeMs);
   if (process.env.HC_INDEX_OLD_CORE) {
-    // The old process owns its v3 DB; it may rebuild the sentinel, never the v4 file.
+    // The old process owns its v3 DB; it may rebuild the sentinel, never the v5 file.
     const bytes = fs.readFileSync(file),
       st = fs.statSync(file);
     const r = spawnSync(
