@@ -185,7 +185,7 @@ class Graph {
       status: row.kind === 'checkpoint' ? row.status || '' : '',
     };
     if (!old) this.db.prepare('INSERT INTO nodes VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(...Object.values(next));
-    else if (Object.keys(next).some((key) => next[key] !== old[key]))
+    else if (Object.keys(next).some((key) => key !== 'body' && next[key] !== old[key]))
       this.db
         .prepare(
           'UPDATE nodes SET kind=?,session=?,stem=?,stamp=?,file=?,body=?,hash=?,seq=?,branch=?,record=?,status=? WHERE id=?',
@@ -575,7 +575,13 @@ class Graph {
     return candidates;
   }
   applyFileDiff(source, candidates) {
-    const prior = this.db.prepare("SELECT * FROM nodes WHERE file=? AND kind<>'file'").all(source.file);
+    const diff = this.diffNodes(source, candidates);
+    this.nextPairs(diff.before, diff.after);
+    this.points(source, diff.pointChanges);
+    return diff;
+  }
+  diffNodes(source, candidates) {
+    const prior = this.db.prepare(`SELECT ${NODE_FIELDS} FROM nodes WHERE file=? AND kind<>'file'`).all(source.file);
     const before = prior.filter((r) => r.kind === 'checkpoint').sort((a, b) => a.seq - b.seq);
     const after = candidates.filter((r) => r.kind === 'checkpoint');
     const ids = new Set(candidates.map((r) => r.id));
@@ -588,17 +594,18 @@ class Graph {
       ...before.filter((r) => !afterById.has(r.id) || afterById.get(r.id).seq !== r.seq),
       ...after.filter((r) => !byId.has(r.id) || byId.get(r.id).seq !== r.seq),
     ];
-    const changed = [];
+    const changed = [],
+      pointChanges = [];
+    let newHeader;
     for (const row of candidates) {
-      const next = this.node(row, byId.get(row.id) || null);
-      if (next?.kind === 'checkpoint') changed.push(next);
-    }
-    this.nextPairs(before, after);
-    for (const row of after) {
-      this.db.prepare("DELETE FROM edges WHERE src=? AND kind='points'").run(row.id);
-      for (const file of references(row.body, [...new Set([path.dirname(source.file), source.dir])])) {
-        this.node({ id: 'file:' + file, kind: 'file', session: '', stem: '', file, body: '' });
-        this.edge(row.id, 'file:' + file, 'points');
+      const old = byId.get(row.id) || null;
+      const next = this.node(row, old);
+      if (row.kind === 'branch') newHeader = next || old;
+      if (next?.kind === 'checkpoint') {
+        changed.push(next);
+        // A seq-only move updates ordering, not the record's references.
+        if (!old || Object.keys(next).some((key) => key !== 'body' && key !== 'seq' && next[key] !== old[key]))
+          pointChanges.push(next);
       }
     }
     return {
@@ -607,9 +614,19 @@ class Graph {
       after,
       moved,
       changed,
+      pointChanges,
       oldHeader: prior.find((r) => r.kind === 'branch'),
-      newHeader: candidates.find((r) => r.kind === 'branch'),
+      newHeader,
     };
+  }
+  points(source, changed) {
+    for (const row of changed) {
+      this.db.prepare("DELETE FROM edges WHERE src=? AND kind='points'").run(row.id);
+      for (const file of references(row.body, [...new Set([path.dirname(source.file), source.dir])])) {
+        this.node({ id: 'file:' + file, kind: 'file', session: '', stem: '', file, body: '' });
+        this.edge(row.id, 'file:' + file, 'points');
+      }
+    }
   }
   nextPairs(before, after) {
     const pairs = (rows) =>
@@ -632,7 +649,7 @@ class Graph {
         byName = new Map(branches.map((b) => [b.name, b]));
       const selected = new Set();
       for (const d of files) {
-        if (d.oldHeader?.body !== d.newHeader?.body || (d.source.stem !== 'main' && d.before[0]?.id !== d.after[0]?.id))
+        if (d.oldHeader?.hash !== d.newHeader?.hash || (d.source.stem !== 'main' && d.before[0]?.id !== d.after[0]?.id))
           selected.add(d.source.stem);
         const ids = new Set(d.moved.map((r) => r.id)),
           stamps = new Set(d.moved.map((r) => r.stamp));

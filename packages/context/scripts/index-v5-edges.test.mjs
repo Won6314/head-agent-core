@@ -165,7 +165,10 @@ test('v5 append: one node and one next pair, no reread of the main line', () => 
     assert.equal(writes.length, 2);
     assert.match(writes[0].sql, /^INSERT INTO nodes/);
     assert.equal(writes[1].args[2], 'next');
-    assert.equal(queries.filter((sql) => sql === "SELECT * FROM nodes WHERE file=? AND kind<>'file'").length, 1);
+    const priorQueries = queries.filter((sql) => sql.includes("FROM nodes WHERE file=? AND kind<>'file'"));
+    assert.deepEqual(priorQueries, [
+      "SELECT id,kind,session,stem,stamp,file,hash,seq,branch,record,status FROM nodes WHERE file=? AND kind<>'file'",
+    ]);
     assert.ok(!queries.some((sql) => /SELECT.*FROM nodes WHERE.*stem=/.test(sql)));
     assert.equal(g.db.prepare('PRAGMA user_version').get().user_version, 5);
     assert.ok(
@@ -175,4 +178,80 @@ test('v5 append: one node and one next pair, no reread of the main line', () => 
         .some((r) => r.name === 'nodes_branch'),
     );
   });
+});
+
+test('v5 points: seq-only moves leave references untouched; body edits use hash and resolve only that record', () => {
+  const project = fs.mkdtempSync(path.join(process.env.HEAD_CONTEXT_TEST_ROOT || process.env.HOME, 'points-diff-'));
+  const base = path.join(project, '.head/sessions/A');
+  fs.mkdirSync(base, { recursive: true });
+  fs.writeFileSync(path.join(base, 'context.md'), 'direction');
+  const file = path.join(base, 'history.md'),
+    target = path.join(base, 'target.md');
+  fs.writeFileSync(target, 'target');
+  const first = rec(1, { history: '[target](target.md)' }),
+    second = rec(2);
+  fs.writeFileSync(file, first + second);
+  withGraph(project, (g) => {
+    const original = g.points,
+      batches = [];
+    g.points = function (source, rows) {
+      batches.push(rows.map((r) => r.id));
+      return original.call(this, source, rows);
+    };
+    const id = checkpointId('A', 'main', '2026-01-01');
+    const before = g.db.prepare('SELECT * FROM nodes WHERE id=?').get(id);
+    try {
+      fs.writeFileSync(file, second + first);
+      g.sync(new Set([file]));
+      assert.deepEqual(batches.pop(), []);
+      const moved = g.db.prepare('SELECT * FROM nodes WHERE id=?').get(id);
+      assert.equal(moved.seq, 1);
+      assert.equal(moved.hash, before.hash);
+      assert.equal(moved.body, before.body);
+      fs.writeFileSync(file, second + rec(1, { history: 'edited body without reference' }));
+      g.sync(new Set([file]));
+      assert.deepEqual(batches.pop(), [id]);
+      const edited = g.db.prepare('SELECT * FROM nodes WHERE id=?').get(id);
+      assert.notEqual(edited.hash, before.hash);
+      assert.match(edited.body, /edited body without reference/);
+      assert.equal(g.db.prepare("SELECT count(*) n FROM edges WHERE src=? AND kind='points'").get(id).n, 0);
+    } finally {
+      g.points = original;
+    }
+  });
+});
+
+test('v5 points: unchanged record with appearing/disappearing target explicitly differs from a fresh index', () => {
+  const project = fs.mkdtempSync(path.join(process.env.HEAD_CONTEXT_TEST_ROOT || process.env.HOME, 'points-target-'));
+  const base = path.join(project, '.head/sessions/A');
+  fs.mkdirSync(base, { recursive: true });
+  fs.writeFileSync(path.join(base, 'context.md'), 'direction');
+  const file = path.join(base, 'history.md'),
+    target = path.join(base, 'target.md');
+  const first = rec(1, { history: '[target](target.md)' });
+  fs.writeFileSync(file, first);
+  withGraph(project, () => {});
+  const rebuild = () => {
+    fs.unlinkSync(path.join(project, '.head/index-v5.sqlite'));
+    return withGraph(project, capture);
+  };
+  const points = (snapshot) => snapshot.edges.filter((e) => e.kind === 'points').map((e) => ({ ...e }));
+  const records = (snapshot) => snapshot.nodes.filter((n) => n.kind !== 'file');
+  const expected = [{ src: checkpointId('A', 'main', '2026-01-01'), dst: 'file:' + target, kind: 'points' }];
+  fs.writeFileSync(target, 'target');
+  fs.appendFileSync(file, rec(2));
+  const appeared = withGraph(project, capture, [file]),
+    freshAppeared = rebuild();
+  assert.deepEqual(points(appeared), []);
+  assert.deepEqual(points(freshAppeared), expected);
+  assert.deepEqual(records(appeared), records(freshAppeared));
+  fs.unlinkSync(target);
+  fs.appendFileSync(file, rec(3));
+  const disappeared = withGraph(project, capture, [file]),
+    freshDisappeared = rebuild();
+  assert.deepEqual(points(disappeared), expected);
+  assert.deepEqual(points(freshDisappeared), []);
+  assert.deepEqual(records(disappeared), records(freshDisappeared));
+  assert.equal(disappeared.nodes.filter((n) => n.kind === 'file').length, 1); // existing orphan policy
+  assert.equal(freshDisappeared.nodes.filter((n) => n.kind === 'file').length, 0);
 });

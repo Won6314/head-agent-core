@@ -234,7 +234,7 @@ test('v4 relationships: empty first/removed checkpoint, nested forks, anchor_id 
   });
 });
 
-test('v4 external edits: marker/context deletion and restoration, moves, artifacts and points re-resolution', () => {
+test('external edits: marker/context deletion and restoration, moves, artifacts; only changed records re-resolve points', () => {
   const { project, file, base } = fixture();
   fs.writeFileSync(file, rec('refs', stamp, '[new](new.md) `back.md`'));
   withGraph(project, (g) => {
@@ -251,9 +251,15 @@ test('v4 external edits: marker/context deletion and restoration, moves, artifac
     );
     fs.appendFileSync(file, rec('more', '2026-01-02'));
     g.sync();
+    assert.doesNotMatch(g.files('A', { id: checkpointId('A', 'main', stamp) }), /- new.md/);
+    fs.writeFileSync(file, rec('refs edited', stamp, '[new](new.md) `back.md`') + rec('more', '2026-01-02'));
+    g.sync();
     assert.match(g.files('A', { id: checkpointId('A', 'main', stamp) }), /- new.md\n- back.md/);
     fs.unlinkSync(path.join(base, 'new.md'));
     fs.appendFileSync(file, '\n');
+    g.sync();
+    assert.match(g.files('A', { id: checkpointId('A', 'main', stamp) }), /- new.md/);
+    fs.writeFileSync(file, rec('refs edited again', stamp, '[new](new.md) `back.md`') + rec('more', '2026-01-02'));
     g.sync();
     assert.doesNotMatch(g.files('A', { id: checkpointId('A', 'main', stamp) }), /- new.md/);
     assert.ok(g.db.prepare('SELECT * FROM nodes WHERE id=?').get('file:' + path.join(base, 'new.md'))); // no orphan cleanup
