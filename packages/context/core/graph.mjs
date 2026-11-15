@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { createHash } from 'node:crypto';
 import { locations, validName, noSymlink, readError } from './storage.mjs';
 import { locked } from './lock.mjs';
 import { parseHistory } from './history.mjs';
@@ -10,7 +11,7 @@ import { sqlite } from './platform.mjs';
 
 // node:sqlite is loaded on first use (platform.mjs): an older Node gets the reason, not a crash at import.
 const database = (file) => new (sqlite().DatabaseSync)(file, { timeout: 5000 });
-const VERSION = 3; // 3: a record points only at links and backtick paths
+const VERSION = 4; // Rebuildable raw-text cache, separate from the v3 index.
 export const stemId = (session, stem) => `stem:${encodeURIComponent(session)}/${encodeURIComponent(stem)}`;
 export const checkpointId = (session, stem, time, occurrence = 1) =>
   `${encodeURIComponent(session)}/${encodeURIComponent(stem)}@${time}${occurrence > 1 ? '#' + occurrence : ''}`;
@@ -75,17 +76,18 @@ function schema(db) {
     'DROP TABLE IF EXISTS edges; DROP TABLE IF EXISTS nodes; DROP TABLE IF EXISTS files; DROP TABLE IF EXISTS links; DROP TABLE IF EXISTS linkfiles;',
   );
   db.exec(`CREATE TABLE files(path TEXT PRIMARY KEY,mtime REAL NOT NULL,size INTEGER NOT NULL);
-    CREATE TABLE nodes(id TEXT PRIMARY KEY,kind TEXT NOT NULL,session TEXT NOT NULL,stem TEXT NOT NULL,stamp TEXT NOT NULL,file TEXT NOT NULL,start INTEGER NOT NULL,end INTEGER NOT NULL,seq INTEGER NOT NULL);
+    CREATE TABLE nodes(id TEXT PRIMARY KEY,kind TEXT NOT NULL,session TEXT NOT NULL,stem TEXT NOT NULL,stamp TEXT NOT NULL,file TEXT NOT NULL,body TEXT NOT NULL,hash TEXT NOT NULL,seq INTEGER NOT NULL);
     CREATE INDEX nodes_stem ON nodes(session,stem,kind,seq);
     CREATE TABLE edges(src TEXT NOT NULL,dst TEXT NOT NULL,kind TEXT NOT NULL,PRIMARY KEY(src,dst,kind));
     CREATE INDEX edges_destination ON edges(dst,kind);
     CREATE TABLE linkfiles(path TEXT PRIMARY KEY,mtime REAL NOT NULL,size INTEGER NOT NULL);
     CREATE TABLE links(src TEXT NOT NULL,dst TEXT NOT NULL,PRIMARY KEY(src,dst)); PRAGMA user_version=${VERSION};`);
 }
-export function withGraph(project, fn) {
+export function withGraph(project, fn, changedFiles = []) {
   const { root, topics, timezone } = locations(project);
   fs.mkdirSync(root, { recursive: true });
-  const file = noSymlink(path.join(root, 'index.sqlite'));
+  const file = noSymlink(path.join(root, 'index-v4.sqlite'));
+  const forced = new Set([...changedFiles].map((f) => noSymlink(f)));
   // Gate schema rebuild and corrupted-file replacement as well as normal operations.
   // History locks are never held by a graph read; writers release them before indexing.
   return locked(file, () => {
@@ -107,7 +109,7 @@ export function withGraph(project, fn) {
     try {
       const shape = {
         files: 'path,mtime,size',
-        nodes: 'id,kind,session,stem,stamp,file,start,end,seq',
+        nodes: 'id,kind,session,stem,stamp,file,body,hash,seq',
         edges: 'src,dst,kind',
         linkfiles: 'path,mtime,size',
         links: 'src,dst',
@@ -132,7 +134,7 @@ export function withGraph(project, fn) {
       }
       db.exec('BEGIN IMMEDIATE');
       const g = new Graph(db, topics, timezone);
-      g.sync();
+      g.sync(forced);
       const result = fn(g);
       db.exec('COMMIT');
       return result;
@@ -148,6 +150,11 @@ export function withGraph(project, fn) {
     }
   });
 }
+// All readers currently use the same mkdir lock and IMMEDIATE transaction as writers.
+// Keep the call boundary explicit without introducing WAL or unlocked connections.
+export function withGraphRead(project, fn) {
+  return withGraph(project, fn);
+}
 class Graph {
   constructor(db, topics, timezone) {
     this.db = db;
@@ -157,25 +164,23 @@ class Graph {
     this.reindexed = [];
     this.short = new Map();
   }
-  node(row) {
-    this.db
-      .prepare('INSERT OR REPLACE INTO nodes VALUES(?,?,?,?,?,?,?,?,?)')
-      .run(row.id, row.kind, row.session, row.stem, row.stamp || '', row.file, row.start, row.end, row.seq || 0);
+  node(row, old = this.db.prepare('SELECT * FROM nodes WHERE id=?').get(row.id)) {
+    const next = {
+      id: row.id, kind: row.kind, session: row.session, stem: row.stem,
+      stamp: row.stamp || '', file: row.file, body: row.body ?? '',
+      hash: row.kind === 'file' ? '' : createHash('sha256').update(row.body).digest('hex'),
+      seq: row.seq || 0,
+    };
+    if (!old) this.db.prepare('INSERT INTO nodes VALUES(?,?,?,?,?,?,?,?,?)').run(...Object.values(next));
+    else if (Object.keys(next).some((key) => next[key] !== old[key]))
+      this.db.prepare('UPDATE nodes SET kind=?,session=?,stem=?,stamp=?,file=?,body=?,hash=?,seq=? WHERE id=?')
+        .run(next.kind, next.session, next.stem, next.stamp, next.file, next.body, next.hash, next.seq, next.id);
   }
   edge(src, dst, kind) {
     this.db.prepare('INSERT OR IGNORE INTO edges VALUES(?,?,?)').run(src, dst, kind);
   }
   read(row) {
-    if (!row) return null;
-    const file = noSymlink(row.file),
-      fd = fs.openSync(file, 'r'),
-      data = Buffer.alloc(row.end - row.start);
-    try {
-      fs.readSync(fd, data, 0, data.length, row.start);
-    } finally {
-      fs.closeSync(fd);
-    }
-    return data.toString('utf8');
+    return row ? row.body : null;
   }
   detail(row) {
     const e = parseHistory(this.read(row))[0];
@@ -399,17 +404,17 @@ class Graph {
       if (!fs.existsSync(target)) return [];
       rows = this.db
         .prepare(
-          "SELECT n.* FROM edges e JOIN nodes n ON n.id=e.src WHERE e.dst=? AND e.kind='points' ORDER BY n.stamp DESC",
+          "SELECT n.* FROM edges e JOIN nodes n ON n.id=e.src WHERE e.dst=? AND e.kind='points' ORDER BY n.stamp DESC,n.session,n.stem,n.seq DESC",
         )
         .all('file:' + target);
-    } else rows = this.db.prepare("SELECT * FROM nodes WHERE kind='checkpoint' ORDER BY stamp DESC").all();
+    } else rows = this.db.prepare("SELECT * FROM nodes WHERE kind='checkpoint' ORDER BY stamp DESC,session,stem,seq DESC").all();
     if (session) rows = rows.filter((r) => r.session === session);
     const results = rows
       .map((r) => this.detail(r))
       .filter((e) => !query || e.body.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
     return limit === 0 ? results : results.slice(0, limit);
   }
-  sync() {
+  sync(forced = new Set()) {
     const sources = [];
     if (fs.existsSync(this.topics))
       for (const e of fs.readdirSync(this.topics, { withFileTypes: true })) {
@@ -430,21 +435,40 @@ class Graph {
               if (fs.existsSync(file)) sources.push({ file, session: e.name, stem: b.name, kind: 'branch', dir });
             }
         } catch (error) {
+          const dir = path.join(this.topics, e.name);
+          if ([...forced].some((file) => {
+            const relative = path.relative(dir, file);
+            return relative && !relative.startsWith('..' + path.sep) && relative !== '..' && !path.isAbsolute(relative);
+          })) throw error;
           this.errors.push({ name: e.name, error: readError(error) });
         }
       }
     const paths = new Set(sources.map((s) => s.file));
-    let changed = false;
+    const affected = new Map();
     for (const old of this.db.prepare('SELECT path FROM files').all())
       if (!paths.has(old.path)) {
-        this.remove(old.path);
-        changed = true;
+        this.db.exec('SAVEPOINT file_sync');
+        try {
+          const names = this.db.prepare("SELECT DISTINCT session FROM nodes WHERE file=? AND kind<>'file'").all(old.path);
+          const previous = names.map(({ session }) => [session, this.db.prepare('SELECT id FROM nodes WHERE session=?').all(session).map((r) => r.id)]);
+          this.remove(old.path);
+          this.db.exec('RELEASE file_sync');
+          for (const [name, ids] of previous) if (!affected.has(name)) affected.set(name, ids);
+        } catch (error) {
+          this.db.exec('ROLLBACK TO file_sync; RELEASE file_sync');
+          if (forced.has(old.path)) throw error;
+          this.errors.push({ file: old.path, error: readError(error) });
+        }
       }
     for (const source of sources) {
+      this.db.exec('SAVEPOINT file_sync');
       try {
         const stat = fs.statSync(source.file),
           old = this.db.prepare('SELECT * FROM files WHERE path=?').get(source.file);
-        if (old && old.mtime === stat.mtimeMs && old.size === stat.size) continue;
+        if (!forced.has(source.file) && old && old.mtime === stat.mtimeMs && old.size === stat.size) {
+          this.db.exec('RELEASE file_sync');
+          continue;
+        }
         let text, stable;
         for (let i = 0; i < 4; i++) {
           const before = fs.statSync(source.file);
@@ -456,51 +480,57 @@ class Graph {
           }
         }
         if (!stable) throw new Error('기록이 계속 바뀌어 안정된 색인 위치를 얻지 못했습니다.');
-        this.remove(source.file);
-        changed = true;
-        this.reindexed.push(source.file);
+        const candidates = [];
         if (source.kind === 'session')
-          this.node({ id: stemId(source.session, 'main'), kind: 'session', ...source, start: 0, end: stable.size });
+          candidates.push({ ...source, id: stemId(source.session, 'main'), kind: 'session', body: text });
         else {
           const header = source.kind === 'branch' ? branchHeader(text) : null;
-          if (source.kind === 'branch' && !header) {
-            this.db.prepare('INSERT OR REPLACE INTO files VALUES(?,?,?)').run(source.file, stable.mtimeMs, stable.size);
-            continue;
-          } // Existing work artifacts are not branches.
           if (header)
-            this.node({
+            candidates.push({
               id: stemId(source.session, source.stem),
-              kind: 'branch',
               ...source,
-              start: 0,
-              end: Buffer.byteLength(text.slice(0, header.end)),
+              kind: 'branch',
+              body: text.slice(0, header.end),
             });
           const counts = new Map();
-          for (const [seq, e] of parseHistory(text).entries()) {
+          for (const [seq, e] of (source.kind === 'branch' && !header ? [] : parseHistory(text)).entries()) {
             const occurrence = (counts.get(e.timestamp) || 0) + 1;
             counts.set(e.timestamp, occurrence);
             const id = checkpointId(source.session, source.stem, e.timestamp, occurrence);
-            this.node({ ...source, id, kind: 'checkpoint', stamp: e.timestamp, start: e.start, end: e.end, seq });
-            for (const file of references(e.body, [...new Set([path.dirname(source.file), source.dir])])) {
-              this.node({
-                id: 'file:' + file,
-                kind: 'file',
-                session: '',
-                stem: '',
-                file,
-                start: 0,
-                end: fs.statSync(file).size,
-              });
-              this.edge(id, 'file:' + file, 'points');
-            }
+            candidates.push({ ...source, id, kind: 'checkpoint', stamp: e.timestamp, body: e.body, seq });
+          }
+        }
+        const prior = this.db.prepare("SELECT * FROM nodes WHERE file=? AND kind<>'file'").all(source.file);
+        // Capture the whole affected session before deleting any of its IDs.
+        const names = new Set([source.session, ...prior.map((r) => r.session)]);
+        const previous = new Map([...names].map((name) => [name, this.db.prepare('SELECT id FROM nodes WHERE session=?').all(name).map((r) => r.id)]));
+        const ids = new Set(candidates.map((r) => r.id));
+        for (const row of prior) {
+          if (!ids.has(row.id)) {
+            this.db.prepare('DELETE FROM edges WHERE src=? OR dst=?').run(row.id, row.id);
+            this.db.prepare('DELETE FROM nodes WHERE id=?').run(row.id);
+          }
+        }
+        const byId = new Map(prior.map((row) => [row.id, row]));
+        for (const row of candidates) this.node(row, byId.get(row.id) || null);
+        for (const row of candidates.filter((r) => r.kind === 'checkpoint')) {
+          this.db.prepare("DELETE FROM edges WHERE src=? AND kind='points'").run(row.id);
+          for (const file of references(row.body, [...new Set([path.dirname(source.file), source.dir])])) {
+            this.node({ id: 'file:' + file, kind: 'file', session: '', stem: '', file, body: '' });
+            this.edge(row.id, 'file:' + file, 'points');
           }
         }
         this.db.prepare('INSERT OR REPLACE INTO files VALUES(?,?,?)').run(source.file, stable.mtimeMs, stable.size);
+        this.db.exec('RELEASE file_sync');
+        for (const [name, ids] of previous) if (!affected.has(name)) affected.set(name, ids);
+        this.reindexed.push(source.file);
       } catch (error) {
+        this.db.exec('ROLLBACK TO file_sync; RELEASE file_sync');
+        if (forced.has(source.file)) throw error;
         this.errors.push({ name: source.session, file: source.file, error: readError(error) });
       }
     }
-    if (changed) this.relate();
+    for (const [name, ids] of affected) this.relate(name, ids);
   }
   remove(file) {
     const ids = this.db.prepare("SELECT id FROM nodes WHERE file=? AND kind<>'file'").all(file);
@@ -510,9 +540,15 @@ class Graph {
     }
     this.db.prepare('DELETE FROM files WHERE path=?').run(file);
   }
-  relate() {
-    this.db.exec("DELETE FROM edges WHERE kind IN ('next','fork','merge')");
-    for (const name of this.names()) {
+  relate(name, previousIds = []) {
+    const ids = [...new Set([...previousIds, ...this.db.prepare('SELECT id FROM nodes WHERE session=?').all(name).map((r) => r.id)])];
+    // Bounded bind lists also cover IDs removed by this refresh, without inferring a
+    // session from encoded ID prefixes or touching any unchanged session's edges.
+    for (let i = 0; i < ids.length; i += 400) {
+      const part = ids.slice(i, i + 400), slots = part.map(() => '?').join(',');
+      this.db.prepare(`DELETE FROM edges WHERE kind IN ('next','fork','merge') AND (src IN (${slots}) OR dst IN (${slots}))`).run(...part, ...part);
+    }
+    if (this.names().includes(name)) {
       const branches = this.branches(name);
       for (const stem of ['main', ...branches.map((b) => b.name)]) {
         const rows = this.own(name, stem);

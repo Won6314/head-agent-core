@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { locations, records, optionalRead, readState, atomicText, atomicJSON } from './storage.mjs';
 import { locked } from './lock.mjs';
-import { withGraph } from './graph.mjs';
+import { withGraph, withGraphRead } from './graph.mjs';
 import { branchPath, branchHeader } from './branch-format.mjs';
 import { isOpen } from './lifecycle.mjs';
 // One-time move of a 0.6 project to 0.7. Nothing is deleted: what 0.7 no longer reads is
@@ -33,7 +33,7 @@ export function migrate(project, { apply = false } = {}) {
       fs.renameSync(dir, to);
     }
   }
-  const found = withGraph(project, (g) => {
+  const found = withGraphRead(project, (g) => {
     const empty = [],
       labels = [];
     for (const session of g.names()) {
@@ -86,7 +86,10 @@ export function migrate(project, { apply = false } = {}) {
       const raw = readState(file);
       atomicJSON(file, { ...raw, branch: null });
     }
-    withGraph(project, (g) => g.names());
+    withGraph(project, (g) => g.names(), [
+      ...found.empty.map((e) => path.join(e.folder, 'history.md')),
+      ...found.labels.map((l) => branchPath(path.join(topics, l.session), l.branch)),
+    ]);
   }
   return report;
 }

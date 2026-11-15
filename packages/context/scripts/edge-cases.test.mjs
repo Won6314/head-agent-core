@@ -24,7 +24,7 @@ test('exact anchor survives a later duplicate legacy timestamp and index rebuild
   fs.appendFileSync(file, entry('late duplicate'));
   const inherited = () => withGraph(dir, (g) => g.recent('demo', 'frozen', 0).map((e) => e.summary));
   assert.deepEqual(inherited(), ['first', 'second']);
-  fs.unlinkSync(path.join(dir, '.head/index.sqlite'));
+  fs.unlinkSync(path.join(dir, '.head/index-v4.sqlite'));
   assert.deepEqual(inherited(), ['first', 'second']);
 });
 test('broken session is reported while valid sources continue; archive/work artifacts are not branches', () => {

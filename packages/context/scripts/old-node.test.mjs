@@ -66,7 +66,7 @@ const project = () => {
       },
     );
   fs.writeFileSync(transcript, lines.map((l) => JSON.stringify(l)).join('\n') + '\n');
-  const index = path.join(dir, '.head/index.sqlite');
+  const index = path.join(dir, '.head/index-v4.sqlite');
   const sum = () => crypto.createHash('md5').update(fs.readFileSync(index)).digest('hex');
   return { dir, transcript, sum };
 };

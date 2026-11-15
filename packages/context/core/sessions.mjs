@@ -13,7 +13,7 @@ import {
   RECENT_COUNT,
   SUMMARY_LIMIT,
 } from './recovery.mjs';
-import { withGraph, resolveRef } from './graph.mjs';
+import { withGraph, withGraphRead, resolveRef } from './graph.mjs';
 import { clock } from './map-view.mjs';
 import { branchPath, branchText, branchHeader, withStatus, withRecap, WORK_MONTH } from './branch-format.mjs';
 import { mergeArgs, isOpen, OPEN, CLOSED, ABANDONED } from './lifecycle.mjs';
@@ -206,27 +206,17 @@ export function sessions(
     }
     return 'main';
   };
-  const openBranch = (g, session, stem, parent = 'main') => {
-    if (parent !== 'main' && !g.header(session, parent)) throw new Error('부모 작업 브랜치가 없습니다.');
-    parent = inheritable(g, session, parent);
+  const openBranch = ({ session, stem, parent, anchor, anchorId }) => {
     const dir = directory(session),
       file = branchPath(dir, stem),
       parentFile = parent === 'main' ? path.join(dir, 'history.md') : branchPath(dir, parent);
-    const last = g.recent(session, parent, 1).at(-1);
+    const text = branchText({ name: stem, label: stem, session, parent, anchor, anchorId, started: new Date(now()).toISOString() });
     fs.mkdirSync(path.dirname(file), { recursive: true });
     try {
       locked(parentFile, () =>
         fs.writeFileSync(
           noSymlink(file),
-          branchText({
-            name: stem,
-            label: stem,
-            session,
-            parent,
-            anchor: last?.timestamp || null,
-            anchorId: last?.id || '',
-            started: new Date(now()).toISOString(),
-          }),
+          text,
           { flag: 'wx' },
         ),
       );
@@ -234,6 +224,7 @@ export function sessions(
       if (e.code === 'EEXIST') throw new Error(`작업 브랜치 '${stem}'이 이미 있습니다. 이어 가려면 attach하세요.`);
       throw e;
     }
+    withGraph(project, () => {}, [file]);
     return stem;
   };
   const setStatus = (session, stem, status) => {
@@ -243,6 +234,7 @@ export function sessions(
         header = branchHeader(text);
       if (header && header.status !== status) atomicText(file, withStatus(text, status));
     });
+    withGraph(project, () => {}, [file]);
   };
   const todos = (name) => openTodos(directory(name));
   const work = (g, name, stem, { count = RECENT_COUNT, limit = SUMMARY_LIMIT } = {}) =>
@@ -252,7 +244,7 @@ export function sessions(
   // this session, or works on main. Nothing else is closed or moved.
   const load = ({ name, branch, history_count = RECENT_COUNT, map_limit = SUMMARY_LIMIT, conversation_id } = {}) => {
     if (!Number.isInteger(history_count) || history_count < 0) throw new Error('history_count는 0 이상의 정수입니다.');
-    const placed = withGraph(project, (g) => {
+    const placed = withGraphRead(project, (g) => {
       const previous = connection(conversation_id),
         selected = name || previous?.session;
       if (!selected) throw new Error('작업 세션 이름이 필요합니다.');
@@ -273,14 +265,14 @@ export function sessions(
     });
     // Attaching to a closed branch opens it again; its next closing save merges once more.
     if (placed.stem !== 'main') setStatus(placed.session, placed.stem, OPEN);
-    return withGraph(project, (g) => work(g, placed.session, placed.stem, { count: history_count, limit: map_limit }));
+    return withGraphRead(project, (g) => work(g, placed.session, placed.stem, { count: history_count, limit: map_limit }));
   };
   // Closing: the branch leaves exactly one entry on main and keeps its own file.
   const closeBranch = (session, stem, { status = CLOSED, reason } = {}) => {
     const dir = directory(session),
       file = branchPath(dir, stem),
       main = path.join(dir, 'history.md');
-    const info = withGraph(project, (g) => {
+    const info = withGraphRead(project, (g) => {
       const header = g.header(session, stem);
       return header ? { ...header, entries: g.own(session, stem).map((r) => g.detail(r)) } : null;
     });
@@ -304,12 +296,12 @@ export function sessions(
       locked(main, () => fs.appendFileSync(main, uniqueEntry(main, args)));
       atomicText(file, withStatus(text, status));
     });
-    withGraph(project, (g) => g.branches(session));
+    withGraph(project, (g) => g.branches(session), [file, main]);
     return true;
   };
   const save = ({ summary, history, next, recap, files, conversation_id }) => {
     if (typeof history !== 'string' || !history.trim()) throw new Error('history(본문)가 필요합니다.');
-    const bound = withGraph(project, (g) => resolve(conversation_id, g)),
+    const bound = withGraphRead(project, (g) => resolve(conversation_id, g)),
       dir = directory(bound.session);
     entry({ summary, history, next });
     if (bound.stem === 'main') {
@@ -318,7 +310,7 @@ export function sessions(
       const main = path.join(dir, 'history.md'),
         refs = referenceFiles(files, [dir]);
       locked(main, () => fs.appendFileSync(main, uniqueEntry(main, { summary, history, next, files: refs.files })));
-      withGraph(project, (g) => g.recent(bound.session, 'main', 1));
+      withGraph(project, (g) => g.recent(bound.session, 'main', 1), [main]);
       return `작업 세션 '${bound.session}' 메인에 기록했습니다.\n요약: ${summary}${next ? `\n다음: ${next}` : ''}${referenceNotice(refs)}`;
     }
     if (next && recap !== undefined && String(recap).trim()) throw new Error(RECAP_REFUSED);
@@ -338,7 +330,7 @@ export function sessions(
         fs.appendFileSync(main, uniqueEntry(main, { summary, index: { label: header.label || bound.stem, record } })),
       );
     });
-    withGraph(project, (g) => g.recent(bound.session, bound.stem, 1));
+    withGraph(project, (g) => g.recent(bound.session, bound.stem, 1), [file, main]);
     if (next)
       return `작업 세션 '${bound.session}' 작업 브랜치 '${bound.stem}'에 기록했습니다.\n요약: ${summary}\n다음: ${next}${referenceNotice(refs)}`;
     closeBranch(bound.session, bound.stem);
@@ -347,7 +339,7 @@ export function sessions(
   };
   const abandon = ({ branch, reason, conversation_id }) => {
     line(reason, 'reason');
-    const bound = withGraph(project, (g) => resolve(conversation_id, g)),
+    const bound = withGraphRead(project, (g) => resolve(conversation_id, g)),
       name = branch || (bound.stem === 'main' ? null : bound.stem);
     if (!name || MAIN.includes(name)) throw new Error('중단할 작업 브랜치를 주세요. 메인은 중단하지 않습니다.');
     validName(name);
@@ -362,7 +354,7 @@ export function sessions(
   // A copy run by a program (a fork or worker, kind 'copy') whose parent is alive is shown
   // once, under that parent (children), not again on its own line.
   const tree = ({ name } = {}) =>
-    withGraph(project, (g) => {
+    withGraphRead(project, (g) => {
       const all = records(path.join(state, 'conversations'));
       const titles = new Map();
       // A conversation its starter marked as a person's (HEAD_CONTEXT_PERSON) is one, whatever
@@ -497,9 +489,9 @@ export function sessions(
     return lines.join('\n');
   };
   const todo = ({ action, text, due, match, name, conversation_id }) => {
-    const target = name || withGraph(project, (g) => resolve(conversation_id, g)).session,
+    const target = name || withGraphRead(project, (g) => resolve(conversation_id, g)).session,
       dir = directory(target);
-    withGraph(project, (g) => g.session(target));
+    withGraphRead(project, (g) => g.session(target));
     if (action === 'add')
       return `작업 세션 '${target}' 할 일에 더했습니다.\n${addTodo(dir, { text, due, timeZone: timezone, now: now() })}`;
     if (action === 'done') {
@@ -521,7 +513,7 @@ export function sessions(
     throw new Error('action은 add/list/done입니다.');
   };
   const locate = ({ conversation_id, session_name, origins = [] }) => {
-    return withGraph(project, (g) => {
+    return withGraphRead(project, (g) => {
       const names = g.names(),
         cached = connection(conversation_id);
       let place = null;
@@ -553,12 +545,12 @@ export function sessions(
     conversations,
     tree,
     note,
-    names: () => withGraph(project, (g) => g.names()),
+    names: () => withGraphRead(project, (g) => g.names()),
     list: () =>
-      withGraph(project, (g) => [topicList(g), ...g.errors.map((e) => `${e.name}: 읽기 실패 — ${e.error}`)].join('\n')),
+      withGraphRead(project, (g) => [topicList(g), ...g.errors.map((e) => `${e.name}: 읽기 실패 — ${e.error}`)].join('\n')),
     // One work session's open branches, for adapters outside the core.
     view: (name) =>
-      withGraph(project, (g) => ({
+      withGraphRead(project, (g) => ({
         name,
         branches: openBranches(g, name).map((b) => ({
           name: b.name,
@@ -580,6 +572,7 @@ export function sessions(
         throw e;
       }
       fs.writeFileSync(path.join(dir, 'context.md'), context, { flag: 'wx' });
+      withGraph(project, () => {}, [path.join(dir, 'context.md')]);
       return load({ name, conversation_id });
     },
     branch({ action, branch, parent, conversation_id, reason }) {
@@ -596,19 +589,22 @@ export function sessions(
         throw new Error(
           `'${branch}'는 작업 파일의 달 폴더(work/YYYY-MM) 꼴이라 작업 브랜치 이름으로 쓸 수 없습니다. 그 일을 나타내는 이름을 주세요.`,
         );
-      withGraph(project, (g) => {
+      const snapshot = withGraphRead(project, (g) => {
         const bound = resolve(conversation_id, g),
           from = parent === undefined ? bound.stem : MAIN.includes(parent) ? 'main' : parent;
         if (from !== 'main') {
           validName(from);
           if (!g.header(bound.session, from)) throw new Error('부모 작업 브랜치가 없습니다.');
         }
-        openBranch(g, bound.session, branch, from);
+        const inherited = inheritable(g, bound.session, from);
+        const last = g.recent(bound.session, inherited, 1).at(-1);
+        return { session: bound.session, stem: branch, parent: inherited, anchor: last?.timestamp || null, anchorId: last?.id || '' };
       });
+      openBranch(snapshot);
       return load({ branch, conversation_id });
     },
     inspect({ action = 'map', name, branch, limit = 30, count = 5, id, file, query, depth = 2, conversation_id }) {
-      return withGraph(project, (g) => {
+      return (action === 'files' ? withGraph : withGraphRead)(project, (g) => {
         const previous = connection(conversation_id),
           selected = name || previous?.session;
         if (action === 'entry') {
@@ -654,7 +650,7 @@ export function sessions(
     identity({ conversation_id }) {
       const bound = connection(conversation_id);
       if (!bound?.session) return '';
-      return withGraph(project, (g) =>
+      return withGraphRead(project, (g) =>
         g.names().includes(bound.session) ? work(g, bound.session, effective(bound, g)) : '',
       );
     },
@@ -679,7 +675,7 @@ export function sessions(
     // The two parts of the work context for a place as the start hook sends them: the
     // work context already cut down to `budget`, and the file that holds context.md.
     parts({ session, stem }, { budget = Infinity } = {}) {
-      return withGraph(project, (g) => ({
+      return withGraphRead(project, (g) => ({
         head: sessionPart(g, { name: session, stem }),
         context: fittedContext(
           g,

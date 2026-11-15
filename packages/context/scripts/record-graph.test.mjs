@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { sessions } from '../core/sessions.mjs';
@@ -123,24 +124,28 @@ test('graph contains identifiers/locations/relationships only; file references a
       .all()
       .map((c) => c.name),
   }));
-  for (const secret of ['DIRECTION_SECRET_19', 'BODY_SECRET_37', 'CURSOR_SECRET_58', 'SUMMARY_SECRET_93'])
-    assert.ok(!JSON.stringify(data).includes(secret));
-  const bytes = fs.readFileSync(path.join(dir, '.head/index.sqlite')).toString();
-  assert.ok(!bytes.includes('BODY_SECRET_37'));
-  assert.ok(!bytes.includes('DIRECTION_SECRET_19'));
+  const context = data.nodes.find((r) => r.kind === 'session');
+  assert.equal(context.body, fs.readFileSync(path.join(base, 'context.md'), 'utf8'));
+  const checkpoint = data.nodes.find((r) => r.kind === 'checkpoint');
+  assert.equal(checkpoint.body, parseHistory(fs.readFileSync(path.join(base, 'history.md'), 'utf8'))[0].body);
+  for (const row of data.nodes)
+    assert.equal(row.hash, row.kind === 'file' ? '' : createHash('sha256').update(row.body).digest('hex'));
+  const bytes = fs.readFileSync(path.join(dir, '.head/index-v4.sqlite')).toString();
+  assert.ok(bytes.includes('BODY_SECRET_37'));
+  assert.ok(bytes.includes('DIRECTION_SECRET_19'));
   assert.ok(data.edges.some((e) => e.kind === 'points'));
-  assert.deepEqual(data.columns, ['id', 'kind', 'session', 'stem', 'stamp', 'file', 'start', 'end', 'seq']);
+  assert.deepEqual(data.columns, ['id', 'kind', 'session', 'stem', 'stamp', 'file', 'body', 'hash', 'seq']);
 });
 test('delete/version/corrupt index rebuild, external append, unchanged files not reindexed, map limit', () => {
   const { dir, s, base } = fixture();
   save(s, 'one');
   save(s, 'two');
   const map = s.inspect({ action: 'map', conversation_id: 'c' });
-  fs.unlinkSync(path.join(dir, '.head/index.sqlite'));
+  fs.unlinkSync(path.join(dir, '.head/index-v4.sqlite'));
   assert.equal(s.inspect({ action: 'map', conversation_id: 'c' }), map);
   withGraph(dir, (g) => g.db.exec('PRAGMA user_version=99'));
   assert.equal(s.inspect({ action: 'map', conversation_id: 'c' }), map);
-  fs.writeFileSync(path.join(dir, '.head/index.sqlite'), 'not a database');
+  fs.writeFileSync(path.join(dir, '.head/index-v4.sqlite'), 'not a database');
   assert.equal(s.inspect({ action: 'map', conversation_id: 'c' }), map);
   const file = path.join(base, 'history.md');
   fs.appendFileSync(

@@ -64,6 +64,30 @@ export function locked(file, fn) {
   try {
     return fn();
   } finally {
-    fs.rmSync(lock, { recursive: true, force: true });
+    release(lock);
+  }
+}
+function release(lock) {
+  let error;
+  for (let attempt = 0; attempt <= 10; attempt++) {
+    if (attempt) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50);
+    try {
+      fs.rmSync(lock, { recursive: true, force: true });
+      return;
+    } catch (e) {
+      error = e;
+      if (!['EBUSY', 'EPERM', 'ENOTEMPTY'].includes(e.code)) break;
+    }
+  }
+  try {
+    fs.renameSync(lock, `${lock}.stale-${process.pid}-${Date.now()}`);
+    return;
+  } catch (e) {
+    error = e;
+  }
+  try {
+    process.stderr.write(`head-context: 잠금 해제 실패: ${lock} (${String(error.code || error.message).replace(/[\r\n]/g, ' ')})\n`);
+  } catch {
+    /* Release diagnostics must not replace the callback's result or exception. */
   }
 }

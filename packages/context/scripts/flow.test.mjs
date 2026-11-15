@@ -19,7 +19,7 @@ const fixture = () => {
   return { dir, s };
 };
 
-test('map summary precedence: explicit then literal work label then body; graph has no label text', () => {
+test('map summary precedence: explicit then literal work label then body; label text only in the record body', () => {
   const { dir, s } = fixture(),
     file = path.join(dir, '.head/sessions/demo/history.md');
   fs.writeFileSync(
@@ -38,7 +38,7 @@ test('map summary precedence: explicit then literal work label then body; graph 
   );
   assert.equal(entries[0].summary, 'first body');
   assert.ok(
-    !JSON.stringify(withGraph(dir, (g) => g.db.prepare('SELECT * FROM nodes').all())).includes('LABEL_SECRET_42'),
+    !JSON.stringify(withGraph(dir, (g) => g.db.prepare('SELECT id,kind,session,stem,stamp,file,hash,seq FROM nodes').all())).includes('LABEL_SECRET_42'),
   );
 });
 test("work context: data only — the work session part, then open branches, to-dos, the map and this branch's newest saves", () => {
