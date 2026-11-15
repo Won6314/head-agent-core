@@ -38,7 +38,9 @@ test('map summary precedence: explicit then literal work label then body; label 
   );
   assert.equal(entries[0].summary, 'first body');
   assert.ok(
-    !JSON.stringify(withGraph(dir, (g) => g.db.prepare('SELECT id,kind,session,stem,stamp,file,hash,seq FROM nodes').all())).includes('LABEL_SECRET_42'),
+    !JSON.stringify(
+      withGraph(dir, (g) => g.db.prepare('SELECT id,kind,session,stem,stamp,file,hash,seq FROM nodes').all()),
+    ).includes('LABEL_SECRET_42'),
   );
 });
 test("work context: data only — the work session part, then open branches, to-dos, the map and this branch's newest saves", () => {

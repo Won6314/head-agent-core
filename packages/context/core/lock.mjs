@@ -86,7 +86,9 @@ function release(lock) {
     error = e;
   }
   try {
-    process.stderr.write(`head-context: 잠금 해제 실패: ${lock} (${String(error.code || error.message).replace(/[\r\n]/g, ' ')})\n`);
+    process.stderr.write(
+      `head-context: 잠금 해제 실패: ${lock} (${String(error.code || error.message).replace(/[\r\n]/g, ' ')})\n`,
+    );
   } catch {
     /* Release diagnostics must not replace the callback's result or exception. */
   }

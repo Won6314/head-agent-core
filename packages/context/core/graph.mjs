@@ -13,7 +13,9 @@ import { sqlite } from './platform.mjs';
 const database = (file) => new (sqlite().DatabaseSync)(file, { timeout: 5000 });
 const VERSION = 4; // Rebuildable raw-text cache, separate from the v3 index.
 const NODE_FIELDS = 'id,kind,session,stem,stamp,file,hash,seq';
-const JOIN_NODE_FIELDS = NODE_FIELDS.split(',').map((field) => 'n.' + field).join(',');
+const JOIN_NODE_FIELDS = NODE_FIELDS.split(',')
+  .map((field) => 'n.' + field)
+  .join(',');
 export const stemId = (session, stem) => `stem:${encodeURIComponent(session)}/${encodeURIComponent(stem)}`;
 export const checkpointId = (session, stem, time, occurrence = 1) =>
   `${encodeURIComponent(session)}/${encodeURIComponent(stem)}@${time}${occurrence > 1 ? '#' + occurrence : ''}`;
@@ -168,14 +170,20 @@ class Graph {
   }
   node(row, old = this.db.prepare('SELECT * FROM nodes WHERE id=?').get(row.id)) {
     const next = {
-      id: row.id, kind: row.kind, session: row.session, stem: row.stem,
-      stamp: row.stamp || '', file: row.file, body: row.body ?? '',
+      id: row.id,
+      kind: row.kind,
+      session: row.session,
+      stem: row.stem,
+      stamp: row.stamp || '',
+      file: row.file,
+      body: row.body ?? '',
       hash: row.kind === 'file' ? '' : createHash('sha256').update(row.body).digest('hex'),
       seq: row.seq || 0,
     };
     if (!old) this.db.prepare('INSERT INTO nodes VALUES(?,?,?,?,?,?,?,?,?)').run(...Object.values(next));
     else if (Object.keys(next).some((key) => next[key] !== old[key]))
-      this.db.prepare('UPDATE nodes SET kind=?,session=?,stem=?,stamp=?,file=?,body=?,hash=?,seq=? WHERE id=?')
+      this.db
+        .prepare('UPDATE nodes SET kind=?,session=?,stem=?,stamp=?,file=?,body=?,hash=?,seq=? WHERE id=?')
         .run(next.kind, next.session, next.stem, next.stamp, next.file, next.body, next.hash, next.seq, next.id);
   }
   edge(src, dst, kind) {
@@ -183,7 +191,9 @@ class Graph {
   }
   read(row) {
     if (!row) return null;
-    return Object.hasOwn(row, 'body') ? row.body : this.db.prepare('SELECT body FROM nodes WHERE id=?').get(row.id).body;
+    return Object.hasOwn(row, 'body')
+      ? row.body
+      : this.db.prepare('SELECT body FROM nodes WHERE id=?').get(row.id).body;
   }
   detail(row) {
     const e = parseHistory(this.read(row))[0];
@@ -196,7 +206,9 @@ class Graph {
   }
   session(name) {
     validName(name);
-    const row = this.db.prepare(`SELECT ${NODE_FIELDS} FROM nodes WHERE id=? AND kind='session'`).get(stemId(name, 'main'));
+    const row = this.db
+      .prepare(`SELECT ${NODE_FIELDS} FROM nodes WHERE id=? AND kind='session'`)
+      .get(stemId(name, 'main'));
     if (!row) throw new Error(`세션 '${name}'이 없습니다.`);
     return { name, context: this.read(row), file: row.file };
   }
@@ -410,7 +422,10 @@ class Graph {
           `SELECT ${JOIN_NODE_FIELDS} FROM edges e JOIN nodes n ON n.id=e.src WHERE e.dst=? AND e.kind='points' ORDER BY n.stamp DESC,n.session,n.stem,n.seq DESC`,
         )
         .all('file:' + target);
-    } else rows = this.db.prepare(`SELECT ${NODE_FIELDS} FROM nodes WHERE kind='checkpoint' ORDER BY stamp DESC,session,stem,seq DESC`).all();
+    } else
+      rows = this.db
+        .prepare(`SELECT ${NODE_FIELDS} FROM nodes WHERE kind='checkpoint' ORDER BY stamp DESC,session,stem,seq DESC`)
+        .all();
     if (session) rows = rows.filter((r) => r.session === session);
     const results = rows
       .map((r) => this.detail(r))
@@ -439,10 +454,15 @@ class Graph {
             }
         } catch (error) {
           const dir = path.join(this.topics, e.name);
-          if ([...forced].some((file) => {
-            const relative = path.relative(dir, file);
-            return relative && !relative.startsWith('..' + path.sep) && relative !== '..' && !path.isAbsolute(relative);
-          })) throw error;
+          if (
+            [...forced].some((file) => {
+              const relative = path.relative(dir, file);
+              return (
+                relative && !relative.startsWith('..' + path.sep) && relative !== '..' && !path.isAbsolute(relative)
+              );
+            })
+          )
+            throw error;
           this.errors.push({ name: e.name, error: readError(error) });
         }
       }
@@ -452,8 +472,16 @@ class Graph {
       if (!paths.has(old.path)) {
         this.db.exec('SAVEPOINT file_sync');
         try {
-          const names = this.db.prepare("SELECT DISTINCT session FROM nodes WHERE file=? AND kind<>'file'").all(old.path);
-          const previous = names.map(({ session }) => [session, this.db.prepare('SELECT id FROM nodes WHERE session=?').all(session).map((r) => r.id)]);
+          const names = this.db
+            .prepare("SELECT DISTINCT session FROM nodes WHERE file=? AND kind<>'file'")
+            .all(old.path);
+          const previous = names.map(({ session }) => [
+            session,
+            this.db
+              .prepare('SELECT id FROM nodes WHERE session=?')
+              .all(session)
+              .map((r) => r.id),
+          ]);
           this.remove(old.path);
           this.db.exec('RELEASE file_sync');
           for (const [name, ids] of previous) if (!affected.has(name)) affected.set(name, ids);
@@ -506,7 +534,15 @@ class Graph {
         const prior = this.db.prepare("SELECT * FROM nodes WHERE file=? AND kind<>'file'").all(source.file);
         // Capture the whole affected session before deleting any of its IDs.
         const names = new Set([source.session, ...prior.map((r) => r.session)]);
-        const previous = new Map([...names].map((name) => [name, this.db.prepare('SELECT id FROM nodes WHERE session=?').all(name).map((r) => r.id)]));
+        const previous = new Map(
+          [...names].map((name) => [
+            name,
+            this.db
+              .prepare('SELECT id FROM nodes WHERE session=?')
+              .all(name)
+              .map((r) => r.id),
+          ]),
+        );
         const ids = new Set(candidates.map((r) => r.id));
         for (const row of prior) {
           if (!ids.has(row.id)) {
@@ -544,12 +580,23 @@ class Graph {
     this.db.prepare('DELETE FROM files WHERE path=?').run(file);
   }
   relate(name, previousIds = []) {
-    const ids = [...new Set([...previousIds, ...this.db.prepare('SELECT id FROM nodes WHERE session=?').all(name).map((r) => r.id)])];
+    const ids = [
+      ...new Set([
+        ...previousIds,
+        ...this.db
+          .prepare('SELECT id FROM nodes WHERE session=?')
+          .all(name)
+          .map((r) => r.id),
+      ]),
+    ];
     // Bounded bind lists also cover IDs removed by this refresh, without inferring a
     // session from encoded ID prefixes or touching any unchanged session's edges.
     for (let i = 0; i < ids.length; i += 400) {
-      const part = ids.slice(i, i + 400), slots = part.map(() => '?').join(',');
-      this.db.prepare(`DELETE FROM edges WHERE kind IN ('next','fork','merge') AND (src IN (${slots}) OR dst IN (${slots}))`).run(...part, ...part);
+      const part = ids.slice(i, i + 400),
+        slots = part.map(() => '?').join(',');
+      this.db
+        .prepare(`DELETE FROM edges WHERE kind IN ('next','fork','merge') AND (src IN (${slots}) OR dst IN (${slots}))`)
+        .run(...part, ...part);
     }
     if (this.names().includes(name)) {
       const branches = this.branches(name);

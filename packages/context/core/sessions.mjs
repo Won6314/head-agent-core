@@ -210,16 +210,18 @@ export function sessions(
     const dir = directory(session),
       file = branchPath(dir, stem),
       parentFile = parent === 'main' ? path.join(dir, 'history.md') : branchPath(dir, parent);
-    const text = branchText({ name: stem, label: stem, session, parent, anchor, anchorId, started: new Date(now()).toISOString() });
+    const text = branchText({
+      name: stem,
+      label: stem,
+      session,
+      parent,
+      anchor,
+      anchorId,
+      started: new Date(now()).toISOString(),
+    });
     fs.mkdirSync(path.dirname(file), { recursive: true });
     try {
-      locked(parentFile, () =>
-        fs.writeFileSync(
-          noSymlink(file),
-          text,
-          { flag: 'wx' },
-        ),
-      );
+      locked(parentFile, () => fs.writeFileSync(noSymlink(file), text, { flag: 'wx' }));
     } catch (e) {
       if (e.code === 'EEXIST') throw new Error(`작업 브랜치 '${stem}'이 이미 있습니다. 이어 가려면 attach하세요.`);
       throw e;
@@ -265,7 +267,9 @@ export function sessions(
     });
     // Attaching to a closed branch opens it again; its next closing save merges once more.
     if (placed.stem !== 'main') setStatus(placed.session, placed.stem, OPEN);
-    return withGraphRead(project, (g) => work(g, placed.session, placed.stem, { count: history_count, limit: map_limit }));
+    return withGraphRead(project, (g) =>
+      work(g, placed.session, placed.stem, { count: history_count, limit: map_limit }),
+    );
   };
   // Closing: the branch leaves exactly one entry on main and keeps its own file.
   const closeBranch = (session, stem, { status = CLOSED, reason } = {}) => {
@@ -547,7 +551,9 @@ export function sessions(
     note,
     names: () => withGraphRead(project, (g) => g.names()),
     list: () =>
-      withGraphRead(project, (g) => [topicList(g), ...g.errors.map((e) => `${e.name}: 읽기 실패 — ${e.error}`)].join('\n')),
+      withGraphRead(project, (g) =>
+        [topicList(g), ...g.errors.map((e) => `${e.name}: 읽기 실패 — ${e.error}`)].join('\n'),
+      ),
     // One work session's open branches, for adapters outside the core.
     view: (name) =>
       withGraphRead(project, (g) => ({
@@ -598,7 +604,13 @@ export function sessions(
         }
         const inherited = inheritable(g, bound.session, from);
         const last = g.recent(bound.session, inherited, 1).at(-1);
-        return { session: bound.session, stem: branch, parent: inherited, anchor: last?.timestamp || null, anchorId: last?.id || '' };
+        return {
+          session: bound.session,
+          stem: branch,
+          parent: inherited,
+          anchor: last?.timestamp || null,
+          anchorId: last?.id || '',
+        };
       });
       openBranch(snapshot);
       return load({ branch, conversation_id });
