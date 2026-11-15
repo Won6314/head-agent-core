@@ -1,0 +1,21 @@
+nodes — 노드 하나가 한 줄
+  id       노드 ID. 화면 STA-01, 화면요소 STA-01#1, 유저 활동 ua.record, 기능 tool:save · hook:claude:SessionStart:session ·
+           mcp:initialize · cli:map · skill:start-job, 정책 pol.close-needs-recap, 코드 code:<파일>#<한정 이름> (파일은 code:<파일>),
+           데이터 data:…, 외부 연결 ext:…, DB db:<테이블>·db:<테이블>.<컬럼>, 제품코어 product:head-context, 유저저니 journey:head-context, IA ia:head-context
+  type     노드 타입: 제품코어 · 유저저니 · IA · 유저 활동 · 화면 · 화면요소 · 정책 · 기능 · 코드 · 데이터 · 외부 연결 · DB
+  name     이름
+  kind     코드: product·component·module(파일)·function·local_function·method·property_function·class·variable·document /
+           기능: MCP tool·MCP 요청·hook·CLI·skill / 정책: 처리·표시 / 데이터: 파일·설정 파일·호스트 파일·env / DB: 테이블·컬럼
+  file, line, end_line   코드만: packages/context 기준 파일과 줄 범위
+  summary  한 줄: 기능이 하는 일, 정책 규칙(조건 / 주체 / 행위), 화면요소가 보여 주는 것, 유저 활동 이름, 모듈이 하는 일
+  doc      원본 문서 위치(제품 쪽 노드): docs/<파일>#<ID>
+  body     원본 글: 화면설계서·유저플로우 기획서 절, 제품 정의서·저니맵·IA 전문
+  props    나머지 속성(JSON). json_extract(props, '$.분기줄') 처럼 읽는다
+edges — 연결 하나가 한 줄 (src → dst)
+  type     연결 이름 = 양쪽 노드 타입(기능→코드, 화면요소→기능, 기능→화면요소, 유저 활동→화면요소, 유저 활동→유저 활동,
+           화면→화면요소, 화면→화면(공통 영역), 화면→정책, 화면→코드, 화면→기능, 정책→기능, 코드→외부 연결),
+           예외: 포함(묶음→안의 것), reference(코드→코드), read·write(코드→데이터)
+  kind     reference만: call · callback · framework-invoked
+  line     reference만: 참조가 나온 줄
+  props    JSON: 근거, 역할(기능→코드의 처리·입구), 줄(처리 코드 안의 분기 줄 범위), api
+meta(key, value) — name, commit, source, schema(이 글), checks(검사 목록 JSON), boundaries(따라가지 않는 경계 JSON), file_sha256(코드 파일마다 SHA-256 — source --repo가 같은 판인지 볼 때)

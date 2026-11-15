@@ -1,0 +1,578 @@
+# 화면설계서 — head-context 0.9.10
+
+> 0.9.5 판(11-04)을 0.9.10(head-agent-core `7a5896c`) 실행 출력과 코드에 맞춰 바뀐 곳만 고쳤다(11-15). R번호는 0.9.10 실행 기록이다. R112까지는 0.9.5와 같은 차례의 실행이고, R113부터는 0.9.6~0.9.10에서 바뀐 동작을 보려고 더한 실행이고, R140부터는 독립 검수(11-15)가 짚은 출력을 보려고 더한 실행이다. `a3`·`C-3`으로 적은 것은 0.9.5에서 한 처음 온 유저 시험이고 다시 하지 않았다.
+
+화면이 없는 제품이라 정의서의 '화면이 없는 제품' 절대로 적용했다. 화면 하나 = 유저가 받는 출력 한 종류, 화면요소 = 그 출력 안의 한 부분. 그림 대신 실제로 받은 출력 원문을 `원문:`에 적었다(R번호 = [A-1 조작 기록](../runs/A-1-outputs.md)).
+유저는 사람과 그 사람의 AI agent다. 대부분의 출력은 agent가 읽고, 사람은 agent가 전하는 말로 받는다.
+
+화면요소 줄의 표시: `←` 뒤 기능은 그 화면요소에 결과를 내는 기능(기능→화면요소), `→` 뒤 기능은 그 화면요소를 읽고 agent가 부르는 기능(화면요소→기능).
+`(코드)`가 붙은 화면요소는 실행에서 나오지 않아 코드에서만 읽은 것이다.
+
+## CMN-01 작업 세션 머리
+
+- 출력 종류: 공통 영역(시작 훅 출력과 도구 결과 앞머리에 붙음)
+- 상태: 대화가 작업 세션에 연결됨
+- 원문: R14, R48, R72, R121
+- 그리는 코드: `code:core/sessions.mjs#sessions.parts`, `code:core/recovery.mjs`
+
+### 개요
+대화가 어느 작업 세션의 어느 자리에서 일하는지 알려 주는 머리. 시작할 때와 불러올 때마다 맨 앞에 온다.
+
+### 화면 흐름
+agent는 여기서 이 일의 목적(context.md)과 지금 자리(메인 또는 작업 브랜치)를 읽고 그 자리에 기록한다.
+
+### 화면요소
+1. **작업 세션 이름** — `# 작업 세션: <이름>` 한 줄.
+2. **context.md 전문** — 작업 세션의 목적·방향·범위. 시작 훅에서 9,000자를 넘으면 앞부분과 `(context.md 뒷부분 생략 — 전문: <경로>)`(코드).
+3. **이 대화의 작업 브랜치** — `이 대화의 작업 브랜치: <이름 | 없음(메인)>`. 둘러보기(TOL-08)에는 없다.
+4. **작업 세션 폴더** — 이름(#1) 바로 아래 한 줄 `작업 세션 폴더: <절대 경로>`(0.9.6부터). 작업 파일을 둘 자리(`work/YYYY-MM/…`)를 찾지 않아도 된다. 둘러보기(TOL-08)에도 나온다.
+
+### 화면 정책
+- `pol.session-part-fits`
+
+## CMN-02 작업 맥락
+
+- 출력 종류: 공통 영역(시작 훅의 작업 맥락 출력, load·create·branch 결과, 둘러보기)
+- 상태: 대화가 작업 세션에 연결됨
+- 원문: R16, R25, R28, R49, R72, R122(시작 훅에서 줄인 것), R123(load — 줄이지 않은 것), R153·R154(Codex, 작업 브랜치), R155(OpenCode)
+- 그리는 코드: `code:core/sessions.mjs#sessions.parts`, `code:core/recovery.mjs`, `code:core/map-view.mjs`
+
+### 개요
+하던 일을 되찾게 하는 압축 지도. 열린 일, 할 일, 최근 흐름, 지금 작업 브랜치의 최근 기록을 담는다.
+
+### 화면 흐름
+agent는 열린 작업 브랜치와 '다음'을 보고 이어 갈 일을 고른다. 더 볼 것은 read(TOL-06~TOL-10)로 내려간다.
+
+### 화면요소
+1. **열린 작업 브랜치** — `## 열린 작업 브랜치 (n)`, 줄마다 이름 · 마지막 저장 시각 · 다음. 이 대화가 있는 것은 '(이 대화)'. 열린 것이 없으면 절이 없다. 시작 훅에서 작업 맥락이 9,000자를 넘어 마지막 단계까지 줄이면 앞의 몇 개만 보이고 나머지 수를 적는다(이 대화의 것은 늘 보인다, 코드). 열린 작업 브랜치 36개·할 일 15개인 실행(R122)에서는 줄이기 6단계(최근 기록 1개, 본문 500자, 지도 15줄)에서 맞아, 열린 작업 브랜치 36줄이 load(R123)와 같은 길이로 모두 남았다. 줄을 짧게 하거나 열린 작업 브랜치 수를 줄이는 뒤 단계는 실행으로 본 적이 없다(코드). → `tool:branch`
+2. **할 일** — `## 할 일 (열린 n개[, 기한 임박 k개])`, 기한 임박 전부(3개를 넘을 수 있음)와 남은 자리(합쳐 3줄까지). 기한 있는 것은 기한 순, 없는 것은 최신 순. 한 항목 120자까지. 더 있으면 `(전체: todo list)`. 열린 것이 없으면 절이 없다. → `tool:todo`
+3. **흐름 지도** — `## 흐름 (최신이 위)`, git 그래프 모양, 저장 하나가 한 줄(짧은 ID 5자, 겹치면 더 길어짐, MM-DD HH:MM, 요약), 줄기 끝 `(main)`·`(이름)`·`(HEAD -> 이름)`, 합침 `Merge branch '이름'`, 중단 `Abandon branch '이름': 이유`. 기본 기록 30개(연결선 줄은 따로, load의 map_limit로 바꿈). 저장이 없는 새 작업 브랜치는 줄기가 생기지 않고 열린 작업 브랜치(#1)에만 보인다(R16). 메인 기록의 본문·다음은 작업 맥락에 나오지 않는다. → `tool:read`
+4. **이 작업 브랜치의 최근 기록** — `## 이 작업 브랜치의 최근 기록: <이름>`, 최근 본문 3개와 마지막 다음. 작업 브랜치에 있을 때만. 기록이 없으면 `(아직 기록 없음)`.
+
+### 화면 정책
+- `pol.hook-budget`
+- `pol.todo-order`
+- `pol.map-hides-index-dup`
+
+## CMN-03 바로잡은 기록 알림
+
+- 출력 종류: 공통 영역(훅 출력·도구 결과 끝에 붙음)
+- 상태: 플러그인 자기 기록 파일이 깨져 옮겨 둔 직후
+- 원문: R63(Claude 시작 훅), R157(도구 결과 끝), R158(Codex 시작 훅)
+- 그리는 코드: `code:core/storage.mjs#takeNotices`
+
+### 개요
+깨진 기록을 옮겨 두고 일을 계속했다는 것을 agent에게 한 번 알린다.
+
+### 화면요소
+1. **옮긴 파일 한 줄** — `head-context: 읽을 수 없는 기록 파일을 옮겨 두고 없는 것으로 처리했습니다: <파일>.broken-<시각> (<JSON 오류>)`. 대화 연결 파일이 깨졌으면 그 대화는 연결 없음으로 시작한다(R63). 도구 답(모든 도구, serve의 withNotices)과 시작·입력 훅 출력 끝에 붙는다. 문구: `읽을 수 없는 기록 파일을 옮겨 두고 없는 것으로 처리했습니다` ← `tool:list` ← `tool:load` ← `tool:create` ← `tool:save` ← `tool:branch` ← `tool:read` ← `tool:todo` ← `tool:conversations` ← `tool:setup` ← `tool:send` ← `hook:claude:SessionStart:session` ← `hook:claude:SessionStart:context` ← `hook:codex:SessionStart:session` ← `hook:codex:SessionStart:context` ← `hook:codex:UserPromptSubmit:inbox`
+
+### 화면 정책
+- `pol.broken-record-notice`
+
+## STA-01 코어 지침
+
+- 출력 종류: 시작 훅이 넣는 글
+- 상태: 초기설정을 마친 프로젝트에서 시작·/clear·압축
+- 원문: R46, R47(Claude 두 출력 — 0.9.10 코어는 한 출력에 들어가 R47은 빈 출력), R52(압축), R56(재개), R65(Codex 한 출력), R133(node:sqlite 없는 Node에서도 들어감)
+- 내는 기능: `hook:claude:SessionStart:core`, `hook:codex:SessionStart:core`
+- 그리는 코드: `code:core/project.mjs#coreParts`
+
+### 개요
+agent가 일하는 방식(HEAD Core 지침)을 매 시작마다 넣는다. 본문은 패키지의 `instructions/HEAD_CORE.md`이고 영어다.
+
+### 화면 흐름
+agent는 이 지침대로 일한다. 0.9.10 코어 지침(HEAD Core 1/1)은 HEAD가 일하는 원칙(How context works, How HEAD works)만 담고 start-job을 부르라는 줄이 없다. 그 줄은 서버 안내문(SRV-01#1)에만 있다.
+
+### 화면요소
+1. **앞부분** — # HEAD Core로 시작. Claude에서는 출력 상한(9,000자)에 맞춰 나눈 것의 첫째이고 끝에 몇째인지 꼬리표가 붙는다. 0.9.10 코어(약 6,900자)는 한 출력에 들어가 꼬리표가 `(HEAD Core 1/1)`이다. ← `hook:claude:SessionStart:core` 문구: `(HEAD Core 1/1)`
+2. **뒷부분** — 코어가 상한을 넘을 때만 `# HEAD Core (계속 <n>/<n>)`로 시작하는 둘째 출력. 0.9.10에서는 둘째 출력이 비어 있다(R47, 코드). ← `hook:claude:SessionStart:core`
+3. **Codex 한 출력** — Codex는 출력 상한을 꺼서 지침 전체가 꼬리표 없이 한 출력. 0.9.10에서는 Claude 출력(#1)도 본문 전체라 글이 겹치지만 Claude 쪽은 #1이고, setup 결과 안의 본문은 TOL-12#3이다(빌드가 이 두 연결을 이름으로 뺀다). ← `hook:codex:SessionStart:core` 문구: `HEAD owns the whole outcome…Prohibitions belong in review criteria, where they are checked against a finished result.`
+
+### 화면 정책
+- `pol.core-after-setup`
+- `pol.quiet-on-resume`
+
+## STA-02 시작 때 작업 세션
+
+- 출력 종류: 시작 훅이 넣는 글
+- 상태: 연결된 대화의 시작·/clear·압축
+- 원문: R48, R53, R121
+- 공통 영역: CMN-01, CMN-03
+- 내는 기능: `hook:claude:SessionStart:session`, `hook:codex:SessionStart:session`
+- 그리는 코드: `code:core/sessions.mjs#sessions.parts`
+
+### 개요
+새로 열리거나 지워지거나 압축된 대화가 자기 자리를 되찾는 첫 출력. 반드시 들어와야 하는 부분이라 따로 낸다.
+
+### 화면요소
+1. **작업 세션 머리** — CMN-01 그대로. ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session`
+
+node:sqlite를 쓸 수 없는 Node에서는 이 출력 대신 ERR-05의 이유 한 줄이 들어간다(R134, R138).
+
+### 화면 정책
+- `pol.quiet-on-resume`
+- `pol.old-node-says`
+
+## STA-03 연결 안 됨과 첫 실행 안내
+
+- 출력 종류: 시작 훅이 넣는 글
+- 상태: 대화가 작업 세션에 연결되지 않음(첫 실행 전이면 안내가 붙음)
+- 원문: R3(첫 실행 전), R60(/clear 뒤 이어받을 대화를 못 찾음), R67(Codex, 초기설정 뒤)
+- 공통 영역: CMN-03
+- 내는 기능: `hook:claude:SessionStart:session`, `hook:codex:SessionStart:session`
+- 그리는 코드: `code:core/project.mjs#guide`
+
+### 개요
+아직 자리가 없는 대화에 그 사실을 알리고, 첫 실행이면 초기설정을 묻게 한다.
+
+### 화면 흐름
+첫 실행 전: agent는 사람의 첫 입력에 답하기 전에 "초기설정 해도 될까요?"를 묻고 답에 따라 setup을 부른 뒤 원래 이야기로 돌아간다. 연결 안 됨만 있으면: 이어질 일이 생기면 작업 세션 목록을 보고 고른다.
+
+### 화면요소
+1. **연결 안 됨 한 줄** — `이 대화는 아직 작업 세션에 연결되지 않았습니다.` ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session` → `tool:list`
+2. **첫 실행 안내** — `# 프로젝트 첫 실행 (head-context)`: 초기설정이 하는 일(코어 지침 켜기, `.claude/settings.json`에 기본 포크 env·마켓·플러그인 켜기), 예/아니오일 때 부를 것, "파일은 직접 쓰지 말고 이 도구만 쓰세요". 초기설정 전이고 시작·/clear일 때만. → `tool:setup`
+
+관찰: 0.9.10 패키지에도(0.9.5와 같이) 조사 절차 파일(`instructions/survey.md`)이 없어 프로젝트 조사 질문(`# 프로젝트 조사 (head-context)`)은 나오지 않는다(core/project.mjs surveyReady). 그래서 화면요소로 두지 않았다.
+
+### 화면 정책
+- `pol.first-run-guide`
+- `pol.never-ask`
+
+## STA-04 시작 때 작업 맥락
+
+- 출력 종류: 시작 훅이 넣는 글
+- 상태: 연결된 대화의 시작·/clear·압축
+- 원문: R49, R54, R122(9,000자를 넘어 줄임), R154(Codex, 작업 브랜치에 연결), R135·R139(node:sqlite 없는 Node — 빈 출력)
+- 공통 영역: CMN-02, CMN-03
+- 내는 기능: `hook:claude:SessionStart:context`, `hook:codex:SessionStart:context`
+- 그리는 코드: `code:core/sessions.mjs#sessions.parts`
+
+### 개요
+작업 맥락(CMN-02)을 시작 훅 출력 하나의 상한에 맞춰 넣는다.
+
+### 화면요소
+1. **작업 맥락** — CMN-02 그대로, 9,000자를 넘으면 줄인 것. 끝을 자르지 않는다(0.9.6부터). load로는 10,639자였던 같은 자리가 시작 훅에서는 7,338자로 들어왔다. 줄이기 6단계(최근 기록 1개, 본문 500자, 지도 30→15줄)에서 맞았고, 열린 작업 브랜치 36줄과 마지막 다음이 남았다(R122~R124). ← `hook:claude:SessionStart:context` ← `hook:codex:SessionStart:context`
+
+### 화면 정책
+- `pol.hook-budget`
+- `pol.quiet-on-resume`
+
+## STA-05 최근 대화
+
+- 출력 종류: 시작 훅이 넣는 글(Claude만)
+- 상태: 압축·/clear 직후
+- 원문: R55, R136(node:sqlite 없는 Node에서도 들어감)
+- 내는 기능: `hook:claude:SessionStart:recent`
+- 그리는 코드: `code:hosts/claude/recent.mjs#recentPart`
+
+### 개요
+호스트 요약 대신 직전 주고받기를 원문 그대로 돌려준다.
+
+### 화면요소
+1. **머리** — `# 최근 대화 (직전 주고받기 n번, 원문)`. ← `hook:claude:SessionStart:recent`
+2. **주고받기** — 최대 5번. 번호마다 `## n · 사용자 MM-DD HH:MM`(사람이 친 말, 질문 창 답은 tool 결과에서 뽑음)과 `## n · 답`(모델 답 중 보이는 글). 도구 호출·결과·생각·훅 알림은 뺀다. 문구: `## n · 사용자`
+3. **넘칠 때 기록 파일 경로** — 오래된 주고받기부터 빼고, 한 번만 남아도 길면 본문을 자르고, 대화 기록 파일 경로를 적는다(코드). 문구: `번은 상한 때문에 뺐습니다. 대화 기록 파일:`
+
+### 화면 정책
+- `pol.recent-after-compact-clear`
+
+## STA-06 OpenCode 요청마다 넣는 글
+
+- 출력 종류: OpenCode system prompt에 더하는 글
+- 상태: OpenCode 대화의 모든 요청. 하위 세션에도 서버 안내문 공용 부분은 들어가고, 작업 맥락만 빠진다
+- 원문: R155(연결된 대화), R156(하위 세션) — OpenCode 앱 없이 플러그인의 훅 함수를 node로 직접 불렀다(가짜 client가 대화 정보를 돌려줌)
+- 공통 영역: CMN-01, CMN-02
+- 내는 기능: `hook:opencode:experimental.chat.system.transform`
+- 그리는 코드: `code:hosts/opencode/plugin.mjs#server.experimental.chat.system.transform`
+
+### 개요
+OpenCode에서는 시작 훅 대신 요청마다 서버 안내문 공용 부분과 작업 맥락을 넣는다.
+
+### 화면요소
+1. **서버 안내문 공용 부분** — SRV-01의 #1~#6(앱별 부분 없음). 하위 세션에도 들어간다(R156). 글이 SRV-01과 같아 문구로 잇지 않는다 — 실행 R155가 그 기능을 SRV-01#1~#6에 잇는다. ← `hook:opencode:experimental.chat.system.transform`
+2. **작업 맥락** — 연결됐으면 CMN-01·CMN-02(R155). 하위 세션(부모가 있고 연결이 없는 세션)에는 넣지 않는다(R156). 글이 CMN-01·CMN-02와 같아 문구로 잇지 않는다 — 실행 R155가 그 기능을 CMN-01·CMN-02 화면요소에 잇는다. ← `hook:opencode:experimental.chat.system.transform`
+
+## SRV-01 서버 안내문
+
+- 출력 종류: 도구 서버 안내문(MCP initialize의 instructions). Codex는 시작 훅으로 넣는다
+- 상태: 도구 서버가 뜰 때
+- 원문: R6(Claude), R66(Codex 시작 훅), R70(Codex 서버)
+- 내는 기능: `mcp:initialize`, `hook:codex:SessionStart:instructions`
+- 그리는 코드: `code:core/mcp.mjs#instructionsFor`
+
+### 개요
+agent에게 이 플러그인의 개념(작업 세션, 작업 브랜치, 저장, 할 일, 다른 대화)과 언제 무엇을 부르는지를 한 번 알려 준다.
+
+### 화면 흐름
+agent는 일을 시작할 때 start-job을 부르고, 이어질 일이 생기면 작업 세션을 고르고, 착수할 때 작업 브랜치를 열고, 결과가 생기면 저장한다.
+
+### 화면요소
+1. **첫 줄** — `일을 시작할 때는 먼저 start-job 스킬을 불러옵니다.` ← `mcp:initialize` → `skill:start-job`
+2. **작업 세션** — 무엇·언제. 없으면 목록에서 찾아 사람에게 묻고 불러오고, 없으면 목적을 정해 만들지 물은 뒤 만든다. context.md는 사람 동의 없이 고치지 않는다. → `tool:list` → `tool:load` → `tool:create` 문구: `이어지는 큰 일의 묶음입니다`
+3. **작업 브랜치** — 무엇·언제. 착수할 때 열고, 이어 갈 것이 있으면 골라 잇는다. → `tool:branch` 문구: `작업 세션 안에서 열리고 닫히는 한 번의 일입니다`
+4. **저장** — 무엇(다음에 이 일을 이어 갈 대화가 읽는 기록, 무엇을 남길지는 그 대화에 필요할 것으로 정함)·언제, 다음/정리, 참조파일(기록이 기대는 파일은 save의 files에, 경로는 `~/` 전체 경로로), 작업 파일 자리(작업 맥락 맨 위 '작업 세션 폴더' 줄의 `work/YYYY-MM/YYYY-MM-DD-<이름>.md`, 작업 브랜치 이름 폴더는 기록 자리라 그 밖에). → `tool:save` 문구: `작업 브랜치에 남기는 기록 한 번입니다`
+5. **할 일** — 무엇·언제(todo add/done). → `tool:todo` 문구: `작업 세션에 남는 나중에 할 일입니다`
+6. **다른 대화** — 먼저 목록(conversations)을 보고, 목록의 보낼 곳을 이 앱의 보내기 도구에 그대로 준다. → `tool:conversations` 문구: `이 프로젝트에서 살아 있는 대화와`
+7. **이 앱에서 부르는 도구** — Claude: SendMessage(to), Agent 도구 fork / 다른 subagent_type. Codex: 이 플러그인의 send(threadId, prompt), spawn_agent fork_turns "all"/"none". OpenCode에는 없다. → `tool:send` 문구: `이 앱(<앱>)에서 부르는 도구`
+
+### 화면 정책
+- `pol.no-host-tool-names`
+- `pol.ask-before-load`
+- `pol.save-when-result`
+- `pol.start-job-agree`
+
+## SRV-02 도구 목록
+
+- 출력 종류: 도구 서버의 도구 설명(MCP tools/list)
+- 상태: 도구 서버가 뜰 때
+- 원문: R7(Claude), R71(Codex)
+- 내는 기능: `mcp:tools/list`
+- 그리는 코드: `code:core/mcp.mjs#DEFINITIONS`
+
+### 개요
+도구마다 무엇을 하고 언제 부르는지, 인자가 무엇인지 적은 설명. agent가 도구를 고를 때 읽는다. conversation_id·agent_id는 "호스트 연결 전용"이라고 적혀 있다.
+
+### 화면요소
+1. **list** — 작업 세션 목록. ← `mcp:tools/list` → `tool:list` 문구: `작업 세션 목록을 읽습니다`
+2. **load** — 불러와 연결, branch로 잇기, branch=main은 메인. → `tool:load` 문구: `작업 세션을 불러와 이 대화를 연결하고 작업 맥락을 돌려줍니다`
+3. **create** — context 필수, context.md 첫 줄·첫 문장 쓰는 법. → `tool:create` 문구: `새 작업 세션을 만들고 이 대화를 그 메인에 연결합니다`
+4. **save** — 요약(흐름 지도에는 이 줄만)·본문·다음, files(참조파일, `~/` 전체 경로 목록), 본문에 파일을 적을 때의 꼴(마크다운 링크나 백틱 경로여야 찾기·파일 나무에 나옴), 작업 맥락에는 최근 기록 3개만 본문까지 나온다는 것, 다음 없이 저장하면 recap 필수·작업 브랜치 닫힘. 0.9.5에서 빠졌던 파일 꼴 안내는 0.9.6에 들어갔다. 인자에 files가 더해졌다(0.9.7). → `tool:save` 문구: `이 대화가 일하는 작업 브랜치(없으면 메인)에 기록 하나를 남깁니다`
+5. **branch** — create/attach/abandon. → `tool:branch` 문구: `작업 브랜치 다루기`
+6. **read** — overview/map/recent/entry/find/files. → `tool:read` 문구: `연결을 바꾸지 않고 기록을 읽습니다`
+7. **todo** — add/list/done, 기한은 실제 날짜로. → `tool:todo` 문구: `작업 세션의 할 일(todo.md)`
+8. **conversations** — 받을 대화 고르는 법 세 단계. → `tool:conversations` 문구: `다른 대화에 말을 전하기 전에 받을 대화를 고르는 목록입니다`
+9. **setup** — 동의했을 때만, 하는 일, never_ask·survey_done. → `tool:setup` 문구: `프로젝트 첫 실행의 유일한 쓰기 도구`
+10. **send** — Codex 도구 서버에만. 받는 쪽마다 delivery 값. → `tool:send` 문구: `다른 대화에 메시지를 보냅니다`
+
+### 화면 정책
+- `pol.no-host-tool-names`
+- `pol.pick-one-conversation`
+
+## SRV-03 일 시작 절차
+
+- 출력 종류: skill 본문(start-job). agent가 skill을 부르면 들어오는 글
+- 상태: agent가 일을 시작하기 전에 skill을 부름
+- 원문: a3 ua.start-job·ua.record·ua.pick-session의 skill 호출 결과(`# 일 시작하기`로 시작)
+- 내는 기능: `skill:start-job`
+- 그리는 코드: `code:skills/start-job/SKILL.md`
+
+### 개요
+일을 받으면 만들기 전에 거칠 차례를 agent에게 준다. 코드가 검사하지 않고 글로만 지킨다.
+
+### 화면 흐름
+agent는 이 차례대로 문제를 파악하고, 기존 기록을 찾고, 사람과 문제·목표·조건을 맞춘 뒤 작업 세션·작업 브랜치와 진행 방식을 정한다.
+
+### 화면요소
+1. **문제 파악** — 요청과 대화에서 문제와 원하는 결과, 이미 정해진 것과 조건을 확인하고 뜻이 흐리면 묻는다. ← `skill:start-job` 문구: `## 1. 문제를 파악한다`
+2. **기존 자료 먼저** — 작업 세션 기록과 프로젝트 파일에서 비슷한 자료·결정·도구를 먼저 찾는다. ← `skill:start-job` → `tool:list` → `tool:read` 문구: `## 2. 기존 자료를 먼저 찾는다`
+3. **문제·목표·조건 맞추기** — 짧은 불릿으로 보이고 사람과 맞춘다. 맞춰지면 작업 세션을 맞추거나 만들고, 이어질 일이면 작업 브랜치를 열어 첫 기록으로 남긴다. 짧게 끝날 일이면 열지 않아도 된다. ← `skill:start-job` → `tool:load` → `tool:create` → `tool:branch` → `tool:save` 문구: `## 3. 문제·목표·조건을 맞춘다`
+4. **진행 방식 고르기** — 직접 / 기본 포크 / 사이드 포크 / 에이전트 표. 기본 포크는 이 대화가 세부에 깊이 들어가 있으면 그 상태로 시작하고, 에이전트에는 해석 없는 관측을 브리프로 준다(0.9.10 글). 자기 결과의 검수는 에이전트에, 맡긴 결과는 받은 쪽이 확인한다. ← `skill:start-job` 문구: `## 4. 진행 방식을 고른다`
+
+### 화면 정책
+- `pol.start-job-agree`
+- `pol.delegate-check`
+
+## TOL-01 작업 세션 목록
+
+- 출력 종류: tool 결과(list)
+- 상태: 작업 세션이 없음 / 있음
+- 원문: R8(없음)
+- 내는 기능: `tool:list`
+- 그리는 코드: `code:core/sessions.mjs#sessions.list`
+
+### 화면요소
+1. **작업 세션 줄** — 작업 세션마다 이름, context.md 첫 문장, 메인 최신 요약, 열린 작업 브랜치 수, 최근 기록 순(코드·도구 설명). ← `tool:list` → `tool:load` 문구: `# 작업 세션 목록 (최근 기록 순)`
+2. **없음** — `아직 작업 세션이 없습니다.` ← `tool:list` → `tool:create`
+3. **읽기 실패 줄** — `<이름>: 읽기 실패 — <오류>`(코드). 0.9.9부터 기록 사이 관계 오류(갈래의 기준 기록 없음, 작업 브랜치 부모 순환 등)는 그 작업 세션을 색인에 다시 반영하는 호출(그 세션 파일이 바뀌었거나 색인을 새로 만들 때)의 목록에 한 번만 이 줄로 나온다(core/graph.mjs sync, 코드).
+
+## TOL-02 불러온 작업 맥락
+
+- 출력 종류: tool 결과(load, create, branch create/attach)
+- 상태: 연결이 생기거나 바뀐 직후
+- 원문: R14(create), R16(branch create), R25(attach), R37(load), R72(Codex load)
+- 공통 영역: CMN-01, CMN-02
+- 내는 기능: `tool:load`, `tool:create`, `tool:branch`
+- 그리는 코드: `code:core/sessions.mjs#sessions.work`, `code:core/recovery.mjs#identity`
+
+### 화면요소
+1. **작업 세션 머리와 작업 맥락** — CMN-01 + CMN-02. 도구 결과는 줄이지 않는다. ← `tool:load` ← `tool:create` ← `tool:branch` → `tool:save`
+2. **이미 있는 이름** — create에서 같은 이름이 있으면 `작업 세션 '<이름>'이 이미 있습니다. 덮어쓰지 않았습니다.` 한 줄만 돌려주고 대화를 연결하지 않는다(코드). ← `tool:create` → `tool:load`
+
+## TOL-03 저장·닫힘·중단 결과
+
+- 출력 종류: tool 결과(save, branch abandon)
+- 상태: 메인 / 작업 브랜치(다음 있음) / 작업 브랜치 닫힘 / 작업 브랜치 중단
+- 원문: R15, R17, R24, R34, R113(참조파일), R151(폴더 참조)
+- 내는 기능: `tool:save`, `tool:branch`
+- 그리는 코드: `code:core/sessions.mjs#sessions.save`, `code:core/sessions.mjs#sessions.abandon`
+
+### 화면요소
+1. **기록한 자리** — `작업 세션 '<이름>' 메인에 기록했습니다.` 또는 `… 작업 브랜치 '<이름>'에 기록했습니다.` ← `tool:save`
+2. **요약** — `요약: <summary>`. ← `tool:save` 문구: `기록했습니다.…요약: <summary>`
+3. **다음** — `다음: <next>`(다음이 있을 때). ← `tool:save` 문구: `기록했습니다.…다음: <next>`
+4. **닫힘 안내** — `…다음이 없어 작업 브랜치를 닫아 메인에 합쳤습니다.`와 `이 대화는 이제 메인에 기록합니다.` ← `tool:save`
+5. **중단 한 줄** — `작업 브랜치 '<이름>'을 중단했습니다. 메인에 중단 항목 1개와 기록: work/<이름>/history.md.` 중단한 대화는 메인으로 돌아간다. ← `tool:branch`
+6. **찾지 못한 참조파일** — files 중 파일로 풀리지 않은 경로를 적은 그대로 남겼다는 한 줄. 저장은 한다. 문구: `참조파일 중 찾지 못한 경로(적은 그대로 남김): <경로>`. 기록에는 `참조파일:` 줄로 쓴다. 파일로 풀린 경로는 절대경로로 바꾸고, 홈 아래면 `~/`로 줄인다. R113에서 홈 아래 파일은 `~/notes/login-plan.md`로, 작업 세션 폴더 기준으로 준 `work/2026-11/…`는 홈 밖이라 `/tmp/hc-demo/…` 절대경로로 써졌다(R122의 최근 기록 본문). 파일 나무(R116)가 `work/2026-11/…`로 보인 것은 나무가 작업 세션 폴더 기준으로 줄여 보이기 때문이다. ← `tool:save`
+7. **폴더 참조파일** — files 중 폴더인 것은 그 폴더 경로로 남기되 기록에서 파일 찾기에는 걸리지 않는다고 알린다(R151). 문구: `참조파일 중 폴더(기록에서 파일 찾기에는 걸리지 않음): <경로>` ← `tool:save`
+
+## TOL-05 할 일
+
+- 출력 종류: tool 결과(todo add/list/done)
+- 원문: R20, R21, R35
+- 내는 기능: `tool:todo`
+- 그리는 코드: `code:core/sessions.mjs#sessions.todo`, `code:core/todo.mjs`
+
+### 화면요소
+1. **더함** — `작업 세션 '<이름>' 할 일에 더했습니다.`와 todo.md에 쓴 줄 그대로(`- [ ] <날짜> 기한 <날짜>(요일) "원문"`). 원문의 큰따옴표는 작은따옴표로 바뀐다. ← `tool:todo` 고치는 동작은 없어, 기한을 바꾸려면 새로 더하고 옛 항목을 끝내야 한다(C-3에서 agent가 그렇게 해 끝나지 않은 일이 끝냄으로 남음).
+2. **목록** — `# 할 일: <이름> (열린 n개)`, 줄마다 기한 · 내용. 기한 있는 것은 기한 순, 없는 것은 최신 순. name을 주면 연결 없이도 볼 수 있다(a3 ua.todo). ← `tool:todo`
+3. **끝냄** — `끝냄: <내용>`. 체크만 바꾸고 할 일 글은 그대로 둔다. 무엇으로 끝났는지는 작업 세션 기록으로 남긴다. ← `tool:todo` 문구: `끝냄: <내용>`
+
+## TOL-06 흐름 지도
+
+- 출력 종류: tool 결과(read map), CLI 출력(map.mjs)
+- 원문: R26, R44, R82
+- 내는 기능: `tool:read`, `cli:map`
+- 그리는 코드: `code:core/map-view.mjs`
+
+### 화면요소
+1. **머리** — `# 지도: <이름>`. ← `tool:read` ← `cli:map`
+2. **줄** — CMN-02#3과 같은 꼴, limit줄(기본 30, 0은 전체). → `tool:read`
+
+## TOL-07 기록 본문
+
+- 출력 종류: tool 결과(read recent, read entry)
+- 원문: R27
+- 내는 기능: `tool:read`
+- 그리는 코드: `code:core/sessions.mjs#sessions.inspect`
+
+### 화면요소
+1. **기록** — 기록마다 `## <ISO 시각>`, `요약: …`, 본문, `다음: …`. ← `tool:read` 문구: `## YYYY-MM-DDT<시각>`
+
+## TOL-08 둘러보기
+
+- 출력 종류: tool 결과(read overview)
+- 원문: R28
+- 공통 영역: CMN-02
+- 내는 기능: `tool:read`
+- 그리는 코드: `code:core/sessions.mjs#sessions.inspect`
+
+### 개요
+연결을 바꾸지 않고 다른 작업 세션(또는 이 작업 세션)을 불러올 때와 같은 모양으로 본다.
+
+### 화면요소
+1. **작업 세션 머리** — CMN-01#1·#2·#4(이 대화의 작업 브랜치 줄 없음). ← `tool:read`
+2. **작업 맥락** — CMN-02#1~#3. ← `tool:read`
+3. **최근 기록(작업 세션 전체)** — `## 최근 기록 (작업 세션 전체, n개)`, 기록마다 `### <짧은 ID> <시각> <요약>`과 본문. ← `tool:read` → `tool:read`
+
+## TOL-09 찾기 결과
+
+- 출력 종류: tool 결과(read find)
+- 원문: R29(낱말), R32(파일), R115(참조파일)
+- 내는 기능: `tool:read`
+- 그리는 코드: `code:core/sessions.mjs#sessions.inspect`
+
+### 화면요소
+1. **기록 줄** — `<작업 세션>/<자리>@<ISO 시각> · <요약>`. 작업 브랜치의 기록은 메인 색인 줄로도 한 번 더 나온다(R29). 최근 기록이 위이고, 같은 시각이면 작업 세션·작업 브랜치·차례 순이다(0.9.9부터, core/graph.mjs find). ← `tool:read` → `tool:read` 파일로 찾을 때는 기록의 참조파일(0.9.7부터, R115)과 본문에 마크다운 링크·백틱 경로로 적은 파일이 맞는다. 평문 경로만 적은 기록은 '(없음)'(C-3, 0.9.5).
+2. **없음** — `(없음)`. ← `tool:read`
+
+## TOL-10 가리킨 파일 나무
+
+- 출력 종류: tool 결과(read files)
+- 원문: R31, R116(참조파일)
+- 내는 기능: `tool:read`
+- 그리는 코드: `code:core/sessions.mjs#sessions.inspect`
+
+### 화면요소
+1. **머리** — `# 파일: 작업 브랜치 <이름> (기록 n개)` 또는 기록 하나. ← `tool:read`
+2. **나무** — 기록의 참조파일과 본문에 마크다운 링크·백틱 경로로 적은 파일, 그 파일들이 가리킨 파일, depth 1~3, 50개까지. 없으면 `(가리킨 파일 없음)`. ← `tool:read` 평문 경로만 적은 기록은 '(가리킨 파일 없음)'(C-3, 0.9.5).
+
+## TOL-11 살아 있는 대화 목록
+
+- 출력 종류: tool 결과(conversations)
+- 원문: R33(Claude), R73(Codex) — 둘 다 살아 있는 대화 없음
+- 내는 기능: `tool:conversations`
+- 그리는 코드: `code:core/sessions.mjs#sessions.conversations`
+
+### 화면요소
+1. **머리와 보내기 안내** — `# 살아 있는 대화 (작업 세션 → 작업 브랜치 → 대화)`와 그 앱의 보내기 도구 한 줄(Claude: 'SendMessage(to: 보낼 곳)', Codex: 'send(threadId: 보낼 곳, prompt)'), 문구: `보내기: <도구>. 이름은 여러 대화가 같을 수 있어`. ← `tool:conversations`
+2. **대화 줄** — 작업 세션 → 작업 브랜치 → 대화, 대화마다 이름·보낼 곳·종류(사람/포크·워커)·마지막 활동·하는 일, 포크·워커는 띄운 대화 아래 들여씀(코드·도구 설명). ← `tool:conversations` → `tool:send` 문구: `하는 일: <일>`
+3. **안 붙은 대화** — 작업 세션에 안 붙은 대화 묶음(코드). 문구: `## 작업 세션 없음`
+4. **없음** — `(살아 있는 대화 없음)`. ← `tool:conversations`
+
+### 화면 정책
+- `pol.forks-under-parent`
+
+## TOL-12 초기설정 결과
+
+- 출력 종류: tool 결과(setup)
+- 원문: R11(setup), R12(survey_done), R91·R119(이미 초기설정된 프로젝트)
+- 내는 기능: `tool:setup`
+- 그리는 코드: `code:core/project.mjs#setupTool`
+
+### 화면요소
+1. **바꾼 것** — `초기설정을 마쳤습니다.`와 코어 지침·env·마켓/플러그인 켜기마다 무엇을 했는지(새로 만들었습니다/더했습니다/그대로). ← `tool:setup`
+2. **다음 시작부터** — 시작·/clear·압축 때 코어 지침, 기본 포크, 새 판 받기. Codex에서는 Codex 설정을 바꾸지 않았다는 말. ← `tool:setup` 문구: `다음 시작부터는 시작·/clear·압축 때 코어 지침이 들어가`
+3. **코어 지침 본문** — STA-01과 같은 본문과 꼬리표. "이 대화부터 따르세요". ← `tool:setup` 문구: `이 대화에서는 아래 코어 지침을 지금부터 따르세요`
+4. **한 줄 결과** — never_ask: `이 프로젝트에서는 … 다시 묻지 않습니다.`, survey_done: `프로젝트 조사를 끝남으로 기록했습니다.` ← `tool:setup`
+5. **이미 초기설정됨** — 이미 초기설정된 프로젝트에서 다시 승인하면 맨 앞에 한 줄(0.9.6부터). 문구: `이 프로젝트는 이미 초기설정되어 있었습니다(다른 대화가 먼저 했을 수 있습니다). 이미 있던 값은 그대로 두었습니다.` 설정 파일은 잠그고 고친다. ← `tool:setup`
+
+## TOL-13 보내기 결과
+
+- 출력 종류: tool 결과(Codex send)
+- 원문: R74
+- 내는 기능: `tool:send`
+- 그리는 코드: `code:hosts/codex/mcp.mjs#sendTool.call`
+
+### 화면요소
+1. **JSON 한 줄** — `{"threadId":"<받는 곳>","delivery":"started|app-queued|queued|sent"}`. ← `tool:send` 문구: `{"threadId":"<받는 곳>","delivery":"<값>"}`
+
+## ERR-01 도구 오류
+
+- 출력 종류: tool 결과(isError)
+- 원문: R9, R10, R13, R18, R19, R23, R30, R36, R38, R39, R75, R76, R114, R117, R118, R149, R150, R152
+- 내는 기능: `tool:list`, `tool:load`, `tool:create`, `tool:save`, `tool:branch`, `tool:read`, `tool:todo`, `tool:setup`, `tool:send`
+- 그리는 코드: `code:core/mcp.mjs#callTool`
+
+### 개요
+무엇이 잘못됐고 무엇을 주면 되는지를 한 문장으로 돌려준다. agent는 고쳐서 다시 부른다.
+
+### 화면요소
+1. **인자 오류** — `알 수 없는 도구: <이름>`, `유효하지 않은 인자: <이름>`, `필수 인자: <이름>`. files에 목록이 아닌 값을 주어도 이것이다(R114). ← `tool:read`
+2. **context 없는 create** — `방향(context)이 필요합니다. 목적 없는 작업 세션은 만들지 않습니다. …` ← `tool:create`
+3. **저장 규칙** — 다음·정리 없이 저장(`…recap으로 주세요. 이어 갈 일이 남았다면 next를 주세요.`), 다음과 정리를 함께(`다음이 있는 저장에는 recap을 받지 않습니다. …`). 0.9.7부터 본문에 기록 제목이나 예약 줄(`요약:`·`다음:`·`참조파일:` 등)이 있으면 거절하고(R149), files 경로에 백틱·줄바꿈이 있으면 거절한다(R150). 문구: `본문에 기록 제목 또는 예약 줄을 넣을 수 없습니다. 참조파일은 files로 줍니다.` 문구: `files의 경로에는 백틱이나 줄바꿈을 넣을 수 없습니다.` ← `tool:save`
+4. **없는 대상** — `세션 '<이름>'이 없습니다.`, `작업 브랜치가 없습니다: <이름>`. ← `tool:load` ← `tool:read`
+5. **branch 규칙** — `reason는 비어 있지 않은 한 줄이어야 합니다.`, `작업 브랜치 '<이름>'이 이미 있습니다. 이어 가려면 attach하세요.`(코드) ← `tool:branch`
+6. **setup 규칙** — `never_ask에는 step(setup 또는 survey)이 필요합니다.` ← `tool:setup`
+7. **send 규칙** — `이 대화 자신에게는 보낼 수 없습니다.`, `받는 Claude 대화가 지금 실행 중이 아닙니다: <보낼 곳>` ← `tool:send`
+8. **이름 규칙** — `이름은 영문·숫자·한글·._-만 허용하며 ..와 경로 구분자는 금지합니다.` 띄어쓰기가 있는 이름은 거절된다(a3 ua.branch·ua.record·ua.todo·ua.resume). 이름을 받는 도구(create·branch·load, name을 준 read·todo)만 이 오류를 낸다(core/sessions.mjs directory, core/graph.mjs Graph.session). ← `tool:create` ← `tool:branch` ← `tool:load` ← `tool:read` ← `tool:todo`
+9. **중단한 작업 브랜치 불러오기** — `중단한 작업 브랜치입니다. 기록은 read로 읽으세요.`(코드) ← `tool:load` ← `tool:branch` → `tool:read`
+10. **짧은 ID** — 꼴이 틀림(`지도 ID는 짧은 ID(16진수 4자 이상) 또는 전체 ID입니다.` — 0.9.5는 '5자 이상'이라 적었으나 검사는 4자부터였고, 0.9.6에서 문구를 검사에 맞춤, R36·R118), 세션 없음, 없는 ID, 여럿에 겹침(후보를 담은 오류)(코드). ← `tool:read`
+11. **연결 안 된 대화의 쓰기** — 작업 세션에 붙지 않은 대화가 save·branch 등을 부르면 문구: `이 대화는 아직 작업 세션에 연결되지 않았습니다. 먼저 작업 세션을 불러오거나 만드세요.`
+13. **잠금을 얻지 못함** — 색인·기록·설정 파일의 잠금을 다른 살아 있는 프로세스가 10초 넘게 쥐고 있으면 그 호출이 실패한다(R152: 색인 잠금을 쥔 채 read). 0.9.8 전에는 저장이 색인 잠금을 10초 넘게 쥐어 다른 대화가 이 오류를 받았다(README). 잠금을 쥐는 도구(`impact core/lock.mjs#locked`) 어디서나 날 수 있다. 문구: `잠금을 얻지 못했습니다: <파일>` ← `tool:list` ← `tool:load` ← `tool:create` ← `tool:save` ← `tool:branch` ← `tool:read` ← `tool:todo` ← `tool:conversations` ← `tool:setup`
+12. **달 꼴 작업 브랜치 이름** — 새 작업 브랜치 이름이 `YYYY-MM` 꼴이면 거절한다(0.9.6부터, R117). 전에 만든 달 꼴 작업 브랜치는 그대로 읽는다(코드). 문구: `'<이름>'는 작업 파일의 달 폴더(work/YYYY-MM) 꼴이라 작업 브랜치 이름으로 쓸 수 없습니다. 그 일을 나타내는 이름을 주세요.` ← `tool:branch`
+
+## ERR-02 쓰기 거절
+
+- 출력 종류: tool 결과(isError)
+- 상태: 대화 안 작업(agent_id) 또는 프로그램이 돌리는 대화(claude -p)가 쓰기 도구를 부름
+- 원문: R43, R45, R77
+- 내는 기능: `tool:load`, `tool:create`, `tool:save`, `tool:branch`, `tool:todo`, `tool:setup`
+- 그리는 코드: `code:core/mcp.mjs#callTool`
+
+### 화면요소
+1. **거절 문구** — `이 작업에서는 작업 기록을 쓰지 않습니다(읽기만 됩니다). 결과를 돌려주면 부른 대화가 확인하고 저장합니다.` ← `tool:save` ← `tool:todo`
+
+## ERR-03 프로젝트를 알 수 없음
+
+- 출력 종류: tool 결과(isError, Codex)
+- 상태: Codex 대화의 시작 훅이 돌지 않아 등록이 없음(대개 훅 신뢰 전)
+- 원문: R78
+- 내는 기능: `tool:list`, `tool:load`, `tool:read`
+- 그리는 코드: `code:hosts/codex/register.mjs`
+
+### 화면요소
+1. **이유** — `이 대화의 프로젝트를 알 수 없습니다. head-context의 시작 훅이 이 대화에서 돌지 않았습니다. …` ← `tool:list`
+2. **사람에게 전할 신뢰 경로** — 터미널 Codex: Hooks need review → Trust all and continue. Codex 앱: 설정 → 코딩 → Hook → 플러그인에서 제공 → Head Context → 모두 신뢰. 그 뒤 새 대화. 문구: `Trust all and continue`
+
+## ERR-04 훅 실패 한 줄
+
+- 출력 종류: 시작·입력 훅이 넣는 글
+- 상태: 훅 실행 중 오류
+- 원문: R64(.head/config.json이 깨짐)
+- 내는 기능: `hook:claude:SessionStart:session`, `hook:codex:SessionStart:session`, `hook:codex:UserPromptSubmit:inbox`
+- 그리는 코드: `code:hosts/claude/hook.mjs`, `code:hosts/codex/hook.mjs`
+
+### 화면요소
+1. **실패 한 줄** — `head-context: 이 훅(<부분>)이 작업 맥락을 넣지 못했습니다: <이유>`. Claude는 시작·하위 에이전트 훅, Codex는 시작·입력·하위 에이전트 훅이 실패하면 낸다(각 훅의 catch). ← `hook:claude:SessionStart:session` ← `hook:claude:SessionStart:context` ← `hook:claude:SessionStart:core` ← `hook:claude:SessionStart:recent` ← `hook:claude:SubagentStart` ← `hook:codex:SessionStart:session` ← `hook:codex:SessionStart:context` ← `hook:codex:SessionStart:core` ← `hook:codex:SessionStart:instructions` ← `hook:codex:UserPromptSubmit:inbox` ← `hook:codex:SubagentStart:subagent`
+2. **설정 파일 이유** — `설정 파일을 읽을 수 없습니다(JSON 오류). 고치기 전에는 기록 위치를 알 수 없어 기록을 읽거나 쓰지 않습니다: <경로> …` 기록 위치를 읽는 훅이 낸다. ← `hook:claude:SessionStart:session` ← `hook:claude:SessionStart:context` ← `hook:codex:SessionStart:session` ← `hook:codex:SessionStart:context` ← `hook:codex:UserPromptSubmit:inbox`
+
+### 화면 정책
+- `pol.hook-failure-says`
+
+## ERR-05 node:sqlite 없는 Node
+
+- 출력 종류: tool 결과(isError)와 시작 훅이 넣는 글
+- 상태: PATH에서 먼저 잡히는 node가 node:sqlite를 불러오지 못함(22.13 미만, 플래그 없는 23.0~23.3) — 실행은 f2의 `/usr/bin/node` v18.19.1로 했다
+- 원문: R129·R130(도구 서버 시작 — initialize·tools/list는 그대로 답함), R131·R140~R147(Claude 도구 서버의 도구 아홉), R132·R148(Codex 도구 서버의 list·send), R134(Claude 시작 훅 session), R138(Codex 시작 훅 session), R135·R137·R139(빈 출력)
+- 내는 기능: `tool:list`, `tool:load`, `tool:create`, `tool:save`, `tool:branch`, `tool:read`, `tool:todo`, `tool:conversations`, `tool:setup`, `tool:send`, `hook:claude:SessionStart:session`, `hook:codex:SessionStart:session`
+- 그리는 코드: `code:core/platform.mjs#runtimeProblem`
+
+### 개요
+0.9.7부터 옛 Node로 띄워도 도구 서버와 훅이 죽지 않고, 무엇이 필요한지 한 줄로 알린다. 전에는 도구 서버가 시작하다 죽었다(README).
+
+### 화면 흐름
+agent는 이 줄을 사람에게 전한다. 사람이 node를 바꾸고 대화를 다시 연다.
+
+### 화면요소
+1. **이유 한 줄** — 모든 도구 호출의 오류와, 시작 훅 session 부분에 한 번. 문구: `head-context는 node:sqlite를 쓸 수 있는 Node(22.13 이상)가 필요합니다. 지금 node(<버전>, <실행 파일>)는 node:sqlite를 불러오지 못합니다. PATH에서 먼저 잡히는 node를 바꾼 뒤 대화를 다시 여세요.` ← `tool:list` ← `tool:load` ← `tool:create` ← `tool:save` ← `tool:branch` ← `tool:read` ← `tool:todo` ← `tool:conversations` ← `tool:setup` ← `tool:send` ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session`
+2. **빠지는 것** — 시작 훅의 작업 맥락(context)은 비고, 압축 직전 훅은 아무것도 내지 않는다(호스트 요약이 남음). 코어 지침(R133)과 압축·/clear 뒤 최근 대화 원문(R136), Codex 안내문은 node:sqlite가 필요 없어 그대로 들어간다.
+
+### 화면 정책
+- `pol.old-node-says`
+
+## AGT-01 대화 안 작업 안내
+
+- 출력 종류: 하위 에이전트 시작 훅이 넣는 글
+- 상태: 대화 안에서 포크·하위 에이전트가 시작
+- 원문: R42(Claude), R81(Codex)
+- 내는 기능: `hook:claude:SubagentStart`, `hook:codex:SubagentStart:subagent`
+- 그리는 코드: `code:core/mcp.mjs#SUBAGENT_NOTICE`
+
+### 화면요소
+1. **안내 한 덩어리** — `이 작업은 부른 대화 안에서 맡은 일 하나를 합니다. 끝나면 결과를 돌려주세요. 부른 대화가 결과를 확인하고 저장합니다. 작업 기록 도구(load, save 등)는 읽기만 됩니다.` ← `hook:claude:SubagentStart` ← `hook:codex:SubagentStart:subagent`
+
+### 화면 정책
+- `pol.subagent-notice`
+
+## MSG-01 받은 메시지
+
+- 출력 종류: 입력 훅이 넣는 글(Codex)
+- 상태: 바로 깨우지 못한 동안 이 대화로 온 메시지가 편지함에 있음
+- 원문: R79(있음), R80(빈 편지함 — 출력 없음)
+- 내는 기능: `hook:codex:UserPromptSubmit:inbox`
+- 그리는 코드: `code:hosts/codex/threads.mjs#asMessage`
+
+### 화면요소
+1. **메시지** — `<cross-session-message from="<보낸 곳>">` 본문 `</cross-session-message>`. ← `hook:codex:UserPromptSubmit:inbox` → `tool:send` 문구: `cross-session-message from=`
+2. **못 읽은 메시지 알림** — `head-context: 이 대화로 온 메시지 n개를 읽을 수 없어 전하지 못하고 따로 두었습니다: …`(코드). 문구: `이 대화로 온 메시지 <n>개를 읽을 수 없어`
+
+## MSG-02 Codex로 보낸 결과
+
+- 출력 종류: Claude의 SendMessage 결과(호스트가 보여 줌), 그 안의 판정은 중계 출력
+- 상태: Claude 대화가 `codex:<ID>`로 SendMessage
+- 원문: R86(이 프로젝트의 대화가 아님), R87(편지함에 둠) — 중계 스크립트 출력
+- 내는 기능: `hook:claude:session.send`
+- 그리는 코드: `code:hooks/conversations.mjs#register`, `code:scripts/relay.mjs`
+
+### 화면요소
+1. **보냄** — 호스트에 `isDelivered: true`(중계 출력 `{"delivered":true,"how":"started|app-queued|queued"}`). ← `hook:claude:session.send`
+2. **못 보낸 이유** — `isDelivered: false`와 reason(예: `이 프로젝트에서 연 Codex 대화가 아닙니다: codex:<ID>`, `Codex로 보내는 중 플러그인 오류가 났습니다`). ← `hook:claude:session.send`
+
+## CMP-01 압축 요약 지시
+
+- 출력 종류: 압축 직전 훅 출력(호스트의 요약 모델이 읽음)
+- 상태: Claude 대화 압축 직전(node:sqlite를 쓸 수 있는 Node일 때만 — 옛 Node에서는 빈 출력, R137)
+- 원문: R51
+- 내는 기능: `hook:claude:PreCompact`
+- 그리는 코드: `code:hosts/claude/compact.mjs#compactInstruction`
+
+### 화면요소
+1. **덮어쓰기 지시** — 번호 절 요약 대신 `<summary>`에 한 줄만, `<analysis>`도 한 줄, 대화 반복·다음 할 일 금지(영어). ← `hook:claude:PreCompact` 문구: `OVERRIDE FOR THIS SUMMARY`
+2. **포인터 한 줄** — `이전 대화는 요약하지 않는다. 압축 직전의 최근 대화(원문)와 작업 세션·작업 맥락은 이 메시지 뒤의 자동 컨텍스트에 있고, 전체 기록은 대화 기록 파일에 있다.` ← `hook:claude:PreCompact`
+
+## CLI-01 0.7 정리
+
+- 출력 종류: CLI 출력(migrate-0.7.mjs)
+- 상태: 0.6에서 올리는 프로젝트(미리 보기가 기본, `--apply`로 적용)
+- 원문: R83(미리 보기), R84(경로 없음)
+- 내는 기능: `cli:migrate-0.7`
+- 그리는 코드: `code:core/migrate.mjs#describe`
+
+### 화면요소
+1. **머리** — `# 0.6 → 0.7 맞추기 (미리 보기 — --apply로 적용)`. ← `cli:migrate-0.7`
+2. **옛 상태 파일** — `.head/state/_0.6/`으로 옮길 것, `subtasks/`는 그대로. ← `cli:migrate-0.7` 문구: `## 옛 상태 파일 → .head/state/_0.6/`
+3. **저장 없는 0.6 자동 브랜치** — 옮길 것 n개. ← `cli:migrate-0.7` 문구: `## 저장 없는 0.6 자동 브랜치`
+4. **그 브랜치를 가리키던 대화** — 메인으로 n개. ← `cli:migrate-0.7` 문구: `## 이 브랜치를 가리키던 대화 → 메인`
+5. **반복 이름표** — `"(fork)"` 반복을 하나로 n개. ← `cli:migrate-0.7` 문구: `반복 이름표 → 하나로`
+6. **경로 없음** — stderr `프로젝트 경로가 필요합니다: node scripts/migrate-0.7.mjs <프로젝트> [--apply]`, 종료 코드 1. ← `cli:migrate-0.7`

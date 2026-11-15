@@ -313,6 +313,8 @@ LLM은 자기 앱의 보내기 도구에 대화 목록(`conversations`)의 보�
 
 공개 GitHub `Won6314/head-agent-core`의 마켓 `head-agent-core`(저장소 이름과 같음)로 낸다. 새 판은 `plugin.json` 버전을 올려 main에 합치고 태그 `head-context--v<판>`을 단다. 초기설정이 프로젝트 settings에 이 마켓을 `autoUpdate: true`로 적으므로 앱이 시작할 때 새 판을 받는다.
 
+태그를 달기 전에 [`graph/build/head-context/README.md`](../../graph/build/head-context/README.md)의 차례로 그 커밋의 제품 그래프(`graph/head-context-<판>/`)를 다시 만들어 같은 main에 넣는다.
+
 ## 시험
 
 ```bash

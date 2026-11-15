@@ -1,0 +1,672 @@
+{
+  "_": "B-6 뜻 파일. 그래프에 직접 쓰는 것: 기능 한 줄, 정책(조건/주체/행위). 근거의 R번호는 runs/A-1-outputs.md, 코드는 7a5896c(0.9.10) packages/context 기준. R112까지 근거는 0.9.5와 같은 차례의 실행이다 파일:줄.",
+  "features": {
+    "tool:list": "작업 세션 목록을 최근 기록 순으로 돌려준다",
+    "tool:load": "작업 세션을 불러와 이 대화를 메인이나 작업 브랜치에 연결하고 작업 맥락을 돌려준다",
+    "tool:create": "목적(context)을 받아 새 작업 세션을 만들고 이 대화를 그 메인에 연결한다",
+    "tool:save": "이 대화의 자리(메인 또는 작업 브랜치)에 기록 하나를 남기고(files는 `참조파일:` 줄로), 다음 없이 저장하면 작업 브랜치를 닫아 메인에 합친다",
+    "tool:branch": "작업 브랜치를 열거나(create) 잇거나(attach) 이유와 함께 중단한다(abandon)",
+    "tool:read": "연결을 바꾸지 않고 둘러보기·흐름 지도·최근 본문·기록 하나·찾기·가리킨 파일 나무를 읽는다",
+    "tool:todo": "작업 세션의 todo.md에 할 일을 더하고, 보이고, 끝낸다",
+    "tool:conversations": "살아 있는 Claude Code·Codex 대화를 작업 세션 → 작업 브랜치 → 대화로 보여 준다",
+    "tool:setup": "사용자 동의 뒤 이 프로젝트의 코어 지침과 .claude/settings.json(기본 포크·마켓·플러그인 켜기)을 잠그고 켜고 첫 실행 단계를 기록한다",
+    "tool:send": "Codex 대화에서 다른 Codex·Claude 대화로 메시지를 보낸다(Codex 도구 서버에만)",
+    "mcp:initialize": "도구 서버가 뜰 때 서버 이름·판과 그 앱용 서버 안내문을 돌려준다",
+    "mcp:tools/list": "도구 서버의 도구 설명과 인자 목록을 돌려준다",
+    "mcp:ping": "도구 서버가 살아 있는지 빈 답으로 알려 준다",
+    "hook:claude:SessionStart:core": "시작·/clear·압축 때 코어 지침을 넣는다. 출력 상한(9,000자)을 넘을 때만 두 출력으로 나누고, 0.9.10 코어는 첫 출력 하나에 `(HEAD Core 1/1)`로 들어가 둘째는 빈다(0.7 import 줄은 빼고)",
+    "hook:claude:SessionStart:session": "대화를 등록하고 이어받을 자리를 찾아 작업 세션 머리(또는 연결 안 됨)와 첫 실행 안내를 넣는다. node:sqlite 없는 Node면 그 이유 한 줄만 넣는다",
+    "hook:claude:SessionStart:context": "연결된 대화에 작업 맥락을 9,000자 안으로 줄여(자르지 않고) 넣는다",
+    "hook:claude:SessionStart:recent": "압축·/clear 직후 직전 주고받기를 원문으로 넣는다",
+    "hook:claude:PreCompact": "호스트 요약을 한 줄 포인터로 바꾸라는 지시를 낸다(node:sqlite 없는 Node에서는 내지 않는다)",
+    "hook:claude:PreToolUse": "setup을 뺀 이 플러그인 도구 호출에 대화 ID(대화 안 작업이면 agent_id도)를 채운다",
+    "hook:claude:SubagentStart": "대화 안 작업이 시작되면 읽기만 된다는 안내를 넣는다",
+    "hook:claude:session.send": "Claude SendMessage 중 codex:<ID> 대상을 가로채 중계 스크립트로 Codex 대화에 보낸다",
+    "hook:codex:SessionStart:core": "Codex 시작·/clear·압축 때 코어 지침 전체를 한 출력으로 넣는다",
+    "hook:codex:SessionStart:instructions": "Codex 시작 때 서버 안내문(공용 + Codex 부분)을 넣는다",
+    "hook:codex:SessionStart:session": "Codex 대화의 폴더와 엔진을 등록하고 작업 세션 머리(또는 연결 안 됨)와 첫 실행 안내를 넣는다. node:sqlite 없는 Node면 그 이유 한 줄만 넣는다",
+    "hook:codex:SessionStart:context": "Codex 연결된 대화에 작업 맥락을 넣는다",
+    "hook:codex:UserPromptSubmit:inbox": "Codex 입력 때 대화 정보(presence)를 다시 쓰고(없거나 깨졌으면 새로) 편지함에 쌓인 메시지를 넣고 비운다",
+    "hook:codex:SubagentStart:subagent": "Codex 하위 에이전트에 읽기만 된다는 안내를 넣는다",
+    "hook:opencode:event": "OpenCode 세션 이벤트에서 대화의 부모·제목을 기억한다",
+    "hook:opencode:experimental.chat.system.transform": "OpenCode 요청마다 서버 안내문 공용 부분과 작업 맥락을 system prompt에 더한다",
+    "hook:opencode:tool.execute.before": "OpenCode의 이 플러그인 도구 호출에 대화 ID(하위 세션이면 agent_id도)를 채운다",
+    "cli:map": "명령줄에서 작업 세션의 흐름 지도를 출력한다",
+    "cli:migrate-0.7": "0.6 기록을 0.7 꼴로 맞출 것을 미리 보이고 --apply면 옮긴다",
+    "cli:report": "코어 밖 도구의 하위 작업 시작·끝을 .head/state/subtasks/에 남긴다",
+    "skill:start-job": "일을 시작하기 전 문제·목표·조건, 기존 자료, 작업 세션·작업 브랜치, 진행 방식을 정하는 절차를 agent에게 준다"
+  },
+  "policies": [
+    {
+      "id": "pol.task-reads-only",
+      "kind": "처리",
+      "condition": "대화 안 작업(agent_id가 있는 호출)이나 프로그램이 돌리는 대화(entrypoint sdk-*, HEAD_CONTEXT_PERSON=1 아님)가 쓰기 도구(load·create·save·branch·todo add/done·setup)를 부르면",
+      "subject": "도구 서버는",
+      "action": "거절하고 읽기만 허용한다",
+      "features": [
+        "tool:load",
+        "tool:create",
+        "tool:save",
+        "tool:branch",
+        "tool:todo",
+        "tool:setup"
+      ],
+      "evidence": "R43, R45, R77 · core/mcp.mjs callTool"
+    },
+    {
+      "id": "pol.create-needs-context",
+      "kind": "처리",
+      "condition": "create에 context가 없거나 공백뿐이면",
+      "subject": "도구 서버는",
+      "action": "작업 세션을 만들지 않고 목적을 정해 달라고 돌려준다",
+      "features": [
+        "tool:create"
+      ],
+      "evidence": "R10"
+    },
+    {
+      "id": "pol.close-needs-recap",
+      "kind": "처리",
+      "condition": "작업 브랜치에서 다음 없이 저장하면",
+      "subject": "도구 서버는",
+      "action": "recap을 요구하고, 그 저장으로 작업 브랜치를 닫아 메인에 합친 뒤 대화를 메인으로 돌린다",
+      "features": [
+        "tool:save"
+      ],
+      "evidence": "R18, R34"
+    },
+    {
+      "id": "pol.no-recap-with-next",
+      "kind": "처리",
+      "condition": "다음이 있는 저장이나 메인 저장에 비어 있지 않은 recap이 함께 오면",
+      "subject": "도구 서버는",
+      "action": "거절한다",
+      "features": [
+        "tool:save"
+      ],
+      "evidence": "R19"
+    },
+    {
+      "id": "pol.abandon-needs-reason",
+      "kind": "처리",
+      "condition": "작업 브랜치 중단에 이유가 없으면",
+      "subject": "도구 서버는",
+      "action": "거절한다",
+      "features": [
+        "tool:branch"
+      ],
+      "evidence": "R23"
+    },
+    {
+      "id": "pol.no-auto-branch",
+      "kind": "처리",
+      "condition": "대화가 작업 세션에 연결될 때",
+      "subject": "도구 서버는",
+      "action": "작업 브랜치를 자동으로 만들지 않고 메인(또는 이 작업 세션에서 쓰던 작업 브랜치)에 둔다",
+      "features": [
+        "tool:load",
+        "tool:create"
+      ],
+      "evidence": "R14 · 도구 설명(load)"
+    },
+    {
+      "id": "pol.leave-branch-open",
+      "kind": "처리",
+      "condition": "대화가 다른 작업 브랜치로 옮기면",
+      "subject": "도구 서버는",
+      "action": "떠난 작업 브랜치를 열린 채 둔다",
+      "features": [
+        "tool:branch",
+        "tool:load"
+      ],
+      "evidence": "R22(열린 작업 브랜치 2)"
+    },
+    {
+      "id": "pol.attach-reopens",
+      "kind": "처리",
+      "condition": "닫힌 작업 브랜치에 attach하거나 그 이름으로 load하면",
+      "subject": "도구 서버는",
+      "action": "그 작업 브랜치를 다시 연다",
+      "features": [
+        "tool:branch",
+        "tool:load"
+      ],
+      "evidence": "코드·도구 설명(load: 닫힌 것은 다시 열립니다), 실행 안 함"
+    },
+    {
+      "id": "pol.todo-done-one",
+      "kind": "처리",
+      "condition": "할 일 끝내기의 match가 열린 항목 여럿에 맞거나 하나도 맞지 않으면",
+      "subject": "도구 서버는",
+      "action": "끝내지 않는다",
+      "features": [
+        "tool:todo"
+      ],
+      "evidence": "core/todo.mjs:77-78(hits.length !== 1)"
+    },
+    {
+      "id": "pol.read-keeps-connection",
+      "kind": "처리",
+      "condition": "read를 부르면",
+      "subject": "도구 서버는",
+      "action": "대화의 연결을 바꾸지 않는다",
+      "features": [
+        "tool:read"
+      ],
+      "evidence": "도구 설명(read) · R44(대화 안 작업도 읽기 됨)"
+    },
+    {
+      "id": "pol.setup-keeps-settings",
+      "kind": "처리",
+      "condition": "초기설정 때",
+      "subject": "setup은",
+      "action": "프로젝트 .claude/settings.json을 잠그고, 기본 포크 env·마켓(자동 업데이트)·플러그인 켜기 중 빠진 키만 채우고, 이미 다른 값이 있거나 JSON이 깨졌으면 바꾸지 않고 결과에 그렇게 적는다. 이미 초기설정된 프로젝트면 그렇다고 맨 앞에 알린다",
+      "features": [
+        "tool:setup"
+      ],
+      "evidence": "R11, R91, R119 · core/project.mjs projectSettings·setupTool"
+    },
+    {
+      "id": "pol.broken-record-moved",
+      "kind": "처리",
+      "condition": "플러그인 자기 기록 파일(대화 연결, 하위 작업 보고, 기록 폴더 안 파일)이 깨졌으면",
+      "subject": "플러그인은",
+      "action": "<파일>.broken-<시각>으로 옮기고 없는 것으로 읽는다",
+      "features": [
+        "hook:claude:SessionStart:session",
+        "hook:codex:SessionStart:session",
+        "tool:load",
+        "tool:save",
+        "tool:read"
+      ],
+      "evidence": "R63"
+    },
+    {
+      "id": "pol.config-broken-stops",
+      "kind": "처리",
+      "condition": ".head/config.json(사람이 고치는 설정)이 깨졌으면",
+      "subject": "플러그인은",
+      "action": "기록을 읽거나 쓰지 않고 어느 파일이 왜 문제인지 알린다",
+      "features": [
+        "hook:claude:SessionStart:session",
+        "hook:codex:SessionStart:session",
+        "tool:load",
+        "tool:save"
+      ],
+      "evidence": "R64"
+    },
+    {
+      "id": "pol.index-rebuild",
+      "kind": "처리",
+      "condition": "색인(.head/index-v5.sqlite)이 깨졌거나 스키마가 다르면",
+      "subject": "플러그인은",
+      "action": "파일에서 다시 만든다(파일이 원본). 옛 판의 색인 파일(index.sqlite, index-v4.sqlite)은 읽지도 지우지도 않아, 옛 판 대화가 떠 있어도 서로의 색인을 다시 만들지 않는다",
+      "features": [
+        "tool:read",
+        "tool:list",
+        "tool:load"
+      ],
+      "evidence": "core/graph.mjs withGraph(index-v5.sqlite)·schema · README 0.9.9·0.9.10, 실행 안 함"
+    },
+    {
+      "id": "pol.conversation-inherits",
+      "kind": "처리",
+      "condition": "연결 없는 대화가 시작하면",
+      "subject": "Claude 시작 훅은",
+      "action": "continued-in 사슬 → /clear 직전 대화(같은 앱 주소, 없으면 같은 pid) → 복사본의 부모 순서로 자리를 이어받되, 그 작업 브랜치가 닫혔거나 중단됐거나 없으면 메인으로 둔다. 이어받을 근거가 없으면 HEAD_CONTEXT_SESSION 이름의 메인, 그것도 없으면 연결하지 않는다(Codex는 이어받지 않는다)",
+      "features": [
+        "hook:claude:SessionStart:session"
+      ],
+      "evidence": "코드(hosts/claude/recovery.mjs ancestry) · R60(등록 파일 없는 /clear는 연결 안 됨)"
+    },
+    {
+      "id": "pol.compact-pointer",
+      "kind": "처리",
+      "condition": "Claude 대화가 압축되기 직전이고 node:sqlite를 쓸 수 있는 Node일 때",
+      "subject": "압축 훅은",
+      "action": "호스트의 번호 절 요약 대신 한 줄 포인터만 쓰라고 지시한다",
+      "features": [
+        "hook:claude:PreCompact"
+      ],
+      "evidence": "R51 · R137(옛 Node — 빈 출력)"
+    },
+    {
+      "id": "pol.send-not-self",
+      "kind": "처리",
+      "condition": "send의 받는 곳이 보내는 대화 자신이면",
+      "subject": "send는",
+      "action": "거절한다",
+      "features": [
+        "tool:send"
+      ],
+      "evidence": "R76"
+    },
+    {
+      "id": "pol.claude-not-running",
+      "kind": "처리",
+      "condition": "send의 받는 Claude 대화가 실행 중이 아니면",
+      "subject": "send는",
+      "action": "보내지 않고 실패를 돌려준다",
+      "features": [
+        "tool:send"
+      ],
+      "evidence": "R75"
+    },
+    {
+      "id": "pol.codex-inbox-fallback",
+      "kind": "처리",
+      "condition": "받는 Codex 대화를 바로 깨울 수 없으면(공용 엔진 밖)",
+      "subject": "보내는 쪽은",
+      "action": "데스크톱 앱 대화는 Codex 대기열에, 그 밖은 편지함에 두고, 편지함 메시지는 그 대화의 다음 입력 때 넣은 뒤 지운다",
+      "features": [
+        "tool:send",
+        "hook:claude:session.send",
+        "hook:codex:UserPromptSubmit:inbox"
+      ],
+      "evidence": "R74, R87(queued), R79(입력 때 들어옴)"
+    },
+    {
+      "id": "pol.relay-project-codex-only",
+      "kind": "처리",
+      "condition": "Claude 대화가 codex:<ID>로 보낼 때 그 대화가 이 프로젝트에서 연 Codex 대화가 아니면",
+      "subject": "중계는",
+      "action": "보내지 않고 이유를 돌려준다",
+      "features": [
+        "hook:claude:session.send"
+      ],
+      "evidence": "R86"
+    },
+    {
+      "id": "pol.codex-needs-hook-trust",
+      "kind": "처리",
+      "condition": "Codex 대화의 시작 훅이 돌지 않아 그 대화의 등록이 없으면",
+      "subject": "Codex 도구 서버는",
+      "action": "프로젝트를 모른다며 멈추고 훅 신뢰 경로를 사람에게 전하게 한다",
+      "features": [
+        "tool:list",
+        "tool:load",
+        "tool:create",
+        "tool:save",
+        "tool:branch",
+        "tool:read",
+        "tool:todo",
+        "tool:conversations",
+        "tool:setup",
+        "tool:send"
+      ],
+      "evidence": "R78"
+    },
+    {
+      "id": "pol.quiet-on-resume",
+      "kind": "표시",
+      "condition": "대화가 재개·포크로 열리면",
+      "subject": "시작 훅은",
+      "action": "작업 세션·작업 맥락·최근 대화를 넣지 않는다. 예외: Claude는 그 대화 기록에 코어 꼬리표가 없으면 코어를 한 번 넣고, 연결 안 된 대화면 연결 안 됨 한 줄을, 바로잡은 기록이 있으면 알림을 넣는다",
+      "features": [],
+      "evidence": "R56~R59"
+    },
+    {
+      "id": "pol.core-after-setup",
+      "kind": "표시",
+      "condition": "초기설정을 마친 프로젝트에서 시작·/clear·압축할 때",
+      "subject": "시작 훅은",
+      "action": "코어 지침을 넣는다(초기설정 전에는 넣지 않는다)",
+      "features": [],
+      "evidence": "R1·R2(전: 빈 출력), R46·R47(뒤)"
+    },
+    {
+      "id": "pol.session-part-fits",
+      "kind": "표시",
+      "condition": "시작 훅의 작업 세션 부분이 9,000자를 넘으면",
+      "subject": "Claude 시작 훅은",
+      "action": "context.md 앞부분과 전문 경로만 넣는다",
+      "features": [],
+      "evidence": "hosts/claude/hook.mjs session 분기, 실행 안 함"
+    },
+    {
+      "id": "pol.hook-budget",
+      "kind": "표시",
+      "condition": "시작 훅의 작업 맥락이 9,000자를 넘으면",
+      "subject": "시작 훅은",
+      "action": "정해진 13단계(최근 본문 3→2→1개, 본문 1500→500→0자, 지도 30→15→5줄, 줄마다 300→200→150→100자로 짧게 하고 지도를 뺌, 열린 작업 브랜치 30→10→3개·기한 임박 할 일 10→5→3개만 보이고 나머지 수를 적음)로 줄이고 끝을 자르지 않는다. 열린 작업 브랜치(이 대화의 것은 늘), 할 일, 마지막 다음은 늘 남는다",
+      "features": [],
+      "evidence": "core/recovery.mjs FIT_STEPS·fittedContext · README 0.9.6 · R122~R124(load 10,639자 → 시작 훅 7,338자, 6단계 '최근 기록 1개·본문 500자·지도 15줄'에서 맞음, 열린 작업 브랜치 36줄·마지막 다음 남음). 줄을 짧게 하는 단계 뒤(9~13단계)는 실행으로 보지 않았다"
+    },
+    {
+      "id": "pol.first-run-guide",
+      "kind": "표시",
+      "condition": "초기설정 전 프로젝트에서 시작·/clear할 때(never_ask가 아니면)",
+      "subject": "시작 훅은",
+      "action": "사람의 첫 입력에 답하기 전에 초기설정을 묻게 하는 안내를 넣는다",
+      "features": [],
+      "evidence": "R3"
+    },
+    {
+      "id": "pol.recent-after-compact-clear",
+      "kind": "표시",
+      "condition": "압축·/clear 직후에만",
+      "subject": "Claude 시작 훅은",
+      "action": "직전 주고받기 최대 5번의 원문을 넣는다(도구 호출·생각·알림 제외, 예산을 넘으면 오래된 것부터 빼고 한 번도 길면 본문을 자름)",
+      "features": [],
+      "evidence": "R50(시작: 빈 출력), R55(압축 뒤)"
+    },
+    {
+      "id": "pol.no-host-tool-names",
+      "kind": "표시",
+      "condition": "공용 서버 안내문·start-job·도구 설명에서",
+      "subject": "플러그인은",
+      "action": "앱의 도구 이름을 쓰지 않고, 앱별 부분('이 앱에서 부르는 도구')에만 그 앱의 도구를 적는다",
+      "features": [],
+      "evidence": "R6·R66 차이"
+    },
+    {
+      "id": "pol.subagent-notice",
+      "kind": "표시",
+      "condition": "대화 안 작업(Agent 도구의 포크·하위 에이전트, Codex spawn_agent)이 시작되면",
+      "subject": "하위 에이전트 시작 훅은",
+      "action": "읽기만 된다는 안내 한 덩어리를 넣는다. claude -p 워커와 대화가 되는 복제(데스크톱 사이드 포크)에는 넣지 않는다",
+      "features": [],
+      "evidence": "R42, R81 · README"
+    },
+    {
+      "id": "pol.broken-record-notice",
+      "kind": "표시",
+      "condition": "기록 파일을 옮겨 둔 직후",
+      "subject": "플러그인은",
+      "action": "다음 훅 출력이나 도구 결과 끝에 옮긴 경로를 한 줄 알린다",
+      "features": [],
+      "evidence": "R63"
+    },
+    {
+      "id": "pol.hook-failure-says",
+      "kind": "표시",
+      "condition": "시작·입력·하위 에이전트 훅이 실패하면",
+      "subject": "훅은",
+      "action": "stderr에만 쓰지 않고 대화에 실패 한 줄을 넣는다",
+      "features": [],
+      "evidence": "R64"
+    },
+    {
+      "id": "pol.name-chars",
+      "kind": "처리",
+      "condition": "작업 세션·작업 브랜치 이름에 영문·숫자·한글·._- 밖의 글자(띄어쓰기 포함)나 ..가 있으면",
+      "subject": "도구 서버는",
+      "action": "거절한다",
+      "features": [
+        "tool:create",
+        "tool:branch",
+        "tool:load"
+      ],
+      "evidence": "core/storage.mjs validName · a3 ua.branch·ua.record·ua.todo·ua.resume(띄어쓰기 거절)"
+    },
+    {
+      "id": "pol.abandoned-not-loadable",
+      "kind": "처리",
+      "condition": "중단한 작업 브랜치를 불러오거나 이으려 하면",
+      "subject": "도구 서버는",
+      "action": "연결하지 않고 read로 읽으라고 돌려준다",
+      "features": [
+        "tool:load",
+        "tool:branch"
+      ],
+      "evidence": "core/sessions.mjs load(B-7 POL-09), 실행 안 함"
+    },
+    {
+      "id": "pol.create-no-overwrite",
+      "kind": "처리",
+      "condition": "같은 이름의 작업 세션이 이미 있으면",
+      "subject": "create는",
+      "action": "덮어쓰지 않고 이미 있다는 한 줄만 돌려주며 대화를 연결하지 않는다",
+      "features": [
+        "tool:create"
+      ],
+      "evidence": "core/sessions.mjs create(B-7 POL-25), 실행 안 함"
+    },
+    {
+      "id": "pol.short-id",
+      "kind": "처리",
+      "condition": "read entry의 짧은 ID가 꼴이 틀리거나, 없거나, 세션 안 여러 기록에 겹치면",
+      "subject": "도구 서버는",
+      "action": "본문을 고르지 않고 오류(겹치면 후보)를 돌려준다",
+      "features": [
+        "tool:read"
+      ],
+      "evidence": "core/graph.mjs entry(B-7 POL-13) · R36, R118. 오류 문구가 실제 검사(16진수 4자 이상)와 같다(0.9.6에서 맞춤)"
+    },
+    {
+      "id": "pol.inbox-broken-aside",
+      "kind": "처리",
+      "condition": "Codex 편지함의 메시지를 읽을 수 없으면",
+      "subject": "입력 훅은",
+      "action": "그 메시지를 편지함의 .broken/으로 옮기고 경로를 알리며 나머지만 넣는다",
+      "features": [
+        "hook:codex:UserPromptSubmit:inbox"
+      ],
+      "evidence": "hosts/codex/threads.mjs·hook.mjs(B-7 POL-20), 실행 안 함"
+    },
+    {
+      "id": "pol.never-ask",
+      "kind": "표시",
+      "condition": "사람이 다시 묻지 말라고 해 setup 또는 survey를 never_ask로 기록했으면",
+      "subject": "시작 훅은",
+      "action": "그 단계를 다시 묻지 않는다",
+      "features": [],
+      "evidence": "core/project.mjs firstRun·guide(B-7 POL-02)"
+    },
+    {
+      "id": "pol.todo-order",
+      "kind": "표시",
+      "condition": "열린 할 일을 보일 때",
+      "subject": "플러그인은",
+      "action": "기한 있는 것을 기한 순으로 먼저, 없는 것을 최신 순으로 보이고, 작업 맥락에는 기한 임박 전부와 남은 자리를 합쳐 3줄까지 보인다",
+      "features": [],
+      "evidence": "core/todo.mjs openTodos · core/recovery.mjs(B-7 POL-15와 대조)"
+    },
+    {
+      "id": "pol.map-hides-index-dup",
+      "kind": "표시",
+      "condition": "흐름 지도를 그릴 때",
+      "subject": "플러그인은",
+      "action": "작업 브랜치 저장이 메인에 남기는 색인 줄을 따로 그리지 않는다(찾기 결과에는 나온다)",
+      "features": [],
+      "evidence": "core/map-view.mjs(B-7 POL-12) · R29"
+    },
+    {
+      "id": "pol.forks-under-parent",
+      "kind": "표시",
+      "condition": "포크·워커를 띄운 대화가 살아 있으면",
+      "subject": "대화 목록은",
+      "action": "포크·워커를 그 대화 아래에 한 번만 보인다",
+      "features": [],
+      "evidence": "core/sessions.mjs conversations(B-7 POL-17), 실행 안 함"
+    },
+    {
+      "id": "pol.start-job-agree",
+      "kind": "표시",
+      "condition": "agent가 일을 시작하면",
+      "subject": "서버 안내문 첫 줄과 start-job 글은",
+      "action": "start-job을 먼저 부르고, 만들기 전에 기존 기록을 보고 문제·목표·조건을 사람과 맞추게 한다. '짧게 끝날 일이면 열지 않아도 된다'는 작업 브랜치 얘기다(코드 검사 없이 글로만)",
+      "features": [],
+      "evidence": "core/mcp.mjs INSTRUCTIONS 첫 줄 · skills/start-job/SKILL.md · 0.9.10 코어 지침(instructions/HEAD_CORE.md)에는 start-job 줄이 없다(0.9.5에는 있었음) · 어긴 사실: A-3 ua.start-job·ua.record 각 한 번, C-3은 지킴(둘 다 0.9.5)"
+    },
+    {
+      "id": "pol.ask-before-load",
+      "kind": "표시",
+      "condition": "이어질 일이 시작됐는데 대화가 작업 세션에 없으면",
+      "subject": "서버 안내문은",
+      "action": "목록에서 맞는 것을 찾아 사용자에게 묻고 불러오게 한다(글로만)",
+      "features": [],
+      "evidence": "core/mcp.mjs INSTRUCTIONS · 어긴 사실: A-3 ua.pick-session 한 번"
+    },
+    {
+      "id": "pol.save-when-result",
+      "kind": "표시",
+      "condition": "결과나 결정이 생기면",
+      "subject": "서버 안내문은",
+      "action": "저장하게 하고, 이어 갈 일이 있으면 다음을, 끝났으면 정리를 준다. 다음 없이 저장하면 작업 브랜치가 닫힌다(글로만)",
+      "features": [],
+      "evidence": "core/mcp.mjs INSTRUCTIONS · 어긴 사실: A-3 ua.branch 한 번(사람이 끝났다고 하기 전에 agent가 끝났다고 판단해 닫음)"
+    },
+    {
+      "id": "pol.pick-one-conversation",
+      "kind": "표시",
+      "condition": "다른 대화에 보내기 전",
+      "subject": "conversations 도구 설명은",
+      "action": "주제 → 사람 대화·최근 활동 순으로 하나를 고르고, 못 좁히면 보내지 말고 사람에게 묻게 한다(글로만)",
+      "features": [],
+      "evidence": "core/mcp.mjs DEFINITIONS conversations(B-7 POL-18) · A-3 ua.message(후보 하나라 바로 보냄) · C-3 ua.conversations(후보 둘이면 물음)"
+    },
+    {
+      "id": "pol.delegate-check",
+      "kind": "표시",
+      "condition": "일을 포크·에이전트에 맡겼으면",
+      "subject": "start-job 글은",
+      "action": "맡긴 결과를 부른 쪽이 확인하게 한다(글로만)",
+      "features": [],
+      "evidence": "skills/start-job/SKILL.md(B-7 POL-27) · a3 ua.delegate(부른 대화가 원문과 대조 후 저장)"
+    },
+    {
+      "id": "pol.links-only",
+      "kind": "처리",
+      "condition": "기록이 파일을 가리킬 때",
+      "subject": "색인은",
+      "action": "save의 files(참조파일, `참조파일:` 줄)와 본문의 `[이름](경로)`·백틱 경로만 파일로 치고, 평문 경로는 파일로 치지 않는다(찾기·파일 나무에 안 나옴). 저장은 평문 경로도 오류 없이 받는다",
+      "features": [
+        "tool:save",
+        "tool:read"
+      ],
+      "evidence": "README(기록이 가리키는 파일) · core/graph.mjs linked · core/sessions.mjs referenceFiles · R115·R116(참조파일 → 찾기·파일 나무에 나옴) · C-3 ua.look-back(0.9.5, 평문 경로 → 없음, Markdown 링크 → 나옴). 0.9.6에서 save 설명에 이 꼴을 적었다"
+    },
+    {
+      "id": "pol.no-todo-edit",
+      "kind": "처리",
+      "condition": "할 일의 내용·기한을 바꾸려 할 때",
+      "subject": "todo 도구는",
+      "action": "고치는 동작이 없어 add와 done만 받는다",
+      "features": [
+        "tool:todo"
+      ],
+      "evidence": "core/mcp.mjs todo action enum(add·list·done) · C-3 ua.todo"
+    },
+    {
+      "id": "pol.no-month-branch",
+      "kind": "처리",
+      "condition": "새 작업 브랜치 이름이 달 꼴(YYYY-MM)이면",
+      "subject": "도구 서버는",
+      "action": "작업 파일의 달 폴더(work/YYYY-MM)와 섞이지 않게 거절한다. 전에 만든 달 꼴 작업 브랜치는 그대로 읽는다",
+      "features": [
+        "tool:branch"
+      ],
+      "evidence": "R117 · core/branch-format.mjs WORK_MONTH · core/sessions.mjs branch · README 0.9.6"
+    },
+    {
+      "id": "pol.save-files-tilde",
+      "kind": "처리",
+      "condition": "save에 files(참조파일)가 오면",
+      "subject": "도구 서버는",
+      "action": "기록에 `참조파일:` 줄로 쓴다. 파일로 풀린 경로는 절대경로로 바꾸고 홈 아래면 `~/`로 줄인다(작업 세션 폴더 기준으로 준 경로도 풀어 쓴다). 폴더는 폴더 경로로 남기고 파일 찾기에는 걸리지 않는다고 알린다. 파일로도 폴더로도 풀리지 않는 경로는 적은 그대로 남기고 답에 알린다(저장은 한다). 목록이 아닌 값, 백틱·줄바꿈이 든 경로는 거절한다",
+      "features": [
+        "tool:save"
+      ],
+      "evidence": "R113, R114, R116, R122(써진 참조파일 줄), R150, R151 · core/sessions.mjs referenceFiles·referenceNotice·tilde · README 0.9.7"
+    },
+    {
+      "id": "pol.old-node-says",
+      "kind": "표시",
+      "condition": "PATH에서 먼저 잡히는 node가 node:sqlite를 불러오지 못하면(22.13 미만 등)",
+      "subject": "시작 훅은",
+      "action": "session 부분에 필요한 Node와 지금 node를 적은 이유 한 줄만 넣고 작업 맥락은 비운다. 코어 지침·최근 대화 원문·Codex 안내문은 그대로 넣는다",
+      "features": [],
+      "evidence": "R133~R139(f2 /usr/bin/node v18.19.1) · hosts/claude/hook.mjs:71-74 · hosts/codex/hook.mjs:78-85 · README 0.9.7"
+    },
+    {
+      "id": "pol.codex-presence-rewrite",
+      "kind": "처리",
+      "condition": "Codex 대화의 대화 정보(presence)가 없거나 깨졌으면(훅을 대화 시작 뒤에 신뢰함, 시작 때 엔진 판별 실패 등)",
+      "subject": "Codex 입력 훅은",
+      "action": "그 대화의 다음 입력 때 시작 훅과 같은 꼴로 새로 써서 대화 목록과 메시지에 다시 나오게 한다",
+      "features": [
+        "hook:codex:UserPromptSubmit:inbox"
+      ],
+      "evidence": "R125~R128(깨진 파일 → JSON으로 다시 써짐, 없던 파일 → 새로 써짐) · hosts/codex/hook.mjs inbox · README 0.9.6. 살아 있는 대화 목록에 다시 나오는지는 실제 Codex 엔진이 없어 보지 않았다"
+    },
+    {
+      "id": "pol.old-node-keeps-serving",
+      "kind": "처리",
+      "condition": "PATH에서 먼저 잡히는 node가 node:sqlite를 불러오지 못하면(22.13 미만 등)",
+      "subject": "도구 서버와 훅은",
+      "action": "죽지 않는다. 도구 서버는 initialize·tools/list에 그대로 답하고 모든 도구 호출을 필요한 Node와 지금 node를 적은 이유의 오류로 돌려준다. 압축 직전 훅은 아무것도 내지 않아 호스트의 요약이 남는다",
+      "features": [
+        "tool:list",
+        "tool:load",
+        "tool:create",
+        "tool:save",
+        "tool:branch",
+        "tool:read",
+        "tool:todo",
+        "tool:conversations",
+        "tool:setup",
+        "tool:send",
+        "hook:claude:SessionStart:session",
+        "hook:codex:SessionStart:session",
+        "hook:claude:PreCompact"
+      ],
+      "evidence": "R129~R132, R137, R140~R148 · core/mcp.mjs serve tools/call(runtimeProblem) · hosts/claude/hook.mjs:67-70 · core/platform.mjs runtimeProblem·sqlite · README 0.9.7"
+    },
+    {
+      "id": "pol.no-reserved-lines",
+      "kind": "처리",
+      "condition": "save 본문(history)에 기록 제목(`## YYYY-MM-DD…`)이나 예약 줄(`요약:`·`상태:`·`다음:`·`브랜치:`·`기록:`·`이유:`·`이름표:`·`참조파일:`)이 있으면",
+      "subject": "도구 서버는",
+      "action": "기록 파일의 칸이 흐트러지지 않게 저장하지 않고 거절한다. 참조파일은 files로 주라고 알린다",
+      "features": [
+        "tool:save"
+      ],
+      "evidence": "R149 · core/storage.mjs 기록 칸 검사(본문 예약 줄) · README 0.9.7"
+    },
+    {
+      "id": "pol.index-before-ok",
+      "kind": "처리",
+      "condition": "저장·닫기·중단·다시 열기·새 작업 세션·새 작업 브랜치를 하면",
+      "subject": "도구 서버는",
+      "action": "자기가 바꾼 기록 파일을 색인에 반영하고 커밋한 뒤에 성공을 답한다. 자기 파일 반영이 실패하면 색인을 되돌리고 그 오류를 답한다(md에는 남고 다음 호출이 다시 반영한다). 다른 대화가 바꾼 파일의 반영 실패는 그 파일만 이전 색인을 지키고 오류 목록에 넣는다",
+      "features": [
+        "tool:save",
+        "tool:branch",
+        "tool:create",
+        "tool:load"
+      ],
+      "evidence": "README 0.9.9 · core/sessions.mjs(withGraph(project, …, [file]) 호출) · core/graph.mjs sync, 코드만(실패 경우는 실행하지 않음)"
+    }
+  ],
+  "db": {
+    "files": "색인이 읽은 기록 파일(context.md·history.md)마다 수정 시각·크기(바뀐 파일만 다시 읽음)",
+    "files.path": "기록 파일 경로",
+    "files.mtime": "마지막으로 읽었을 때 파일 수정 시각",
+    "files.size": "그때 파일 크기",
+    "nodes": "작업 세션(context.md)·작업 브랜치 머리말·기록 하나(저장·합침·중단)·가리킨 파일마다 한 줄: 종류, 어느 작업 세션·작업 브랜치의 몇 번째이고 어느 파일에 있으며 원문은 무엇인가(0.9.9부터 원문을 색인에 둔다)",
+    "nodes.id": "기록 ID(<작업 세션>/<자리>@<저장 시각>, 같은 시각이 겹치면 #순번). 지도의 짧은 ID는 이 ID 글자를 SHA-1 해시한 값의 앞 5자(겹치면 한 자씩 늘림)",
+    "nodes.kind": "줄 종류(session: context.md, branch: 작업 브랜치 머리말, checkpoint: 기록, file: 기록이 가리킨 파일)",
+    "nodes.session": "작업 세션 이름",
+    "nodes.stem": "작업 브랜치 이름(메인은 main)",
+    "nodes.stamp": "저장 시각",
+    "nodes.file": "기록이 든 파일",
+    "nodes.seq": "그 자리 안 차례",
+    "edges": "줄 사이 연결: next(같은 자리의 다음 기록), fork(갈래 — 작업 브랜치가 갈라진 기록), merge(합침 — 작업 브랜치 → 메인의 합침 기록), points(기록 → 가리킨 파일). 0.9.10부터 바뀐 작업 브랜치·작업 세션의 선만 다시 긋는다",
+    "edges.src": "연결 시작",
+    "edges.dst": "연결 끝",
+    "edges.kind": "연결 종류",
+    "linkfiles": "파일 → 파일 링크 캐시를 만들 때 읽은 파일의 수정 시각·크기(files 도구가 물을 때만 채움)",
+    "linkfiles.path": "읽은 파일 경로",
+    "linkfiles.mtime": "그때 수정 시각",
+    "linkfiles.size": "그때 크기",
+    "links": "파일이 링크·백틱 경로로 가리킨 파일(files 나무의 둘째 단계부터)",
+    "links.src": "가리키는 파일",
+    "links.dst": "가리켜진 파일",
+    "nodes.body": "그 줄의 원문(기록 본문, 작업 브랜치 머리말, context.md 전문). 조회는 md 파일을 다시 열지 않고 이 칸에서 읽는다",
+    "nodes.hash": "원문의 SHA-256(가리킨 파일 줄은 빈 값). 바뀐 파일을 다시 나눌 때 같은 기록은 건드리지 않고, 값이 바뀐 기록만 고치고 그 기록의 가리킨 파일 선만 다시 긋는다(0.9.10)",
+    "nodes.branch": "메인의 합침·중단 기록이 가리키는 작업 브랜치 이름(기록 줄에만)",
+    "nodes.record": "합침·중단 기록이 가리키는 작업 브랜치 기록 파일(기록 줄에만)",
+    "nodes.status": "합침·중단 기록의 상태(끝남·멈춤·중단 등, 기록 줄에만)"
+  }
+}

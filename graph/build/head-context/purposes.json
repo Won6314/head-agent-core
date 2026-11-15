@@ -1,0 +1,271 @@
+{
+  "_": "코드 지도에서 손으로 쓰는 글 전부(초안). 층 이름과 어느 모듈이 어느 층인지, 모듈 하는 일 한 줄, 큰 모듈 안 묶음, 바깥 칸 이름과 어느 파일이 닿는지. 층 차례·⚠·입구·파일·의존은 code_map.mjs가 계산한다. 빈 곳은 지도에 '묶음 없음:'·'글 없음:'·'층 없음:'·'바깥 이름 없음:'으로 뜬다.",
+  "draft": true,
+  "title": "head-context",
+  "layers": [
+    {
+      "name": "입구",
+      "desc": "매니페스트가 실행하는 파일과 명령줄 도구",
+      "modules": [
+        "hooks",
+        "scripts"
+      ]
+    },
+    {
+      "name": "앱 포장",
+      "desc": "앱마다 다른 것",
+      "modules": [
+        "hosts/claude",
+        "hosts/codex",
+        "hosts/opencode"
+      ]
+    },
+    {
+      "name": "본체",
+      "desc": "앱과 상관없는 규칙과 저장",
+      "modules": [
+        "core"
+      ]
+    }
+  ],
+  "modules": {
+    "hooks": {
+      "does": "Claude 쪽 SendMessage 중 Codex 대화로 가는 것을 relay로 넘김"
+    },
+    "scripts": {
+      "does": "실행 자리: 입구 파일, 명령줄 도구, 옛 import 자리",
+      "groups": [
+        {
+          "name": "경로로 실행되는 도구",
+          "files": [
+            "relay"
+          ]
+        },
+        {
+          "name": "명령줄 도구",
+          "files": [
+            "map",
+            "migrate-0.7",
+            "report"
+          ]
+        },
+        {
+          "name": "옛 import 자리",
+          "files": [
+            "history",
+            "process",
+            "sessions",
+            "state"
+          ]
+        }
+      ]
+    },
+    "hosts/claude": {
+      "does": "살아 있는 대화 찾기, 수신함에 메시지 넣기, 압축·복구·최근 대화 훅"
+    },
+    "hosts/codex": {
+      "does": "대화 등록, 엔진 판별·연결, 대화 목록·수신함·보내기"
+    },
+    "hosts/opencode": {
+      "does": "요청마다 작업 맥락 넣기, 도구 호출에 대화 ID 채우기"
+    },
+    "core": {
+      "does": "작업 세션·작업 브랜치·기록·할 일의 규칙과 저장, 작업 맥락 조립, 도구 서버",
+      "groups": [
+        {
+          "name": "작업 세션·브랜치",
+          "files": [
+            "sessions",
+            "branch-format",
+            "lifecycle",
+            "history",
+            "todo"
+          ]
+        },
+        {
+          "name": "저장",
+          "files": [
+            "storage",
+            "state",
+            "migrate"
+          ]
+        },
+        {
+          "name": "기록 지도",
+          "files": [
+            "graph",
+            "map-view"
+          ]
+        },
+        {
+          "name": "맥락 조립",
+          "files": [
+            "recovery",
+            "instruction",
+            "project"
+          ]
+        },
+        {
+          "name": "도구 서버",
+          "files": [
+            "mcp"
+          ]
+        },
+        {
+          "name": "공통 도구",
+          "files": [
+            "liveness",
+            "lock",
+            "platform"
+          ]
+        },
+        {
+          "name": "앱 포장 약속",
+          "files": [
+            "protocol"
+          ]
+        }
+      ]
+    }
+  },
+  "outside": {
+    "name": "바깥",
+    "desc": "플러그인 밖 (Node fs·net·child_process·readline으로 닿는 곳)",
+    "boxes": [
+      {
+        "name": ".head/ 상태·기록·색인 파일",
+        "touch": {
+          "fs": [
+            "core/storage.mjs",
+            "core/lock.mjs",
+            "core/sessions.mjs",
+            "core/todo.mjs",
+            "core/migrate.mjs",
+            "core/graph.mjs",
+            "core/project.mjs",
+            "hosts/codex/threads.mjs"
+          ]
+        },
+        "except_defs": [
+          "code:hosts/codex/threads.mjs#mtime"
+        ]
+      },
+      {
+        "name": "프로젝트 설정·플러그인 지침 파일",
+        "touch": {
+          "fs": [
+            "core/project.mjs"
+          ]
+        }
+      },
+      {
+        "name": "프로세스 표 (/proc · ps · PowerShell)",
+        "touch": {
+          "fs": [
+            "core/liveness.mjs",
+            "core/platform.mjs"
+          ],
+          "child_process": [
+            "core/platform.mjs"
+          ]
+        }
+      },
+      {
+        "name": "Claude 등록 파일·대화 기록",
+        "touch": {
+          "fs": [
+            "hosts/claude/process.mjs",
+            "hosts/claude/recent.mjs",
+            "hosts/claude/recovery.mjs",
+            "hosts/claude/hook.mjs",
+            "hosts/claude/deliver.mjs"
+          ]
+        }
+      },
+      {
+        "name": "Claude 수신함 소켓",
+        "touch": {
+          "net": [
+            "hosts/claude/deliver.mjs"
+          ]
+        }
+      },
+      {
+        "name": "Codex 엔진 소켓·proxy",
+        "touch": {
+          "net": [
+            "hosts/codex/engine.mjs"
+          ],
+          "child_process": [
+            "hosts/codex/engine.mjs",
+            "hosts/codex/threads.mjs"
+          ]
+        }
+      },
+      {
+        "name": "Codex 앱 대기열·Mac 앱 깨우기",
+        "touch": {
+          "child_process": [
+            "hosts/codex/deliver.mjs"
+          ]
+        }
+      },
+      {
+        "name": "Codex 플러그인 데이터 폴더(대화 등록)",
+        "touch": {
+          "fs": [
+            "hosts/codex/register.mjs"
+          ]
+        }
+      },
+      {
+        "name": "Codex 대화 기록 파일",
+        "desc": "Codex가 쓰는 대화 기록(transcript_path). 대화가 살아 있는지 볼 때 수정 시각(mtime)을, 마지막 말을 찾을 때 끝 4MB(lastSaid → readTail)를 읽는다",
+        "touch": {
+          "fs": [
+            "hosts/codex/threads.mjs"
+          ]
+        },
+        "defs": [
+          "code:hosts/codex/threads.mjs#mtime"
+        ]
+      },
+      {
+        "name": "훅 입력(표준 입력)",
+        "touch": {
+          "fs": [
+            "hosts/claude/hook.mjs",
+            "hosts/codex/hook.mjs",
+            "scripts/relay.mjs"
+          ]
+        }
+      },
+      {
+        "name": "도구 서버 표준 입출력",
+        "touch": {
+          "readline": [
+            "core/mcp.mjs"
+          ]
+        }
+      }
+    ],
+    "fact_targets": {
+      "_": "한 파일 안에서 fs 호출마다 닿는 곳이 다를 때 줄 단위로 정한다(재검수 N2, 원본 7a5896c 줄로 확인).",
+      "core/project.mjs:123": ".head/ 상태·기록·색인 파일",
+      "core/project.mjs:130": "프로젝트 설정·플러그인 지침 파일",
+      "core/project.mjs:136": "프로젝트 설정·플러그인 지침 파일",
+      "core/project.mjs:150": "프로젝트 설정·플러그인 지침 파일",
+      "core/project.mjs:183": "프로젝트 설정·플러그인 지침 파일",
+      "core/project.mjs:218": "프로젝트 설정·플러그인 지침 파일",
+      "core/project.mjs:219": ".head/ 상태·기록·색인 파일",
+      "core/project.mjs:224": "프로젝트 설정·플러그인 지침 파일"
+    },
+    "via": {
+      "code:core/storage.mjs#readTail": {
+        "code:hosts/claude/process.mjs#recentPrompts": "Claude 등록 파일·대화 기록",
+        "code:hosts/claude/recovery.mjs#continuedInto": "Claude 등록 파일·대화 기록",
+        "code:hosts/codex/threads.mjs#lastSaid": "Codex 대화 기록 파일"
+      }
+    }
+  }
+}
