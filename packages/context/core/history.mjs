@@ -14,6 +14,8 @@ export function parseHistory(text) {
       /^##[ \t]+\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})[^\n]*|(?:[ \t]+(?:work:|run:)[^\n]*)?[ \t]*\r?$)/gm,
     ),
   ];
+  let position = 0;
+  let bytes = 0;
   return matches.map((m, i) => {
     const body = text.slice(m.index, matches[i + 1]?.index ?? text.length).trimEnd();
     const tokens = m[0]
@@ -40,6 +42,12 @@ export function parseHistory(text) {
         .join('');
     // A main-line index entry: one line naming the branch label and the file the body is in.
     const index = lines.map((l) => /^이름표: (.*) · 본문: (\S+)$/.exec(l)).find(Boolean);
+    bytes += Buffer.byteLength(text.slice(position, m.index));
+    position = m.index;
+    const start = bytes;
+    bytes += Buffer.byteLength(text.slice(position, m.index + body.length));
+    position = m.index + body.length;
+    const end = bytes;
     return {
       timestamp: tokens[0],
       label: index?.[1] || '',
@@ -70,8 +78,8 @@ export function parseHistory(text) {
       ended: ['상태: 끝남', '상태: 멈춤', '상태: 중단'].some((l) => lines.includes(l)),
       next: lines.at(-1)?.startsWith('다음:') ? lines.at(-1).slice(3).trim() : '',
       body,
-      start: Buffer.byteLength(text.slice(0, m.index)),
-      end: Buffer.byteLength(text.slice(0, m.index + body.length)),
+      start,
+      end,
     };
   });
 }
