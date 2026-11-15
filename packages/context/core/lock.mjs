@@ -75,7 +75,6 @@ function release(lock) {
       fs.rmSync(lock, { recursive: true, force: true });
       return;
     } catch (e) {
-      error = e;
       if (!['EBUSY', 'EPERM', 'ENOTEMPTY'].includes(e.code)) break;
     }
   }

@@ -227,7 +227,6 @@ export function sessions(
       throw e;
     }
     withGraph(project, () => {}, [file]);
-    return stem;
   };
   const setStatus = (session, stem, status) => {
     const file = branchPath(directory(session), stem);

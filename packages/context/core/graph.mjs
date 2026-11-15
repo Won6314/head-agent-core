@@ -475,13 +475,7 @@ class Graph {
           const names = this.db
             .prepare("SELECT DISTINCT session FROM nodes WHERE file=? AND kind<>'file'")
             .all(old.path);
-          const previous = names.map(({ session }) => [
-            session,
-            this.db
-              .prepare('SELECT id FROM nodes WHERE session=?')
-              .all(session)
-              .map((r) => r.id),
-          ]);
+          const previous = names.map(({ session }) => [session, this.sessionIds(session)]);
           this.remove(old.path);
           this.db.exec('RELEASE file_sync');
           for (const [name, ids] of previous) if (!affected.has(name)) affected.set(name, ids);
@@ -511,54 +505,8 @@ class Graph {
           }
         }
         if (!stable) throw new Error('기록이 계속 바뀌어 안정된 색인 위치를 얻지 못했습니다.');
-        const candidates = [];
-        if (source.kind === 'session')
-          candidates.push({ ...source, id: stemId(source.session, 'main'), kind: 'session', body: text });
-        else {
-          const header = source.kind === 'branch' ? branchHeader(text) : null;
-          if (header)
-            candidates.push({
-              id: stemId(source.session, source.stem),
-              ...source,
-              kind: 'branch',
-              body: text.slice(0, header.end),
-            });
-          const counts = new Map();
-          for (const [seq, e] of (source.kind === 'branch' && !header ? [] : parseHistory(text)).entries()) {
-            const occurrence = (counts.get(e.timestamp) || 0) + 1;
-            counts.set(e.timestamp, occurrence);
-            const id = checkpointId(source.session, source.stem, e.timestamp, occurrence);
-            candidates.push({ ...source, id, kind: 'checkpoint', stamp: e.timestamp, body: e.body, seq });
-          }
-        }
-        const prior = this.db.prepare("SELECT * FROM nodes WHERE file=? AND kind<>'file'").all(source.file);
-        // Capture the whole affected session before deleting any of its IDs.
-        const names = new Set([source.session, ...prior.map((r) => r.session)]);
-        const previous = new Map(
-          [...names].map((name) => [
-            name,
-            this.db
-              .prepare('SELECT id FROM nodes WHERE session=?')
-              .all(name)
-              .map((r) => r.id),
-          ]),
-        );
-        const ids = new Set(candidates.map((r) => r.id));
-        for (const row of prior) {
-          if (!ids.has(row.id)) {
-            this.db.prepare('DELETE FROM edges WHERE src=? OR dst=?').run(row.id, row.id);
-            this.db.prepare('DELETE FROM nodes WHERE id=?').run(row.id);
-          }
-        }
-        const byId = new Map(prior.map((row) => [row.id, row]));
-        for (const row of candidates) this.node(row, byId.get(row.id) || null);
-        for (const row of candidates.filter((r) => r.kind === 'checkpoint')) {
-          this.db.prepare("DELETE FROM edges WHERE src=? AND kind='points'").run(row.id);
-          for (const file of references(row.body, [...new Set([path.dirname(source.file), source.dir])])) {
-            this.node({ id: 'file:' + file, kind: 'file', session: '', stem: '', file, body: '' });
-            this.edge(row.id, 'file:' + file, 'points');
-          }
-        }
+        const candidates = this.fileCandidates(source, text);
+        const previous = this.applyFileDiff(source, candidates);
         this.db.prepare('INSERT OR REPLACE INTO files VALUES(?,?,?)').run(source.file, stable.mtimeMs, stable.size);
         this.db.exec('RELEASE file_sync');
         for (const [name, ids] of previous) if (!affected.has(name)) affected.set(name, ids);
@@ -571,24 +519,66 @@ class Graph {
     }
     for (const [name, ids] of affected) this.relate(name, ids);
   }
+  fileCandidates(source, text) {
+    const candidates = [];
+    if (source.kind === 'session')
+      candidates.push({ ...source, id: stemId(source.session, 'main'), kind: 'session', body: text });
+    else {
+      const header = source.kind === 'branch' ? branchHeader(text) : null;
+      if (header)
+        candidates.push({
+          id: stemId(source.session, source.stem),
+          ...source,
+          kind: 'branch',
+          body: text.slice(0, header.end),
+        });
+      const counts = new Map();
+      for (const [seq, e] of (source.kind === 'branch' && !header ? [] : parseHistory(text)).entries()) {
+        const occurrence = (counts.get(e.timestamp) || 0) + 1;
+        counts.set(e.timestamp, occurrence);
+        const id = checkpointId(source.session, source.stem, e.timestamp, occurrence);
+        candidates.push({ ...source, id, kind: 'checkpoint', stamp: e.timestamp, body: e.body, seq });
+      }
+    }
+    return candidates;
+  }
+  applyFileDiff(source, candidates) {
+    const prior = this.db.prepare("SELECT * FROM nodes WHERE file=? AND kind<>'file'").all(source.file);
+    // Capture the whole affected session before deleting any of its IDs.
+    const names = new Set([source.session, ...prior.map((r) => r.session)]);
+    const previous = new Map([...names].map((name) => [name, this.sessionIds(name)]));
+    const ids = new Set(candidates.map((r) => r.id));
+    for (const row of prior) {
+      if (!ids.has(row.id)) this.removeNode(row.id);
+    }
+    const byId = new Map(prior.map((row) => [row.id, row]));
+    for (const row of candidates) this.node(row, byId.get(row.id) || null);
+    for (const row of candidates.filter((r) => r.kind === 'checkpoint')) {
+      this.db.prepare("DELETE FROM edges WHERE src=? AND kind='points'").run(row.id);
+      for (const file of references(row.body, [...new Set([path.dirname(source.file), source.dir])])) {
+        this.node({ id: 'file:' + file, kind: 'file', session: '', stem: '', file, body: '' });
+        this.edge(row.id, 'file:' + file, 'points');
+      }
+    }
+    return previous;
+  }
+  sessionIds(name) {
+    return this.db
+      .prepare('SELECT id FROM nodes WHERE session=?')
+      .all(name)
+      .map((r) => r.id);
+  }
+  removeNode(id) {
+    this.db.prepare('DELETE FROM edges WHERE src=? OR dst=?').run(id, id);
+    this.db.prepare('DELETE FROM nodes WHERE id=?').run(id);
+  }
   remove(file) {
     const ids = this.db.prepare("SELECT id FROM nodes WHERE file=? AND kind<>'file'").all(file);
-    for (const { id } of ids) {
-      this.db.prepare('DELETE FROM edges WHERE src=? OR dst=?').run(id, id);
-      this.db.prepare('DELETE FROM nodes WHERE id=?').run(id);
-    }
+    for (const { id } of ids) this.removeNode(id);
     this.db.prepare('DELETE FROM files WHERE path=?').run(file);
   }
   relate(name, previousIds = []) {
-    const ids = [
-      ...new Set([
-        ...previousIds,
-        ...this.db
-          .prepare('SELECT id FROM nodes WHERE session=?')
-          .all(name)
-          .map((r) => r.id),
-      ]),
-    ];
+    const ids = [...new Set([...previousIds, ...this.sessionIds(name)])];
     // Bounded bind lists also cover IDs removed by this refresh, without inferring a
     // session from encoded ID prefixes or touching any unchanged session's edges.
     for (let i = 0; i < ids.length; i += 400) {

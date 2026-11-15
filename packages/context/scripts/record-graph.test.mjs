@@ -100,7 +100,7 @@ test('no parent checkpoints, branch-of-empty-branch, branch name safety', () => 
   assert.throws(() => s.branch({ action: 'create', branch: '../escape', conversation_id: 'c' }));
   assert.throws(() => s.branch({ action: 'create', branch: 'main', conversation_id: 'c' }));
 });
-test('graph contains identifiers/locations/relationships only; file references and direct word search', () => {
+test('graph caches record text with identifiers and relationships; md stays the source', () => {
   const { dir, s, base } = fixture();
   fs.writeFileSync(path.join(base, 'doc.md'), 'referenced file');
   fs.writeFileSync(path.join(base, 'other.txt'), 'other');
@@ -115,7 +115,7 @@ test('graph contains identifiers/locations/relationships only; file references a
   assert.match(result, /SUMMARY_SECRET_93/);
   assert.match(s.inspect({ action: 'find', file: 'other.txt', conversation_id: 'c' }), /SUMMARY_SECRET_93/);
   assert.equal(s.inspect({ action: 'find', file: 'missing.md', conversation_id: 'c' }), '(없음)');
-  assert.equal(s.inspect({ action: 'find', file: 'plain.md', conversation_id: 'c' }), '(없음)'); // a name in the text is not a pointerassert.match(s.inspect({action:'find',query:'body_secret',conversation_id:'c'}),/SUMMARY_SECRET_93/);
+  assert.equal(s.inspect({ action: 'find', file: 'plain.md', conversation_id: 'c' }), '(없음)'); // a name in the text is not a pointer
   const data = withGraph(dir, (g) => ({
     nodes: g.db.prepare('SELECT * FROM nodes').all(),
     edges: g.db.prepare('SELECT * FROM edges').all(),
