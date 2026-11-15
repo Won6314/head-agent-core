@@ -130,22 +130,35 @@ test('graph caches record text with identifiers and relationships; md stays the 
   assert.equal(checkpoint.body, parseHistory(fs.readFileSync(path.join(base, 'history.md'), 'utf8'))[0].body);
   for (const row of data.nodes)
     assert.equal(row.hash, row.kind === 'file' ? '' : createHash('sha256').update(row.body).digest('hex'));
-  const bytes = fs.readFileSync(path.join(dir, '.head/index-v4.sqlite')).toString();
+  const bytes = fs.readFileSync(path.join(dir, '.head/index-v5.sqlite')).toString();
   assert.ok(bytes.includes('BODY_SECRET_37'));
   assert.ok(bytes.includes('DIRECTION_SECRET_19'));
   assert.ok(data.edges.some((e) => e.kind === 'points'));
-  assert.deepEqual(data.columns, ['id', 'kind', 'session', 'stem', 'stamp', 'file', 'body', 'hash', 'seq']);
+  assert.deepEqual(data.columns, [
+    'id',
+    'kind',
+    'session',
+    'stem',
+    'stamp',
+    'file',
+    'body',
+    'hash',
+    'seq',
+    'branch',
+    'record',
+    'status',
+  ]);
 });
 test('delete/version/corrupt index rebuild, external append, unchanged files not reindexed, map limit', () => {
   const { dir, s, base } = fixture();
   save(s, 'one');
   save(s, 'two');
   const map = s.inspect({ action: 'map', conversation_id: 'c' });
-  fs.unlinkSync(path.join(dir, '.head/index-v4.sqlite'));
+  fs.unlinkSync(path.join(dir, '.head/index-v5.sqlite'));
   assert.equal(s.inspect({ action: 'map', conversation_id: 'c' }), map);
   withGraph(dir, (g) => g.db.exec('PRAGMA user_version=99'));
   assert.equal(s.inspect({ action: 'map', conversation_id: 'c' }), map);
-  fs.writeFileSync(path.join(dir, '.head/index-v4.sqlite'), 'not a database');
+  fs.writeFileSync(path.join(dir, '.head/index-v5.sqlite'), 'not a database');
   assert.equal(s.inspect({ action: 'map', conversation_id: 'c' }), map);
   const file = path.join(base, 'history.md');
   fs.appendFileSync(

@@ -11,8 +11,8 @@ import { sqlite } from './platform.mjs';
 
 // node:sqlite is loaded on first use (platform.mjs): an older Node gets the reason, not a crash at import.
 const database = (file) => new (sqlite().DatabaseSync)(file, { timeout: 5000 });
-const VERSION = 4; // Rebuildable raw-text cache, separate from the v3 index.
-const NODE_FIELDS = 'id,kind,session,stem,stamp,file,hash,seq';
+const VERSION = 5; // Separate cache: older conversations retain their own indexes.
+const NODE_FIELDS = 'id,kind,session,stem,stamp,file,hash,seq,branch,record,status';
 const JOIN_NODE_FIELDS = NODE_FIELDS.split(',')
   .map((field) => 'n.' + field)
   .join(',');
@@ -80,8 +80,9 @@ function schema(db) {
     'DROP TABLE IF EXISTS edges; DROP TABLE IF EXISTS nodes; DROP TABLE IF EXISTS files; DROP TABLE IF EXISTS links; DROP TABLE IF EXISTS linkfiles;',
   );
   db.exec(`CREATE TABLE files(path TEXT PRIMARY KEY,mtime REAL NOT NULL,size INTEGER NOT NULL);
-    CREATE TABLE nodes(id TEXT PRIMARY KEY,kind TEXT NOT NULL,session TEXT NOT NULL,stem TEXT NOT NULL,stamp TEXT NOT NULL,file TEXT NOT NULL,body TEXT NOT NULL,hash TEXT NOT NULL,seq INTEGER NOT NULL);
+    CREATE TABLE nodes(id TEXT PRIMARY KEY,kind TEXT NOT NULL,session TEXT NOT NULL,stem TEXT NOT NULL,stamp TEXT NOT NULL,file TEXT NOT NULL,body TEXT NOT NULL,hash TEXT NOT NULL,seq INTEGER NOT NULL,branch TEXT NOT NULL DEFAULT '',record TEXT NOT NULL DEFAULT '',status TEXT NOT NULL DEFAULT '');
     CREATE INDEX nodes_stem ON nodes(session,stem,kind,seq);
+    CREATE INDEX nodes_branch ON nodes(session,kind,branch);
     CREATE TABLE edges(src TEXT NOT NULL,dst TEXT NOT NULL,kind TEXT NOT NULL,PRIMARY KEY(src,dst,kind));
     CREATE INDEX edges_destination ON edges(dst,kind);
     CREATE TABLE linkfiles(path TEXT PRIMARY KEY,mtime REAL NOT NULL,size INTEGER NOT NULL);
@@ -90,7 +91,7 @@ function schema(db) {
 export function withGraph(project, fn, changedFiles = []) {
   const { root, topics, timezone } = locations(project);
   fs.mkdirSync(root, { recursive: true });
-  const file = noSymlink(path.join(root, 'index-v4.sqlite'));
+  const file = noSymlink(path.join(root, 'index-v5.sqlite'));
   const forced = new Set([...changedFiles].map((f) => noSymlink(f)));
   // Gate schema rebuild and corrupted-file replacement as well as normal operations.
   // History locks are never held by a graph read; writers release them before indexing.
@@ -113,7 +114,7 @@ export function withGraph(project, fn, changedFiles = []) {
     try {
       const shape = {
         files: 'path,mtime,size',
-        nodes: 'id,kind,session,stem,stamp,file,body,hash,seq',
+        nodes: 'id,kind,session,stem,stamp,file,body,hash,seq,branch,record,status',
         edges: 'src,dst,kind',
         linkfiles: 'path,mtime,size',
         links: 'src,dst',
@@ -179,12 +180,32 @@ class Graph {
       body: row.body ?? '',
       hash: row.kind === 'file' ? '' : createHash('sha256').update(row.body).digest('hex'),
       seq: row.seq || 0,
+      branch: row.kind === 'checkpoint' ? row.branch || '' : '',
+      record: row.kind === 'checkpoint' ? row.record || '' : '',
+      status: row.kind === 'checkpoint' ? row.status || '' : '',
     };
-    if (!old) this.db.prepare('INSERT INTO nodes VALUES(?,?,?,?,?,?,?,?,?)').run(...Object.values(next));
+    if (!old) this.db.prepare('INSERT INTO nodes VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(...Object.values(next));
     else if (Object.keys(next).some((key) => next[key] !== old[key]))
       this.db
-        .prepare('UPDATE nodes SET kind=?,session=?,stem=?,stamp=?,file=?,body=?,hash=?,seq=? WHERE id=?')
-        .run(next.kind, next.session, next.stem, next.stamp, next.file, next.body, next.hash, next.seq, next.id);
+        .prepare(
+          'UPDATE nodes SET kind=?,session=?,stem=?,stamp=?,file=?,body=?,hash=?,seq=?,branch=?,record=?,status=? WHERE id=?',
+        )
+        .run(
+          next.kind,
+          next.session,
+          next.stem,
+          next.stamp,
+          next.file,
+          next.body,
+          next.hash,
+          next.seq,
+          next.branch,
+          next.record,
+          next.status,
+          next.id,
+        );
+    else return null;
+    return next;
   }
   edge(src, dst, kind) {
     this.db.prepare('INSERT OR IGNORE INTO edges VALUES(?,?,?)').run(src, dst, kind);
@@ -467,18 +488,18 @@ class Graph {
         }
       }
     const paths = new Set(sources.map((s) => s.file));
-    const affected = new Map();
+    const diffs = [];
     for (const old of this.db.prepare('SELECT path FROM files').all())
       if (!paths.has(old.path)) {
         this.db.exec('SAVEPOINT file_sync');
         try {
-          const names = this.db
-            .prepare("SELECT DISTINCT session FROM nodes WHERE file=? AND kind<>'file'")
-            .all(old.path);
-          const previous = names.map(({ session }) => [session, this.sessionIds(session)]);
-          this.remove(old.path);
+          const row = this.db
+            .prepare("SELECT session,stem,kind FROM nodes WHERE file=? AND kind<>'file' LIMIT 1")
+            .get(old.path);
+          const diff = row ? this.applyFileDiff({ ...row, file: old.path }, []) : null;
+          this.db.prepare('DELETE FROM files WHERE path=?').run(old.path);
           this.db.exec('RELEASE file_sync');
-          for (const [name, ids] of previous) if (!affected.has(name)) affected.set(name, ids);
+          if (diff) diffs.push(diff);
         } catch (error) {
           this.db.exec('ROLLBACK TO file_sync; RELEASE file_sync');
           if (forced.has(old.path)) throw error;
@@ -506,10 +527,10 @@ class Graph {
         }
         if (!stable) throw new Error('기록이 계속 바뀌어 안정된 색인 위치를 얻지 못했습니다.');
         const candidates = this.fileCandidates(source, text);
-        const previous = this.applyFileDiff(source, candidates);
+        const diff = this.applyFileDiff(source, candidates);
         this.db.prepare('INSERT OR REPLACE INTO files VALUES(?,?,?)').run(source.file, stable.mtimeMs, stable.size);
         this.db.exec('RELEASE file_sync');
-        for (const [name, ids] of previous) if (!affected.has(name)) affected.set(name, ids);
+        diffs.push(diff);
         this.reindexed.push(source.file);
       } catch (error) {
         this.db.exec('ROLLBACK TO file_sync; RELEASE file_sync');
@@ -517,7 +538,8 @@ class Graph {
         this.errors.push({ name: source.session, file: source.file, error: readError(error) });
       }
     }
-    for (const [name, ids] of affected) this.relate(name, ids);
+    this.forks(diffs);
+    this.merges(diffs);
   }
   fileCandidates(source, text) {
     const candidates = [];
@@ -537,97 +559,183 @@ class Graph {
         const occurrence = (counts.get(e.timestamp) || 0) + 1;
         counts.set(e.timestamp, occurrence);
         const id = checkpointId(source.session, source.stem, e.timestamp, occurrence);
-        candidates.push({ ...source, id, kind: 'checkpoint', stamp: e.timestamp, body: e.body, seq });
+        candidates.push({
+          ...source,
+          id,
+          kind: 'checkpoint',
+          stamp: e.timestamp,
+          body: e.body,
+          seq,
+          branch: e.branch || '',
+          record: e.record || '',
+          status: e.status || '',
+        });
       }
     }
     return candidates;
   }
   applyFileDiff(source, candidates) {
     const prior = this.db.prepare("SELECT * FROM nodes WHERE file=? AND kind<>'file'").all(source.file);
-    // Capture the whole affected session before deleting any of its IDs.
-    const names = new Set([source.session, ...prior.map((r) => r.session)]);
-    const previous = new Map([...names].map((name) => [name, this.sessionIds(name)]));
+    const before = prior.filter((r) => r.kind === 'checkpoint').sort((a, b) => a.seq - b.seq);
+    const after = candidates.filter((r) => r.kind === 'checkpoint');
     const ids = new Set(candidates.map((r) => r.id));
     for (const row of prior) {
       if (!ids.has(row.id)) this.removeNode(row.id);
     }
     const byId = new Map(prior.map((row) => [row.id, row]));
-    for (const row of candidates) this.node(row, byId.get(row.id) || null);
-    for (const row of candidates.filter((r) => r.kind === 'checkpoint')) {
+    const afterById = new Map(after.map((row) => [row.id, row]));
+    const moved = [
+      ...before.filter((r) => !afterById.has(r.id) || afterById.get(r.id).seq !== r.seq),
+      ...after.filter((r) => !byId.has(r.id) || byId.get(r.id).seq !== r.seq),
+    ];
+    const changed = [];
+    for (const row of candidates) {
+      const next = this.node(row, byId.get(row.id) || null);
+      if (next?.kind === 'checkpoint') changed.push(next);
+    }
+    this.nextPairs(before, after);
+    for (const row of after) {
       this.db.prepare("DELETE FROM edges WHERE src=? AND kind='points'").run(row.id);
       for (const file of references(row.body, [...new Set([path.dirname(source.file), source.dir])])) {
         this.node({ id: 'file:' + file, kind: 'file', session: '', stem: '', file, body: '' });
         this.edge(row.id, 'file:' + file, 'points');
       }
     }
-    return previous;
+    return {
+      source,
+      before,
+      after,
+      moved,
+      changed,
+      oldHeader: prior.find((r) => r.kind === 'branch'),
+      newHeader: candidates.find((r) => r.kind === 'branch'),
+    };
   }
-  sessionIds(name) {
-    return this.db
-      .prepare('SELECT id FROM nodes WHERE session=?')
-      .all(name)
-      .map((r) => r.id);
+  nextPairs(before, after) {
+    const pairs = (rows) =>
+      new Map(rows.slice(1).map((r, i) => [JSON.stringify([rows[i].id, r.id]), [rows[i].id, r.id]]));
+    const oldPairs = pairs(before),
+      newPairs = pairs(after);
+    for (const [key, pair] of oldPairs)
+      if (!newPairs.has(key)) this.db.prepare("DELETE FROM edges WHERE src=? AND dst=? AND kind='next'").run(...pair);
+    for (const [key, pair] of newPairs) if (!oldPairs.has(key)) this.edge(...pair, 'next');
   }
   removeNode(id) {
     this.db.prepare('DELETE FROM edges WHERE src=? OR dst=?').run(id, id);
     this.db.prepare('DELETE FROM nodes WHERE id=?').run(id);
   }
-  remove(file) {
-    const ids = this.db.prepare("SELECT id FROM nodes WHERE file=? AND kind<>'file'").all(file);
-    for (const { id } of ids) this.removeNode(id);
-    this.db.prepare('DELETE FROM files WHERE path=?').run(file);
-  }
-  relate(name, previousIds = []) {
-    const ids = [...new Set([...previousIds, ...this.sessionIds(name)])];
-    // Bounded bind lists also cover IDs removed by this refresh, without inferring a
-    // session from encoded ID prefixes or touching any unchanged session's edges.
-    for (let i = 0; i < ids.length; i += 400) {
-      const part = ids.slice(i, i + 400),
-        slots = part.map(() => '?').join(',');
-      this.db
-        .prepare(`DELETE FROM edges WHERE kind IN ('next','fork','merge') AND (src IN (${slots}) OR dst IN (${slots}))`)
-        .run(...part, ...part);
-    }
-    if (this.names().includes(name)) {
-      const branches = this.branches(name);
-      for (const stem of ['main', ...branches.map((b) => b.name)]) {
-        const rows = this.own(name, stem);
-        for (let i = 1; i < rows.length; i++) this.edge(rows[i - 1].id, rows[i].id, 'next');
-      }
-      const pending = [...branches];
-      let progress = true;
-      while (pending.length && progress) {
-        progress = false;
-        for (let i = pending.length - 1; i >= 0; i--) {
-          const b = pending[i];
-          if (pending.some((x) => x.name === b.parent)) continue;
-          try {
-            const parentRows = b.parent === 'main' ? this.own(name, 'main') : this.lineage(name, b.parent);
-            const anchor = b.anchor
-              ? parentRows.findLast((r) => (b.anchor_id ? r.id === b.anchor_id : r.stamp === b.anchor))
-              : null;
-            if (b.anchor && !anchor) throw new Error(`갈래 체크포인트 없음: ${b.name} ← ${b.parent}@${b.anchor}`);
-            this.edge(stemId(name, b.parent), stemId(name, b.name), 'fork');
-            if (anchor) this.edge(anchor.id, stemId(name, b.name), 'fork');
-            const first = this.own(name, b.name)[0];
-            if (anchor && first) this.edge(anchor.id, first.id, 'next');
-          } catch (error) {
-            this.errors.push({ name, error: readError(error) });
+  // Only branches affected by headers, first records, or ancestor anchor positions.
+  forks(diffs) {
+    for (const name of new Set(diffs.map((d) => d.source.session))) {
+      const files = diffs.filter((d) => d.source.session === name);
+      const branches = this.branches(name),
+        byName = new Map(branches.map((b) => [b.name, b]));
+      const selected = new Set();
+      for (const d of files) {
+        if (d.oldHeader?.body !== d.newHeader?.body || (d.source.stem !== 'main' && d.before[0]?.id !== d.after[0]?.id))
+          selected.add(d.source.stem);
+        const ids = new Set(d.moved.map((r) => r.id)),
+          stamps = new Set(d.moved.map((r) => r.stamp));
+        for (const b of branches) {
+          if (!(b.anchor_id ? ids.has(b.anchor_id) : stamps.has(b.anchor))) continue;
+          const seen = new Set();
+          for (let parent = b.parent; parent && !seen.has(parent); parent = byName.get(parent)?.parent) {
+            if (parent === d.source.stem) {
+              selected.add(b.name);
+              break;
+            }
+            seen.add(parent);
           }
-          pending.splice(i, 1);
-          progress = true;
         }
       }
-      if (pending.length) this.errors.push({ name, error: '브랜치 부모 순환 또는 부모 누락' });
-      for (const row of this.own(name, 'main')) {
-        const e = this.detail(row);
+      let expanded = true;
+      while (expanded) {
+        expanded = false;
+        for (const b of branches)
+          if (selected.has(b.parent) && !selected.has(b.name)) {
+            selected.add(b.name);
+            expanded = true;
+          }
+      }
+      const pending = branches.filter((b) => selected.has(b.name));
+      // Clean all selected branches before the pending loop, including cyclic ones.
+      for (const b of pending) {
+        const d = files.find((d) => d.source.stem === b.name);
+        const first = d
+          ? d.before[0]
+          : this.db
+              .prepare(
+                `SELECT ${NODE_FIELDS} FROM nodes WHERE session=? AND stem=? AND kind='checkpoint' ORDER BY seq LIMIT 1`,
+              )
+              .get(name, b.name);
+        const anchors = this.db
+          .prepare(
+            "SELECT e.src FROM edges e JOIN nodes n ON n.id=e.src WHERE e.dst=? AND e.kind='fork' AND n.kind='checkpoint'",
+          )
+          .all(stemId(name, b.name));
+        if (first)
+          for (const a of anchors)
+            this.db.prepare("DELETE FROM edges WHERE src=? AND dst=? AND kind='next'").run(a.src, first.id);
+        this.db.prepare("DELETE FROM edges WHERE dst=? AND kind='fork'").run(stemId(name, b.name));
+      }
+      // Reuse this call's candidates rather than re-reading the changed line's rows.
+      const own = this.own;
+      this.own = (session, stem) =>
+        files.find((d) => session === name && d.source.stem === stem && d.source.kind !== 'session')?.after ??
+        own.call(this, session, stem);
+      try {
+        let progress = true;
+        while (pending.length && progress) {
+          progress = false;
+          for (let i = pending.length - 1; i >= 0; i--) {
+            const b = pending[i];
+            if (pending.some((x) => x.name === b.parent)) continue;
+            try {
+              const parentRows = b.parent === 'main' ? this.own(name, 'main') : this.lineage(name, b.parent);
+              const anchor = b.anchor
+                ? parentRows.findLast((r) => (b.anchor_id ? r.id === b.anchor_id : r.stamp === b.anchor))
+                : null;
+              if (b.anchor && !anchor) throw new Error(`갈래 체크포인트 없음: ${b.name} ← ${b.parent}@${b.anchor}`);
+              this.edge(stemId(name, b.parent), stemId(name, b.name), 'fork');
+              if (anchor) this.edge(anchor.id, stemId(name, b.name), 'fork');
+              const first = this.own(name, b.name)[0];
+              if (anchor && first) this.edge(anchor.id, first.id, 'next');
+            } catch (error) {
+              this.errors.push({ name, error: readError(error) });
+            }
+            pending.splice(i, 1);
+            progress = true;
+          }
+        }
+        if (pending.length) this.errors.push({ name, error: '브랜치 부모 순환 또는 부모 누락' });
+      } finally {
+        this.own = own;
+      }
+    }
+  }
+  merges(diffs) {
+    for (const name of new Set(diffs.map((d) => d.source.session))) {
+      const branches = new Set(this.branches(name).map((b) => b.name));
+      const changed = new Map();
+      for (const d of diffs.filter((d) => d.source.session === name)) {
+        if (d.source.stem === 'main') for (const row of d.changed) changed.set(row.id, row);
+        if (!!d.oldHeader !== !!d.newHeader)
+          for (const row of this.db
+            .prepare(
+              `SELECT ${NODE_FIELDS} FROM nodes WHERE session=? AND kind='checkpoint' AND stem='main' AND branch=?`,
+            )
+            .all(name, d.source.stem))
+            changed.set(row.id, row);
+      }
+      for (const row of changed.values()) {
+        this.db.prepare("DELETE FROM edges WHERE dst=? AND kind='merge'").run(row.id);
         if (
-          e.branch &&
-          e.record === `work/${e.branch}/history.md` &&
-          ['끝남', '멈춤', '중단'].includes(e.status) &&
-          branches.some((b) => b.name === e.branch)
+          row.branch &&
+          row.record === `work/${row.branch}/history.md` &&
+          ['끝남', '멈춤', '중단'].includes(row.status) &&
+          branches.has(row.branch)
         )
-          this.edge(stemId(name, e.branch), row.id, 'merge');
+          this.edge(stemId(name, row.branch), row.id, 'merge');
       }
     }
   }

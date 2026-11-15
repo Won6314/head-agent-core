@@ -66,7 +66,7 @@ const project = () => {
       },
     );
   fs.writeFileSync(transcript, lines.map((l) => JSON.stringify(l)).join('\n') + '\n');
-  const index = path.join(dir, '.head/index-v4.sqlite');
+  const index = path.join(dir, '.head/index-v5.sqlite');
   const sum = () => crypto.createHash('md5').update(fs.readFileSync(index)).digest('hex');
   return { dir, transcript, sum };
 };
@@ -96,13 +96,16 @@ test('old Node: on a set-up project the start hooks give the reason once, and th
     if (text) said[`${script} ${part.join(' ')}`] = text;
   }
   // A core that fits one output leaves the second part empty.
-  assert.deepEqual(Object.keys(said).filter((k) => k !== 'hook.mjs core 2 2'), [
-    'hook.mjs session',
-    'hook.mjs core 1 2',
-    'codex-hook.mjs session',
-    'codex-hook.mjs core',
-    'codex-hook.mjs instructions',
-  ]);
+  assert.deepEqual(
+    Object.keys(said).filter((k) => k !== 'hook.mjs core 2 2'),
+    [
+      'hook.mjs session',
+      'hook.mjs core 1 2',
+      'codex-hook.mjs session',
+      'codex-hook.mjs core',
+      'codex-hook.mjs instructions',
+    ],
+  );
   assert.match(said['hook.mjs session'], REASON);
   assert.match(said['codex-hook.mjs session'], REASON);
   assert.match(said['hook.mjs core 1 2'], /^# HEAD Core/);

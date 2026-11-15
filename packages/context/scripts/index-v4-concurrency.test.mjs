@@ -159,12 +159,12 @@ test('v4 concurrency evidence: latency differs from actual mkdir wait/hold; all 
     lockHoldMs: stats(events.filter((e) => e.event === 'release').map((e) => e.hold)),
     timeouts: events.filter((e) => /잠금을 얻지/.test(e.error || '')).length,
   };
-  assert.ok(events.some((e) => e.event === 'acquire' && e.file.endsWith('index-v4.sqlite.lock')));
+  assert.ok(events.some((e) => e.event === 'acquire' && e.file.endsWith('index-v5.sqlite.lock')));
   for (const pid of new Set(events.map((e) => e.pid))) {
     let count = null;
     for (const e of events.filter((e) => e.pid === pid)) {
       if (e.event === 'start' && e.method === 'verify') count = 0;
-      if (count !== null && e.event === 'acquire' && e.file.endsWith('index-v4.sqlite.lock')) count++;
+      if (count !== null && e.event === 'acquire' && e.file.endsWith('index-v5.sqlite.lock')) count++;
       if (e.event === 'verified') {
         assert.ok(count >= 4, 'every inspect read must acquire the index lock');
         count = null;

@@ -23,10 +23,10 @@ function installLockInstrumentation() {
   };
   fs.mkdirSync = function (p, ...args) {
     if (!String(p).endsWith('.lock')) return mkdir(p, ...args);
-    const index = String(p).endsWith('index-v4.sqlite.lock');
-    if (index && [...held.keys()].some((f) => !f.endsWith('index-v4.sqlite.lock')))
+    const index = String(p).endsWith('index-v5.sqlite.lock');
+    if (index && [...held.keys()].some((f) => !f.endsWith('index-v5.sqlite.lock')))
       throw new Error('history -> index nesting');
-    if (!index && [...held.keys()].some((f) => f.endsWith('index-v4.sqlite.lock')))
+    if (!index && [...held.keys()].some((f) => f.endsWith('index-v5.sqlite.lock')))
       throw new Error('index -> history nesting');
     const start = waiting.get(p) ?? performance.now();
     waiting.set(p, start);
@@ -51,7 +51,7 @@ function installLockInstrumentation() {
     if (held.has(p)) {
       emit({ event: 'release', file: p, hold: performance.now() - held.get(p) });
       held.delete(p);
-      if (barrier && appended && !held.size && !String(p).endsWith('index-v4.sqlite.lock')) {
+      if (barrier && appended && !held.size && !String(p).endsWith('index-v5.sqlite.lock')) {
         appended = false;
         emit({ event: 'paused' });
         while (!fs.existsSync(barrier)) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
@@ -63,7 +63,7 @@ function installLockInstrumentation() {
 
 function installGraphInstrumentation() {
   const proto = withGraphRead(project, (g) => Object.getPrototypeOf(g));
-  for (const method of ['sync', 'relate', 'recent', 'map', 'find', 'item']) {
+  for (const method of ['sync', 'forks', 'merges', 'recent', 'map', 'find', 'item']) {
     const original = proto[method];
     proto[method] = function (...args) {
       const t = performance.now();
@@ -71,7 +71,7 @@ function installGraphInstrumentation() {
         return original.apply(this, args);
       } finally {
         emit({
-          event: method === 'sync' || method === 'relate' ? method : 'callback',
+          event: ['sync', 'forks', 'merges'].includes(method) ? method : 'callback',
           method,
           ms: performance.now() - t,
           changed: this.reindexed.length,

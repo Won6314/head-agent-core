@@ -379,7 +379,7 @@ test('v4 stability exhaustion is four reads; commit failure rolls back without r
     proto.exec = exec;
   }
   assert.equal(callbacks, 1);
-  const db = new (sqlite().DatabaseSync)(path.join(project, '.head/index-v4.sqlite'));
+  const db = new (sqlite().DatabaseSync)(path.join(project, '.head/index-v5.sqlite'));
   assert.equal(db.prepare("SELECT count(*) n FROM nodes WHERE kind='checkpoint'").get().n, 1);
   db.close();
   assert.equal(
@@ -408,7 +408,7 @@ test('v4 D2: source enumeration failure for an own changed session propagates th
   } finally {
     fs.readdirSync = readdir;
   }
-  const db = new (sqlite().DatabaseSync)(path.join(project, '.head/index-v4.sqlite'));
+  const db = new (sqlite().DatabaseSync)(path.join(project, '.head/index-v5.sqlite'));
   assert.equal(
     db.prepare("SELECT body FROM nodes WHERE session='A' AND kind='checkpoint'").get().body,
     before.nodes.find((r) => r.kind === 'checkpoint').body,
@@ -445,7 +445,7 @@ test('v4 D2 file savepoint restores partial SQL changes and files stat; own fail
   fs.writeFileSync(file, rec('good-A'));
   fs.writeFileSync(other, rec('reject-token'));
   assert.throws(() => withGraph(project, () => {}, [file, other]), /reject-body/);
-  const db = new (sqlite().DatabaseSync)(path.join(project, '.head/index-v4.sqlite'));
+  const db = new (sqlite().DatabaseSync)(path.join(project, '.head/index-v5.sqlite'));
   assert.equal(
     db.prepare("SELECT body FROM nodes WHERE session='A' AND kind='checkpoint'").get().body,
     before.a.nodes.find((r) => r.kind === 'checkpoint').body,
@@ -527,7 +527,7 @@ test('v4 D1: schema rebuilds and corruption restore md; v3 sentinel is untouched
   fs.writeFileSync(sentinel, 'v3 sentinel');
   const stat = fs.statSync(sentinel);
   const expected = s.inspect({ name: 'A', action: 'map' });
-  const file = path.join(project, '.head/index-v4.sqlite');
+  const file = path.join(project, '.head/index-v5.sqlite');
   fs.unlinkSync(file);
   assert.equal(s.inspect({ name: 'A', action: 'map' }), expected);
   for (const sql of ['PRAGMA user_version=99', 'ALTER TABLE nodes ADD COLUMN wrong TEXT']) {
