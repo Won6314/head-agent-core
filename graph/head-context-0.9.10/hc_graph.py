@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""head-context 0.9.5 제품 그래프 조회 — 표준 라이브러리만, 읽기 전용.
+"""head-context 0.9.10 제품 그래프 조회 — 표준 라이브러리만, 읽기 전용.
 
   python3 hc_graph.py overview                    처음 볼 때: 노드 타입별 수, 화면 묶음, 유저 활동, 기능, 따라 내려가는 길
   python3 hc_graph.py feature tool:save           기능 하나: 처리 코드에서 도달하는 코드 트리 + 읽고 쓰는 것·외부 연결, 화면·정책
@@ -13,8 +13,9 @@
   python3 hc_graph.py checks                      검사 목록(도달하지 않는 코드, 정합성 검사)
   python3 hc_graph.py schema | sql "SELECT …"     테이블 꼴 / 읽기 전용 SQL 하나
 
-DB는 이 스크립트 옆의 head-context-0.9.5.sqlite, 다른 곳이면 --db <파일> 또는 환경 변수 HC_GRAPH_DB.
+DB는 이 스크립트 옆의 head-context-0.9.10.sqlite, 다른 곳이면 --db <파일> 또는 환경 변수 HC_GRAPH_DB.
 """
+import hashlib
 import json
 import os
 import sqlite3
@@ -335,12 +336,18 @@ def source(g, key, repo=None):
     nid = g.resolve(key)
     n = g.node(nid)
     if n["type"] == "코드" and n["file"]:
-        p(f"{n['file']}:{n['line']}-{n['end_line']}  (head-agent-core 04e9328 packages/context)")
+        p(f"{n['file']}:{n['line']}-{n['end_line']}  (head-agent-core 7a5896c packages/context)")
         if repo:
             path = os.path.join(repo, n["file"])
             if not os.path.isfile(path):
-                sys.exit(f"--repo에 이 파일이 없습니다: {path}\n--repo에는 head-agent-core 04e9328의 packages/context 폴더를 줍니다.")
-            lines = open(path, encoding="utf-8").read().splitlines()
+                sys.exit(f"--repo에 이 파일이 없습니다: {path}\n--repo에는 head-agent-core 7a5896c의 packages/context 폴더를 줍니다.")
+            raw = open(path, "rb").read()
+            row = g.db.execute("SELECT value FROM meta WHERE key='file_sha256'").fetchone()
+            want = json.loads(row[0]).get(n["file"]) if row else None
+            if want and hashlib.sha256(raw).hexdigest() != want:
+                p(f"주의: --repo의 이 파일은 그래프를 만든 커밋(7a5896c)의 파일과 내용이 다릅니다. 아래 줄은 그래프의 줄 범위와 어긋날 수 있습니다.\n"
+                  f"     같은 판으로 읽으려면: git -C <head-agent-core> show 7a5896c:packages/context/{n['file']}")
+            lines = raw.decode("utf-8").splitlines()
             for i in range(n["line"] - 1, min(n["end_line"], len(lines))):
                 p(f"{i + 1:5} {lines[i]}")
         return
@@ -355,7 +362,7 @@ def source(g, key, repo=None):
 
 def main():
     args = sys.argv[1:]
-    db = opt(args, "--db", os.environ.get("HC_GRAPH_DB") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "head-context-0.9.5.sqlite"))
+    db = opt(args, "--db", os.environ.get("HC_GRAPH_DB") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "head-context-0.9.10.sqlite"))
     repo = opt(args, "--repo")
     typ = opt(args, "--type")
     full = "--full" in args
