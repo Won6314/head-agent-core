@@ -31,7 +31,7 @@ export const INSTRUCTIONS = `일을 시작할 때는 먼저 start-job 스킬을 
 export const APP_INSTRUCTIONS = {
   antigravity: `이 앱(Antigravity)에서 부르는 도구
 - 기록 도구는 플러그인 MCP 서버 head-context_session의 도구를 call_mcp_tool로 부릅니다.
-- 다른 대화에 보내기: 이 플러그인의 send(threadId: 보낼 곳, prompt). Antigravity 대화는 다음 입력 때 받으며 깨우지 않습니다.`,
+- 다른 대화에 보내기: 이 플러그인의 send(threadId: 보낼 곳, prompt). Antigravity의 delivery는 started(살아 있는 ACP 대화를 바로 깨움), queued(다음 입력 때 받음)입니다. TUI·데스크톱 앱은 queued입니다.`,
   claude: `이 앱(Claude Code)에서 부르는 도구
 - 다른 대화에 보내기: SendMessage(to: 보낼 곳)
 - 기본 포크(하위 에이전트를 이 대화의 컨텍스트를 이어받게 부르기): Agent 도구에 subagent_type "fork". 같은 모델이 이 대화를 이어받으므로 앱을 넘지 않습니다.

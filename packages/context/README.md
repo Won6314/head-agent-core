@@ -1,4 +1,4 @@
-# head-context 0.9.13 — 작업 세션·작업 브랜치·저장
+# head-context 0.9.14 — 작업 세션·작업 브랜치·저장
 
 작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 작업 맥락을 다시 불러온다.
 살아 있는 대화를 작업 세션·작업 브랜치와 묶어 보여 준다. 포크·새 대화·대화 사이 메시지는 호스트(Claude Code) 기능을 그대로 쓴다.
@@ -143,7 +143,7 @@ Row = {conversation_id,host:'claude'|'codex',title,address,reachable,last_at,ent
 - 이름표에 ` (fork)`가 반복되면 하나만 남긴다.
   다시 돌려도 더 할 일이 없다.
 
-## Antigravity CLI·ACP 포장 (0.9.13)
+## Antigravity CLI·ACP 포장 (0.9.14)
 
 Google Antigravity CLI 1.5.13의 `agy acp`가 기준이다. Claude·Codex와 같은 프로젝트 기록을 읽고 쓴다.
 루트 `plugin.json`, `hooks.json`, `mcp_config.json`만 Antigravity가 읽고, 기존 `skills/`를 공유한다.
@@ -162,7 +162,8 @@ agy plugin install https://github.com/Won6314/head-agent-core/tree/main/packages
   - agy 1.5.13 실제 시험에서 `<summary>` 본문은 한 줄 포인터가 됐다. 호스트가 그 바깥에 붙이는 `User Requests`(이전 사용자 입력)와 `Conversation Logs` 경로 안내는 남는다.
 - 매 도구 호출의 `_meta`의 `antigravity.google/conversation_id`가 대화 ID(ACP sessionId)다. `root_conversation_id`가 다르면 부른 대화의 프로젝트를 쓰고 기록 쓰기는 거절한다.
 - 등록과 마지막 처리 CHECKPOINT: `${PLUGIN_DATA}/conversations/<ID>.json` (`cwd`, `conversation_id`, `transcript_path`, `checkpoint`). `PLUGIN_DATA`는 agy가 제공한다(기본 `~/.gemini/antigravity-cli/plugin_data/head-context`).
-- 세 앱이 같은 Antigravity peer(`host`, `live`, `accepts`, `send`)를 사용한다. 주소는 **`antigravity:<ACP sessionId>`**, 앱 표시는 **`antigravity`**다. 보내기는 `queued`, 깨우기는 하지 않는다.
+- 세 앱이 같은 Antigravity peer(`host`, `live`, `accepts`, `send`)를 사용한다. 주소는 **`antigravity:<ACP sessionId>`**, 앱 표시는 **`antigravity`**다. Antigravity 보내기의 delivery는 `started`(살아 있는 ACP 대화를 바로 깨움), `queued`(다음 입력 때 받음)다. `started`는 깨우기 신호가 수락됐다는 뜻이지 메시지 처리가 끝났다는 확인은 아니다. 일하는 중이면 다음 단계에서 받는다. TUI·데스크톱 앱·살아 있지 않은 대화·깨우기 실패는 `queued`다.
+- 먼저 inbox에 넣고, presence의 pid/start가 살아 있으면 **그 pid의** `~/.gemini/antigravity-cli/log/acp-server-<시각>-<pid>.log`에서 HTTP 포트(HTTPS 아님)를 읽어 loopback `SendAgentMessage`를 부른다. 신호에는 메시지 원문을 싣지 않는다. 다른 pid의 서버로 대신 보내지 않으며 호출 실패도 이미 성공한 inbox 저장을 실패시키지 않는다. 이 로컬 RPC는 비공개 구현에 의존한다.
 
 ### 클라이언트가 쓰는 대화별 시작 작업 세션 파일
 
@@ -216,7 +217,7 @@ SessionStart 및 매 PreInvocation에 원자적으로 갱신한다. `pid`는 셸
 }
 ```
 
-`from`은 `claude:`, `codex:`, `antigravity:` 주소다. 다음 PreInvocation의 `invocationNum === 0`에서 오래된 것부터 시스템 메시지로 넣고 지운다. `.taking-<pid>-<UUID>/`로 rename하여 가져갈 권리를 잡고 출력 뒤 지운다. 가져간 프로세스가 죽거나 10분 지난 것은 복구한다(출력 직후 ack 전에 죽으면 한 번 더 갈 수 있음). 깨진 JSON은 `.broken/`에 남겨 두고 대화에 알린다.
+`from`은 `claude:`, `codex:`, `antigravity:` 주소다. 매 PreInvocation에서 오래된 것부터 시스템 메시지로 넣고 지운다(턴 도중 들어온 깨우기도 다음 invocation에서 처리). 원문은 이 inbox 경로로만 전달한다. `.taking-<pid>-<UUID>/`로 rename하여 가져갈 권리를 잡고 출력 뒤 지운다. 가져간 프로세스가 죽거나 10분 지난 것은 복구한다(출력 직후 ack 전에 죽으면 한 번 더 갈 수 있음). 깨진 JSON은 `.broken/`에 남겨 두고 대화에 알린다.
 
 ## Codex 포장
 

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import http from 'node:http';
 import { spawn, spawnSync } from 'node:child_process';
 import { once } from 'node:events';
 import { sessions } from '../core/sessions.mjs';
@@ -20,6 +21,68 @@ import { antigravityPeer } from '../hosts/antigravity/peer.mjs';
 import { claudeTree } from '../hosts/claude/tree.mjs';
 
 const fresh = () => fs.mkdtempSync(path.join(process.env.HEAD_CONTEXT_TEST_ROOT || os.tmpdir(), 'agy-'));
+test('Antigravity send: owner ACP HTTP only, signal has no payload; failure/non-ACP/dead owners stay queued', async () => {
+  const dir = fresh();
+  const presence = path.join(locations(dir).state, 'presence');
+  const logs = path.join(os.homedir(), '.gemini/antigravity-cli/log');
+  fs.mkdirSync(presence, { recursive: true });
+  fs.mkdirSync(logs, { recursive: true });
+  const requests = [];
+  const owner = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)', 'acp']);
+  await once(owner, 'spawn');
+  let status = 200;
+  const server = http.createServer(async (req, res) => {
+    let body = '';
+    for await (const chunk of req) body += chunk;
+    requests.push({ url: req.url, body: JSON.parse(body) });
+    res.writeHead(status).end('{}');
+  });
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  const log = path.join(logs, `acp-server-20261120_120000-${owner.pid}.log`);
+  const put = (identity) => fs.writeFileSync(path.join(presence, 'antigravity-target.json'), JSON.stringify(identity));
+  const send = () => antigravityPeer.send('antigravity:target', 'SECRET_PAYLOAD', { project: dir, from: 'claude:sender' });
+  const inbox = path.join(locations(dir).state, 'inbox/antigravity-target');
+  try {
+    put({ pid: owner.pid, start: processBirth(owner.pid) });
+    // An unrelated ACP log must never substitute for this owner's missing log.
+    fs.writeFileSync(path.join(logs, 'acp-server-20261120_120000-99999999.log'), `Language server listening on random port at ${server.address().port} for HTTP\n`);
+    assert.equal(await send(), 'queued');
+    assert.equal(requests.length, 0);
+    fs.writeFileSync(log, `Language server listening on random port at 1 for HTTPS (gRPC)\n`);
+    assert.equal(await send(), 'queued');
+    assert.equal(requests.length, 0);
+    fs.appendFileSync(log, `Language server listening on random port at ${server.address().port} for HTTP\n`);
+    assert.equal(await send(), 'started');
+    assert.deepEqual(requests[0], {
+      url: '/exa.language_server_pb.LanguageServerService/SendAgentMessage',
+      body: { recipient: 'target', content: '다른 대화에서 메시지가 도착했습니다.', senderId: 'head-context' },
+    });
+    assert.equal(fs.readdirSync(inbox).filter((f) => f.endsWith('.json')).length, 3);
+    status = 401;
+    assert.equal(await send(), 'queued');
+    put({ pid: owner.pid, start: 'reused' });
+    assert.equal(await send(), 'queued');
+    put({});
+    assert.equal(await send(), 'queued');
+    assert.equal(requests.length, 2);
+    assert.equal(fs.readdirSync(inbox).filter((f) => f.endsWith('.json')).length, 6);
+    // Even an old ACP log for this live non-ACP pid must not signal it.
+    const oldLog = path.join(logs, `acp-server-20261120_120000-${process.pid}.log`);
+    fs.copyFileSync(log, oldLog);
+    put({ pid: process.pid });
+    assert.equal(await send(), 'queued');
+    assert.equal(requests.length, 2);
+    fs.unlinkSync(oldLog);
+    put({ pid: owner.pid });
+    await new Promise((resolve) => server.close(resolve));
+    assert.equal(await send(), 'queued');
+  } finally {
+    server.close();
+    owner.kill();
+    fs.rmSync(log, { force: true });
+  }
+});
 const hook = (dir, data, input = {}, env = {}, error = false) => {
   const r = spawnSync(process.execPath, ['scripts/antigravity-hook.mjs'], {
     input: JSON.stringify({
@@ -172,7 +235,7 @@ test('Antigravity start file: bad requests notify once and are consumed; only st
   assert.ok(fs.existsSync(path.join(startDir, 'claude-old.json')));
   assert.ok(fs.existsSync(path.join(startDir, 'antigravity-fresh.json')));
 });
-test('Antigravity hook: camelCase -> injectSteps, consent, registration; ordinary invocations/resume add nothing; inbox once at invocation zero', () => {
+test('Antigravity hook: camelCase -> injectSteps, consent, registration; ordinary invocations/resume add nothing; inbox once even mid-turn', () => {
   const dir = fresh(),
     data = fresh();
   const first = hook(dir, data, { hookEventName: 'SessionStart' });
@@ -187,8 +250,8 @@ test('Antigravity hook: camelCase -> injectSteps, consent, registration; ordinar
     hook(dir, data, { hookEventName: 'SessionStart' }).includes(fs.readFileSync(CORE_SOURCE, 'utf8').trimEnd()),
   );
   queue(dir, 'c1', { from: 'claude:other', text: 'INBOX_SENTINEL' });
-  assert.deepEqual(hook(dir, data, { invocationNum: 1 }), []);
-  assert.match(hook(dir, data).join('\n'), /INBOX_SENTINEL/);
+  assert.match(hook(dir, data, { invocationNum: 1 }).join('\n'), /INBOX_SENTINEL/);
+  assert.deepEqual(hook(dir, data, { invocationNum: 2 }), []);
   assert.deepEqual(hook(dir, data), []);
   assert.equal(readPresence(dir, 'c1').host, 'antigravity');
 });
@@ -271,7 +334,7 @@ test('Antigravity MCP: authoritative meta, registration, shared records and chil
   assert.equal(run(child, 'read', { action: 'overview', name: 'proof' }).isError, undefined);
   assert.equal(run({}, 'list', {}).isError, true);
 });
-test('Claude sends Antigravity addresses through its relay; no wake, delivered next invocation only', async () => {
+test('Claude sends Antigravity addresses through its relay; non-ACP owner queued and delivered once next invocation', async () => {
   const dir = fresh(),
     data = fresh();
   hook(dir, data, { hookEventName: 'SessionStart' });

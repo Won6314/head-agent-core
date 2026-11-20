@@ -18,7 +18,7 @@ export function serveAntigravity({ peers = [] } = {}) {
         definition: {
           name: 'send',
           description:
-            '다른 대화에 보냅니다. threadId는 conversations의 보낼 곳 그대로. Antigravity는 queued(다음 입력 때 받음)이며 깨우지 않습니다.',
+            '다른 대화에 보냅니다. threadId는 conversations의 보낼 곳 그대로. Antigravity의 delivery는 started(살아 있는 ACP 대화를 바로 깨움; 일하는 중이면 다음 단계에서 받음), queued(다음 입력 때 받음; TUI·데스크톱 앱·깨우기 실패 포함)입니다. started는 처리가 끝났다는 확인이 아닙니다.',
           inputSchema: {
             type: 'object',
             properties: { threadId: { type: 'string' }, prompt: { type: 'string' } },

@@ -62,12 +62,12 @@ export async function runHook() {
     }
     if (event === 'PreInvocation') {
       if (input.lastUserInput?.trim() === '/compact' && !runtimeProblem()) parts.push(compactInstruction());
-      if (input.invocationNum === 0) {
-        waiting = take(project, id);
-        parts.push(...waiting.messages.map(asMessage));
-        if (waiting.broken.length)
-          parts.push(`head-context: 읽을 수 없는 메시지를 따로 두었습니다: ${waiting.broken.join(', ')}`);
-      }
+      // A wake during a running turn reaches a later invocation, not zero.
+      // Claim/ack makes each inbox message appear only once across invocations.
+      waiting = take(project, id);
+      parts.push(...waiting.messages.map(asMessage));
+      if (waiting.broken.length)
+        parts.push(`head-context: 읽을 수 없는 메시지를 따로 두었습니다: ${waiting.broken.join(', ')}`);
     }
     parts.push(...takeNotices());
     if (parts.some(Boolean)) fs.writeSync(1, `${JSON.stringify(hookOutput(parts))}\n`);
