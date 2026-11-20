@@ -5,7 +5,7 @@ import { atomicJSON, locations, recordFile, readLoose, records, noSymlink } from
 import { pidAlive } from '../../core/liveness.mjs';
 import { envelope } from '../../core/protocol.mjs';
 import { instructionLine } from '../../core/instruction.mjs';
-import { RECENT_DAYS } from '../../core/recovery.mjs';
+import { agyOwner, antigravityAlive } from './process.mjs';
 
 const presenceFile = (project, id) => recordFile(locations(project).state, 'presence', id, 'antigravity');
 export const readPresence = (project, id) => readLoose(presenceFile(project, id));
@@ -15,6 +15,10 @@ export function writePresence(project, { conversation_id, transcript_path, said 
     host: 'antigravity',
     conversation_id,
     cwd: project,
+    // Replace owner identity on resume too; do not retain a previous process's start.
+    pid: undefined,
+    start: undefined,
+    ...agyOwner(),
     ...(transcript_path ? { transcript_path } : {}),
     ...(said && !said.trim().startsWith('/') ? { said: instructionLine(said) } : {}),
     at: new Date().toISOString(),
@@ -22,11 +26,9 @@ export function writePresence(project, { conversation_id, transcript_path, said 
   atomicJSON(presenceFile(project, conversation_id), value);
   return value;
 }
-// There is no external wake or loaded-session query in this host. Like Codex's
-// app presence, show conversations active within RECENT_DAYS; refreshed each turn.
-export function antigravityLive(project, known = new Map(), { now = Date.now(), days = RECENT_DAYS } = {}) {
+export function antigravityLive(project, known = new Map()) {
   return records(path.join(locations(project).state, 'presence'), { loose: true })
-    .filter((p) => p.host === 'antigravity' && Date.parse(p.at) >= now - days * 86400000)
+    .filter((p) => p.host === 'antigravity' && antigravityAlive(p))
     .map((p) => ({
       conversation_id: p.conversation_id,
       host: 'antigravity',

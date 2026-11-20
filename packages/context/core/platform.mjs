@@ -85,6 +85,33 @@ export function processStart(pid) {
   } // gone: no start time
 }
 
+// Antigravity records process identity on every supported OS. Keep the older
+// Linux-only processStart contract used by Claude/Codex evidence unchanged.
+export function processBirth(pid) {
+  if (isLinux) return processStart(pid);
+  try {
+    const value = isWindows
+      ? execFileSync(
+          'powershell.exe',
+          [
+            '-NoProfile',
+            '-NonInteractive',
+            '-Command',
+            `(Get-Process -Id ${Number(pid)} -ErrorAction Stop).StartTime.ToUniversalTime().Ticks`,
+          ],
+          { encoding: 'utf8', timeout: 2000, windowsHide: true },
+        )
+      : execFileSync('ps', ['-o', 'lstart=', '-p', String(pid)], {
+          encoding: 'utf8',
+          timeout: 2000,
+          env: { ...process.env, LC_ALL: 'C' },
+        });
+    return value.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 // A Unix socket file at an absolute path. On Windows (AF_UNIX) it is not reported as a
 // socket, so being there is enough.
 export const socketThere = (file) => {

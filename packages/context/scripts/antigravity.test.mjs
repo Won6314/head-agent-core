@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { once } from 'node:events';
 import { sessions } from '../core/sessions.mjs';
 import { setupTool, CORE_SOURCE } from '../core/project.mjs';
 import { compactInstruction } from '../hosts/claude/compact.mjs';
@@ -13,6 +14,10 @@ import { callerOf } from '../hosts/antigravity/register.mjs';
 import { queue, readPresence } from '../hosts/antigravity/threads.mjs';
 import { register as registerClaudeSend } from '../hooks/conversations.mjs';
 import { locations } from '../core/storage.mjs';
+import { agyOwner } from '../hosts/antigravity/process.mjs';
+import { processBirth } from '../core/platform.mjs';
+import { antigravityPeer } from '../hosts/antigravity/peer.mjs';
+import { claudeTree } from '../hosts/claude/tree.mjs';
 
 const fresh = () => fs.mkdtempSync(path.join(process.env.HEAD_CONTEXT_TEST_ROOT || os.tmpdir(), 'agy-'));
 const hook = (dir, data, input = {}, env = {}, error = false) => {
@@ -32,6 +37,83 @@ const hook = (dir, data, input = {}, env = {}, error = false) => {
   else assert.equal(r.stderr, '');
   return r.stdout ? JSON.parse(r.stdout).injectSteps.map((s) => s.systemMessage.systemMessage) : [];
 };
+test('Antigravity owner: walk past the hook shell; missing start uses pid only; never adopt an unrelated ancestor', () => {
+  const table = new Map([
+    [30, { argv: ['sh', '-c', 'node hook.mjs'], ppid: 20 }],
+    [20, { argv: ['/opt/tools/agy', 'acp'], ppid: 10 }],
+  ]);
+  assert.deepEqual(
+    agyOwner(
+      30,
+      (pid) => table.get(pid),
+      () => '123',
+    ),
+    { pid: 20, start: '123' },
+  );
+  assert.deepEqual(
+    agyOwner(
+      30,
+      (pid) => table.get(pid),
+      () => null,
+    ),
+    { pid: 20 },
+  );
+  table.set(20, { argv: ['node', 'unrelated.mjs'], ppid: 10 });
+  assert.deepEqual(
+    agyOwner(30, (pid) => table.get(pid)),
+    {},
+  );
+});
+test('Antigravity lists: shared owner, close removes only one, process exit removes the other; legacy and reused pid excluded, no age cutoff', async () => {
+  const dir = fresh(),
+    presence = path.join(locations(dir).state, 'presence');
+  fs.mkdirSync(presence, { recursive: true });
+  const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)']);
+  await once(child, 'spawn');
+  const file = (id) => path.join(presence, `antigravity-${id}.json`);
+  const put = (id, identity) =>
+    fs.writeFileSync(
+      file(id),
+      JSON.stringify({
+        host: 'antigravity',
+        conversation_id: id,
+        at: '2000-01-01T00:00:00Z',
+        ...identity,
+      }),
+    );
+  try {
+    const start = processBirth(child.pid);
+    put('one', { pid: child.pid, ...(start ? { start } : {}) });
+    put('two', { pid: child.pid });
+    put('legacy', {});
+    put('reused', { pid: child.pid, start: 'different-process' });
+    const ids = () =>
+      antigravityPeer
+        .live(dir)
+        .map((p) => p.conversation_id)
+        .sort();
+    assert.deepEqual(ids(), ['one', 'two']);
+    for (const host of ['claude', 'codex', 'antigravity']) {
+      const out = sessions(dir, {
+        host,
+        peers: [{ host: 'antigravity', live: (known) => antigravityPeer.live(dir, known) }],
+      }).conversations();
+      assert.match(out, /antigravity:one/);
+      assert.match(out, /antigravity:two/);
+      assert.doesNotMatch(out, /antigravity:(legacy|reused)/);
+    }
+    assert.equal(claudeTree(dir).loose.filter((p) => p.host === 'antigravity').length, 2);
+    fs.unlinkSync(file('one'));
+    assert.deepEqual(ids(), ['two']);
+    child.kill();
+    await once(child, 'exit');
+    assert.deepEqual(ids(), []);
+    assert.equal(claudeTree(dir).loose.filter((p) => p.host === 'antigravity').length, 0);
+    assert.ok(fs.existsSync(file('legacy')));
+  } finally {
+    child.kill();
+  }
+});
 test('Antigravity start file: same head/context and connection as env, per conversation, optional branch via load', () => {
   const dir = fresh(),
     data = fresh();

@@ -1,4 +1,4 @@
-# head-context 0.9.12 — 작업 세션·작업 브랜치·저장
+# head-context 0.9.13 — 작업 세션·작업 브랜치·저장
 
 작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 작업 맥락을 다시 불러온다.
 살아 있는 대화를 작업 세션·작업 브랜치와 묶어 보여 준다. 포크·새 대화·대화 사이 메시지는 호스트(Claude Code) 기능을 그대로 쓴다.
@@ -143,7 +143,7 @@ Row = {conversation_id,host:'claude'|'codex',title,address,reachable,last_at,ent
 - 이름표에 ` (fork)`가 반복되면 하나만 남긴다.
   다시 돌려도 더 할 일이 없다.
 
-## Antigravity CLI·ACP 포장 (0.9.12)
+## Antigravity CLI·ACP 포장 (0.9.13)
 
 Google Antigravity CLI 1.5.13의 `agy acp`가 기준이다. Claude·Codex와 같은 프로젝트 기록을 읽고 쓴다.
 루트 `plugin.json`, `hooks.json`, `mcp_config.json`만 Antigravity가 읽고, 기존 `skills/`를 공유한다.
@@ -180,6 +180,10 @@ agy plugin install https://github.com/Won6314/head-agent-core/tree/main/packages
 - 읽은 파일은 즉시 지운다(환경변수가 우선한 파일도 버린다). 잘못된 JSON/필드, 없는 작업 세션·브랜치는 기존 훅 오류 경계에서 `head-context: 작업 맥락을 넣지 못했습니다: …` 한 줄로 알린다. 실패한 요청도 남기지 않는다.
 - 매 `SessionStart`에서 같은 start 폴더의 `antigravity-*.json` 중 수정 시각이 1일 넘은 미소비 파일을 지운다. `PreInvocation`과 재개에는 시작 파일을 소비하지 않는다.
 
+### 클라이언트가 대화를 놓을 때
+
+ACP 클라이언트는 `session/close`로 대화를 놓을 때 그 대화의 `<project>/.head/state/presence/antigravity-<ACP sessionId>.json`을 지운다(이미 없으면 성공으로 취급한다). 한 agy 프로세스에 여러 대화가 있으므로 프로세스 생존만으로 개별 대화의 close를 알 수 없다. 다른 대화의 presence나 작업 세션·연결 기록은 지우지 않는다. 같은 대화를 `session/load`로 다시 열고 턴을 보내면 PreInvocation 훅이 현재 agy 프로세스의 presence를 다시 쓴다.
+
 ### 모바일챗이 읽는 presence·inbox 규격
 
 프로젝트 쪽에 두어 다른 앱도 별도 agy 환경변수 없이 읽고 쓴다. 경로는 실제 프로젝트 경계 아래다.
@@ -191,13 +195,15 @@ agy plugin install https://github.com/Won6314/head-agent-core/tree/main/packages
   "host": "antigravity",
   "conversation_id": "<ACP sessionId>",
   "cwd": "<작업 폴더 절대 경로>",
+  "pid": 12345,
+  "start": "<프로세스 시작 식별값>",
   "transcript_path": "<transcript_full.jsonl 절대 경로>",
   "said": "<마지막 일반 사용자 입력 한 줄>",
   "at": "2026-11-20T10:00:00.000Z"
 }
 ```
 
-SessionStart 및 매 PreInvocation에 원자적으로 갱신한다. `transcript_path`, `said`는 해당 값이 있을 때만 있으며 `/compact`는 `said`를 덮지 않는다. 살아 있음은 `at`가 최근 7일 이내인 것으로 판단한다(Codex 앱과 같은 최근 활동 기준). `title`이 있으면 목록에 쓴다.
+SessionStart 및 매 PreInvocation에 원자적으로 갱신한다. `pid`는 셸 부모를 넘어 찾은 실제 agy 프로세스 번호다. `start`는 Linux `/proc/<pid>/stat`의 starttime, 다른 Unix는 `ps lstart`, Windows는 프로세스 StartTime의 UTC ticks이며, 구하지 못하면 생략하고 pid만 쓴다. agy 부모를 찾지 못하면 pid도 쓰지 않는다. 살아 있음은 pid가 살아 있고, start가 있으면 현재 시작 식별값과 같은 것이다. pid 없는 옛 presence는 살아 있지 않으며 파일은 그대로 둔다. 7일 기준은 없다. `at`는 마지막 활동·정렬에만 쓴다. conversations, Claude·Codex peer 목록, claudeTree는 모두 이 같은 판정을 쓴다. `transcript_path`, `said`는 해당 값이 있을 때만 있으며 `/compact`는 `said`를 덮지 않는다. `title`이 있으면 목록에 쓴다.
 
 `<project>/.head/state/inbox/antigravity-<ACP sessionId>/<ISO시각의 콜론·점을 하이픈으로 바꾼 값>-<UUID>.json`:
 
