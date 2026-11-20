@@ -12,9 +12,10 @@ import { checkpointOf, steps, recentPart } from '../hosts/antigravity/transcript
 import { callerOf } from '../hosts/antigravity/register.mjs';
 import { queue, readPresence } from '../hosts/antigravity/threads.mjs';
 import { register as registerClaudeSend } from '../hooks/conversations.mjs';
+import { locations } from '../core/storage.mjs';
 
 const fresh = () => fs.mkdtempSync(path.join(process.env.HEAD_CONTEXT_TEST_ROOT || os.tmpdir(), 'agy-'));
-const hook = (dir, data, input = {}) => {
+const hook = (dir, data, input = {}, env = {}, error = false) => {
   const r = spawnSync(process.execPath, ['scripts/antigravity-hook.mjs'], {
     input: JSON.stringify({
       conversationId: 'c1',
@@ -23,13 +24,72 @@ const hook = (dir, data, input = {}) => {
       invocationNum: 0,
       ...input,
     }),
-    env: { ...process.env, PLUGIN_DATA: data },
+    env: { ...process.env, PLUGIN_DATA: data, ...env },
     encoding: 'utf8',
   });
   assert.equal(r.status, 0);
-  assert.equal(r.stderr, '');
+  if (error) assert.match(r.stderr, /^head-context: .+\n$/);
+  else assert.equal(r.stderr, '');
   return r.stdout ? JSON.parse(r.stdout).injectSteps.map((s) => s.systemMessage.systemMessage) : [];
 };
+test('Antigravity start file: same head/context and connection as env, per conversation, optional branch via load', () => {
+  const dir = fresh(),
+    data = fresh();
+  const store = sessions(dir, { host: 'antigravity' });
+  store.create({ name: 'demo', context: 'START PURPOSE', conversation_id: 'seed' });
+  store.branch({ action: 'create', branch: 'proof', conversation_id: 'seed' });
+  store.save({ summary: 'saved', history: 'START HISTORY', next: 'START NEXT', conversation_id: 'seed' });
+  const startDir = path.join(locations(dir).state, 'start');
+  fs.mkdirSync(startDir, { recursive: true });
+  const file = path.join(startDir, 'antigravity-c1.json');
+  fs.writeFileSync(file, JSON.stringify({ session: 'demo' }));
+  // PreInvocation must not consume the request.
+  hook(dir, data);
+  assert.ok(fs.existsSync(file));
+  const input = { hookEventName: 'SessionStart' };
+  const fromFile = hook(dir, data, input);
+  assert.ok(!fs.existsSync(file));
+  const fromEnv = hook(dir, data, { ...input, conversationId: 'env' }, { HEAD_CONTEXT_SESSION: 'demo' });
+  assert.deepEqual(fromFile, fromEnv);
+  const { bound_at: fileAt, ...fileConnection } = store.connection('c1');
+  const { bound_at: envAt, ...envConnection } = store.connection('env');
+  assert.ok(fileAt && envAt);
+  assert.deepEqual(fileConnection, { ...envConnection, conversation_id: 'c1' });
+  assert.match(fromFile.join('\n'), /START PURPOSE/);
+  assert.match(hook(dir, data, { ...input, conversationId: 'unbound' }).join('\n'), /연결되지 않았습니다/);
+  fs.writeFileSync(file, JSON.stringify({ session: 'demo', branch: 'proof' }));
+  const branched = hook(dir, data, input).join('\n');
+  assert.match(branched, /START HISTORY/);
+  assert.match(branched, /START NEXT/);
+  assert.equal(store.connection('c1').branch, 'proof');
+  // Env wins even over a malformed request, and the overridden file is removed.
+  fs.writeFileSync(file, 'broken');
+  hook(dir, data, input, { HEAD_CONTEXT_SESSION: 'demo' });
+  assert.ok(!fs.existsSync(file));
+});
+test('Antigravity start file: bad requests notify once and are consumed; only stale Antigravity requests are pruned', () => {
+  const dir = fresh(),
+    data = fresh();
+  const startDir = path.join(locations(dir).state, 'start');
+  fs.mkdirSync(startDir, { recursive: true });
+  const file = path.join(startDir, 'antigravity-c1.json');
+  for (const request of ['broken', '{}', '{"session":"missing"}', '{"session":"missing","branch":42}']) {
+    fs.writeFileSync(file, request);
+    const out = hook(dir, data, { hookEventName: 'SessionStart' }, {}, true);
+    assert.equal(out.length, 1);
+    assert.match(out[0], /^head-context: 작업 맥락을 넣지 못했습니다: .+$/);
+    assert.ok(!fs.existsSync(file));
+  }
+  for (const name of ['antigravity-old.json', 'claude-old.json', 'antigravity-fresh.json']) {
+    const old = path.join(startDir, name);
+    fs.writeFileSync(old, '{}');
+    if (!name.includes('fresh')) fs.utimesSync(old, new Date(0), new Date(0));
+  }
+  hook(dir, data, { hookEventName: 'SessionStart' });
+  assert.ok(!fs.existsSync(path.join(startDir, 'antigravity-old.json')));
+  assert.ok(fs.existsSync(path.join(startDir, 'claude-old.json')));
+  assert.ok(fs.existsSync(path.join(startDir, 'antigravity-fresh.json')));
+});
 test('Antigravity hook: camelCase -> injectSteps, consent, registration; ordinary invocations/resume add nothing; inbox once at invocation zero', () => {
   const dir = fresh(),
     data = fresh();

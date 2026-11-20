@@ -9,6 +9,7 @@ import { compactInstruction } from '../claude/compact.mjs';
 import { register, registered } from './register.mjs';
 import { writePresence, take, asMessage } from './threads.mjs';
 import { steps, checkpointOf, recentPart } from './transcript.mjs';
+import { takeStart } from './start.mjs';
 
 export const hookOutput = (parts) => ({
   injectSteps: parts.filter(Boolean).map((text) => ({ systemMessage: { systemMessage: text } })),
@@ -37,7 +38,17 @@ export async function runHook() {
       if (problem) parts.push(problem);
       else {
         const store = sessions(project, { host: 'antigravity' });
-        const where = { conversation_id: id, session_name: process.env.HEAD_CONTEXT_SESSION, origins: [] };
+        const request = start ? takeStart(project, id) : null;
+        if (request) {
+          if (!store.names().includes(request.session)) throw new Error(`작업 세션 '${request.session}'이 없습니다.`);
+          if (request.branch !== undefined)
+            store.load({ name: request.session, branch: request.branch, conversation_id: id });
+        }
+        const where = {
+          conversation_id: id,
+          session_name: process.env.HEAD_CONTEXT_SESSION || request?.session,
+          origins: [],
+        };
         const place = start
           ? store.start({ ...where, info: { transcript_path: transcript, entrypoint: 'antigravity-acp' } })
           : store.locate(where);

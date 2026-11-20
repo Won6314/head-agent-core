@@ -1,4 +1,4 @@
-# head-context 0.9.11 — 작업 세션·작업 브랜치·저장
+# head-context 0.9.12 — 작업 세션·작업 브랜치·저장
 
 작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 작업 맥락을 다시 불러온다.
 살아 있는 대화를 작업 세션·작업 브랜치와 묶어 보여 준다. 포크·새 대화·대화 사이 메시지는 호스트(Claude Code) 기능을 그대로 쓴다.
@@ -143,7 +143,7 @@ Row = {conversation_id,host:'claude'|'codex',title,address,reachable,last_at,ent
 - 이름표에 ` (fork)`가 반복되면 하나만 남긴다.
   다시 돌려도 더 할 일이 없다.
 
-## Antigravity CLI·ACP 포장 (0.9.11)
+## Antigravity CLI·ACP 포장 (0.9.12)
 
 Google Antigravity CLI 1.5.13의 `agy acp`가 기준이다. Claude·Codex와 같은 프로젝트 기록을 읽고 쓴다.
 루트 `plugin.json`, `hooks.json`, `mcp_config.json`만 Antigravity가 읽고, 기존 `skills/`를 공유한다.
@@ -152,8 +152,8 @@ HEAD_CORE는 rules가 아니라 시작 훅으로만 넣으며 프로젝트 초�
 ```bash
 agy plugin validate /절대/경로/head-agent-core/packages/context
 agy plugin install /절대/경로/head-agent-core/packages/context
-# GitHub 하위 폴더 (아직 main에 합치지 않은 작업 브랜치)
-agy plugin install https://github.com/Won6314/head-agent-core/tree/context-0.9.11-antigravity/packages/context
+# GitHub 하위 폴더
+agy plugin install https://github.com/Won6314/head-agent-core/tree/main/packages/context
 ```
 
 - MCP·훅 경로는 `${PLUGIN_ROOT}`로 설치 위치에서 풀린다. MCP 서버는 `head-context_session`, 도구는 `call_mcp_tool`로 부른다.
@@ -163,6 +163,22 @@ agy plugin install https://github.com/Won6314/head-agent-core/tree/context-0.9.1
 - 매 도구 호출의 `_meta`의 `antigravity.google/conversation_id`가 대화 ID(ACP sessionId)다. `root_conversation_id`가 다르면 부른 대화의 프로젝트를 쓰고 기록 쓰기는 거절한다.
 - 등록과 마지막 처리 CHECKPOINT: `${PLUGIN_DATA}/conversations/<ID>.json` (`cwd`, `conversation_id`, `transcript_path`, `checkpoint`). `PLUGIN_DATA`는 agy가 제공한다(기본 `~/.gemini/antigravity-cli/plugin_data/head-context`).
 - 세 앱이 같은 Antigravity peer(`host`, `live`, `accepts`, `send`)를 사용한다. 주소는 **`antigravity:<ACP sessionId>`**, 앱 표시는 **`antigravity`**다. 보내기는 `queued`, 깨우기는 하지 않는다.
+
+### 클라이언트가 쓰는 대화별 시작 작업 세션 파일
+
+한 `agy acp` 프로세스에 여러 대화를 두는 클라이언트(모바일챗 등)는 `session/new` 응답의 ID를 받아 **첫 `session/prompt` 전에** 다음 파일을 완성한다(임시 파일을 쓴 뒤 rename 권장).
+
+`<project>/.head/state/start/antigravity-<ACP sessionId>.json`:
+
+```json
+{"session": "agy-시험-0911", "branch": "이어갈-작업"}
+```
+
+- `session`은 이미 있는 작업 세션 이름(필수), `branch`는 이미 있는 작업 브랜치 이름(선택, 생략하면 기존 시작 연결 규칙)이다. branch는 기존 `load`와 같게 처리한다: 닫힌 브랜치는 다시 열고, 중단한 브랜치는 거절한다.
+- `<project>`는 훅 stdin의 `cwd`를 기존 `locations()` 규칙으로 해석한 프로젝트 경계다. `sessions_dir` 설정은 이 state 경로를 옮기지 않는다.
+- 첫 `SessionStart`에서 `HEAD_CONTEXT_SESSION` 환경변수가 우선이고, 없으면 이 파일을 쓴다. 둘 다 없으면 기존처럼 연결되지 않은 상태다. 작업 세션·작업 맥락과 연결 기록을 모델의 `load` 호출 없이 같은 훅에서 만든다.
+- 읽은 파일은 즉시 지운다(환경변수가 우선한 파일도 버린다). 잘못된 JSON/필드, 없는 작업 세션·브랜치는 기존 훅 오류 경계에서 `head-context: 작업 맥락을 넣지 못했습니다: …` 한 줄로 알린다. 실패한 요청도 남기지 않는다.
+- 매 `SessionStart`에서 같은 start 폴더의 `antigravity-*.json` 중 수정 시각이 1일 넘은 미소비 파일을 지운다. `PreInvocation`과 재개에는 시작 파일을 소비하지 않는다.
 
 ### 모바일챗이 읽는 presence·inbox 규격
 
