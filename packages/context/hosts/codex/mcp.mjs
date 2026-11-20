@@ -39,7 +39,10 @@ const sendTool = (peers) => ({
     const target = threadId.trim();
     const peer = peers.find((p) => p.accepts?.(target));
     if (peer)
-      return JSON.stringify({ threadId: target, delivery: await peer.send(target, prompt, { from, fromName }) });
+      return JSON.stringify({
+        threadId: target,
+        delivery: await peer.send(target, prompt, { project, from, fromName }),
+      });
     const id = target.startsWith('codex:') ? target.slice(6) : target;
     if (!/^[A-Za-z0-9_-]+$/.test(id))
       throw new Error(`보낼 곳을 알 수 없습니다: ${target}. 대화 목록(conversations)의 보낼 곳을 그대로 주세요.`);

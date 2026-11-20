@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "session": {
+      "command": "node",
+      "args": ["${PLUGIN_ROOT}/scripts/antigravity-mcp.mjs"]
+    }
+  }
+}

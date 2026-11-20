@@ -29,6 +29,9 @@ export const INSTRUCTIONS = `일을 시작할 때는 먼저 start-job 스킬을 
 // Per app: which of the app's own tools does what the shared instructions and the start-job
 // skill describe in the app's terms. Each app gets the shared part and its own part only.
 export const APP_INSTRUCTIONS = {
+  antigravity: `이 앱(Antigravity)에서 부르는 도구
+- 기록 도구는 플러그인 MCP 서버 head-context_session의 도구를 call_mcp_tool로 부릅니다.
+- 다른 대화에 보내기: 이 플러그인의 send(threadId: 보낼 곳, prompt). Antigravity 대화는 다음 입력 때 받으며 깨우지 않습니다.`,
   claude: `이 앱(Claude Code)에서 부르는 도구
 - 다른 대화에 보내기: SendMessage(to: 보낼 곳)
 - 기본 포크(하위 에이전트를 이 대화의 컨텍스트를 이어받게 부르기): Agent 도구에 subagent_type "fork". 같은 모델이 이 대화를 이어받으므로 앱을 넘지 않습니다.
@@ -42,7 +45,7 @@ export const APP_INSTRUCTIONS = {
 // host without one, e.g. OpenCode).
 export const instructionsFor = (host) =>
   APP_INSTRUCTIONS[host] ? `${INSTRUCTIONS}\n\n${APP_INSTRUCTIONS[host]}` : INSTRUCTIONS;
-export const VERSION = '0.9.10';
+export const VERSION = '0.9.11';
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
 const missing = { create: { context: CONTEXT_REQUIRED } };

@@ -2,4 +2,5 @@
 // send reaches them.
 import { serveCodex } from '../hosts/codex/mcp.mjs';
 import { claudePeer } from '../hosts/claude/peer.mjs';
-await serveCodex({ peers: [claudePeer] });
+import { antigravityPeer } from '../hosts/antigravity/peer.mjs';
+await serveCodex({ peers: [claudePeer, antigravityPeer] });

@@ -449,6 +449,8 @@ export function sessions(
   // codex:<id> for both.
   const addressOf = (c) => {
     if (c.host === 'codex') return `codex:${c.conversation_id}`;
+    if (c.host === 'antigravity') return `antigravity:${c.conversation_id}`;
+    if (c.host === 'claude' && host === 'antigravity') return `claude:${c.conversation_id}`;
     if (c.host === 'claude' && host === 'codex') return `claude:${c.conversation_id}`;
     return c.address || '(모름)';
   };
@@ -474,7 +476,8 @@ export function sessions(
         ...(c.children || []).flatMap((k) => show(k, `${pad}    `)),
       ];
     };
-    const how = host === 'codex' ? 'send(threadId: 보낼 곳, prompt)' : 'SendMessage(to: 보낼 곳)';
+    const how =
+      host === 'codex' || host === 'antigravity' ? 'send(threadId: 보낼 곳, prompt)' : 'SendMessage(to: 보낼 곳)';
     const lines = [
       '# 살아 있는 대화 (작업 세션 → 작업 브랜치 → 대화)',
       `보내기: ${how}. 이름은 여러 대화가 같을 수 있어 보낼 곳을 그대로 씁니다. 보낼 곳은 대화가 다시 시작하면 바뀌므로 방금 읽은 이 목록의 것을 씁니다.`,

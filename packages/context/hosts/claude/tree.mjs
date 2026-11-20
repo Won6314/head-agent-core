@@ -4,12 +4,16 @@
 import { sessions, doing } from '../../core/sessions.mjs';
 import { hostInfo, liveConversations } from './process.mjs';
 import { codexLive } from '../codex/threads.mjs';
+import { antigravityLive } from '../antigravity/threads.mjs';
 export { doing };
 export function claudeTree(project, { name } = {}) {
   return sessions(project, {
     host: 'claude',
     hostInfo,
     live: (known) => liveConversations(project, known),
-    peers: [{ host: 'codex', live: (known) => codexLive(project, known) }],
+    peers: [
+      { host: 'codex', live: (known) => codexLive(project, known) },
+      { host: 'antigravity', live: (known) => antigravityLive(project, known) },
+    ],
   }).tree({ name });
 }

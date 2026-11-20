@@ -1,8 +1,8 @@
-# head-context 0.9.10 — 작업 세션·작업 브랜치·저장
+# head-context 0.9.11 — 작업 세션·작업 브랜치·저장
 
 작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 작업 맥락을 다시 불러온다.
 살아 있는 대화를 작업 세션·작업 브랜치와 묶어 보여 준다. 포크·새 대화·대화 사이 메시지는 호스트(Claude Code) 기능을 그대로 쓴다.
-기준 환경은 이 플러그인만 붙은 Claude Code와 Codex(데스크톱 앱 포함)다. 한 패키지에 두 앱의 포장이 있다(`.claude-plugin`, `.codex-plugin`). 두 앱은 프로젝트의 같은 기록을 같이 읽고 쓴다. 상주 프로세스는 없다(도구 호출 때만 도는 MCP 하나와 훅 둘). 사용자가 직접 치는 명령(스킬)은 두지 않는다: 모든 것은 자연어로 하고 모델이 도구를 부른다.
+기준 환경은 이 플러그인만 붙은 Claude Code, Codex(데스크톱 앱 포함), Antigravity CLI·ACP다. 한 패키지에 세 앱의 포장이 있다(`.claude-plugin`, `.codex-plugin`, 루트 `plugin.json`). 세 앱은 프로젝트의 같은 기록을 같이 읽고 쓴다. 플러그인이 따로 띄우는 상주 프로세스는 없다. 사용자가 직접 치는 명령(스킬)은 두지 않는다: 모든 것은 자연어로 하고 모델이 도구를 부른다.
 스킬은 모델이 부르는 `start-job` 하나다(`skills/start-job`, 호스트 목록에는 `head-context:start-job`). 일을 시작할 때 부르라는 지침은 서버 안내문 첫 줄에만 있다(코어 지침은 이론과 일하는 원칙만 담는다).
 첫 실행 초기설정은 프로젝트 `.claude/settings.json`에 `env.CLAUDE_CODE_FORK_SUBAGENT="1"`도 넣는다(기본 포크 켜기, 다른 설정은 그대로, 이미 값이 있거나 JSON이 깨졌으면 손대지 않고 알린다).
 현황판·채널·대화 상태 표시는 코어 밖(추가기능)이다.
@@ -33,7 +33,7 @@
 
 ## 도구 (도구 서버 이름 `session`, 호스트가 conversation_id·agent_id를 채움)
 
-Claude Code에서는 `mcp__plugin_head-context_session__<도구>`, Codex에서는 `mcp__session__<도구>`로 보인다.
+Claude Code에서는 `mcp__plugin_head-context_session__<도구>`, Codex에서는 `mcp__session__<도구>`로 보인다. Antigravity에서는 `head-context_session` 서버의 도구를 `call_mcp_tool`로 부른다.
 
 | 도구           | 하는 일                                                                                                                                                                                                                                                                                  |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -142,6 +142,59 @@ Row = {conversation_id,host:'claude'|'codex',title,address,reachable,last_at,ent
 - 저장 없는 0.6 자동 브랜치(`branch-<시각>-<16진>`, 열림·멈춤, 다른 브랜치가 갈라져 나오지 않은 것). 그 브랜치를 가리키던 대화는 메인으로.
 - 이름표에 ` (fork)`가 반복되면 하나만 남긴다.
   다시 돌려도 더 할 일이 없다.
+
+## Antigravity CLI·ACP 포장 (0.9.11)
+
+Google Antigravity CLI 1.5.13의 `agy acp`가 기준이다. Claude·Codex와 같은 프로젝트 기록을 읽고 쓴다.
+루트 `plugin.json`, `hooks.json`, `mcp_config.json`만 Antigravity가 읽고, 기존 `skills/`를 공유한다.
+HEAD_CORE는 rules가 아니라 시작 훅으로만 넣으며 프로젝트 초기설정 동의를 그대로 따른다.
+
+```bash
+agy plugin validate /절대/경로/head-agent-core/packages/context
+agy plugin install /절대/경로/head-agent-core/packages/context
+# GitHub 하위 폴더 (아직 main에 합치지 않은 작업 브랜치)
+agy plugin install https://github.com/Won6314/head-agent-core/tree/context-0.9.11-antigravity/packages/context
+```
+
+- MCP·훅 경로는 `${PLUGIN_ROOT}`로 설치 위치에서 풀린다. MCP 서버는 `head-context_session`, 도구는 `call_mcp_tool`로 부른다.
+- SessionStart는 코어 지침, 서버 안내문, 작업 세션/연결 안 됨(+첫 실행 안내), 작업 맥락을 각각 `injectSteps` 시스템 메시지로 넣는다.
+- PreInvocation은 `/compact`에 공용 `compactInstruction()`을 넣고, 기록의 새 CHECKPOINT가 있으면 코어·작업 세션·작업 맥락·최근 주고받기 5번 원문을 한 번 되살린다. 새 프로세스 `session/load`는 새 CHECKPOINT가 없으면 아무것도 다시 넣지 않는다.
+  - agy 1.5.13 실제 시험에서 `<summary>` 본문은 한 줄 포인터가 됐다. 호스트가 그 바깥에 붙이는 `User Requests`(이전 사용자 입력)와 `Conversation Logs` 경로 안내는 남는다.
+- 매 도구 호출의 `_meta`의 `antigravity.google/conversation_id`가 대화 ID(ACP sessionId)다. `root_conversation_id`가 다르면 부른 대화의 프로젝트를 쓰고 기록 쓰기는 거절한다.
+- 등록과 마지막 처리 CHECKPOINT: `${PLUGIN_DATA}/conversations/<ID>.json` (`cwd`, `conversation_id`, `transcript_path`, `checkpoint`). `PLUGIN_DATA`는 agy가 제공한다(기본 `~/.gemini/antigravity-cli/plugin_data/head-context`).
+- 세 앱이 같은 Antigravity peer(`host`, `live`, `accepts`, `send`)를 사용한다. 주소는 **`antigravity:<ACP sessionId>`**, 앱 표시는 **`antigravity`**다. 보내기는 `queued`, 깨우기는 하지 않는다.
+
+### 모바일챗이 읽는 presence·inbox 규격
+
+프로젝트 쪽에 두어 다른 앱도 별도 agy 환경변수 없이 읽고 쓴다. 경로는 실제 프로젝트 경계 아래다.
+
+`<project>/.head/state/presence/antigravity-<ACP sessionId>.json`:
+
+```json
+{
+  "host": "antigravity",
+  "conversation_id": "<ACP sessionId>",
+  "cwd": "<작업 폴더 절대 경로>",
+  "transcript_path": "<transcript_full.jsonl 절대 경로>",
+  "said": "<마지막 일반 사용자 입력 한 줄>",
+  "at": "2026-11-20T10:00:00.000Z"
+}
+```
+
+SessionStart 및 매 PreInvocation에 원자적으로 갱신한다. `transcript_path`, `said`는 해당 값이 있을 때만 있으며 `/compact`는 `said`를 덮지 않는다. 살아 있음은 `at`가 최근 7일 이내인 것으로 판단한다(Codex 앱과 같은 최근 활동 기준). `title`이 있으면 목록에 쓴다.
+
+`<project>/.head/state/inbox/antigravity-<ACP sessionId>/<ISO시각의 콜론·점을 하이픈으로 바꾼 값>-<UUID>.json`:
+
+```json
+{
+  "from": "claude:<발신 대화 ID>",
+  "from_name": "<발신 표시 이름, 선택>",
+  "text": "<보낸 말 원문>",
+  "at": "2026-11-20T10:00:00.000Z"
+}
+```
+
+`from`은 `claude:`, `codex:`, `antigravity:` 주소다. 다음 PreInvocation의 `invocationNum === 0`에서 오래된 것부터 시스템 메시지로 넣고 지운다. `.taking-<pid>-<UUID>/`로 rename하여 가져갈 권리를 잡고 출력 뒤 지운다. 가져간 프로세스가 죽거나 10분 지난 것은 복구한다(출력 직후 ack 전에 죽으면 한 번 더 갈 수 있음). 깨진 JSON은 `.broken/`에 남겨 두고 대화에 알린다.
 
 ## Codex 포장
 

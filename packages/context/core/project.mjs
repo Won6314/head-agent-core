@@ -191,9 +191,11 @@ const surveyQuestion = () =>
 // settings: on Codex they are written too (the same project may be opened with Claude Code
 // later) but take no effect there, and Codex's own settings are left alone.
 const settingsWhat = (host) =>
-  host === 'codex'
-    ? `나중에 같은 프로젝트를 Claude Code로 열 때 쓰도록 프로젝트 \`.claude/settings.json\`에 Claude Code용 설정(기본 포크, 이 플러그인의 마켓 GitHub ${MARKETPLACE_REPO}와 자동 업데이트, 플러그인 켜기)을 넣습니다(파일이 없으면 만들고 기존 내용은 그대로 둡니다). Codex에서는 이 설정이 쓰이지 않고, Codex 설정은 바꾸지 않습니다`
-    : `프로젝트 \`.claude/settings.json\`에 기본 포크를 켜는 env 한 줄과, 새 판을 자동으로 받도록 이 플러그인의 마켓(GitHub ${MARKETPLACE_REPO})과 플러그인 켜기를 넣습니다(파일이 없으면 만들고 기존 내용은 그대로 둡니다)`;
+  host === 'antigravity'
+    ? `나중에 같은 프로젝트를 Claude Code로 열 때 쓰도록 프로젝트 \`.claude/settings.json\`에 Claude Code용 설정(기본 포크, 이 플러그인의 마켓과 자동 업데이트, 플러그인 켜기)을 넣습니다. Antigravity 설정은 바꾸지 않습니다`
+    : host === 'codex'
+      ? `나중에 같은 프로젝트를 Claude Code로 열 때 쓰도록 프로젝트 \`.claude/settings.json\`에 Claude Code용 설정(기본 포크, 이 플러그인의 마켓 GitHub ${MARKETPLACE_REPO}와 자동 업데이트, 플러그인 켜기)을 넣습니다(파일이 없으면 만들고 기존 내용은 그대로 둡니다). Codex에서는 이 설정이 쓰이지 않고, Codex 설정은 바꾸지 않습니다`
+      : `프로젝트 \`.claude/settings.json\`에 기본 포크를 켜는 env 한 줄과, 새 판을 자동으로 받도록 이 플러그인의 마켓(GitHub ${MARKETPLACE_REPO})과 플러그인 켜기를 넣습니다(파일이 없으면 만들고 기존 내용은 그대로 둡니다)`;
 export function guide(project, { host = 'claude' } = {}) {
   const s = firstRun(project);
   if (!s.setup)
@@ -229,11 +231,18 @@ export function setupTool(project, { action, step }, { host = 'claude' } = {}) {
     return { already: was, ...result };
   });
   const next = surveyReady() && firstRun(project).survey === null ? `\n\n이어서 ${surveyQuestion()}` : '';
-  const claudeOnly = host === 'codex' ? ' (Claude Code용, Codex에서는 쓰이지 않음)' : '';
+  const claudeOnly =
+    host === 'antigravity'
+      ? ' (Claude Code용, Antigravity에서는 쓰이지 않음)'
+      : host === 'codex'
+        ? ' (Claude Code용, Codex에서는 쓰이지 않음)'
+        : '';
   const after =
-    host === 'codex'
-      ? '- 다음 시작부터는 시작·/clear·압축 때 코어 지침이 들어갑니다. Codex 설정은 바꾸지 않았습니다. .claude/settings.json은 이 프로젝트를 Claude Code로 열 때 쓰입니다.'
-      : '- 다음 시작부터는 시작·/clear·압축 때 코어 지침이 들어가고 기본 포크가 켜지며, 앱이 시작할 때 새 판을 받습니다.';
+    host === 'antigravity'
+      ? '- 다음 시작부터는 시작·압축 뒤에 코어 지침이 들어갑니다. Antigravity 설정은 바꾸지 않았습니다. .claude/settings.json은 Claude Code용입니다.'
+      : host === 'codex'
+        ? '- 다음 시작부터는 시작·/clear·압축 때 코어 지침이 들어갑니다. Codex 설정은 바꾸지 않았습니다. .claude/settings.json은 이 프로젝트를 Claude Code로 열 때 쓰입니다.'
+        : '- 다음 시작부터는 시작·/clear·압축 때 코어 지침이 들어가고 기본 포크가 켜지며, 앱이 시작할 때 새 판을 받습니다.';
   // The core given here carries the same tag as the start hook's, so a resume of this
   // conversation knows it already holds the core.
   return `${already ? '이 프로젝트는 이미 초기설정되어 있었습니다(다른 대화가 먼저 했을 수 있습니다). 이미 있던 값은 그대로 두었습니다.\n' : ''}초기설정을 마쳤습니다.\n- 코어 지침: 이 프로젝트에서 켰습니다(사본: .head/core.md).\n- .claude/settings.json의 env.${FORK_ENV}="1"(기본 포크 켜기)${claudeOnly}: ${fork}.\n- .claude/settings.json의 마켓 ${MARKETPLACE}(GitHub ${MARKETPLACE_REPO}, 자동 업데이트)와 enabledPlugins."${PLUGIN_ID}"${claudeOnly}: ${market}.\n${after} 이 대화에서는 아래 코어 지침을 지금부터 따르세요.${next}\n\n${body.trimEnd()}\n\n${CORE_MARK}1 — 초기설정이 돌려준 코어)`;
