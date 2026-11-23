@@ -84,7 +84,9 @@ for r in code["refs"]:
 # 데이터·외부 연결: purposes.json 바깥 칸. 요청이 들어오는 통로(훅 표준 입력, 도구 서버 입출력)는 '호출하는 곳'이 아니라 뺀다(B-2).
 CHANNEL = {"훅 입력(표준 입력)", "도구 서버 표준 입출력"}
 DATA = {".head/ 상태·기록·색인 파일": "파일", "프로젝트 설정·플러그인 지침 파일": "설정 파일",
-        "Codex 플러그인 데이터 폴더(대화 등록)": "파일", "Claude 등록 파일·대화 기록": "호스트 파일", "Codex 대화 기록 파일": "호스트 파일"}
+        "Codex 플러그인 데이터 폴더(대화 등록)": "파일", "Claude 등록 파일·대화 기록": "호스트 파일", "Codex 대화 기록 파일": "호스트 파일",
+        # 0.9.15: Antigravity가 읽는 agy 쪽 파일. 등록 파일(PLUGIN_DATA/conversations)은 공용 도우미로만 읽고 써서 칸을 두지 않는다(그래프 패치 2.4 HEAD 결정 (a))
+        "Antigravity 대화 기록 파일": "호스트 파일", "Antigravity ACP 로그": "호스트 파일", "Antigravity 대화 폴더 메시지(brain)": "호스트 파일"}
 # 호스트(Claude Code)가 쓴 등록 파일·대화 기록은 바깥 서비스 호출이 아니라 파일 읽기라 데이터로 둔다(검수 지적).
 READ = {"readFileSync", "readSync", "readdirSync", "existsSync", "statSync", "lstatSync", "realpathSync", "readlinkSync",
         "accessSync", "openSync", "fstatSync"}
@@ -137,6 +139,15 @@ for f in code["facts"]:
                 agg.setdefault((op, f["def"], tid), set()).add((api, f["line"]))
         else:
             agg.setdefault(("코드→외부 연결", f["def"], tid), set()).add((api, f["line"]))
+# 손으로 잇는 바깥 접근: 추출기가 사실로 잡지 않는 전역 호출(fetch). (정의, 바깥 칸, api, 원문에서 찾을 글)
+MANUAL_OUTSIDE = [("code:hosts/antigravity/wake.mjs#wake", "Antigravity language server(loopback HTTP)", "fetch", "await fetch(")]
+for did, bname, api, text in MANUAL_OUTSIDE:
+    d = defs.get(did)
+    lns = [i + 1 for i, l in enumerate((pkg / d["file"]).read_text().splitlines()) if text in l and d["line"] <= i + 1 <= d["end_line"]] if d else []
+    if not lns or bname not in box:
+        problems.append(f"B-2 손 연결: {did} → {bname}({text})를 잇지 못함")
+        continue
+    agg.setdefault(("코드→외부 연결", did, box[bname]), set()).update((api, ln) for ln in lns)
 for (t, a, b), apis in sorted(agg.items()):
     edge(t, a, b, api=", ".join(sorted({x[0] for x in apis})), 줄들=",".join(str(x) for x in sorted({x[1] for x in apis})))
 
@@ -181,22 +192,31 @@ for (op, did, tid), lns in sorted(db_ops.items()):
 
 
 # ---- 주입(B-2 판단, LLM 판단): 입구 파일이 도구 서버에 넘긴 객체의 함수를 받은 쪽이 이름으로 부르는 곳.
-# 02a의 framework-invoked(DI)로 잇는다. 이 패키지의 입구(scripts/mcp.mjs, scripts/codex-mcp.mjs)가 넘기는 것만 적는다.
+# 02a의 framework-invoked(DI)로 잇는다. 이 패키지의 입구(scripts/mcp.mjs, scripts/codex-mcp.mjs, scripts/antigravity-mcp.mjs)가 넘기는 것만 적는다.
+# 0.9.11~: 세 입구가 서로의 peer를 받는다 — mcp [codexPeer, antigravityPeer], codex-mcp [claudePeer, antigravityPeer], antigravity-mcp [claudePeer, codexPeer].
+AGY_PEER = "code:hosts/antigravity/peer.mjs#antigravityPeer"
 INJECT = [
     ("core/sessions.mjs", "source.live(known)", ["code:hosts/claude/mcp.mjs#serveClaude.live", "code:hosts/claude/mcp.mjs#serveClaude.live@15",
-                                                 "code:hosts/codex/mcp.mjs#serveCodex.options.live", "code:hosts/codex/mcp.mjs#serveCodex.options.live@63"]),
+                                                 "code:hosts/codex/mcp.mjs#serveCodex.options.live", "code:hosts/codex/mcp.mjs#serveCodex.options.live@66",
+                                                 "code:hosts/antigravity/mcp.mjs#serveAntigravity.options.live",
+                                                 "code:hosts/antigravity/mcp.mjs#serveAntigravity.options.live@14"]),
     ("core/sessions.mjs", "hostInfo(id)", ["code:hosts/claude/process.mjs#hostInfo"]),
-    ("hosts/claude/mcp.mjs", "p.live(project, known)", ["code:hosts/codex/threads.mjs#codexLive"]),      # scripts/mcp.mjs: peers [codexPeer]
-    ("hosts/codex/mcp.mjs", "p.live(dir, known)", ["code:hosts/claude/process.mjs#liveConversations"]),  # scripts/codex-mcp.mjs: peers [claudePeer]
-    ("hosts/codex/mcp.mjs", "p.accepts?.(target)", ["code:hosts/claude/peer.mjs#claudePeer.accepts"]),
-    ("hosts/codex/mcp.mjs", "peer.send(target", ["code:hosts/claude/peer.mjs#claudePeer.send"]),
-    # serve()가 받은 함수들: 앱마다 serveClaude·serveCodex·OpenCode 입구가 넘긴다
+    ("hosts/claude/mcp.mjs", "p.live(project, known)", ["code:hosts/codex/threads.mjs#codexLive", "code:hosts/antigravity/threads.mjs#antigravityLive"]),
+    ("hosts/codex/mcp.mjs", "p.live(dir, known)", ["code:hosts/claude/process.mjs#liveConversations", "code:hosts/antigravity/threads.mjs#antigravityLive"]),
+    ("hosts/codex/mcp.mjs", "p.accepts?.(target)", ["code:hosts/claude/peer.mjs#claudePeer.accepts", AGY_PEER + ".accepts"]),
+    ("hosts/codex/mcp.mjs", "peer.send(target", ["code:hosts/claude/peer.mjs#claudePeer.send", AGY_PEER + ".send"]),
+    ("hosts/antigravity/mcp.mjs", "p.live(dir, known)", ["code:hosts/claude/process.mjs#liveConversations", "code:hosts/codex/threads.mjs#codexLive"]),
+    ("hosts/antigravity/mcp.mjs", "p.accepts?.(target)", [AGY_PEER + ".accepts", "code:hosts/claude/peer.mjs#claudePeer.accepts",
+                                                          "code:hosts/codex/peer.mjs#codexPeer.accepts"]),
+    ("hosts/antigravity/mcp.mjs", "peer.send(target", [AGY_PEER + ".send", "code:hosts/claude/peer.mjs#claudePeer.send",
+                                                       "code:hosts/codex/peer.mjs#codexPeer.send"]),
+    # serve()가 받은 함수들: 앱마다 serveClaude·serveCodex·serveAntigravity·OpenCode 입구가 넘긴다
     ("core/mcp.mjs", "conversationOf(request)", ["code:hosts/claude/mcp.mjs#serveClaude.conversationOf", "code:hosts/codex/mcp.mjs#serveCodex.conversationOf",
-                                                "code:hosts/opencode/mcp.mjs#conversationOf"]),
-    ("core/mcp.mjs", "agentOf(request)", ["code:hosts/codex/mcp.mjs#serveCodex.agentOf"]),
-    ("core/mcp.mjs", "projectOf(request)", ["code:hosts/codex/mcp.mjs#projectOf"]),
+                                                "code:hosts/opencode/mcp.mjs#conversationOf", "code:hosts/antigravity/mcp.mjs#serveAntigravity.conversationOf"]),
+    ("core/mcp.mjs", "agentOf(request)", ["code:hosts/codex/mcp.mjs#serveCodex.agentOf", "code:hosts/antigravity/mcp.mjs#serveAntigravity.agentOf"]),
+    ("core/mcp.mjs", "projectOf(request)", ["code:hosts/codex/mcp.mjs#projectOf", "code:hosts/antigravity/mcp.mjs#serveAntigravity.projectOf"]),
     ("core/mcp.mjs", "readOnly(request)", ["code:hosts/claude/mcp.mjs#serveClaude.readOnly"]),
-    ("core/mcp.mjs", "options(dir)", ["code:hosts/codex/mcp.mjs#serveCodex.options"]),
+    ("core/mcp.mjs", "options(dir)", ["code:hosts/codex/mcp.mjs#serveCodex.options", "code:hosts/antigravity/mcp.mjs#serveAntigravity.options"]),
 ]
 for file, text, targets in INJECT:
     hits = [i + 1 for i, l in enumerate((pkg / file).read_text().splitlines()) if text in l]
@@ -302,17 +322,22 @@ for name in json.loads(defs_js):
     sb = branch_range("core/mcp.mjs", "if (name === 'setup')", (ct["line"], ct["end_line"]))
     # 입구 callTool의 줄 범위: setup이 아닌 tool은 setup 분기를 지나지 않는다
     irng = None if name == "setup" else [(ct["line"], sb[0] - 1), (sb[1] + 1, ct["end_line"])]
-    feature(f"tool:{name}", "MCP tool", handler, 입구="code:core/mcp.mjs#callTool", 앱="Claude Code · Codex · OpenCode",
+    feature(f"tool:{name}", "MCP tool", handler, 입구="code:core/mcp.mjs#callTool", 앱="Claude Code · Codex · OpenCode · Antigravity",
             근거="core/mcp.mjs DEFINITIONS", 입구rng=irng, 공통=TOOLS_CALL)
 codex_mcp = (pkg / "hosts/codex/mcp.mjs").read_text()
 for name in re.findall(r"definition: \{\s*name: '(\w+)'", codex_mcp):
     feature(f"tool:{name}", "MCP tool", f"code:hosts/codex/mcp.mjs#sendTool.call", 앱="Codex", 근거="hosts/codex/mcp.mjs sendTool", 공통=OWN_TOOLS_CALL)
+# Antigravity 도구 서버의 앱 도구: 처리 코드가 Codex send와 달라 따로 된 기능 <도구>@antigravity로 둔다(그래프 패치 2.1-2 HEAD 결정)
+agy_mcp = (pkg / "hosts/antigravity/mcp.mjs").read_text()
+for name in re.findall(r"definition: \{\s*name: '(\w+)'", agy_mcp):
+    feature(f"tool:{name}@antigravity", "MCP tool", "code:hosts/antigravity/mcp.mjs#serveAntigravity.call", 앱="Antigravity",
+            근거="hosts/antigravity/mcp.mjs serveAntigravity tools", 공통=OWN_TOOLS_CALL)
 # 도구 서버 요청: serve의 method 분기(tools/call은 위 tool들의 입구라 따로 두지 않는다)
 for meth in re.findall(r"method === '([\w/]+)'", mcp_src):
     if meth == "tools/call":
         continue
     feature(f"mcp:{meth}", "MCP 요청", "code:core/mcp.mjs#serve", rng=[branch_range("core/mcp.mjs", f"method === '{meth}'")],
-            앱="Claude Code · Codex · OpenCode", 근거="core/mcp.mjs serve")
+            앱="Claude Code · Codex · OpenCode · Antigravity", 근거="core/mcp.mjs serve")
 def preamble(rel, first_pattern):
     """'try {' 줄부터 첫 분기 앞까지: 모든 분기가 같이 지나는 줄."""
     L = src_lines(rel)
@@ -389,6 +414,21 @@ for ev, groups in sorted(xj["hooks"].items()):
                 rng = [xpre, branch_range(XH, f"input.hook_event_name === '{ev}'"), xcatch]
             feature(f"hook:codex:{ev}:{part}", "hook", f"code:{XH}", rng=rng, 앱="Codex", 근거=f"hooks/codex-hooks.json {ev}")
             features[f"hook:codex:{ev}:{part}"]["명령"] = f"scripts/codex-hook.mjs {part}"
+# Antigravity hook: 패키지 루트 hooks.json({<묶음>: {<이벤트>: [{command}]}}). 처리 = hosts/antigravity/hook.mjs#runHook 한 함수.
+# SessionStart는 PreInvocation 블록(편지함·압축 지시)을 지나지 않는다. PreInvocation은 압축 뒤 복원 때 시작 블록도 지나므로 함수 전체다.
+AH = "hosts/antigravity/hook.mjs"
+aj = json.loads((pkg / "hooks.json").read_text())
+arun = defs["code:hosts/antigravity/hook.mjs#runHook"]
+apre = branch_range(AH, "if (event === 'PreInvocation') {", (arun["line"], arun["end_line"]))
+for group, evs in sorted(aj.items()):
+    for ev, hs in sorted(evs.items()):
+        if ev == "SessionStart":
+            rng = [(arun["line"], apre[0] - 1), (apre[1] + 1, arun["end_line"])]
+        else:
+            rng = [(arun["line"], arun["end_line"])]
+        feature(f"hook:antigravity:{ev}", "hook", f"code:hosts/antigravity/hook.mjs#runHook", rng=rng, 앱="Antigravity",
+                근거=f"hooks.json(루트) {group} {ev}")
+        features[f"hook:antigravity:{ev}"]["명령"] = "scripts/antigravity-hook.mjs"
 # OpenCode hook: 플러그인이 돌려주는 훅 객체의 키(이 패키지 manifest에는 없음 — 바깥 런타임이 싣는다).
 for d in code["defs"]:
     if d["file"] == "hosts/opencode/plugin.mjs" and d["kind"] == "property_function" \
@@ -413,7 +453,7 @@ for f in sorted((pkg / "scripts").glob("*.mjs")):
             feature(f"cli:{f.stem}", "CLI", f"code:{rel}", 근거=f"{rel} (process.argv)")
 for skill in sorted((pkg / "skills").glob("*/SKILL.md")):
     rel = skill.relative_to(pkg).as_posix()
-    feature(f"skill:{skill.parent.name}", "skill", f"code:{rel}", 앱="Claude Code · Codex", 근거="skills/ (start-job 절차 문서)")
+    feature(f"skill:{skill.parent.name}", "skill", f"code:{rel}", 앱="Claude Code · Codex · Antigravity", 근거="skills/ (start-job 절차 문서, Antigravity는 루트 plugin.json이 같은 skills/를 싣는다)")
 
 for fid, f in sorted(features.items()):
     one = meaning["features"].get(fid)
@@ -436,7 +476,7 @@ def doc(name):
 
 
 PRODUCT = node("제품코어", "product:head-context", name="head-context", 문서="docs/product-core.md", 본문=doc("product-core.md"),
-               한줄="LLM 대화(Claude Code·Codex)에 붙어 컨텍스트를 쌓아 주는 플러그인. 목표: LLM이 일을 잘하게. 방법: 컨텍스트를 잘 쌓는다.")
+               한줄="LLM 대화(Claude Code·Codex·Antigravity)에 붙어 컨텍스트를 쌓아 주는 플러그인. 목표: LLM이 일을 잘하게. 방법: 컨텍스트를 잘 쌓는다.")
 node("유저저니", "journey:head-context", name="유저 저니맵", 문서="docs/journey.md", 본문=doc("journey.md"))
 ia_text = doc("ia.md")
 node("IA", "ia:head-context", name="IA", 문서="docs/ia.md", 본문=ia_text)
@@ -572,14 +612,17 @@ RUNS = json.loads((docs.parent / "runs" / "a-runs.json").read_text())
 def run_feature(r):
     i = r["입력"]
     if r["종류"] == "hook":
-        cmd = i["명령"].split(); ev = i["입력"].get("hook_event_name")
+        cmd = i["명령"].split(); ev = i["입력"].get("hook_event_name") or i["입력"].get("hookEventName")
+        if cmd[0] == "antigravity-hook.mjs":
+            return f"hook:antigravity:{ev}"
         if cmd[0] == "hook.mjs":
             return f"hook:claude:SessionStart:{cmd[1]}" if ev == "SessionStart" else f"hook:claude:{ev}"
         return f"hook:codex:{ev}:{cmd[1]}"
     if r["종류"] == "mcp":
         return f"mcp:{i['method']}"
     if r["종류"] == "mcp tool":
-        return f"tool:{i['tool']}"
+        own = i["서버"].startswith("antigravity-mcp.mjs") and f"tool:{i['tool']}@antigravity" in features
+        return f"tool:{i['tool']}@antigravity" if own else f"tool:{i['tool']}"
     if r["종류"] == "CLI":
         name = i["명령"].split()[1].split("/")[-1][:-4]
         return "hook:claude:session.send" if name == "relay" else f"cli:{name}"  # relay.mjs는 그 모드의 코드(B-4)
@@ -625,6 +668,9 @@ for r in RUNS:
 RUN_LINK_EXCLUDE = {
     ("hook:claude:SessionStart:core", "STA-01#3"): "STA-01#3은 Codex의 꼬리표 없는 한 출력. 0.9.10부터 Claude 코어도 본문 전체가 한 출력이라 글이 겹치지만 Claude 쪽은 STA-01#1이다",
     ("tool:setup", "STA-01#3"): "setup 결과 안의 코어 본문은 TOL-12#3(tool 결과)이고 시작 훅 출력 STA-01이 아니다",
+    # 0.9.15(11-23): Antigravity 출력이 같은 글로 맞았지만 출력 종류가 다른 것
+    ("hook:antigravity:SessionStart", "ERR-01#4"): "시작 파일의 없는 작업 세션(R163)은 훅 실패 한 줄 ERR-04#3이고 도구 오류 ERR-01#4가 아니다",
+    ("tool:send@antigravity", "MSG-02#2"): "Antigravity send의 '받는 Antigravity 대화를 찾을 수 없습니다'(R177)는 도구 오류 ERR-01#7이고 Claude 중계 결과 MSG-02가 아니다",
 }
 for k in RUN_LINK_EXCLUDE:
     if k not in run_links:
@@ -691,9 +737,10 @@ for fid, f in features.items():
     for h, _, rr in entries(f):
         if h in nodes:
             reached |= reach(h, rr)
-reached |= {"code:scripts/hook.mjs", "code:scripts/codex-hook.mjs", "code:scripts/mcp.mjs", "code:scripts/codex-mcp.mjs"}
+reached |= {"code:scripts/hook.mjs", "code:scripts/codex-hook.mjs", "code:scripts/mcp.mjs", "code:scripts/codex-mcp.mjs",
+            "code:scripts/antigravity-hook.mjs", "code:scripts/antigravity-mcp.mjs"}
 reached |= {f"code:scripts/{fid[4:]}.mjs" for fid in features if fid.startswith("cli:")}  # CLI 입구 파일
-for entry in ("code:scripts/mcp.mjs", "code:scripts/codex-mcp.mjs", "code:hosts/opencode/mcp.mjs"):
+for entry in ("code:scripts/mcp.mjs", "code:scripts/codex-mcp.mjs", "code:scripts/antigravity-mcp.mjs", "code:hosts/opencode/mcp.mjs"):
     reached |= reach(entry)
 for n, v in nodes.items():  # 파일은 안의 정의 하나라도 도달하면 도달한 것
     if v["type"] == "코드" and v["props"].get("kind") not in ("product", "component", "module") and n in reached:

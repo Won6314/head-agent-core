@@ -17,6 +17,7 @@
       "modules": [
         "hosts/claude",
         "hosts/codex",
+        "hosts/antigravity",
         "hosts/opencode"
       ]
     },
@@ -66,6 +67,9 @@
     "hosts/codex": {
       "does": "대화 등록, 엔진 판별·연결, 대화 목록·수신함·보내기"
     },
+    "hosts/antigravity": {
+      "does": "Antigravity CLI·ACP 대화 등록, 시작·매 단계 주입, 시작 파일 연결, 살아 있음 판정, 편지함·깨우기, 보내기, 서브에이전트 판정"
+    },
     "hosts/opencode": {
       "does": "요청마다 작업 맥락 넣기, 도구 호출에 대화 ID 채우기"
     },
@@ -102,7 +106,8 @@
           "files": [
             "recovery",
             "instruction",
-            "project"
+            "project",
+            "recent"
           ]
         },
         {
@@ -124,6 +129,12 @@
           "files": [
             "protocol"
           ]
+        },
+        {
+          "name": "대화 사이 메시지",
+          "files": [
+            "inbox"
+          ]
         }
       ]
     }
@@ -143,7 +154,10 @@
             "core/migrate.mjs",
             "core/graph.mjs",
             "core/project.mjs",
-            "hosts/codex/threads.mjs"
+            "hosts/codex/threads.mjs",
+            "core/inbox.mjs",
+            "hosts/antigravity/threads.mjs",
+            "hosts/antigravity/start.mjs"
           ]
         },
         "except_defs": [
@@ -154,7 +168,8 @@
         "name": "프로젝트 설정·플러그인 지침 파일",
         "touch": {
           "fs": [
-            "core/project.mjs"
+            "core/project.mjs",
+            "core/mcp.mjs"
           ]
         }
       },
@@ -231,12 +246,45 @@
         ]
       },
       {
+        "name": "Antigravity 대화 기록 파일",
+        "desc": "agy가 쓰는 대화 기록(훅 입력의 transcriptPath, transcript_full.jsonl). 통째로 읽어 압축 표시(CHECKPOINT)와 주고받기를 찾는다",
+        "touch": {
+          "fs": [
+            "hosts/antigravity/transcript.mjs"
+          ]
+        }
+      },
+      {
+        "name": "Antigravity ACP 로그",
+        "desc": "~/.gemini/antigravity-cli/log/acp-server-<시각>-<pid>.log. 깨우기 때 그 pid의 language server HTTP 포트를 읽는다",
+        "touch": {
+          "fs": [
+            "hosts/antigravity/wake.mjs"
+          ]
+        }
+      },
+      {
+        "name": "Antigravity language server(loopback HTTP)",
+        "desc": "agy 프로세스의 로컬 language server SendAgentMessage(공개되지 않은 내부 통로). 내용 없는 깨우기 신호만 보낸다. 추출기가 전역 fetch를 잡지 않아 build_graph.py MANUAL_OUTSIDE로 잇는다",
+        "touch": {}
+      },
+      {
+        "name": "Antigravity 대화 폴더 메시지(brain)",
+        "desc": "훅 입력 artifactDirectoryPath 아래 .system_generated/messages/*.json(agy가 서브에이전트에 부모 지시문을 먼저 놓는 곳). 서브에이전트 판정 때 읽기만 한다",
+        "touch": {
+          "fs": [
+            "hosts/antigravity/subagent.mjs"
+          ]
+        }
+      },
+      {
         "name": "훅 입력(표준 입력)",
         "touch": {
           "fs": [
             "hosts/claude/hook.mjs",
             "hosts/codex/hook.mjs",
-            "scripts/relay.mjs"
+            "scripts/relay.mjs",
+            "hosts/antigravity/hook.mjs"
           ]
         }
       },
@@ -250,15 +298,15 @@
       }
     ],
     "fact_targets": {
-      "_": "한 파일 안에서 fs 호출마다 닿는 곳이 다를 때 줄 단위로 정한다(재검수 N2, 원본 7a5896c 줄로 확인).",
+      "_": "한 파일 안에서 fs 호출마다 닿는 곳이 다를 때 줄 단위로 정한다(재검수 N2, 원본 7a5896c 줄로 확인. 0.9.15 e96f5aa에서 191줄 뒤가 2줄 밀린 것을 다시 맞춤).",
       "core/project.mjs:123": ".head/ 상태·기록·색인 파일",
       "core/project.mjs:130": "프로젝트 설정·플러그인 지침 파일",
       "core/project.mjs:136": "프로젝트 설정·플러그인 지침 파일",
       "core/project.mjs:150": "프로젝트 설정·플러그인 지침 파일",
       "core/project.mjs:183": "프로젝트 설정·플러그인 지침 파일",
-      "core/project.mjs:218": "프로젝트 설정·플러그인 지침 파일",
-      "core/project.mjs:219": ".head/ 상태·기록·색인 파일",
-      "core/project.mjs:224": "프로젝트 설정·플러그인 지침 파일"
+      "core/project.mjs:220": "프로젝트 설정·플러그인 지침 파일",
+      "core/project.mjs:221": ".head/ 상태·기록·색인 파일",
+      "core/project.mjs:226": "프로젝트 설정·플러그인 지침 파일"
     },
     "via": {
       "code:core/storage.mjs#readTail": {

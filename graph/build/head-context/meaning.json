@@ -1,5 +1,5 @@
 {
-  "_": "B-6 뜻 파일. 그래프에 직접 쓰는 것: 기능 한 줄, 정책(조건/주체/행위). 근거의 R번호는 runs/A-1-outputs.md, 코드는 7a5896c(0.9.10) packages/context 기준. R112까지 근거는 0.9.5와 같은 차례의 실행이다 파일:줄.",
+  "_": "B-6 뜻 파일. 그래프에 직접 쓰는 것: 기능 한 줄, 정책(조건/주체/행위). 근거의 R번호는 runs/A-1-outputs.md, 코드는 e96f5aa(0.9.15) packages/context 기준(0.9.10에서 온 줄은 7a5896c 때 확인). R112까지 근거는 0.9.5와 같은 차례의 실행이고, R159~R220은 Antigravity 실행이다 파일:줄.",
   "features": {
     "tool:list": "작업 세션 목록을 최근 기록 순으로 돌려준다",
     "tool:load": "작업 세션을 불러와 이 대화를 메인이나 작업 브랜치에 연결하고 작업 맥락을 돌려준다",
@@ -8,10 +8,10 @@
     "tool:branch": "작업 브랜치를 열거나(create) 잇거나(attach) 이유와 함께 중단한다(abandon)",
     "tool:read": "연결을 바꾸지 않고 둘러보기·흐름 지도·최근 본문·기록 하나·찾기·가리킨 파일 나무를 읽는다",
     "tool:todo": "작업 세션의 todo.md에 할 일을 더하고, 보이고, 끝낸다",
-    "tool:conversations": "살아 있는 Claude Code·Codex 대화를 작업 세션 → 작업 브랜치 → 대화로 보여 준다",
+    "tool:conversations": "살아 있는 Claude Code·Codex·Antigravity 대화를 작업 세션 → 작업 브랜치 → 대화로 보여 준다",
     "tool:setup": "사용자 동의 뒤 이 프로젝트의 코어 지침과 .claude/settings.json(기본 포크·마켓·플러그인 켜기)을 잠그고 켜고 첫 실행 단계를 기록한다",
-    "tool:send": "Codex 대화에서 다른 Codex·Claude 대화로 메시지를 보낸다(Codex 도구 서버에만)",
-    "mcp:initialize": "도구 서버가 뜰 때 서버 이름·판과 그 앱용 서버 안내문을 돌려준다",
+    "tool:send": "Codex 대화에서 다른 Codex·Claude·Antigravity 대화로 메시지를 보낸다(Codex 도구 서버에만)",
+    "mcp:initialize": "도구 서버가 뜰 때 서버 이름·판(plugin.json과 같은 판)과 그 앱용 서버 안내문을 돌려준다",
     "mcp:tools/list": "도구 서버의 도구 설명과 인자 목록을 돌려준다",
     "mcp:ping": "도구 서버가 살아 있는지 빈 답으로 알려 준다",
     "hook:claude:SessionStart:core": "시작·/clear·압축 때 코어 지침을 넣는다. 출력 상한(9,000자)을 넘을 때만 두 출력으로 나누고, 0.9.10 코어는 첫 출력 하나에 `(HEAD Core 1/1)`로 들어가 둘째는 빈다(0.7 import 줄은 빼고)",
@@ -21,7 +21,7 @@
     "hook:claude:PreCompact": "호스트 요약을 한 줄 포인터로 바꾸라는 지시를 낸다(node:sqlite 없는 Node에서는 내지 않는다)",
     "hook:claude:PreToolUse": "setup을 뺀 이 플러그인 도구 호출에 대화 ID(대화 안 작업이면 agent_id도)를 채운다",
     "hook:claude:SubagentStart": "대화 안 작업이 시작되면 읽기만 된다는 안내를 넣는다",
-    "hook:claude:session.send": "Claude SendMessage 중 codex:<ID> 대상을 가로채 중계 스크립트로 Codex 대화에 보낸다",
+    "hook:claude:session.send": "Claude SendMessage 중 codex:<ID>·antigravity:<ID> 대상을 가로채 중계 스크립트로 그 앱의 대화에 보낸다",
     "hook:codex:SessionStart:core": "Codex 시작·/clear·압축 때 코어 지침 전체를 한 출력으로 넣는다",
     "hook:codex:SessionStart:instructions": "Codex 시작 때 서버 안내문(공용 + Codex 부분)을 넣는다",
     "hook:codex:SessionStart:session": "Codex 대화의 폴더와 엔진을 등록하고 작업 세션 머리(또는 연결 안 됨)와 첫 실행 안내를 넣는다. node:sqlite 없는 Node면 그 이유 한 줄만 넣는다",
@@ -34,13 +34,16 @@
     "cli:map": "명령줄에서 작업 세션의 흐름 지도를 출력한다",
     "cli:migrate-0.7": "0.6 기록을 0.7 꼴로 맞출 것을 미리 보이고 --apply면 옮긴다",
     "cli:report": "코어 밖 도구의 하위 작업 시작·끝을 .head/state/subtasks/에 남긴다",
-    "skill:start-job": "일을 시작하기 전 문제·목표·조건, 기존 자료, 작업 세션·작업 브랜치, 진행 방식을 정하는 절차를 agent에게 준다"
+    "skill:start-job": "일을 시작하기 전 문제·목표·조건, 기존 자료, 작업 세션·작업 브랜치, 진행 방식을 정하는 절차를 agent에게 준다",
+    "tool:send@antigravity": "Antigravity 대화에서 다른 Claude·Codex·Antigravity 대화로 메시지를 보낸다(Antigravity 도구 서버에만)",
+    "hook:antigravity:SessionStart": "Antigravity 대화가 처음 시작될 때 대화 정보(presence)와 등록을 쓰고, 코어 지침·서버 안내문·작업 세션 머리(또는 연결 안 됨)·작업 맥락·첫 실행 안내를 시스템 메시지로 넣는다. 클라이언트가 둔 시작 파일이 있으면 그 작업 세션(·작업 브랜치)에 도구 호출 없이 연결한다. 서브에이전트(invoke_subagent)로 판정되면 대화 안 작업 안내 하나만 넣고 대화 정보·작업 세션 연결을 쓰지 않으며 판정을 등록 파일에 남긴다",
+    "hook:antigravity:PreInvocation": "Antigravity 대화의 매 단계 앞에서 대화 정보를 다시 쓰고 편지함 메시지를 넣는다. /compact 입력이면 압축 요약 지시를 넣고, 새 압축 표시(CHECKPOINT)가 보이면 코어·작업 세션·작업 맥락·최근 대화 원문을 한 번 되살린다. 등록 파일에 판정이 없으면 서브에이전트인지 한 번 판정하고, 서브에이전트면 대화 정보를 쓰지 않고 남은 것은 지우며 압축 지시 없이 압축 뒤 대화 안 작업 안내 하나만 넣는다"
   },
   "policies": [
     {
       "id": "pol.task-reads-only",
       "kind": "처리",
-      "condition": "대화 안 작업(agent_id가 있는 호출)이나 프로그램이 돌리는 대화(entrypoint sdk-*, HEAD_CONTEXT_PERSON=1 아님)가 쓰기 도구(load·create·save·branch·todo add/done·setup)를 부르면",
+      "condition": "대화 안 작업(agent_id가 있는 호출)이나 프로그램이 돌리는 대화(entrypoint sdk-*, HEAD_CONTEXT_PERSON=1 아님)가 쓰기 도구(load·create·save·branch·todo add/done·setup)를 부르면, 또는 Antigravity 도구 호출의 _meta root가 그 대화와 다르면(서브에이전트 포함)",
       "subject": "도구 서버는",
       "action": "거절하고 읽기만 허용한다",
       "features": [
@@ -51,7 +54,7 @@
         "tool:todo",
         "tool:setup"
       ],
-      "evidence": "R43, R45, R77 · core/mcp.mjs callTool"
+      "evidence": "R43, R45, R77 · core/mcp.mjs callTool · R173, R208·R209(Antigravity)"
     },
     {
       "id": "pol.create-needs-context",
@@ -164,7 +167,7 @@
       "features": [
         "tool:setup"
       ],
-      "evidence": "R11, R91, R119 · core/project.mjs projectSettings·setupTool"
+      "evidence": "R11, R91, R119 · core/project.mjs projectSettings·setupTool · core/project.mjs settingsWhat·setupTool의 Antigravity 문구(Antigravity 설정은 바꾸지 않음)"
     },
     {
       "id": "pol.broken-record-moved",
@@ -177,9 +180,11 @@
         "hook:codex:SessionStart:session",
         "tool:load",
         "tool:save",
-        "tool:read"
+        "tool:read",
+        "hook:antigravity:SessionStart",
+        "hook:antigravity:PreInvocation"
       ],
-      "evidence": "R63"
+      "evidence": "R63 · Antigravity 훅도 같은 저장 도우미·takeNotices를 쓴다(코드)"
     },
     {
       "id": "pol.config-broken-stops",
@@ -191,9 +196,11 @@
         "hook:claude:SessionStart:session",
         "hook:codex:SessionStart:session",
         "tool:load",
-        "tool:save"
+        "tool:save",
+        "hook:antigravity:SessionStart",
+        "hook:antigravity:PreInvocation"
       ],
-      "evidence": "R64"
+      "evidence": "R64 · Antigravity 훅도 같은 저장 도우미·takeNotices를 쓴다(코드)"
     },
     {
       "id": "pol.index-rebuild",
@@ -222,13 +229,14 @@
     {
       "id": "pol.compact-pointer",
       "kind": "처리",
-      "condition": "Claude 대화가 압축되기 직전이고 node:sqlite를 쓸 수 있는 Node일 때",
-      "subject": "압축 훅은",
-      "action": "호스트의 번호 절 요약 대신 한 줄 포인터만 쓰라고 지시한다",
+      "condition": "Claude 대화가 압축되기 직전, 또는 Antigravity 사람 대화에 /compact가 들어와 그 단계를 돌기 직전이고, node:sqlite를 쓸 수 있는 Node일 때",
+      "subject": "Claude 압축 훅과 Antigravity 매 턴 훅은",
+      "action": "호스트의 번호 절 요약 대신 한 줄 포인터만 쓰라고 지시한다. Antigravity 서브에이전트에는 이 지시를 넣지 않아 agy 요약이 그대로 남는다(되살릴 작업 세션이 없어 포인터의 약속이 사실이 아니다)",
       "features": [
-        "hook:claude:PreCompact"
+        "hook:claude:PreCompact",
+        "hook:antigravity:PreInvocation"
       ],
-      "evidence": "R51 · R137(옛 Node — 빈 출력)"
+      "evidence": "R51 · R137(옛 Node — 빈 출력) · R167(Antigravity), R190(옛 Node — 없음), R197(서브에이전트 — 없음)"
     },
     {
       "id": "pol.send-not-self",
@@ -237,9 +245,10 @@
       "subject": "send는",
       "action": "거절한다",
       "features": [
-        "tool:send"
+        "tool:send",
+        "tool:send@antigravity"
       ],
-      "evidence": "R76"
+      "evidence": "R76 · R175(Antigravity)"
     },
     {
       "id": "pol.claude-not-running",
@@ -263,7 +272,7 @@
         "hook:claude:session.send",
         "hook:codex:UserPromptSubmit:inbox"
       ],
-      "evidence": "R74, R87(queued), R79(입력 때 들어옴)"
+      "evidence": "R74, R87(queued), R79(입력 때 들어옴) · Antigravity 받는 쪽은 pol.agy-wake-owner·pol.agy-inbox-every-step"
     },
     {
       "id": "pol.relay-project-codex-only",
@@ -301,18 +310,18 @@
       "kind": "표시",
       "condition": "대화가 재개·포크로 열리면",
       "subject": "시작 훅은",
-      "action": "작업 세션·작업 맥락·최근 대화를 넣지 않는다. 예외: Claude는 그 대화 기록에 코어 꼬리표가 없으면 코어를 한 번 넣고, 연결 안 된 대화면 연결 안 됨 한 줄을, 바로잡은 기록이 있으면 알림을 넣는다",
+      "action": "작업 세션·작업 맥락·최근 대화를 넣지 않는다. 예외: Claude는 그 대화 기록에 코어 꼬리표가 없으면 코어를 한 번 넣고, 연결 안 된 대화면 연결 안 됨 한 줄을, 바로잡은 기록이 있으면 알림을 넣는다. Antigravity session/load 재개는 새 압축 표시가 없으면 아무것도 다시 넣지 않는다(편지함 메시지·기록 알림은 나온다). Antigravity 서브에이전트의 압축 뒤 복원은 대화 안 작업 안내 하나만 넣는다",
       "features": [],
-      "evidence": "R56~R59"
+      "evidence": "R56~R59 · hosts/antigravity/hook.mjs runHook(restore) · R169, R198"
     },
     {
       "id": "pol.core-after-setup",
       "kind": "표시",
       "condition": "초기설정을 마친 프로젝트에서 시작·/clear·압축할 때",
-      "subject": "시작 훅은",
+      "subject": "시작 훅(Antigravity 사람 대화의 시작 훅 포함, 서브에이전트 제외)은",
       "action": "코어 지침을 넣는다(초기설정 전에는 넣지 않는다)",
       "features": [],
-      "evidence": "R1·R2(전: 빈 출력), R46·R47(뒤)"
+      "evidence": "R1·R2(전: 빈 출력), R46·R47(뒤) · hosts/antigravity/hook.mjs runHook · R159·R160, R210(서브에이전트 — 없음)"
     },
     {
       "id": "pol.session-part-fits",
@@ -336,19 +345,21 @@
       "id": "pol.first-run-guide",
       "kind": "표시",
       "condition": "초기설정 전 프로젝트에서 시작·/clear할 때(never_ask가 아니면)",
-      "subject": "시작 훅은",
+      "subject": "시작 훅(Antigravity 사람 대화의 시작 훅 포함, 서브에이전트 제외)은",
       "action": "사람의 첫 입력에 답하기 전에 초기설정을 묻게 하는 안내를 넣는다",
       "features": [],
-      "evidence": "R3"
+      "evidence": "R3 · hosts/antigravity/hook.mjs runHook · R159·R160, R210(서브에이전트 — 없음)"
     },
     {
       "id": "pol.recent-after-compact-clear",
       "kind": "표시",
       "condition": "압축·/clear 직후에만",
-      "subject": "Claude 시작 훅은",
-      "action": "직전 주고받기 최대 5번의 원문을 넣는다(도구 호출·생각·알림 제외, 예산을 넘으면 오래된 것부터 빼고 한 번도 길면 본문을 자름)",
-      "features": [],
-      "evidence": "R50(시작: 빈 출력), R55(압축 뒤)"
+      "subject": "Claude 시작 훅과 Antigravity 매 턴 훅(압축 뒤 처음 한 번, 사람 대화만)은",
+      "action": "직전 주고받기 최대 5번의 원문을 넣는다(도구 호출·생각·알림 제외, 예산을 넘으면 오래된 것부터 빼고 한 번도 길면 본문을 자름). 한 번만 남았는데도 길면 사용자 말 1/3, 모델 답 2/3로 자르고 원문 경로를 적는다. Antigravity 서브에이전트의 압축 뒤에는 넣지 않는다",
+      "features": [
+        "hook:antigravity:PreInvocation"
+      ],
+      "evidence": "R50(시작: 빈 출력), R55(압축 뒤) · 0.9.15: core/recent.mjs renderRecent(두 앱 공용) · R168, R188(Antigravity)"
     },
     {
       "id": "pol.no-host-tool-names",
@@ -362,11 +373,11 @@
     {
       "id": "pol.subagent-notice",
       "kind": "표시",
-      "condition": "대화 안 작업(Agent 도구의 포크·하위 에이전트, Codex spawn_agent)이 시작되면",
-      "subject": "하위 에이전트 시작 훅은",
-      "action": "읽기만 된다는 안내 한 덩어리를 넣는다. claude -p 워커와 대화가 되는 복제(데스크톱 사이드 포크)에는 넣지 않는다",
+      "condition": "대화 안 작업(Agent 도구의 포크·하위 에이전트, Codex spawn_agent, Antigravity invoke_subagent 서브에이전트)이 시작되면",
+      "subject": "하위 에이전트 시작 훅(Antigravity는 시작 훅)은",
+      "action": "읽기만 된다는 안내 한 덩어리를 넣는다. claude -p 워커와 대화가 되는 복제(데스크톱 사이드 포크)에는 넣지 않는다. Antigravity 서브에이전트는 압축 뒤에도 이 안내 한 덩어리만 다시 받고, node:sqlite 없는 Node에서도 이유 줄 없이 안내만 받는다(Claude 하위 에이전트와 같다)",
       "features": [],
-      "evidence": "R42, R81 · README"
+      "evidence": "R42, R81 · README · R193, R198, R210~R213, R217"
     },
     {
       "id": "pol.broken-record-notice",
@@ -380,11 +391,11 @@
     {
       "id": "pol.hook-failure-says",
       "kind": "표시",
-      "condition": "시작·입력·하위 에이전트 훅이 실패하면",
+      "condition": "시작·입력·하위 에이전트 훅(Antigravity 시작·매 단계 훅 포함)이 실패하면",
       "subject": "훅은",
       "action": "stderr에만 쓰지 않고 대화에 실패 한 줄을 넣는다",
       "features": [],
-      "evidence": "R64"
+      "evidence": "R64 · hosts/antigravity/hook.mjs catch(부분 이름 없는 한 줄) · R163"
     },
     {
       "id": "pol.name-chars",
@@ -436,22 +447,23 @@
     {
       "id": "pol.inbox-broken-aside",
       "kind": "처리",
-      "condition": "Codex 편지함의 메시지를 읽을 수 없으면",
-      "subject": "입력 훅은",
+      "condition": "Codex·Antigravity 편지함의 메시지를 읽을 수 없으면",
+      "subject": "Codex 입력 훅과 Antigravity 매 턴 훅은",
       "action": "그 메시지를 편지함의 .broken/으로 옮기고 경로를 알리며 나머지만 넣는다",
       "features": [
-        "hook:codex:UserPromptSubmit:inbox"
+        "hook:codex:UserPromptSubmit:inbox",
+        "hook:antigravity:PreInvocation"
       ],
-      "evidence": "hosts/codex/threads.mjs·hook.mjs(B-7 POL-20), 실행 안 함"
+      "evidence": "hosts/codex/threads.mjs·hook.mjs(B-7 POL-20), 실행 안 함 · 0.9.15: core/inbox.mjs takeFrom(두 앱 공용) · R166(Antigravity, 알림 문구는 앱마다 다름)"
     },
     {
       "id": "pol.never-ask",
       "kind": "표시",
       "condition": "사람이 다시 묻지 말라고 해 setup 또는 survey를 never_ask로 기록했으면",
-      "subject": "시작 훅은",
+      "subject": "시작 훅(Antigravity 사람 대화의 시작 훅 포함, 서브에이전트 제외)은",
       "action": "그 단계를 다시 묻지 않는다",
       "features": [],
-      "evidence": "core/project.mjs firstRun·guide(B-7 POL-02)"
+      "evidence": "core/project.mjs firstRun·guide(B-7 POL-02) · hosts/antigravity/hook.mjs runHook · R159·R160, R210(서브에이전트 — 없음)"
     },
     {
       "id": "pol.todo-order",
@@ -575,9 +587,9 @@
       "kind": "표시",
       "condition": "PATH에서 먼저 잡히는 node가 node:sqlite를 불러오지 못하면(22.13 미만 등)",
       "subject": "시작 훅은",
-      "action": "session 부분에 필요한 Node와 지금 node를 적은 이유 한 줄만 넣고 작업 맥락은 비운다. 코어 지침·최근 대화 원문·Codex 안내문은 그대로 넣는다",
+      "action": "session 부분에 필요한 Node와 지금 node를 적은 이유 한 줄만 넣고 작업 맥락은 비운다. 코어 지침·최근 대화 원문·Codex 안내문은 그대로 넣는다. Antigravity는 사람 대화의 시작과 압축 뒤 복원 때만 이유 한 줄을 넣고(일반 단계는 이유 없이 편지함을 넣고, /compact 단계는 압축 지시를 내지 않는다), 서브에이전트에는 이유 줄 없이 대화 안 작업 안내만 넣는다",
       "features": [],
-      "evidence": "R133~R139(f2 /usr/bin/node v18.19.1) · hosts/claude/hook.mjs:71-74 · hosts/codex/hook.mjs:78-85 · README 0.9.7"
+      "evidence": "R133~R139(f2 /usr/bin/node v18.19.1) · hosts/claude/hook.mjs:71-74 · hosts/codex/hook.mjs:78-85 · README 0.9.7 · R187~R190, R211·R212"
     },
     {
       "id": "pol.codex-presence-rewrite",
@@ -609,9 +621,11 @@
         "tool:send",
         "hook:claude:SessionStart:session",
         "hook:codex:SessionStart:session",
-        "hook:claude:PreCompact"
+        "hook:claude:PreCompact",
+        "tool:send@antigravity",
+        "hook:antigravity:PreInvocation"
       ],
-      "evidence": "R129~R132, R137, R140~R148 · core/mcp.mjs serve tools/call(runtimeProblem) · hosts/claude/hook.mjs:67-70 · core/platform.mjs runtimeProblem·sqlite · README 0.9.7"
+      "evidence": "R129~R132, R137, R140~R148 · core/mcp.mjs serve tools/call(runtimeProblem) · hosts/claude/hook.mjs:67-70 · core/platform.mjs runtimeProblem·sqlite · README 0.9.7 · R191(Antigravity send 거절), R190(Antigravity /compact — 압축 지시 없음)"
     },
     {
       "id": "pol.no-reserved-lines",
@@ -637,6 +651,196 @@
         "tool:load"
       ],
       "evidence": "README 0.9.9 · core/sessions.mjs(withGraph(project, …, [file]) 호출) · core/graph.mjs sync, 코드만(실패 경우는 실행하지 않음)"
+    },
+    {
+      "id": "pol.inbox-once-or-twice",
+      "kind": "처리",
+      "condition": "편지함 메시지를 꺼낸 프로세스가 넣기 전에 죽거나, 꺼낸 지 10분이 지나면",
+      "subject": "다음 호출의 Codex 입력 훅·Antigravity 매 턴 훅은",
+      "action": "그 메시지를 편지함에 되돌려 다시 넣는다. 그래서 한 메시지가 한 번 더 갈 수는 있어도 사라지지는 않는다",
+      "features": [
+        "hook:codex:UserPromptSubmit:inbox",
+        "hook:antigravity:PreInvocation"
+      ],
+      "evidence": "core/inbox.mjs takeFrom·STALE_MS(주석) · 시험 messaging.test.mjs, 실행 안 함"
+    },
+    {
+      "id": "pol.inbox-unreadable-per-app",
+      "kind": "처리",
+      "condition": "편지함 폴더가 없거나 읽을 수 없으면",
+      "subject": "Codex 입력 훅과 Antigravity 매 턴 훅은",
+      "action": "폴더가 없으면 둘 다 기다리는 메시지가 없는 것으로 본다. 폴더가 있는데 읽지 못하면 Codex는 메시지가 없는 것으로 보고, Antigravity는 훅 실패 한 줄을 낸다(첫 폴더 열거는 앱의 take가 자기 규칙으로 한다)",
+      "features": [
+        "hook:codex:UserPromptSubmit:inbox",
+        "hook:antigravity:PreInvocation"
+      ],
+      "evidence": "hosts/codex/threads.mjs take(readdir 실패 → 빈 값) · hosts/antigravity/threads.mjs take(existsSync 뒤 readdirSync) · 시험 antigravity.test.mjs 'unreadable inbox differs from Codex', 실행 안 함"
+    },
+    {
+      "id": "pol.agy-start-file",
+      "kind": "처리",
+      "condition": "Antigravity 클라이언트가 session/new 뒤 첫 session/prompt 전에 .head/state/start/antigravity-<ID>.json(session 필수, branch 선택)을 두고 그 대화가 사람 대화이면",
+      "subject": "Antigravity 시작 훅은",
+      "action": "그 파일을 읽자마자 지우고, 모델의 load 호출 없이 그 작업 세션에 연결한다(branch가 있으면 load와 같게: 닫힌 것은 다시 열고 중단한 것은 거절). HEAD_CONTEXT_SESSION이 있으면 그것이 먼저이고 파일은 버린다. 잘못된 파일이나 없는 작업 세션·작업 브랜치는 훅 실패 한 줄로 알리고 그 파일도 남기지 않는다. 서브에이전트는 시작 파일을 읽지 않고 작업 세션에 붙지 않는다",
+      "features": [
+        "hook:antigravity:SessionStart"
+      ],
+      "evidence": "hosts/antigravity/start.mjs takeStart · hook.mjs 사람 대화 길 · R161~R163, R213·R214(서브에이전트)"
+    },
+    {
+      "id": "pol.agy-start-prune",
+      "kind": "처리",
+      "condition": "Antigravity 사람 대화의 시작 훅이 돌 때마다",
+      "subject": "사람 대화의 시작 훅은",
+      "action": "같은 start 폴더의 antigravity-*.json 가운데 수정 시각이 1일을 넘은 것을 지운다. 매 턴 훅·재개·서브에이전트는 시작 파일 폴더를 건드리지 않는다",
+      "features": [
+        "hook:antigravity:SessionStart"
+      ],
+      "evidence": "hosts/antigravity/start.mjs takeStart · R164·R165(지워짐), R213·R214(서브에이전트는 그대로 둠)"
+    },
+    {
+      "id": "pol.agy-alive",
+      "kind": "처리",
+      "condition": "Antigravity 대화가 살아 있는지 볼 때",
+      "subject": "대화 목록(세 앱의 conversations와 claudeTree)과 보내기는",
+      "action": "presence의 pid가 살아 있고, start가 있으면 지금 그 pid의 시작 식별값과 같을 때만 살아 있다고 본다. pid 없는 옛 presence는 살아 있지 않다(파일은 남긴다). 기간 기준은 없고 at은 정렬에만 쓴다",
+      "features": [
+        "tool:conversations",
+        "hook:claude:session.send",
+        "tool:send",
+        "tool:send@antigravity"
+      ],
+      "evidence": "hosts/antigravity/process.mjs antigravityAlive · threads.mjs antigravityLive · R184~R186(살아 있는 G7만, pid 없는 G2 안 나옴)"
+    },
+    {
+      "id": "pol.agy-owner-pid",
+      "kind": "처리",
+      "condition": "Antigravity 사람 대화의 훅이 presence를 쓸 때",
+      "subject": "훅은",
+      "action": "셸·훅 부모를 넘어 올라가 실제 agy 프로세스를 찾아 그 pid와 시작 식별값을 쓴다. 재개하면 앞 프로세스의 값을 지우고 다시 찾는다. 찾지 못하면 pid를 쓰지 않는다",
+      "features": [
+        "hook:antigravity:SessionStart",
+        "hook:antigravity:PreInvocation"
+      ],
+      "evidence": "hosts/antigravity/process.mjs agyOwner · threads.mjs writePresence · 시험 antigravity.test.mjs 'Antigravity owner', run_a에는 agy가 없어 pid 없음"
+    },
+    {
+      "id": "pol.agy-close-presence",
+      "kind": "처리",
+      "condition": "ACP 클라이언트가 session/close로 대화를 놓으면",
+      "subject": "클라이언트(모바일챗 등)는",
+      "action": "그 대화의 .head/state/presence/antigravity-<ID>.json만 지운다(없으면 성공). 한 agy 프로세스에 여러 대화가 있어 프로세스 생존만으로는 대화 하나의 닫힘을 알 수 없기 때문이다. 플러그인 쪽에서는 서브에이전트의 것만 지운다",
+      "features": [],
+      "evidence": "README 「클라이언트가 대화를 놓을 때」 · 시험 antigravity.test.mjs 'Antigravity lists' — 주체가 플러그인 밖(클라이언트 계약)"
+    },
+    {
+      "id": "pol.agy-wake-owner",
+      "kind": "처리",
+      "condition": "다른 대화가 antigravity:<ID>로 보내면",
+      "subject": "보내는 쪽(Antigravity peer)은",
+      "action": "먼저 편지함에 넣는다. 그다음 presence의 소유 pid가 살아 있고 그 명령줄에 acp가 있을 때만 그 pid의 ACP 로그에서 HTTP 포트를 읽어 loopback으로 내용 없는 깨우기 신호를 보내고 started를 돌려준다. 다른 pid로 대신 보내지 않는다. 터미널 agy·데스크톱 앱·살아 있지 않은 대화·신호 실패는 queued다. 깨우기 실패는 이미 넣은 편지함 저장을 실패로 바꾸지 않는다. 신호는 공개되지 않은 agy 내부 통로에 기댄다",
+      "features": [
+        "tool:send",
+        "tool:send@antigravity",
+        "hook:claude:session.send"
+      ],
+      "evidence": "hosts/antigravity/peer.mjs send · wake.mjs wake · R178·R179·R181(queued), started는 시험 antigravity.test.mjs 'Antigravity send'와 0.9.14 실제 확인만"
+    },
+    {
+      "id": "pol.agy-receiver-known",
+      "kind": "처리",
+      "condition": "받는 Antigravity 대화의 presence가 없으면",
+      "subject": "보내는 쪽은",
+      "action": "보내지 않고 '받는 Antigravity 대화를 찾을 수 없습니다: <보낼 곳>'을 돌려준다",
+      "features": [
+        "tool:send",
+        "tool:send@antigravity",
+        "hook:claude:session.send"
+      ],
+      "evidence": "hosts/antigravity/peer.mjs send · R177, R182"
+    },
+    {
+      "id": "pol.agy-inbox-every-step",
+      "kind": "처리",
+      "condition": "Antigravity 대화의 매 단계(PreInvocation) 앞에서",
+      "subject": "매 턴 훅은",
+      "action": "편지함 메시지를 오래된 것부터 시스템 메시지로 넣고 출력 뒤 지운다. 턴 중간에 온 깨우기도 다음 단계에서 받는다. 서브에이전트도 편지함을 본다(0.9.14 목록에서 주소를 받아 보낸 메시지가 있을 수 있음)",
+      "features": [
+        "hook:antigravity:PreInvocation"
+      ],
+      "evidence": "hosts/antigravity/hook.mjs runHook PreInvocation 블록 · R166, R183, R189"
+    },
+    {
+      "id": "pol.agy-caller-meta",
+      "kind": "처리",
+      "condition": "Antigravity 도구 호출의 _meta에서 antigravity.google/root_conversation_id가 conversation_id와 다르면(서브에이전트는 parent_conversation_id도 오고 root가 부모)",
+      "subject": "도구 서버는",
+      "action": "부른 대화를 root로 보고 그 대화의 프로젝트를 쓰며, 쓰기 도구와 setup은 대화 안 작업처럼 거절한다",
+      "features": [
+        "tool:list",
+        "tool:load",
+        "tool:create",
+        "tool:save",
+        "tool:branch",
+        "tool:read",
+        "tool:todo",
+        "tool:conversations",
+        "tool:setup"
+      ],
+      "evidence": "hosts/antigravity/register.mjs callerOf · mcp.mjs serveAntigravity · R172·R173, R207~R209"
+    },
+    {
+      "id": "pol.agy-needs-hook-first",
+      "kind": "처리",
+      "condition": "Antigravity 대화의 훅이 아직 돌지 않아 등록 파일에 작업 폴더가 없으면",
+      "subject": "Antigravity 도구 서버는",
+      "action": "'이 대화의 프로젝트를 알 수 없습니다. 대화를 새로 시작하거나 다시 열어 주세요(시작할 때 프로젝트를 등록합니다).'로 멈춘다",
+      "features": [
+        "tool:list",
+        "tool:load",
+        "tool:create",
+        "tool:save",
+        "tool:branch",
+        "tool:read",
+        "tool:todo",
+        "tool:conversations",
+        "tool:setup",
+        "tool:send@antigravity"
+      ],
+      "evidence": "hosts/antigravity/mcp.mjs projectOf · core/mcp.mjs PROJECT_UNKNOWN · R174"
+    },
+    {
+      "id": "pol.agy-subagent-detect",
+      "kind": "처리",
+      "condition": "Antigravity 대화의 시작 훅 때(늘), 또는 등록 파일에 parent 칸이 없는 대화의 모델 호출(PreInvocation) 때",
+      "subject": "Antigravity 훅은",
+      "action": "훅 입력의 artifactDirectoryPath 아래 .system_generated/messages/에서 제목이 'Message from Parent Agent'이고 sender가 자기 아닌 대화 ID(UUID)인 메시지를 찾는다. 있으면 가장 이른 것의 sender를 부모로 삼아 대화 안 작업으로 판정하고 등록 파일 parent에 남긴다. 없거나, 폴더 이름이 대화 ID와 맞지 않거나, 읽지 못하면 사람 대화로 보고 parent: null을 남긴다(오류 줄 없음). 판정이 남은 대화는 다시 판정하지 않는다. agy 대화 요약 DB와 lastUserInput은 쓰지 않는다. 근거는 공개되지 않은 agy 내부 파일이다",
+      "features": [
+        "hook:antigravity:SessionStart",
+        "hook:antigravity:PreInvocation"
+      ],
+      "evidence": "hosts/antigravity/subagent.mjs parentOf · hook.mjs runHook · R193·R194, R195·R196(0.9.14 잔재), R199~R204(사람 대화), R215~R220"
+    },
+    {
+      "id": "pol.task-not-listed",
+      "kind": "표시",
+      "condition": "대화 안 작업(Claude Agent 도구의 포크·하위 에이전트, Codex spawn_agent, Antigravity 서브에이전트)이면",
+      "subject": "대화 목록(세 앱의 conversations)과 모바일챗은",
+      "action": "그 작업을 따로 올리지 않는다. Antigravity 서브에이전트는 플러그인이 대화 정보를 쓰지 않기 때문이다. 따로 띄운 워커(claude -p)와 데스크톱 사이드 포크는 대화 안 작업이 아니어서 지금처럼 오른다(워커는 pol.forks-under-parent)",
+      "features": [],
+      "evidence": "hosts/claude/hook.mjs(하위 에이전트에는 SessionStart 분기가 돌지 않음) · hosts/codex/hook.mjs inbox(agent_id면 presence 안 씀) · hosts/antigravity/hook.mjs 서브에이전트 길 · R205·R206"
+    },
+    {
+      "id": "pol.agy-subagent-presence",
+      "kind": "처리",
+      "condition": "Antigravity 대화가 서브에이전트로 판정됐으면(시작 때든, 0.9.14 잔재를 모델 호출 때 판정했든)",
+      "subject": "Antigravity 훅은",
+      "action": "그 대화의 presence를 쓰지 않고, 있으면 지운다. 다시 부르지 않는 서브에이전트의 것은 남는다(부모와 같은 pid라 부모 프로세스가 살아 있는 동안은 목록에 남는다)",
+      "features": [
+        "hook:antigravity:SessionStart",
+        "hook:antigravity:PreInvocation"
+      ],
+      "evidence": "hosts/antigravity/threads.mjs dropPresence · hook.mjs runHook · R184(정리 전) → R195·R196 → R205"
     }
   ],
   "db": {

@@ -29,7 +29,9 @@ for p in (HOME / ".claude" / "sessions", HOME / ".codex", PROJ):
 SRC = PKG
 PKG = HOME / ".claude" / "plugins" / "cache" / "head-agent-core" / "head-context" / VERSION
 CPKG = HOME / ".codex" / "plugins" / "cache" / "head-agent-core" / "head-context" / VERSION
-for dst in (PKG, CPKG):
+APKG = HOME / ".gemini" / "config" / "plugins" / "head-context"  # Antigravity(agy)가 플러그인을 두는 자리(0.9.11~)
+APKG_DATA = HOME / ".gemini" / "antigravity-cli" / "plugin_data" / "head-context"  # agy가 주는 PLUGIN_DATA
+for dst in (PKG, CPKG, APKG):
     shutil.copytree(SRC, dst)
 
 ENV = {k: v for k, v in os.environ.items() if not k.startswith(("CLAUDE", "ANTHROPIC", "CODEX", "HEAD_CONTEXT"))}
@@ -70,9 +72,10 @@ def hook(script, args, payload, what, env=None, node="node"):
 
 class Server:
     def __init__(self, script, env=None, cwd=PROJ, node="node"):
-        root = CPKG if script.startswith("codex") else PKG
+        root = CPKG if script.startswith("codex") else APKG if script.startswith("antigravity") else PKG
+        agy_env = {"PLUGIN_ROOT": str(APKG), "PLUGIN_DATA": str(APKG_DATA)} if script.startswith("antigravity") else {}
         self.p = subprocess.Popen([node, str(root / "scripts" / script)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE, text=True, env={**ENV, **(env or {})}, cwd=cwd)
+                                  stderr=subprocess.PIPE, text=True, env={**ENV, **agy_env, **(env or {})}, cwd=cwd)
         self.n = 0
         self.script = script if node == "node" else f"{script} (node {node})"
 
@@ -428,6 +431,245 @@ s.rpc("initialize", {"protocolVersion": "2025-06-18"})
 s.call("read", {"action": "map", "conversation_id": C1}, "연결 파일이 깨진 대화의 도구 호출")
 s.close()
 hook("codex-hook.mjs", ["session"], {"hook_event_name": "SessionStart", "session_id": X1, "cwd": str(PROJ), "source": "startup"}, "Codex SessionStart(startup) · session (연결 파일이 깨짐)")
+
+# ---------------------------------------------------------------- 12. Antigravity(0.9.11~0.9.15, 그래프 패치 2.8 A1~A13·5.6 A14~A26)
+# agy 없이 훅(scripts/antigravity-hook.mjs)과 도구 서버(scripts/antigravity-mcp.mjs)를 agy가 주는 꼴의 입력으로 직접 부른다.
+# 훅 입력은 camelCase, 출력은 injectSteps(시스템 메시지마다 하나)다. 출력 원문은 시스템 메시지들을 빈 줄 하나로 잇는다.
+def agy(payload, what, node="node", env=None):
+    cmd = [node, str(APKG / "scripts" / "antigravity-hook.mjs")]
+    p = subprocess.run(cmd, input=json.dumps(payload), capture_output=True, text=True,
+                       env={**ENV, "PLUGIN_ROOT": str(APKG), "PLUGIN_DATA": str(APKG_DATA), **(env or {})}, cwd=payload.get("cwd", str(PROJ)))
+    out = p.stdout
+    try:
+        j = json.loads(out.strip().splitlines()[-1]) if out.strip() else None
+        if j and "injectSteps" in j:
+            out = "\n\n".join(x["systemMessage"]["systemMessage"] for x in j["injectSteps"])
+    except Exception:
+        pass
+    record("hook", what, {"명령": "antigravity-hook.mjs", "입력": {k: scrub(v) if isinstance(v, str) else v for k, v in payload.items()},
+                          **({"node": node} if node != "node" else {}), **({"env": env} if env else {})}, out, p.stderr, p.returncode)
+    return out
+
+
+AFRESH = ROOT / "agy-fresh"  # 초기설정 전 프로젝트
+AFRESH.mkdir(parents=True, exist_ok=True)
+BRAIN = HOME / ".gemini" / "antigravity-cli" / "brain"
+def gid(n):
+    return f"aaaaaaaa-0000-4000-8000-{n:012d}"
+def sid(n):
+    return f"bbbbbbbb-0000-4000-8000-{n:012d}"
+def conv_dir(cid):
+    d = BRAIN / cid
+    (d / ".system_generated" / "logs").mkdir(parents=True, exist_ok=True)
+    return d
+def agy_in(cid, event, project=PROJ, **kw):
+    d = conv_dir(cid)
+    base = {"artifactDirectoryPath": str(d), "conversationId": cid, "cwd": str(project), "hookEventName": event,
+            "lastUserInput": "", "modelName": "gemini-4-neon-low",
+            "transcriptPath": str(d / ".system_generated" / "logs" / "transcript_full.jsonl"), "workspacePaths": [str(project)]}
+    if event == "PreInvocation":
+        base.update(initialNumSteps=1, invocationNum=1)
+    base.update(kw)
+    return base
+def parent_message(cid, sender, title="Message from Parent Agent", name="m-parent.json", ts="2026-11-23T04:41:06.000000000Z"):
+    folder = conv_dir(cid) / ".system_generated" / "messages"
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / name).write_text(json.dumps({"id": name[:-5], "recipient": cid, "sender": sender, "priority": "MESSAGE_PRIORITY_HIGH",
+                                           "timestamp": ts, "renderDetails": {"messageTitle": title}, "content": "Do this task"}))
+TROWS = {}
+def trow(cid, type_, content, source="SYSTEM"):
+    rows = TROWS.setdefault(cid, [])
+    rows.append({"step_index": len(rows), "type": type_, "content": content, "source": source, "status": "DONE",
+                 "created_at": f"2026-11-23T01:{len(rows):02d}:00Z"})
+    f = conv_dir(cid) / ".system_generated" / "logs" / "transcript_full.jsonl"
+    f.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n")
+def exchange(cid, user, model):
+    trow(cid, "USER_INPUT", f"<USER_REQUEST>\n{user}\n</USER_REQUEST>", "USER_EXPLICIT")
+    trow(cid, "PLANNER_RESPONSE", model, "MODEL")
+def birth(pid):
+    stat = Path(f"/proc/{pid}/stat").read_text()
+    return stat[stat.rindex(")") + 2:].split(" ")[19]
+STATE_DIR = PROJ / ".head" / "state"
+def presence_of(cid, project=PROJ):
+    return project / ".head" / "state" / "presence" / f"antigravity-{cid}.json"
+def registered(cid):
+    f = APKG_DATA / "conversations" / f"{cid}.json"
+    return json.loads(f.read_text()) if f.exists() else None
+def measure(what, inp, out):
+    record("측정", what, inp, scrub(out))
+
+G1, G2, G3, G4, G5, G6, G7, G8 = (gid(i) for i in range(1, 9))
+STATE["label"] = "Antigravity 대화, 초기설정 전 프로젝트"
+agy(agy_in(G1, "SessionStart", AFRESH, lastUserInput="안녕"), "Antigravity SessionStart (초기설정 전, 사람 대화)")             # A1
+STATE["label"] = "Antigravity 대화, 초기설정 뒤 demo 프로젝트"
+agy(agy_in(G2, "SessionStart", lastUserInput="로그인 화면 보자"), "Antigravity SessionStart (연결 안 됨)")                       # A2
+start_dir = STATE_DIR / "start"
+start_dir.mkdir(parents=True, exist_ok=True)
+(start_dir / f"antigravity-{G3}.json").write_text(json.dumps({"session": "demo"}))
+agy(agy_in(G3, "SessionStart", lastUserInput="이어서"), "Antigravity SessionStart (시작 파일: session demo)")                  # A3
+(start_dir / f"antigravity-{G4}.json").write_text(json.dumps({"session": "demo", "branch": "ctx-1"}))
+agy(agy_in(G4, "SessionStart", lastUserInput="이어서"), "Antigravity SessionStart (시작 파일: session demo, branch ctx-1)")
+(start_dir / f"antigravity-{G5}.json").write_text(json.dumps({"session": "nope"}))
+agy(agy_in(G5, "SessionStart", lastUserInput="이어서"), "Antigravity SessionStart (시작 파일: 없는 작업 세션)")
+stale = start_dir / "antigravity-cccccccc-0000-4000-8000-000000000001.json"
+stale.write_text(json.dumps({"session": "demo"}))
+old = __import__("time").time() - 2 * 86400
+os.utime(stale, (old, old))
+agy(agy_in(G6, "SessionStart", lastUserInput="안녕"), "Antigravity SessionStart (하루 지난 남의 시작 파일이 있음)")              # A4
+measure("하루 지난 시작 파일", {"파일": ".head/state/start/antigravity-cccccccc-….json", "수정 시각": "이틀 전"}, "지워짐" if not stale.exists() else "남음")
+inbox = STATE_DIR / "inbox" / f"antigravity-{G3}"
+inbox.mkdir(parents=True, exist_ok=True)
+(inbox / "2026-11-23T01-00-00-000Z-11111111-1111-4111-8111-111111111111.json").write_text(json.dumps(
+    {"from": f"claude:{C1}", "from_name": "head-1", "text": "로그인 시안 나왔어요", "at": "2026-11-23T01:00:00.000Z"}, ensure_ascii=False))
+(inbox / "2026-11-23T01-00-01-000Z-22222222-2222-4222-8222-222222222222.json").write_text("{broken")
+agy(agy_in(G3, "PreInvocation", lastUserInput="계속"), "Antigravity PreInvocation (편지함: 메시지 하나와 깨진 파일 하나)")       # A5
+exchange(G3, "로그인 버튼이 두 번 눌려", "요청이 끝날 때까지 버튼을 막겠습니다.")
+exchange(G3, "그렇게 해", "구현했고 시험이 통과했습니다.")
+agy(agy_in(G3, "PreInvocation", lastUserInput="/compact"), "Antigravity PreInvocation (/compact)")                           # A6
+trow(G3, "CHECKPOINT", "# Resuming from a compaction")
+trow(G3, "USER_INPUT", "<USER_REQUEST>\n계속\n</USER_REQUEST>", "USER_EXPLICIT")
+agy(agy_in(G3, "PreInvocation", lastUserInput="계속"), "Antigravity PreInvocation (압축 뒤 첫 단계: 새 CHECKPOINT)")
+agy(agy_in(G3, "PreInvocation", lastUserInput="계속"), "Antigravity PreInvocation (압축 뒤 둘째 단계)")
+# 0.9.14가 남긴 서브에이전트 꼴: 부모(G3)와 같은 살아 있는 pid로 쓴 presence, parent 칸 없는 등록 파일(A11에서 보이고 A15에서 정리된다)
+S1, S2, S3, S4, S5, S6, S7 = (sid(i) for i in range(1, 8))
+pres_dir = STATE_DIR / "presence"
+live = {"pid": os.getpid(), "start": birth(os.getpid())}
+for cid, said in ((G7, "살아 있는 사람 대화"), (S2, "")):
+    presence_of(cid).write_text(json.dumps({"host": "antigravity", "conversation_id": cid, "cwd": str(PROJ), **live,
+                                            **({"said": said} if said else {}), "at": "2026-11-23T01:30:00.000Z"}, ensure_ascii=False))
+(APKG_DATA / "conversations").mkdir(parents=True, exist_ok=True)
+(APKG_DATA / "conversations" / f"{S2}.json").write_text(json.dumps({"cwd": str(PROJ), "checkpoint": None}))
+parent_message(S2, G3)
+STATE["label"] = "Antigravity 도구 서버(초기설정 뒤 demo 프로젝트)"
+a = Server("antigravity-mcp.mjs", cwd=APKG)
+a.init("Antigravity 도구 서버 시작")                                                                                     # A7
+M = lambda cid, root=None, parent=None: {"antigravity.google/conversation_id": cid, "antigravity.google/root_conversation_id": root or cid,
+                                         **({"antigravity.google/parent_conversation_id": parent} if parent else {})}
+a.call("list", {}, "Antigravity 대화의 작업 세션 목록", meta=M(G3))
+a.call("save", {"summary": "s", "history": "h"}, "Antigravity 하위 대화(root가 다름)의 저장", meta=M("dddddddd-0000-4000-8000-000000000001", G3))
+a.call("list", {}, "등록 안 된 Antigravity 대화의 도구 호출", meta=M("eeeeeeee-0000-4000-8000-000000000001"))         # A8
+a.call("send", {"threadId": f"antigravity:{G3}", "prompt": "x"}, "Antigravity send(자기 자신)", meta=M(G3))           # A9
+a.call("send", {"threadId": "nope:1", "prompt": "x"}, "Antigravity send(알 수 없는 보낼 곳)", meta=M(G3))
+a.call("send", {"threadId": "antigravity:ffffffff-0000-4000-8000-000000000001", "prompt": "x"}, "Antigravity send(presence 없는 Antigravity 대화)", meta=M(G3))
+a.call("send", {"threadId": f"antigravity:{G2}", "prompt": "로그인 봐 줘"}, "Antigravity send(pid 없는 presence → 다음 입력 때)", meta=M(G3))
+a.call("send", {"threadId": f"antigravity:{G7}", "prompt": "로그인 봐 줘"}, "Antigravity send(살아 있는 pid지만 ACP 프로세스가 아님 → 다음 입력 때)", meta=M(G3))
+a.call("send", {"threadId": "", "prompt": " "}, "Antigravity send(빈 인자)", meta=M(G3))
+a.close()
+STATE["label"] = "Claude 대화가 Antigravity로 보냄"
+cli(["relay.mjs", str(PROJ), f"antigravity:{G2}", f"claude:{C1}"], "Claude → Antigravity 중계(presence 있음)", stdin="Claude에서 보냄")   # A10
+cli(["relay.mjs", str(PROJ), "antigravity:ffffffff-0000-4000-8000-000000000002", f"claude:{C1}"], "Claude → Antigravity 중계(없는 대화)", stdin="안녕")
+agy(agy_in(G2, "PreInvocation", lastUserInput="계속"), "Antigravity PreInvocation (Claude가 보낸 메시지를 받음)")
+STATE["label"] = "살아 있는 Antigravity 대화 G7과 0.9.14가 남긴 서브에이전트 S2, pid 없는 G2"
+s = Server("mcp.mjs")
+s.rpc("initialize", {"protocolVersion": "2025-06-18"})
+s.call("conversations", {"conversation_id": C1}, "Claude에서 대화 목록(Antigravity 포함)")                              # A11
+s.close()
+c = Server("codex-mcp.mjs", cwd=CPKG)
+c.rpc("initialize", {"protocolVersion": "2025-06-18"})
+c.call("conversations", {}, "Codex에서 대화 목록(Antigravity 포함)", meta={"threadId": X2, "sessionId": X2})
+c.close()
+a = Server("antigravity-mcp.mjs", cwd=APKG)
+a.rpc("initialize", {"protocolVersion": "2025-06-18"})
+a.call("conversations", {}, "Antigravity에서 대화 목록", meta=M(G3))
+a.close()
+STATE["label"] = f"Antigravity, node:sqlite가 없는 Node({subprocess.run([OLD, '--version'], capture_output=True, text=True).stdout.strip()})"
+agy(agy_in(G8, "SessionStart", lastUserInput="안녕"), "옛 Node · Antigravity SessionStart", node=OLD)                   # A12
+trow(G3, "PLANNER_RESPONSE", "계속합니다.", "MODEL")
+trow(G3, "CHECKPOINT", "# Resuming from a compaction")
+agy(agy_in(G3, "PreInvocation", lastUserInput="계속"), "옛 Node · Antigravity PreInvocation (새 CHECKPOINT)", node=OLD)
+(inbox / "2026-11-23T02-00-00-000Z-33333333-3333-4333-8333-333333333333.json").write_text(json.dumps(
+    {"from": f"codex:{X1}", "text": "옛 Node에서도 받나요", "at": "2026-11-23T02:00:00.000Z"}, ensure_ascii=False))
+agy(agy_in(G3, "PreInvocation", lastUserInput="계속"), "옛 Node · Antigravity PreInvocation (편지함 메시지)", node=OLD)
+agy(agy_in(G3, "PreInvocation", lastUserInput="/compact"), "옛 Node · Antigravity PreInvocation (/compact)", node=OLD)
+o = Server("antigravity-mcp.mjs", cwd=APKG, node=OLD)
+o.rpc("initialize", {"protocolVersion": "2025-06-18"})
+o.call("send", {"threadId": f"antigravity:{G2}", "prompt": "x"}, "옛 Node에서 Antigravity send", meta=M(G3))
+o.close()
+STATE["label"] = "세 도구 서버의 판 번호(serverInfo)"
+infos = {}
+for script, cwd in (("mcp.mjs", PROJ), ("codex-mcp.mjs", CPKG), ("antigravity-mcp.mjs", APKG)):                          # A13
+    v = Server(script, cwd=cwd)
+    infos[script] = v.rpc("initialize", {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "demo", "version": "0"}})["result"]["serverInfo"]
+    v.close()
+record("mcp", "세 도구 서버의 serverInfo", {"서버": "mcp.mjs · codex-mcp.mjs · antigravity-mcp.mjs", "method": "initialize", "plugin.json 판": VERSION},
+       "\n".join(f"{k}: {json.dumps(v, ensure_ascii=False)}" for k, v in infos.items()))
+bad = {k: v.get("version") for k, v in infos.items() if v.get("version") != VERSION}
+if bad:
+    sys.exit(f"serverInfo.version이 plugin.json 판({VERSION})과 다름: {bad}")
+
+# ---- 서브에이전트(invoke_subagent) 꼴 입력 — 0.9.15
+STATE["label"] = "Antigravity 서브에이전트(부모 G3), 초기설정 뒤 demo 프로젝트"
+parent_message(S1, G3)
+agy(agy_in(S1, "SessionStart"), "Antigravity 서브에이전트 SessionStart")                                                 # A14
+measure("서브에이전트 시작 뒤 파일", {"대화": "S1"},
+        f"presence {'있음' if presence_of(S1).exists() else '없음'} · 등록 parent={(registered(S1) or {}).get('parent')} · "
+        f"작업 세션 연결 기록 {'있음' if (STATE_DIR / 'conversations' / f'antigravity-{S1}.json').exists() else '없음'}")
+agy(agy_in(S2, "PreInvocation"), "Antigravity PreInvocation (0.9.14가 남긴 서브에이전트: parent 칸 없는 등록 파일·presence)")   # A15
+measure("0.9.14 잔재 정리 뒤 파일", {"대화": "S2"},
+        f"presence {'있음' if presence_of(S2).exists() else '없음'} · 등록 parent={(registered(S2) or {}).get('parent')}")
+agy(agy_in(S1, "PreInvocation", lastUserInput="/compact"), "Antigravity 서브에이전트 PreInvocation (/compact)")          # A16
+exchange(S1, "하위 일 하나", "했습니다.")
+trow(S1, "CHECKPOINT", "# Resuming from a compaction")
+agy(agy_in(S1, "PreInvocation"), "Antigravity 서브에이전트 PreInvocation (압축 뒤 첫 단계: 새 CHECKPOINT)")
+H = [gid(i) for i in range(11, 15)]
+for cid, (sender, title) in zip(H, ((f"{gid(11)}/task-1", "Background task finished"), (S1, "Message from probe-self (self)"),
+                                    ("system", None), (gid(14), "Message from Parent Agent"))):
+    folder = conv_dir(cid) / ".system_generated" / "messages"
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "m.json").write_text(json.dumps({"id": "m", "recipient": cid, "sender": sender, "priority": "MESSAGE_PRIORITY_HIGH",
+                                               "timestamp": "2026-11-23T04:00:00Z", **({"renderDetails": {"messageTitle": title}} if title else {}),
+                                               "content": "x"}))
+for cid, what in zip(H, ("자기 백그라운드 알림만", "부모 쪽 서브에이전트 보고만", "sender system만", "제목은 맞지만 sender가 자기")):
+    agy(agy_in(cid, "SessionStart", lastUserInput="안녕"), f"Antigravity SessionStart (사람 대화, 메시지 폴더에 {what})")      # A17
+measure("사람 대화 판정", {"대화": "A17의 넷"}, " · ".join(f"parent={(registered(cid) or {}).get('parent')}" for cid in H))
+agy(agy_in(gid(15), "SessionStart"), "Antigravity SessionStart (메시지 폴더 없음, lastUserInput 빈 값)")              # A18
+STATE["label"] = "서브에이전트 S1·S2와 부모 G3, 살아 있는 G7"
+s = Server("mcp.mjs")
+s.rpc("initialize", {"protocolVersion": "2025-06-18"})
+s.call("conversations", {"conversation_id": C1}, "Claude에서 대화 목록(서브에이전트 정리 뒤)")                          # A19
+s.close()
+a = Server("antigravity-mcp.mjs", cwd=APKG)
+a.rpc("initialize", {"protocolVersion": "2025-06-18"})
+a.call("conversations", {}, "Antigravity에서 대화 목록(서브에이전트 정리 뒤)", meta=M(G3))
+a.call("list", {}, "서브에이전트의 list", meta=M(S1, G3, G3))                                                            # A20
+a.call("todo", {"action": "add", "text": "x"}, "서브에이전트의 todo add", meta=M(S1, G3, G3))
+a.call("setup", {"action": "setup"}, "서브에이전트의 setup", meta=M(S1, G3, G3))
+a.close()
+STATE["label"] = "Antigravity 서브에이전트, 초기설정 전 프로젝트"
+parent_message(S3, G1)
+agy(agy_in(S3, "SessionStart", AFRESH), "Antigravity 서브에이전트 SessionStart (초기설정 전)")                           # A21
+STATE["label"] = f"Antigravity 서브에이전트, node:sqlite가 없는 Node"
+agy(agy_in(S1, "SessionStart"), "옛 Node · Antigravity 서브에이전트 SessionStart", node=OLD)                            # A22
+trow(S1, "CHECKPOINT", "# Resuming from a compaction")
+agy(agy_in(S1, "PreInvocation"), "옛 Node · Antigravity 서브에이전트 PreInvocation (새 CHECKPOINT)", node=OLD)
+STATE["label"] = "Antigravity 서브에이전트, 시작 파일과 HEAD_CONTEXT_SESSION이 있음"
+parent_message(S4, G3)
+(start_dir / f"antigravity-{S4}.json").write_text(json.dumps({"session": "demo"}))
+stale2 = start_dir / "antigravity-cccccccc-0000-4000-8000-000000000002.json"
+stale2.write_text(json.dumps({"session": "demo"}))
+os.utime(stale2, (old, old))
+agy(agy_in(S4, "SessionStart"), "Antigravity 서브에이전트 SessionStart (자기 시작 파일·하루 지난 남의 시작 파일·HEAD_CONTEXT_SESSION)",
+    env={"HEAD_CONTEXT_SESSION": "demo"})                                                                                   # A23
+measure("서브에이전트 시작 뒤 시작 파일", {"대화": "S4"},
+        f"자기 시작 파일 {'남음' if (start_dir / f'antigravity-{S4}.json').exists() else '지워짐'} · 하루 지난 남의 시작 파일 {'남음' if stale2.exists() else '지워짐'} · "
+        f"작업 세션 연결 기록 {'있음' if (STATE_DIR / 'conversations' / f'antigravity-{S4}.json').exists() else '없음'}")
+STATE["label"] = "Antigravity 판정할 수 없는 입력"
+parent_message(S5, G3)
+agy({k: v for k, v in agy_in(S5, "SessionStart").items() if k != "artifactDirectoryPath"}, "Antigravity SessionStart (artifactDirectoryPath 없음, 부모 메시지는 있음)")   # A24
+parent_message(S6, G3)
+agy(agy_in(S7, "SessionStart", artifactDirectoryPath=str(BRAIN / S6)), "Antigravity SessionStart (artifactDirectoryPath의 폴더 이름이 대화 ID와 다름)")
+S8, S9 = sid(8), sid(9)
+parent_message(S8, G3)
+(conv_dir(S8) / ".system_generated" / "messages" / "a-broken.json").write_text("{broken")
+agy(agy_in(S8, "SessionStart"), "Antigravity SessionStart (깨진 메시지 파일 옆에 부모 메시지)")                         # A25
+parent_message(S9, G3)
+locked = conv_dir(S9) / ".system_generated" / "messages"
+locked.chmod(0)
+agy(agy_in(S9, "SessionStart", lastUserInput="안녕"), "Antigravity SessionStart (메시지 폴더를 읽을 수 없음)")
+locked.chmod(0o755)
+parent_message(H[0], G3, name="z-late-parent.json")
+agy(agy_in(H[0], "PreInvocation", lastUserInput="계속"), "Antigravity PreInvocation (사람 대화로 판정된 뒤 부모 메시지 꼴 파일이 생김)")   # A26
+measure("판정이 남은 사람 대화", {"대화": "A17 첫째"}, f"parent={(registered(H[0]) or {}).get('parent')}")
 
 OUT.write_text(json.dumps(runs, ensure_ascii=False, indent=1))
 print(len(runs), "runs")

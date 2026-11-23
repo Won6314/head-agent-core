@@ -1,7 +1,7 @@
 {
  "tool:todo": {
   "실행된 정의": 57,
-  "그래프 도달 범위": 93,
+  "그래프 도달 범위": 100,
   "범위 밖에서 실행됨": [
    "code:hosts/claude/mcp.mjs#serveClaude.live@15"
   ],
@@ -36,6 +36,13 @@
    "code:core/todo.mjs#parseTodo",
    "code:core/todo.mjs#todoLine",
    "code:core/todo.mjs#weekday",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.agentOf",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.conversationOf",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.options",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.projectOf",
+   "code:hosts/antigravity/register.mjs#callerOf",
+   "code:hosts/antigravity/register.mjs#fileOf",
+   "code:hosts/antigravity/register.mjs#registered",
    "code:hosts/codex/mcp.mjs#projectOf",
    "code:hosts/codex/mcp.mjs#serveCodex.agentOf",
    "code:hosts/codex/mcp.mjs#serveCodex.conversationOf",
@@ -50,7 +57,7 @@
  },
  "tool:list": {
   "실행된 정의": 60,
-  "그래프 도달 범위": 86,
+  "그래프 도달 범위": 93,
   "범위 밖에서 실행됨": [
    "code:hosts/claude/mcp.mjs#serveClaude.live@15"
   ],
@@ -75,6 +82,13 @@
    "code:core/lock.mjs#lockOwner",
    "code:core/platform.mjs#runtimeNeed",
    "code:core/storage.mjs#readError",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.agentOf",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.conversationOf",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.options",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.projectOf",
+   "code:hosts/antigravity/register.mjs#callerOf",
+   "code:hosts/antigravity/register.mjs#fileOf",
+   "code:hosts/antigravity/register.mjs#registered",
    "code:hosts/codex/mcp.mjs#projectOf",
    "code:hosts/codex/mcp.mjs#serveCodex.agentOf",
    "code:hosts/codex/mcp.mjs#serveCodex.conversationOf",
@@ -177,7 +191,7 @@
  },
  "tool:save": {
   "실행된 정의": 87,
-  "그래프 도달 범위": 103,
+  "그래프 도달 범위": 110,
   "범위 밖에서 실행됨": [
    "code:hosts/claude/mcp.mjs#serveClaude.live@15"
   ],
@@ -192,6 +206,13 @@
    "code:core/sessions.mjs#tilde",
    "code:core/storage.mjs#readError",
    "code:core/storage.mjs#setAside",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.agentOf",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.conversationOf",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.options",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.projectOf",
+   "code:hosts/antigravity/register.mjs#callerOf",
+   "code:hosts/antigravity/register.mjs#fileOf",
+   "code:hosts/antigravity/register.mjs#registered",
    "code:hosts/codex/mcp.mjs#projectOf",
    "code:hosts/codex/mcp.mjs#serveCodex.agentOf",
    "code:hosts/codex/mcp.mjs#serveCodex.conversationOf",
@@ -206,7 +227,7 @@
  },
  "tool:read": {
   "실행된 정의": 71,
-  "그래프 도달 범위": 133,
+  "그래프 도달 범위": 140,
   "범위 밖에서 실행됨": [
    "code:hosts/claude/mcp.mjs#serveClaude.live@15"
   ],
@@ -267,6 +288,13 @@
    "code:core/todo.mjs#today",
    "code:core/todo.mjs#todoFile",
    "code:core/todo.mjs#todoLine",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.agentOf",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.conversationOf",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.options",
+   "code:hosts/antigravity/mcp.mjs#serveAntigravity.projectOf",
+   "code:hosts/antigravity/register.mjs#callerOf",
+   "code:hosts/antigravity/register.mjs#fileOf",
+   "code:hosts/antigravity/register.mjs#registered",
    "code:hosts/codex/mcp.mjs#projectOf",
    "code:hosts/codex/mcp.mjs#serveCodex.agentOf",
    "code:hosts/codex/mcp.mjs#serveCodex.conversationOf",

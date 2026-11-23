@@ -1,6 +1,6 @@
 # head-context 그래프 빌드 묶음
 
-이 폴더는 [`../../head-context-0.9.10/`](../../head-context-0.9.10/)의 그래프를 만든 재료 전부입니다. 스크립트, 사람이 쓴 문서, 플러그인을 실제로 돌려 받은 출력 기록이 들어 있습니다. 플러그인 새 판을 낼 때 이 폴더로 그 판의 그래프를 다시 만듭니다.
+이 폴더는 [`../../head-context-0.9.15/`](../../head-context-0.9.15/)의 그래프를 만든 재료 전부입니다. 스크립트, 사람이 쓴 문서, 플러그인을 실제로 돌려 받은 출력 기록이 들어 있습니다. 플러그인 새 판을 낼 때 이 폴더로 그 판의 그래프를 다시 만듭니다.
 
 그래프에 무엇을 담는지(정의)와 어떤 차례로 만드는지(일반 순서)는 [`../02a-graph-definitions.md`](../02a-graph-definitions.md)와 [`../02b-graph-workflow.md`](../02b-graph-workflow.md)에 있습니다. 이 README는 head-context 그래프에 맞춘 차례입니다.
 
@@ -72,5 +72,6 @@ graph/build/head-context/make.sh <head-agent-core 저장소> [커밋] [--with-ru
 ## 알아 둘 것
 
 - 유저 활동(`docs/activities.md`)은 0.9.5 때 처음 쓰는 사람처럼 실제로 써 본 기록으로 썼다. 판마다 다시 써 보지는 않고, 바뀐 것만 그 줄에 적는다.
-- Codex·OpenCode 쪽 출력은 실제 앱 없이 훅·도구 서버·플러그인 훅 함수를 직접 돌려 받는다.
+- Codex·OpenCode·Antigravity 쪽 출력은 실제 앱 없이 훅·도구 서버·플러그인 훅 함수를 직접 돌려 받는다. Antigravity 실행(R159~)은 임시 HOME의 `.gemini/config/plugins/head-context`에 복사한 플러그인과 `PLUGIN_DATA`로 돈다. `--with-run`은 세 도구 서버의 serverInfo 판이 plugin.json 판과 다르면 멈춘다(R192).
+- 실행 매칭에서 글이 같아 잘못 맞은 연결은 `build_graph.py` `RUN_LINK_EXCLUDE`에 이유와 함께 이름으로 뺀다. 추출기가 잡지 않는 바깥 접근(전역 `fetch`)은 `MANUAL_OUTSIDE`에 손으로 적는다.
 - 처음부터 다른 제품의 그래프를 만들 때는 이 폴더를 복사하지 말고 `../02b-graph-workflow.md`의 차례를 따른다. 이 폴더의 규칙은 head-context 코드에 맞춘 것이다.
