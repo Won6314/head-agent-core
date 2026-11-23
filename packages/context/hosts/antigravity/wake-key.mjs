@@ -34,6 +34,8 @@ export function pruneKeys() {
 
 export function claimAsk(owner) {
   if (!Number.isInteger(owner.pid) || !owner.start) return false;
+  // Asked already: every later call of this process stops here, so pruning runs once per process.
+  if (fs.existsSync(keyFile(owner))) return false;
   pruneKeys();
   fs.mkdirSync(keyDir(), { recursive: true, mode: 0o700 });
   let fd;
