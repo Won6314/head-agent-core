@@ -10,9 +10,10 @@ import { once } from 'node:events';
 import { sessions } from '../core/sessions.mjs';
 import { setupTool, CORE_SOURCE } from '../core/project.mjs';
 import { compactInstruction } from '../hosts/claude/compact.mjs';
+import { SUBAGENT_NOTICE } from '../core/mcp.mjs';
 import { checkpointOf, steps, recentPart } from '../hosts/antigravity/transcript.mjs';
 import { callerOf } from '../hosts/antigravity/register.mjs';
-import { queue, readPresence } from '../hosts/antigravity/threads.mjs';
+import { queue, readPresence, writePresence, antigravityLive } from '../hosts/antigravity/threads.mjs';
 import { take as takeCodex } from '../hosts/codex/threads.mjs';
 import { register as registerClaudeSend } from '../hooks/conversations.mjs';
 import { locations } from '../core/storage.mjs';
@@ -22,6 +23,18 @@ import { antigravityPeer } from '../hosts/antigravity/peer.mjs';
 import { claudeTree } from '../hosts/claude/tree.mjs';
 
 const fresh = () => fs.mkdtempSync(path.join(process.env.HEAD_CONTEXT_TEST_ROOT || os.tmpdir(), 'agy-'));
+const PARENT = '3330a406-49c4-47c8-9be3-c6daf8e2a838';
+const message = (sender = PARENT, messageTitle = 'Message from Parent Agent', recipient = 'c1') => ({
+  id: 'message-1', recipient, sender, priority: 'MESSAGE_PRIORITY_HIGH',
+  timestamp: '2026-11-23T04:23:40.747013683Z', renderDetails: { messageTitle }, content: 'Do this task',
+});
+const brain = (id, messages) => {
+  const dir = path.join(fresh(), 'brain', id);
+  const folder = path.join(dir, '.system_generated/messages');
+  fs.mkdirSync(folder, { recursive: true });
+  messages.forEach((m, n) => fs.writeFileSync(path.join(folder, `${n}.json`), JSON.stringify(m)));
+  return dir;
+};
 test('Antigravity send: owner ACP HTTP only, signal has no payload; failure/non-ACP/dead owners stay queued', async () => {
   const dir = fresh();
   const presence = path.join(locations(dir).state, 'presence');
@@ -246,7 +259,8 @@ test('Antigravity hook: camelCase -> injectSteps, consent, registration; ordinar
   assert.equal(first.filter((s) => s.includes('연결되지 않았습니다')).length, 1);
   assert.equal(first.filter((s) => s.startsWith('일을 시작할 때는 먼저')).length, 1);
   assert.equal(JSON.parse(fs.readFileSync(path.join(data, 'conversations/c1.json'))).cwd, dir);
-  assert.deepEqual(Object.keys(JSON.parse(fs.readFileSync(path.join(data, 'conversations/c1.json')))).sort(), ['checkpoint', 'cwd']);
+  assert.deepEqual(Object.keys(JSON.parse(fs.readFileSync(path.join(data, 'conversations/c1.json')))).sort(), ['checkpoint', 'cwd', 'parent']);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(data, 'conversations/c1.json'))).parent, null);
   assert.deepEqual(hook(dir, data), []);
   setupTool(dir, { action: 'setup' }, { host: 'antigravity' });
   assert.ok(
@@ -387,4 +401,118 @@ test('Antigravity inbox: all broken files are set aside without claims; unreadab
     const codex = path.join(locations(dir).state, 'inbox/codex-c1');
     fs.chmodSync(fs.existsSync(codex) ? codex : inbox, 0o700);
   }
+});
+
+let subagent;
+test('Antigravity subagent start', () => {
+  const dir = fresh(), data = fresh(), artifactDirectoryPath = brain('c1', [message()]);
+  setupTool(dir, { action: 'setup' }, { host: 'antigravity' });
+  const store = sessions(dir, { host: 'antigravity' });
+  store.create({ name: 'sub-task', context: 'SUB PURPOSE', conversation_id: 'seed' });
+  const start = path.join(locations(dir).state, 'start');
+  fs.mkdirSync(start, { recursive: true });
+  const files = ['antigravity-other.json', 'antigravity-stale.json', 'antigravity-c1.json'];
+  const body = JSON.stringify({ session: 'sub-task' });
+  for (const name of files) fs.writeFileSync(path.join(start, name), body);
+  const old = new Date(Date.now() - 2 * 86400000);
+  fs.utimesSync(path.join(start, files[1]), old, old);
+  const staleMtime = fs.statSync(path.join(start, files[1])).mtimeMs;
+  assert.deepEqual(hook(dir, data, { hookEventName: 'SessionStart', artifactDirectoryPath }, { HEAD_CONTEXT_SESSION: 'sub-task' }), [SUBAGENT_NOTICE]);
+  assert.equal(readPresence(dir, 'c1'), null);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(data, 'conversations/c1.json'))).parent, PARENT);
+  for (const name of files) assert.equal(fs.readFileSync(path.join(start, name), 'utf8'), body);
+  assert.equal(fs.statSync(path.join(start, files[1])).mtimeMs, staleMtime);
+  assert.ok(!store.locate({ conversation_id: 'c1' }));
+  subagent = { dir, data, artifactDirectoryPath };
+});
+test('Antigravity subagent every invocation', () => {
+  const { dir, data, artifactDirectoryPath } = subagent;
+  const run = (input = {}) => {
+    const out = hook(dir, data, { artifactDirectoryPath, ...input });
+    assert.equal(readPresence(dir, 'c1'), null);
+    return out;
+  };
+  assert.deepEqual(run({ lastUserInput: '/compact' }), []);
+  queue(dir, 'c1', { from: 'claude:other', text: 'SUB_INBOX' });
+  assert.equal(run().join('\n').split('SUB_INBOX').length - 1, 1);
+  assert.deepEqual(run(), []);
+  const transcriptPath = path.join(dir, 'transcript.jsonl');
+  fs.writeFileSync(transcriptPath, JSON.stringify({ step_index: 0, type: 'CHECKPOINT', content: '# Resuming from a compaction', source: 'SYSTEM', status: 'DONE', created_at: '2026-11-20T10:00:00Z' }) + '\n');
+  assert.deepEqual(run({ transcriptPath }), [SUBAGENT_NOTICE]);
+  assert.deepEqual(run({ transcriptPath }), []);
+});
+test('Antigravity 0.9.14 remnants', () => {
+  const dir = fresh(), data = fresh();
+  fs.mkdirSync(path.join(data, 'conversations'));
+  fs.writeFileSync(path.join(data, 'conversations/c1.json'), JSON.stringify({ cwd: dir, checkpoint: null }));
+  writePresence(dir, { conversation_id: 'c1' });
+  assert.deepEqual(hook(dir, data, { artifactDirectoryPath: brain('c1', [message()]) }), []);
+  assert.equal(readPresence(dir, 'c1'), null);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(data, 'conversations/c1.json'))).parent, PARENT);
+});
+test('Antigravity prevent misclassification', () => {
+  const cases = [
+    () => ({}),
+    () => { const dir = brain('c1', []); fs.rmdirSync(path.join(dir, '.system_generated/messages')); return { artifactDirectoryPath: dir }; },
+    () => ({ artifactDirectoryPath: brain('c1', [message('c1/task-1', 'Background task finished')]) }),
+    () => ({ artifactDirectoryPath: brain('c1', [message(PARENT, 'Message from Data Analyst (self)')]) }),
+    () => ({ artifactDirectoryPath: brain('c1', ['system', 'user'].map((sender) => ({ ...message(sender), renderDetails: {} }))) }),
+    () => ({ conversationId: PARENT, artifactDirectoryPath: brain(PARENT, [message(PARENT, 'Message from Parent Agent', PARENT)]) }),
+    () => ({ artifactDirectoryPath: brain('other', [message()]) }),
+    () => { const dir = brain('c1', []); fs.writeFileSync(path.join(dir, '.system_generated/messages/0.json'), '{broken'); return { artifactDirectoryPath: dir }; },
+  ];
+  if (process.getuid?.() !== 0) cases.push(() => {
+    const dir = brain('c1', [message()]);
+    fs.chmodSync(path.join(dir, '.system_generated/messages'), 0);
+    return { artifactDirectoryPath: dir };
+  });
+  for (const make of cases) {
+    const dir = fresh(), data = fresh(), input = make();
+    try {
+      const out = hook(dir, data, { hookEventName: 'SessionStart', ...input });
+      assert.ok(!out.includes(SUBAGENT_NOTICE));
+      assert.equal(out.filter((s) => s.startsWith('일을 시작할 때는 먼저')).length, 1);
+      assert.equal(out.filter((s) => s.includes('연결되지 않았습니다')).length, 1);
+      const id = input.conversationId || 'c1';
+      assert.ok(readPresence(dir, id));
+      assert.equal(JSON.parse(fs.readFileSync(path.join(data, `conversations/${id}.json`))).parent, null);
+    } finally {
+      if (input.artifactDirectoryPath) {
+        const folder = path.join(input.artifactDirectoryPath, '.system_generated/messages');
+        if (fs.existsSync(folder)) fs.chmodSync(folder, 0o700);
+      }
+    }
+  }
+});
+test('Antigravity a classified human conversation is not checked again', () => {
+  const dir = fresh(), data = fresh(), artifactDirectoryPath = brain('c1', []);
+  hook(dir, data, { hookEventName: 'SessionStart', artifactDirectoryPath });
+  fs.writeFileSync(path.join(artifactDirectoryPath, '.system_generated/messages/0.json'), JSON.stringify(message()));
+  assert.deepEqual(hook(dir, data, { artifactDirectoryPath }), []);
+  assert.ok(readPresence(dir, 'c1'));
+  assert.equal(JSON.parse(fs.readFileSync(path.join(data, 'conversations/c1.json'))).parent, null);
+});
+test('Antigravity old Node', () => {
+  const here = path.dirname(new URL(import.meta.url).pathname);
+  for (const child of [true, false]) {
+    const dir = fresh(), data = fresh();
+    const r = spawnSync(process.execPath, ['--require', path.join(here, 'fixtures/no-sqlite.cjs'), path.join(here, 'antigravity-hook.mjs')], {
+      input: JSON.stringify({ conversationId: 'c1', cwd: dir, hookEventName: 'SessionStart', artifactDirectoryPath: brain('c1', child ? [message()] : []) }),
+      env: { ...process.env, PLUGIN_DATA: data }, encoding: 'utf8',
+    });
+    assert.equal(r.status, 0);
+    assert.equal(r.stderr, '');
+    const out = JSON.parse(r.stdout).injectSteps.map((s) => s.systemMessage.systemMessage);
+    if (child) assert.deepEqual(out, [SUBAGENT_NOTICE]);
+    assert.equal(out.some((s) => /^head-context는 node:sqlite를 쓸 수 있는 Node/.test(s)), !child);
+  }
+});
+test('Antigravity excluded from lists', () => {
+  const dir = fresh(), data = fresh(), presence = path.join(locations(dir).state, 'presence');
+  fs.mkdirSync(presence, { recursive: true });
+  for (const id of [PARENT, 'c1']) fs.writeFileSync(path.join(presence, `antigravity-${id}.json`), JSON.stringify({
+    host: 'antigravity', conversation_id: id, cwd: dir, pid: process.pid, start: processBirth(process.pid), at: new Date().toISOString(),
+  }));
+  assert.deepEqual(hook(dir, data, { artifactDirectoryPath: brain('c1', [message()]) }), []);
+  assert.deepEqual(antigravityLive(dir).map((p) => p.conversation_id), [PARENT]);
 });

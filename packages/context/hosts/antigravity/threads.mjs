@@ -25,6 +25,8 @@ export function writePresence(project, { conversation_id, transcript_path, said 
   atomicJSON(presenceFile(project, conversation_id), value);
   return value;
 }
+// A subagent is an in-conversation task: it is not listed, so its presence is removed.
+export const dropPresence = (project, id) => fs.rmSync(presenceFile(project, id), { force: true });
 export function antigravityLive(project, known = new Map()) {
   return records(path.join(locations(project).state, 'presence'), { loose: true })
     .filter((p) => p.host === 'antigravity' && antigravityAlive(p))

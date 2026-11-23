@@ -159,6 +159,7 @@ agy plugin install https://github.com/Won6314/head-agent-core/tree/main/packages
 - SessionStart는 코어 지침, 서버 안내문, 작업 세션/연결 안 됨(+첫 실행 안내), 작업 맥락을 각각 `injectSteps` 시스템 메시지로 넣는다.
 - PreInvocation은 `/compact`에 공용 `compactInstruction()`을 넣고, 기록의 새 CHECKPOINT가 있으면 코어·작업 세션·작업 맥락·최근 주고받기 5번 원문을 한 번 되살린다. 새 프로세스 `session/load`는 새 CHECKPOINT가 없으면 아무것도 다시 넣지 않는다.
 - 매 도구 호출의 `_meta`의 `antigravity.google/conversation_id`가 대화 ID(ACP sessionId)다. `root_conversation_id`가 다르면 부른 대화의 프로젝트를 쓰고 기록 쓰기는 거절한다.
+- `invoke_subagent`로 뜬 서브에이전트는 대화 안 작업으로 다룬다. 훅 입력 `artifactDirectoryPath`의 `.system_generated/messages/`에 다른 대화가 보낸 `Message from Parent Agent` 메시지가 있으면 서브에이전트다. 서브에이전트에는 시작과 새 CHECKPOINT 뒤에 Claude·Codex 하위 에이전트와 같은 읽기만 안내 하나만 넣는다. 코어 지침, 서버 안내문, 작업 맥락, 최근 원문, `/compact` 지시는 넣지 않고, 작업 세션에 붙이거나 시작 파일을 건드리지 않으며, presence를 쓰지 않는다. 편지함은 사람 대화와 같게 넣는다. 이 판정은 공개되지 않은 agy 내부 파일에 기대므로, 찾지 못하면 사람 대화로 다룬다.
 - 주소는 **`antigravity:<ACP sessionId>`**, 앱 표시는 **`antigravity`**다. Antigravity 보내기의 delivery는 `started`(살아 있는 ACP 대화를 바로 깨움), `queued`(다음 입력 때 받음)다. `started`는 깨우기 신호가 수락됐다는 뜻이지 메시지 처리가 끝났다는 확인은 아니다. 일하는 중이면 다음 단계에서 받는다. TUI·데스크톱 앱·살아 있지 않은 대화·깨우기 실패는 `queued`다.
 - 먼저 inbox에 넣고, 그 대화를 쥔 살아 있는 ACP 프로세스에만 깨우기 신호를 보낸다. 다른 프로세스로 대신 보내지 않고, 신호가 실패해도 inbox 저장은 성공으로 남는다(`queued`). 이 신호는 공개되지 않은 agy 내부 통로에 기댄다.
 
@@ -176,7 +177,7 @@ agy plugin install https://github.com/Won6314/head-agent-core/tree/main/packages
 - `<project>`는 훅 stdin의 `cwd`를 기존 `locations()` 규칙으로 해석한 프로젝트 경계다. `sessions_dir` 설정은 이 state 경로를 옮기지 않는다.
 - 첫 `SessionStart`에서 `HEAD_CONTEXT_SESSION` 환경변수가 우선이고, 없으면 이 파일을 쓴다. 둘 다 없으면 기존처럼 연결되지 않은 상태다. 작업 세션·작업 맥락과 연결 기록을 모델의 `load` 호출 없이 같은 훅에서 만든다.
 - 읽은 파일은 즉시 지운다(환경변수가 우선한 파일도 버린다). 잘못된 JSON/필드, 없는 작업 세션·브랜치는 기존 훅 오류 경계에서 `head-context: 작업 맥락을 넣지 못했습니다: …` 한 줄로 알린다. 실패한 요청도 남기지 않는다.
-- 매 `SessionStart`에서 같은 start 폴더의 `antigravity-*.json` 중 수정 시각이 1일 넘은 미소비 파일을 지운다. `PreInvocation`과 재개에는 시작 파일을 소비하지 않는다.
+- 사람이 연 대화의 매 `SessionStart`에서 같은 start 폴더의 `antigravity-*.json` 중 수정 시각이 1일 넘은 미소비 파일을 지운다. `PreInvocation`과 재개에는 시작 파일을 소비하지 않는다. 서브에이전트는 시작 파일을 읽거나 지우지 않는다.
 
 ### 클라이언트가 대화를 놓을 때
 
@@ -201,7 +202,7 @@ ACP 클라이언트는 `session/close`로 대화를 놓을 때 그 대화의 `<p
 }
 ```
 
-SessionStart 및 매 PreInvocation에 원자적으로 갱신한다. `pid`는 셸 부모를 넘어 찾은 실제 agy 프로세스 번호다. `start`는 Linux `/proc/<pid>/stat`의 starttime, 다른 Unix는 `ps lstart`, Windows는 프로세스 StartTime의 UTC ticks이며, 구하지 못하면 생략하고 pid만 쓴다. agy 부모를 찾지 못하면 pid도 쓰지 않는다. 살아 있음은 pid가 살아 있고, start가 있으면 현재 시작 식별값과 같은 것이다. pid 없는 옛 presence는 살아 있지 않으며 파일은 그대로 둔다. 7일 기준은 없다. `at`는 마지막 활동·정렬에만 쓴다. `transcript_path`, `said`는 해당 값이 있을 때만 있으며 `/compact`는 `said`를 덮지 않는다. `title`이 있으면 목록에 쓴다.
+사람이 연 대화는 SessionStart 및 매 PreInvocation에 원자적으로 갱신한다. 서브에이전트의 presence는 쓰지 않고, 이미 있으면 플러그인이 지운다. `pid`는 셸 부모를 넘어 찾은 실제 agy 프로세스 번호다. `start`는 Linux `/proc/<pid>/stat`의 starttime, 다른 Unix는 `ps lstart`, Windows는 프로세스 StartTime의 UTC ticks이며, 구하지 못하면 생략하고 pid만 쓴다. agy 부모를 찾지 못하면 pid도 쓰지 않는다. 살아 있음은 pid가 살아 있고, start가 있으면 현재 시작 식별값과 같은 것이다. pid 없는 옛 presence는 살아 있지 않으며 파일은 그대로 둔다. 7일 기준은 없다. `at`는 마지막 활동·정렬에만 쓴다. `transcript_path`, `said`는 해당 값이 있을 때만 있으며 `/compact`는 `said`를 덮지 않는다. `title`이 있으면 목록에 쓴다.
 
 `<project>/.head/state/inbox/antigravity-<ACP sessionId>/<ISO시각의 콜론·점을 하이픈으로 바꾼 값>-<UUID>.json`:
 

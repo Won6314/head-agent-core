@@ -1,13 +1,14 @@
 import fs from 'node:fs';
 import { sessions } from '../../core/sessions.mjs';
 import { coreParts, guide, refreshCore } from '../../core/project.mjs';
-import { instructionsFor } from '../../core/mcp.mjs';
+import { instructionsFor, SUBAGENT_NOTICE } from '../../core/mcp.mjs';
 import { UNCONNECTED, HOOK_BUDGET } from '../../core/recovery.mjs';
 import { locations, takeNotices } from '../../core/storage.mjs';
 import { runtimeProblem } from '../../core/platform.mjs';
 import { compactInstruction } from '../claude/compact.mjs';
 import { register, registered } from './register.mjs';
-import { writePresence, take } from './threads.mjs';
+import { writePresence, dropPresence, take } from './threads.mjs';
+import { parentOf } from './subagent.mjs';
 import { asMessage } from '../../core/inbox.mjs';
 import { steps, checkpointOf, recentPart } from './transcript.mjs';
 import { takeStart } from './start.mjs';
@@ -23,14 +24,19 @@ export async function runHook() {
     const { conversationId: id, cwd: project, transcriptPath: transcript, hookEventName: event } = input;
     if (!['SessionStart', 'PreInvocation'].includes(event)) return;
     const previous = registered(id);
+    const start = event === 'SessionStart';
+    const parent = !start && previous && 'parent' in previous ? previous.parent : parentOf(input);
     const rows = steps(transcript),
       checkpoint = checkpointOf(rows);
+    const restore = !start && checkpoint !== null && checkpoint !== previous?.checkpoint;
+    const parts = [];
+    if (parent) {
+      dropPresence(project, id);
+      if (start || restore) parts.push(SUBAGENT_NOTICE);
+    } else {
     // Register even on resume; session/load has no SessionStart, but none of the
     // context is repeated unless a new CHECKPOINT actually appeared.
     writePresence(project, { conversation_id: id, transcript_path: transcript, said: input.lastUserInput });
-    const start = event === 'SessionStart';
-    const restore = !start && checkpoint !== null && checkpoint !== previous?.checkpoint;
-    const parts = [];
     if (start || restore) {
       refreshCore(project);
       parts.push(...coreParts(project));
@@ -60,8 +66,9 @@ export async function runHook() {
       if (start) parts.push(guide(project, { host: 'antigravity' }));
       if (restore) parts.push(recentPart(rows, transcript, { timeZone: locations(project).timezone }));
     }
+    }
     if (event === 'PreInvocation') {
-      if (input.lastUserInput?.trim() === '/compact' && !runtimeProblem()) parts.push(compactInstruction());
+      if (!parent && input.lastUserInput?.trim() === '/compact' && !runtimeProblem()) parts.push(compactInstruction());
       // A wake during a running turn reaches a later invocation, not zero.
       // Claim/ack makes each inbox message appear only once across invocations.
       waiting = take(project, id);
@@ -77,6 +84,7 @@ export async function runHook() {
     register(id, {
       cwd: project,
       checkpoint: start || restore ? checkpoint : (previous?.checkpoint ?? null),
+      parent: parent ?? null,
     });
   } catch (error) {
     console.error(`head-context: ${error.message}`);
