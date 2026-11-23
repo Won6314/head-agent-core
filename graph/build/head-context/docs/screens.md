@@ -14,7 +14,7 @@
 
 - 출력 종류: 공통 영역(시작 훅 출력과 도구 결과 앞머리에 붙음)
 - 상태: 대화가 작업 세션에 연결됨
-- 원문: R14, R48, R72, R121, R161(Antigravity 시작 훅)
+- 원문: R14, R48, R72, R121, R161(Antigravity 시작 훅), R250·R251(Claude 시작·압축 뒤, 머리를 자름), R254·R255(Codex 시작 — 자르지 않음, 압축 뒤 — 자름)
 - 그리는 코드: `code:core/sessions.mjs#sessions.parts`, `code:core/recovery.mjs`
 
 ### 개요
@@ -25,7 +25,7 @@ agent는 여기서 이 일의 목적(context.md)과 지금 자리(메인 또는 
 
 ### 화면요소
 1. **작업 세션 이름** — `# 작업 세션: <이름>` 한 줄.
-2. **context.md 전문** — 작업 세션의 목적·방향·범위. 시작 훅에서 9,000자를 넘으면 앞부분과 `(context.md 뒷부분 생략 — 전문: <경로>)`(코드).
+2. **context.md 전문** — 작업 세션의 목적·방향·범위. 상한(9,000자)을 넘으면 앞부분과 `(context.md 뒷부분 생략 — 전문:` 경로 한 줄. Claude 시작 훅은 시작·/clear·압축 때 첫 실행 안내와 압축 뒤 복원 블록(STA-07) 자리까지 더해 재고(R250·R251), Codex 시작 훅은 압축 뒤 복원 블록이 붙을 때만 자른다(0.9.17, R255 — 시작 때는 자르지 않음 R254).
 3. **이 대화의 작업 브랜치** — `이 대화의 작업 브랜치: <이름 | 없음(메인)>`. 둘러보기(TOL-08)에는 없다.
 4. **작업 세션 폴더** — 이름(#1) 바로 아래 한 줄 `작업 세션 폴더: <절대 경로>`(0.9.6부터). 작업 파일을 둘 자리(`work/YYYY-MM/…`)를 찾지 않아도 된다. 둘러보기(TOL-08)에도 나온다.
 
@@ -193,14 +193,14 @@ node:sqlite를 쓸 수 없는 Node에서는 이 출력 대신 ERR-05의 이유 �
 OpenCode에서는 시작 훅 대신 요청마다 서버 안내문 공용 부분과 작업 맥락을 넣는다.
 
 ### 화면요소
-1. **서버 안내문 공용 부분** — SRV-01의 #1~#7(앱별 부분 없음). 하위 세션에도 들어간다(R156). 글이 SRV-01과 같아 문구로 잇지 않는다 — 실행 R155가 그 기능을 SRV-01#1~#6에 잇는다. ← `hook:opencode:experimental.chat.system.transform`
+1. **서버 안내문 공용 부분** — SRV-01의 #1~#7(앱별 부분 없음). 하위 세션에도 들어간다(R156). 글이 SRV-01과 같아 문구로 잇지 않는다 — 실행 R155가 그 기능을 SRV-01#1~#7에 잇는다. ← `hook:opencode:experimental.chat.system.transform`
 2. **작업 맥락** — 연결됐으면 CMN-01·CMN-02(R155). 하위 세션(부모가 있고 연결이 없는 세션)에는 넣지 않는다(R156). 글이 CMN-01·CMN-02와 같아 문구로 잇지 않는다 — 실행 R155가 그 기능을 CMN-01·CMN-02 화면요소에 잇는다. ← `hook:opencode:experimental.chat.system.transform`
 
 ## STA-07 컴팩트 뒤 먼저 할 것
 
 - 출력 종류: 시작 훅이 넣는 글(session 출력의 끝)
 - 상태: Claude·Codex 사람 대화의 압축 뒤 시작(source compact). 하위 에이전트(Codex agent_id)·Claude 프로그램 실행(sdk-*)·재개에는 없다. Antigravity에는 없다
-- 원문: R53(Claude, 메인에 연결), R234(Claude, 작업 브랜치 ctx-1), R235(Claude, 연결 안 됨), R238(Codex, 작업 브랜치 ctx-1), R239(Codex 하위 에이전트 — 없음), R242(Claude sdk-cli — 없음)
+- 원문: R53(Claude, 메인에 연결), R234(Claude, 작업 브랜치 ctx-1), R235(Claude, 연결 안 됨), R238(Codex, 작업 브랜치 ctx-1), R239(Codex 하위 에이전트 — 없음), R242(Claude sdk-cli — 없음), R251·R255(작업 세션 머리를 잘라 자리를 낸 Claude·Codex)
 - 공통 영역: 없음
 - 내는 기능: `hook:claude:SessionStart:session`, `hook:codex:SessionStart:session`
 - 그리는 코드: `code:core/recovery.mjs#compactRecovery`
@@ -214,11 +214,11 @@ agent는 이 블록대로 작업 브랜치를 시작한 목적을 `read entry`�
 ### 화면요소
 1. **머리** — `## 컴팩트 뒤 먼저 할 것`과 복원을 먼저 하라는 한 줄. ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session` 문구: `하던 일을 잇기 전에 복원부터 한다`
 2. **최초 목적** — 작업 브랜치면 read entry와 첫 기록 짧은 ID, 첫 기록 요약. 메인이면 최근 대화와 read recent, 연결이 없으면 최근 대화에서 사람이 정한 일. ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session` → `tool:read` 문구: `로 이 작업 브랜치를 시작한 목적(문제·목표·조건)을 읽는다`
-3. **지금 할 일** — 작업 브랜치면 마지막 기록의 다음과 '사람이 정한 일인지 확인한 뒤 잇는다', 아니면 최근 대화에서 사람이 마지막으로 정한 일. ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session` 문구: `이 다음은 기록을 남긴 대화가 적은 계획이다`
+3. **지금 할 일** — 경우마다 다르다. 작업 브랜치: 마지막 기록의 다음과 '사람이 정한 일인지 최근 대화에서 확인한 뒤 잇는다'(다음이 없으면 최근 대화에서 사람이 마지막으로 정한 일). 메인: '위에서 찾은 일이다. 사람이 정하지 않은 계획은 잇기 전에 확인한다'(R53). 연결 없음: 이 줄이 따로 없고 #2 자리 한 줄('최초 목적과 지금 할 일')에 합쳐 나온다(R235). ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session` 문구: `이 다음은 기록을 남긴 대화가 적은 계획이다`
 
 ### 화면 정책
 - `pol.compact-recovery`
-- `pol.hook-budget`
+- `pol.session-part-fits`
 
 ## SRV-01 서버 안내문
 
@@ -229,7 +229,7 @@ agent는 이 블록대로 작업 브랜치를 시작한 목적을 `read entry`�
 - 그리는 코드: `code:core/mcp.mjs#instructionsFor`
 
 ### 개요
-agent에게 이 플러그인의 개념(작업 세션, 작업 브랜치, 저장, 할 일, 다른 대화)과 언제 무엇을 부르는지를 한 번 알려 준다.
+agent에게 이 플러그인의 개념(작업 세션, 작업 브랜치, 저장, 읽기, 할 일, 다른 대화)과 언제 무엇을 부르는지를 한 번 알려 준다.
 
 ### 화면 흐름
 agent는 일을 시작할 때 start-job을 부른다. 시작 때 연결 안 됨 안내를 받은 대화는 첫 말을 받을 때도 부르고, 첫 말에 답하면서 남길 작업 세션을 제안한다(0.9.17). 지금 하는 일이나 지난 일을 찾을 때는 read부터 쓰고, 착수할 때 이어서 할 일이면 작업 브랜치를 열고, 결과가 생기면 저장한다.
@@ -424,7 +424,7 @@ agent는 이 차례대로 문제를 파악하고, 기존 기록을 read로 먼�
 ## TOL-11 살아 있는 대화 목록
 
 - 출력 종류: tool 결과(conversations)
-- 원문: R33(Claude), R73(Codex) — 둘 다 살아 있는 대화 없음. R184(Claude)·R185(Codex)·R186(Antigravity) — 살아 있는 Antigravity 대화와 0.9.14가 남긴 서브에이전트 줄, R205·R206 — 서브에이전트 정리 뒤, R246 — 짧은 말('응')도 said로 남음(0.9.16)
+- 원문: R33(Claude), R73(Codex) — 둘 다 살아 있는 대화 없음. R184(Claude)·R185(Codex)·R186(Antigravity) — 살아 있는 Antigravity 대화와 0.9.14가 남긴 서브에이전트 줄, R205·R206 — 서브에이전트 정리 뒤. 0.9.16 짧은 말: R246은 이 목록의 출력이 아니라 R245(Antigravity PreInvocation, 사람이 '응') 뒤 presence를 읽은 측정값(said="응")이다. 짧은 말이 '최근 지시'로 나온 목록 실행은 없다
 - 내는 기능: `tool:conversations`
 - 그리는 코드: `code:core/sessions.mjs#sessions.conversations`
 

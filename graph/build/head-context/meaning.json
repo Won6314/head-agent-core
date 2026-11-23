@@ -1,5 +1,5 @@
 {
-  "_": "B-6 뜻 파일. 그래프에 직접 쓰는 것: 기능 한 줄, 정책(조건/주체/행위). 근거의 R번호는 runs/A-1-outputs.md, 코드는 d2be2ca(0.9.17) packages/context 기준(0.9.15에서 온 줄은 e96f5aa, 0.9.10에서 온 줄은 7a5896c 때 확인). R112까지 근거는 0.9.5와 같은 차례의 실행이고, R159~R232는 Antigravity 실행, R233~R246은 0.9.16·0.9.17 변경을 보는 실행이다 파일:줄.",
+  "_": "B-6 뜻 파일. 그래프에 직접 쓰는 것: 기능 한 줄, 정책(조건/주체/행위). 근거의 R번호는 runs/A-1-outputs.md, 코드는 d2be2ca(0.9.17) packages/context 기준(0.9.15에서 온 줄은 e96f5aa, 0.9.10에서 온 줄은 7a5896c 때 확인). R112까지 근거는 0.9.5와 같은 차례의 실행이고, R159~R232는 Antigravity 실행, R233~R255는 0.9.16·0.9.17 변경을 보는 실행이다(R247~R255는 독립 검수 M1의 머리 자르기) 파일:줄.",
   "features": {
     "tool:list": "작업 세션 목록을 최근 기록 순으로 돌려준다",
     "tool:load": "작업 세션을 불러와 이 대화를 메인이나 작업 브랜치에 연결하고 작업 맥락을 돌려준다",
@@ -15,7 +15,7 @@
     "mcp:tools/list": "도구 서버의 도구 설명과 인자 목록을 돌려준다",
     "mcp:ping": "도구 서버가 살아 있는지 빈 답으로 알려 준다",
     "hook:claude:SessionStart:core": "시작·/clear·압축 때 코어 지침을 넣는다. 출력 상한(9,000자)을 넘을 때만 두 출력으로 나누고, 0.9.10 코어는 첫 출력 하나에 `(HEAD Core 1/1)`로 들어가 둘째는 빈다(0.7 import 줄은 빼고)",
-    "hook:claude:SessionStart:session": "대화를 등록하고 이어받을 자리를 찾아 작업 세션 머리(또는 연결 안 됨)와 첫 실행 안내를 넣는다. node:sqlite 없는 Node면 그 이유 한 줄만 넣는다. 압축 뒤 사람 대화면 끝에 「컴팩트 뒤 먼저 할 것」을 붙이고(0.9.17), 프로그램 실행(sdk-*)이 연결되지 않았으면 아무것도 넣지 않는다(0.9.17)",
+    "hook:claude:SessionStart:session": "대화를 등록하고 이어받을 자리를 찾아 작업 세션 머리(또는 연결 안 됨)와 첫 실행 안내를 넣는다. node:sqlite 없는 Node면 그 이유 한 줄만 넣는다. 압축 뒤 사람 대화면 끝에 「컴팩트 뒤 먼저 할 것」을 붙이고(0.9.17), 프로그램 실행(sdk-*, HEAD_CONTEXT_PERSON=1 아님)이 연결되지 않았으면 연결 안 됨과 첫 실행 안내를 넣지 않는다(바로잡은 기록 알림은 나간다, 0.9.17)",
     "hook:claude:SessionStart:context": "연결된 대화에 작업 맥락을 9,000자 안으로 줄여(자르지 않고) 넣는다",
     "hook:claude:SessionStart:recent": "압축·/clear 직후 직전 주고받기를 원문으로 넣는다",
     "hook:claude:PreCompact": "호스트 요약을 한 줄 포인터로 바꾸라는 지시를 낸다(node:sqlite 없는 Node에서는 내지 않는다)",
@@ -34,7 +34,7 @@
     "cli:map": "명령줄에서 작업 세션의 흐름 지도를 출력한다",
     "cli:migrate-0.7": "0.6 기록을 0.7 꼴로 맞출 것을 미리 보이고 --apply면 옮긴다",
     "cli:report": "코어 밖 도구의 하위 작업 시작·끝을 .head/state/subtasks/에 남긴다",
-    "skill:start-job": "일을 시작하기 전 문제·목표·조건, 기존 자료, 작업 세션·작업 브랜치, 진행 방식을 정하는 절차를 agent에게 준다",
+    "skill:start-job": "일을 시작하기 전 문제·목표·조건, 기존 자료, 작업 세션·작업 브랜치, 진행 방식을 정하는 절차를 agent에게 준다. 연결 안 된 대화는 첫 말을 받을 때도 부른다(0.9.17)",
     "tool:send@antigravity": "Antigravity 대화에서 다른 Claude·Codex·Antigravity 대화로 메시지를 보낸다(Antigravity 도구 서버에만)",
     "hook:antigravity:SessionStart": "Antigravity 대화가 처음 시작될 때 대화 정보(presence)와 등록을 쓰고, 코어 지침·서버 안내문·작업 세션 머리(또는 연결 안 됨)·작업 맥락·첫 실행 안내를 시스템 메시지로 넣는다. 클라이언트가 둔 시작 파일이 있으면 그 작업 세션(·작업 브랜치)에 도구 호출 없이 연결한다. 서브에이전트(invoke_subagent)로 판정되면 대화 안 작업 안내 하나만 넣고 대화 정보·작업 세션 연결을 쓰지 않으며 판정을 등록 파일에 남긴다",
     "hook:antigravity:PreInvocation": "Antigravity 대화의 매 단계 앞에서 대화 정보를 다시 쓰고 편지함 메시지를 넣는다. /compact 입력이면 압축 요약 지시를 넣고, 새 압축 표시(CHECKPOINT)가 보이면 코어·작업 세션·작업 맥락·최근 대화 원문을 한 번 되살린다. 등록 파일에 판정이 없으면 서브에이전트인지 한 번 판정하고, 서브에이전트면 대화 정보를 쓰지 않고 남은 것은 지우며 압축 지시 없이 압축 뒤 대화 안 작업 안내 하나만 넣는다"
@@ -326,11 +326,14 @@
     {
       "id": "pol.session-part-fits",
       "kind": "표시",
-      "condition": "시작 훅의 작업 세션 부분이 9,000자를 넘으면",
-      "subject": "Claude 시작 훅은",
-      "action": "context.md 앞부분과 전문 경로만 넣는다",
-      "features": [],
-      "evidence": "hosts/claude/hook.mjs session 분기, 실행 안 함"
+      "condition": "시작 훅의 작업 세션 부분이 상한(9,000자)을 넘으면. Claude: 시작·/clear·압축 때, 첫 실행 안내와 압축 뒤 복원 블록(STA-07) 자리까지 더해 잰다. Codex: 압축 뒤 복원 블록이 붙을 때만 머리와 블록을 합쳐 잰다(0.9.17, Codex 시작 때는 자르지 않는다)",
+      "subject": "Claude·Codex 시작 훅(session)은",
+      "action": "context.md 앞부분과 `(context.md 뒷부분 생략 — 전문: <경로>)`만 넣고, 압축 뒤 복원 블록은 자르지 않고 끝에 붙인다",
+      "features": [
+        "hook:claude:SessionStart:session",
+        "hook:codex:SessionStart:session"
+      ],
+      "evidence": "hosts/claude/hook.mjs:118-123(fit, recoverySpace) · hosts/codex/hook.mjs:111-116(0.9.17) · R250(Claude 시작), R251(Claude 압축 뒤), R254(Codex 시작 — 자르지 않음), R255(Codex 압축 뒤)"
     },
     {
       "id": "pol.hook-budget",
@@ -504,11 +507,11 @@
     {
       "id": "pol.ask-before-load",
       "kind": "표시",
-      "condition": "시작 때 작업 세션에 연결되지 않았다는 안내를 받은 대화가 첫 말을 받으면(0.9.16까지는 '이어질 일이 시작됐는데 대화가 작업 세션에 없으면')",
+      "condition": "연결 안 된 대화에서 남길 작업 세션을 제안했을 때(0.9.17). 0.9.16까지는 '이어질 일이 시작됐는데 대화가 작업 세션에 없으면'",
       "subject": "서버 안내문은",
-      "action": "첫 말에 답하면서 남길 작업 세션을 제안하게 한다 — 목록에 맞는 것이 있으면 그 이름, 없으면 새 이름. 이어 갈 일인지는 사용자가 정하고, 받으면 불러오거나 만든다(글로만)",
+      "action": "사용자가 받아야 그 작업 세션을 불러오거나 만들게 한다. 이어 갈 일인지는 사용자가 정하고, 받지 않으면 작업 세션 없이 잇는다. context.md는 사용자가 동의한 뒤에 고친다(글로만)",
       "features": [],
-      "evidence": "core/mcp.mjs INSTRUCTIONS(0.9.17) · R6·R70·R170 · 어긴 사실(0.9.5 글): A-3 ua.pick-session 한 번"
+      "evidence": "core/mcp.mjs INSTRUCTIONS(0.9.17) 작업 세션 '언제' · skills/start-job/SKILL.md 「연결되지 않은 대화의 첫 말」 마지막 줄 · R6·R70·R170 · 어긴 사실(0.9.5 글): A-3 ua.pick-session 한 번"
     },
     {
       "id": "pol.save-when-result",
@@ -847,7 +850,7 @@
       "kind": "표시",
       "condition": "시작 때 연결 안 됨 안내를 받은 대화가 첫 말을 받으면",
       "subject": "서버 안내문과 start-job 글은",
-      "action": "start-job을 부르게 하고, 물음이면 답 먼저·제안은 끝 한 줄, 일을 맡기는 말이면 이해한 목적 한 줄과 함께 남길 작업 세션을 제안하게 한다. 사용자가 받지 않으면 작업 세션 없이 잇는다(글로만, 0.9.17)",
+      "action": "start-job을 부르게 하고, 첫 말에 답하면서 남길 작업 세션을 제안하는 꼴을 정한다 — 물음이면 답 먼저·제안은 끝 한 줄, 일을 맡기는 말이면 이해한 목적 한 줄과 제안, 목록에 맞는 것이 있으면 그 이름·없으면 새 이름(글로만, 0.9.17). 받은 뒤의 일은 pol.ask-before-load",
       "features": [],
       "evidence": "core/mcp.mjs INSTRUCTIONS · skills/start-job/SKILL.md 「연결되지 않은 대화의 첫 말」 · R6·R66·R70"
     },
@@ -890,9 +893,11 @@
       "subject": "instructionLine은",
       "action": "명령·알림·다른 대화의 메시지 등이 아닌 사람의 말이면 첫 줄을 길이와 상관없이 고른다. 0.9.15까지는 10자 이하를 버렸다(0.9.16)",
       "features": [
-        "tool:conversations"
+        "tool:conversations",
+        "hook:antigravity:SessionStart",
+        "hook:antigravity:PreInvocation"
       ],
-      "evidence": "core/instruction.mjs instructionLine · R246(Antigravity '응' → said \"응\") · 대화 목록의 '최근 지시'"
+      "evidence": "core/instruction.mjs instructionLine — 부르는 곳 hosts/claude/process.mjs:159(conversations·현황 데이터), hosts/codex/threads.mjs:129, hosts/antigravity/threads.mjs:22 writePresence(Antigravity SessionStart·PreInvocation) · R245(Antigravity PreInvocation, 사람이 '응') 뒤 R246 presence 측정 said=\"응\" · Claude·Codex 대화 기록에서 고르는 경로는 실행 없음(scripts/conversation.test.mjs에만) · 대화 목록의 '최근 지시'"
     }
   ],
   "db": {

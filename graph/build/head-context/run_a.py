@@ -66,7 +66,8 @@ def hook(script, args, payload, what, env=None, node="node"):
             out = ac
     except Exception:
         pass
-    record("hook", what, {"명령": f"{script} {' '.join(args)}".strip(), "입력": payload, **({"node": node} if node != "node" else {})}, out, p.stderr, p.returncode)
+    record("hook", what, {"명령": f"{script} {' '.join(args)}".strip(), "입력": payload, **({"node": node} if node != "node" else {}),
+                          **({"env": {k: scrub(v) for k, v in env.items()}} if env else {})}, out, p.stderr, p.returncode)
     return out
 
 
@@ -738,6 +739,29 @@ STATE["label"] = "0.9.16 짧은 말 — Antigravity 사람 대화"
 G16 = gid(16)
 agy(agy_in(G16, "PreInvocation", lastUserInput="응"), "Antigravity PreInvocation (사람이 '응'이라고 함)")
 measure("짧은 말의 said", {"대화": "G16", "lastUserInput": "응"}, f"presence said={json.dumps((json.loads(presence_of(G16).read_text()) if presence_of(G16).exists() else {}).get('said'), ensure_ascii=False)}")
+
+# A32(검수 M1, 0.9.17): 작업 세션 머리가 상한을 넘을 때 — Claude는 시작·압축 모두, Codex는 압축 때만 context.md를 잘라 복원 블록 자리를 낸다
+STATE["label"] = "0.9.17 작업 세션 머리가 9,000자를 넘음(context.md 약 1만 자)"
+C20 = "99999999-9999-4999-8999-000000000020"
+big = "# big\n\n긴 목적 문서로 시작 훅 상한을 넘기는 시험.\n\n" + "".join(f"- 범위 메모 {i:03d}: 로그인 화면의 문구·버튼·오류 상태를 정리한 줄이다.\n" for i in range(1, 300))
+s = Server("mcp.mjs")
+s.rpc("initialize", {"protocolVersion": "2025-06-18"})
+s.rpc("tools/call", {"name": "create", "arguments": {"name": "big", "context": big, "conversation_id": C20}})
+s.call("branch", {"action": "create", "branch": "long-1", "conversation_id": C20}, "긴 작업 세션에 작업 브랜치 열기")
+s.call("save", {"summary": "긴 목적 시험 시작", "history": "머리 자르기 확인용 기록.", "next": "압축 뒤 확인", "conversation_id": C20}, "긴 작업 세션의 작업 브랜치에 저장")
+s.close()
+measure("긴 작업 세션의 context.md 글자 수", {"작업 세션": "big"}, f"context.md {len(big)}자")
+claude_start("startup", C20, parts=("session",))
+claude_start("compact", C20, parts=("session",))
+X4 = "019a0000-0000-7000-8000-0000000000ee"
+cx4 = {"hook_event_name": "SessionStart", "session_id": X4, "cwd": str(PROJ), "source": "startup", "transcript_path": str(HOME / ".codex" / "sessions" / f"{X4}.jsonl")}
+hook("codex-hook.mjs", ["session"], cx4, "Codex SessionStart(startup) · session (머리 자르기 시험용 Codex 대화)")
+c = Server("codex-mcp.mjs", cwd=CPKG)
+c.rpc("initialize", {"protocolVersion": "2025-06-18"})
+c.call("load", {"name": "big", "branch": "long-1"}, "Codex 대화가 긴 작업 세션의 작업 브랜치 불러오기", meta={"threadId": X4, "sessionId": X4})
+c.close()
+hook("codex-hook.mjs", ["session"], cx4, "Codex SessionStart(startup) · session (긴 작업 세션 — 자르지 않음)")
+hook("codex-hook.mjs", ["session"], {**cx4, "source": "compact"}, "Codex SessionStart(compact) · session (긴 작업 세션 — 머리를 잘라 복원 블록 자리)")
 
 OUT.write_text(json.dumps(runs, ensure_ascii=False, indent=1))
 print(len(runs), "runs")
