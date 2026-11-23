@@ -276,7 +276,7 @@
       },
       {
         "name": "Antigravity 깨우기 열쇠 기록",
-        "desc": "~/.gemini/antigravity-cli/plugin_data/head-context/wake/<pid>-<sha256(시작 시각) 앞 16자>.json, agy 프로세스 하나에 하나(0.9.18). 칸 pid·start·asked_at, 등록되면 address·token·registered_at. 폴더 0700·파일 0600. 파일이 있으면 요청함, address·token이 있으면 등록됨(거절은 담지 않음). 매 턴 훅이 요청 때 'wx'로 만들고(그때 죽었거나 시작 시각이 다른 pid의 파일과 1시간 지난 .tmp를 지움), 등록 명령이 임시 파일→rename으로 주소·열쇠를 더하고, 세 앱의 보내기가 읽는다. 홈 아래 고정 자리라 PLUGIN_DATA를 읽지 않는다",
+        "desc": "~/.gemini/antigravity-cli/plugin_data/head-context/wake/<pid>-<sha256(시작 시각) 앞 16자>.json, agy 프로세스 하나에 하나(0.9.18). 칸 pid·start·asked_at, 등록되면 address·token·registered_at. 폴더 0700·파일 0600. 파일이 있으면 요청함, address·token이 있으면 등록됨(거절은 담지 않음). 매 턴 훅이 그 프로세스에 처음 요청할 때 'wx'로 만들고(그때 한 번만 죽었거나 시작 시각이 다른 pid의 파일과 1시간 지난 .tmp를 지움, 이미 요청받은 프로세스의 뒤 호출은 파일이 있는지만 본다), 등록 명령이 임시 파일→rename으로 주소·열쇠를 더하고, 세 앱의 보내기가 읽는다. 홈 아래 고정 자리라 PLUGIN_DATA를 읽지 않는다",
         "touch": {
           "fs": [
             "hosts/antigravity/wake-key.mjs"

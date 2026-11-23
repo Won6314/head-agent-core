@@ -997,5 +997,22 @@ agy_under(T3, agy_in(G26, "PreInvocation", lastUserInput="안녕"), "옛 Node ·
 measure("옛 Node 요청 뒤 깨우기 열쇠 기록", {"프로세스": "T3"}, key_state(T3))
 T3.stop()
 
+# A43(0.9.18, 043ffdb): 이미 요청받은 프로세스의 뒤 호출에서는 정리가 돌지 않는다. 정리는 프로세스가 처음 요청받을 때 한 번
+STATE["label"] = "0.9.18 정리는 처음 요청 때만"
+G27, G28 = gid(27), gid(28)
+T4 = FakeAgy()
+agy_under(T4, agy_in(G27, "PreInvocation", lastUserInput="안녕"), "Antigravity PreInvocation (가짜 터미널 agy T4, 첫 모델 호출)")
+gone = subprocess.Popen(["true"])
+gone.wait()
+stale = KEY_DIR / f"{gone.pid}-0000000000000000.json"
+stale.write_text(json.dumps({"pid": gone.pid, "start": "1", "asked_at": "2026-11-23T00:00:00.000Z"}))
+agy_under(T4, agy_in(G27, "PreInvocation", lastUserInput="계속"), "Antigravity PreInvocation (T4 두 번째 호출, 죽은 프로세스의 기록이 있음)")
+measure("이미 요청받은 프로세스의 뒤 호출 뒤", {"죽은 프로세스의 기록": "있음"}, f"죽은 프로세스의 기록 {'남음' if stale.exists() else '지워짐'}")
+T5 = FakeAgy()
+agy_under(T5, agy_in(G28, "PreInvocation", lastUserInput="안녕"), "Antigravity PreInvocation (새 가짜 터미널 agy T5, 첫 모델 호출)")
+measure("새 프로세스가 처음 요청받은 뒤", {"죽은 프로세스의 기록": "있었음"}, f"죽은 프로세스의 기록 {'남음' if stale.exists() else '지워짐'}")
+T4.stop()
+T5.stop()
+
 OUT.write_text(json.dumps(runs, ensure_ascii=False, indent=1))
 print(len(runs), "runs")
