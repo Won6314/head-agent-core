@@ -1,4 +1,4 @@
-# head-context 0.9.17 — 작업 세션·작업 브랜치·저장
+# head-context 0.9.18 — 작업 세션·작업 브랜치·저장
 
 작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 작업 맥락을 다시 불러온다.
 살아 있는 대화를 작업 세션·작업 브랜치와 묶어 보여 준다. 포크·새 대화·대화 사이 메시지는 호스트(Claude Code) 기능을 그대로 쓴다.
@@ -143,7 +143,7 @@ Row = {conversation_id,host:'claude'|'codex',title,address,reachable,last_at,ent
 - 이름표에 ` (fork)`가 반복되면 하나만 남긴다.
   다시 돌려도 더 할 일이 없다.
 
-## Antigravity CLI·ACP 포장 (0.9.15)
+## Antigravity CLI·ACP 포장 (0.9.18)
 
 Google Antigravity CLI 1.5.13의 `agy acp`가 기준이다. Claude·Codex와 같은 프로젝트 기록을 읽고 쓴다.
 루트 `plugin.json`, `hooks.json`, `mcp_config.json`만 Antigravity가 읽고, 기존 `skills/`를 공유한다.
@@ -160,8 +160,9 @@ agy plugin install https://github.com/Won6314/head-agent-core/tree/main/packages
 - PreInvocation은 `/compact`에 공용 `compactInstruction()`을 넣고, 기록의 새 CHECKPOINT가 있으면 코어·작업 세션·작업 맥락·최근 주고받기 5번 원문을 한 번 되살린다. 새 프로세스 `session/load`는 새 CHECKPOINT가 없으면 아무것도 다시 넣지 않는다.
 - 매 도구 호출의 `_meta`의 `antigravity.google/conversation_id`가 대화 ID(ACP sessionId)다. `root_conversation_id`가 다르면 부른 대화의 프로젝트를 쓰고 기록 쓰기는 거절한다.
 - `invoke_subagent`로 뜬 서브에이전트는 대화 안 작업으로 다룬다. 훅 입력 `artifactDirectoryPath`의 `.system_generated/messages/`에 다른 대화가 보낸 `Message from Parent Agent` 메시지가 있으면 서브에이전트다. 서브에이전트에는 시작과 새 CHECKPOINT 뒤에 Claude·Codex 하위 에이전트와 같은 읽기만 안내 하나만 넣는다. 코어 지침, 서버 안내문, 작업 맥락, 최근 원문, `/compact` 지시는 넣지 않고, 작업 세션에 붙이거나 시작 파일을 건드리지 않으며, presence를 쓰지 않는다. 편지함은 사람 대화와 같게 넣는다. 이 판정은 공개되지 않은 agy 내부 파일에 기대므로, 찾지 못하면 사람 대화로 다룬다.
-- 주소는 **`antigravity:<ACP sessionId>`**, 앱 표시는 **`antigravity`**다. Antigravity 보내기의 delivery는 `started`(살아 있는 ACP 대화를 바로 깨움), `queued`(다음 입력 때 받음)다. `started`는 깨우기 신호가 수락됐다는 뜻이지 메시지 처리가 끝났다는 확인은 아니다. 일하는 중이면 다음 단계에서 받는다. TUI·데스크톱 앱·살아 있지 않은 대화·깨우기 실패는 `queued`다.
-- 먼저 inbox에 넣고, 그 대화를 쥔 살아 있는 ACP 프로세스에만 깨우기 신호를 보낸다. 다른 프로세스로 대신 보내지 않고, 신호가 실패해도 inbox 저장은 성공으로 남는다(`queued`). 이 신호는 공개되지 않은 agy 내부 통로에 기댄다.
+- 주소는 **`antigravity:<ACP sessionId>`**, 앱 표시는 **`antigravity`**다. Antigravity 보내기의 delivery는 `started`(살아 있는 ACP 대화나 깨우기 등록을 마친 터미널 대화를 바로 깨움), `queued`(다음 입력 때 받음)다. `started`는 깨우기 신호가 수락됐다는 뜻이지 메시지 처리가 끝났다는 확인은 아니다. 일하는 중이면 다음 단계에서 받는다. 등록 안 된 터미널 대화·화면에서 떠난 대화·데스크톱 앱·살아 있지 않은 대화·깨우기 실패는 `queued`다.
+- 먼저 inbox에 넣고, 그 대화를 쥔 살아 있는 agy 프로세스에만(ACP는 로그의 LS 포트로, 터미널은 깨우기 열쇠 기록으로) 깨우기 신호를 보낸다. 다른 프로세스로 대신 보내지 않고, 신호가 실패해도 inbox 저장은 성공으로 남는다(`queued`). 이 신호는 공개되지 않은 agy 내부 통로에 기댄다.
+- **터미널 깨우기 등록(0.9.18)**: 터미널에서 띄운 `agy`는 프로세스마다 무작위 CSRF 토큰을 요구하고, 그 값은 모델이 돌리는 셸 명령에만 주어진다. 그래서 사람 대화의 PreInvocation 훅은 그 agy 프로세스에 한 번, 답하기 전에 `node "<플러그인>/scripts/antigravity-wake-register.mjs"`를 돌리라고 넣는다(ACP·print 모드·`--remote-agent`·서브에이전트·`/compact` 턴 제외). 이 명령은 `~/.gemini/antigravity-cli/plugin_data/head-context/wake/<pid>-<시작 시각 해시>.json`(0600)에 LS 주소와 토큰을 남기고 한 줄만 낸다. 같은 판의 PreToolUse 훅(`run_command`만)은 이 명령과 글자까지 같은 호출에만 `auto_approve`, 그 밖에는 `allow`(기본 정책에 맡김)를 돌려준다. 사용자 확인·차단 규칙, `--sandbox`, 관리자 정책이 있으면 허락 창이 뜰 수 있고, 거절하면 그 턴이 멈춘다. 같은 프로세스에는 다시 요청하지 않는다. 등록이 든 첫 턴은 몇 초 늦어질 수 있다. 보내기는 그 대화를 쥔 프로세스가 agy 내부 잠금 파일 `~/.gemini/antigravity-cli/presence/<ID>.lock`을 열어 둔 때(= 지금 화면의 대화)만 신호를 보낸다. Linux에서 확인했고 Mac은 확인하지 않았다. agy를 기본이 아닌 앱 데이터 폴더로 띄우면 터미널 깨우기는 `queued`가 된다. 이 길도 공개되지 않은 agy 내부 통로에 기댄다.
 
 ### 클라이언트가 쓰는 대화별 시작 작업 세션 파일
 
@@ -262,6 +263,10 @@ LLM은 자기 앱의 보내기 도구에 대화 목록(`conversations`)의 보�
 - 실행 중이 아닌 Claude 대화(데스크톱이 내린 대화)는 Codex 목록에 "지금은 받지 못함"이 붙고, 보내면 실패를 돌려준다.
 - Claude 등록 파일과 기록은 `CLAUDE_CONFIG_DIR`을 따른다(없으면 `~/.claude`). Codex 도구 서버에는 `.codex-mcp.json`의 env_vars로 넘긴다.
 - 화면 없이 띄운 Claude 대화(`claude -p`)를 띄운 쪽이 `HEAD_CONTEXT_PERSON=1`로 띄우면 포크·워커가 아니라 사람 대화로 센다(기록 쓰기도 됨).
+
+## 0.9.18에서 바뀐 것
+
+- 터미널에서 띄운 Antigravity 대화도 다른 대화가 보낸 메시지로 깨어난다. agy 프로세스마다 한 번, 첫 호출에 모델이 등록 명령을 돌려 깨울 주소와 열쇠를 남기고, 플러그인 PreToolUse 훅이 그 명령에만 자동 승인을 준다. 그 밖의 명령 허락은 바뀌지 않는다. ACP 깨우기, 데스크톱 앱, Claude·Codex는 그대로다. 터미널 깨우기는 Linux에서 확인했고 Mac은 확인하지 않았다.
 
 ## 0.9.17에서 바뀐 것
 

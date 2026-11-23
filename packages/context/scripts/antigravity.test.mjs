@@ -21,6 +21,9 @@ import { agyOwner } from '../hosts/antigravity/process.mjs';
 import { processBirth } from '../core/platform.mjs';
 import { antigravityPeer } from '../hosts/antigravity/peer.mjs';
 import { claudeTree } from '../hosts/claude/tree.mjs';
+import { keyDir, keyFile, lockFile, writeKey, holdsLock } from '../hosts/antigravity/wake-key.mjs';
+import { registerCommand } from '../hosts/antigravity/wake-command.mjs';
+import { decide } from '../hosts/antigravity/pretool.mjs';
 
 const fresh = () => fs.mkdtempSync(path.join(process.env.HEAD_CONTEXT_TEST_ROOT || os.tmpdir(), 'agy-'));
 const PARENT = '3330a406-49c4-47c8-9be3-c6daf8e2a838';
@@ -515,4 +518,296 @@ test('Antigravity excluded from lists', () => {
   }));
   assert.deepEqual(hook(dir, data, { artifactDirectoryPath: brain('c1', [message()]) }), []);
   assert.deepEqual(antigravityLive(dir).map((p) => p.conversation_id), [PARENT]);
+});
+
+const ROOT = path.resolve(new URL('..', import.meta.url).pathname);
+const REGISTER = path.join(ROOT, 'scripts/antigravity-wake-register.mjs');
+const PRETOOL = path.join(ROOT, 'scripts/antigravity-pretool.mjs');
+const ASK = `head-context 깨우기 등록: 이 agy 프로세스는 아직 등록되지 않아, 다른 대화가 보낸 메시지로 이 대화를 깨울 수 없습니다. 사용자 물음에 답하기 전에 run_command로 아래 명령을 글자 그대로 한 번만 실행하세요. 인자를 붙이거나 따옴표·경로를 고치지 마세요. 출력은 한 줄이며 사용자에게 따로 설명하지 않아도 됩니다. 실행하지 못했거나 거절되면 다시 시도하지 말고 사용자 물음에 답하세요.
+${registerCommand(ROOT)}`;
+const TEST_TOKEN = 'TEST-TOKEN-0918';
+const clearKeys = () => fs.rmSync(keyDir(), { recursive: true, force: true });
+const keyNames = () => fs.existsSync(keyDir()) ? fs.readdirSync(keyDir()) : [];
+const keyValues = () => keyNames().filter((n) => n.endsWith('.json')).map((n) => JSON.parse(fs.readFileSync(path.join(keyDir(), n), 'utf8')));
+const payload = (dir, input = {}) => JSON.stringify({ conversationId: 'c1', cwd: dir, hookEventName: 'PreInvocation', invocationNum: 0, ...input });
+const partsOf = (text) => text.trim() ? JSON.parse(text).injectSteps.map((s) => s.systemMessage.systemMessage) : [];
+function fakeAgy(args = []) {
+  const dir = fresh(), bin = path.join(dir, 'bin'), file = path.join(bin, 'agy');
+  fs.mkdirSync(bin);
+  const body = '"$FAKE_AGY_NODE" "$FAKE_AGY_SCRIPT"';
+  const script = (commands = body) => fs.writeFileSync(file, `#!/bin/sh\n${commands}\nstatus=$?\nexit $status\n`, { mode: 0o755 });
+  script();
+  return {
+    dir, script,
+    run(input, env = {}) {
+      return spawnSync(file, args, {
+        input, encoding: 'utf8',
+        env: { ...process.env, FAKE_AGY_NODE: process.execPath, FAKE_AGY_SCRIPT: path.join(ROOT, 'scripts/antigravity-hook.mjs'), PLUGIN_DATA: fresh(), PLUGIN_ROOT: ROOT, ...env },
+      });
+    },
+  };
+}
+const cleanResult = (r) => {
+  assert.equal(r.status, 0);
+  assert.ok(r.stderr === '', 'stderr is empty');
+  assert.ok(!r.stdout.includes(TEST_TOKEN) && !r.stderr.includes(TEST_TOKEN), 'no key in output');
+};
+function hookPair(fake, dir, first = {}, second = {}, concurrent = false) {
+  for (const [name, input] of [['one', first], ['two', second]])
+    fs.writeFileSync(path.join(fake.dir, name), payload(dir, input));
+  fake.script(`"$FAKE_AGY_NODE" "$FAKE_AGY_SCRIPT" < "${fake.dir}/one" > "${fake.dir}/out-one"${concurrent ? ' &' : ''}\n"$FAKE_AGY_NODE" "$FAKE_AGY_SCRIPT" < "${fake.dir}/two" > "${fake.dir}/out-two"${concurrent ? ' &\nwait' : ''}`);
+  const r = fake.run('');
+  cleanResult(r);
+  return ['one', 'two'].map((name) => partsOf(fs.readFileSync(path.join(fake.dir, `out-${name}`), 'utf8')));
+}
+function holder(lockPath, args = [], open = true) {
+  return spawn(process.execPath, ['-e', `const fs=require('fs');fs.mkdirSync(require('path').dirname(process.argv[1]),{recursive:true});${open ? "fs.closeSync(fs.openSync(process.argv[1],'a'));const fd=fs.openSync(process.argv[1],'r');" : ''}process.stdout.write('ready');setInterval(()=>{},1000)`, lockPath, ...args]);
+}
+
+test('Ask once per terminal agy process', () => {
+  clearKeys();
+  const dir = fresh(), fake = fakeAgy();
+  setupTool(dir, { action: 'setup' }, { host: 'antigravity' });
+  const [first, second] = hookPair(fake, dir, {}, { conversationId: 'c2' });
+  assert.equal(first.at(-1), ASK);
+  assert.ok(!second.includes(ASK));
+  const [record] = keyValues();
+  assert.equal(keyNames().length, 1);
+  assert.match(keyNames()[0], new RegExp(`^${record.pid}-[a-f0-9]{16}\\.json$`));
+  assert.deepEqual(Object.keys(record), ['pid', 'start', 'asked_at']);
+  assert.ok(record.start && record.asked_at);
+  assert.equal(record.pid, readPresence(dir, 'c1').pid);
+  assert.equal(record.pid, readPresence(dir, 'c2').pid);
+  assert.equal(fs.statSync(keyFile(record)).mode & 0o777, 0o600);
+  assert.equal(fs.statSync(keyDir()).mode & 0o777, 0o700);
+});
+test('Concurrent asks', () => {
+  clearKeys();
+  const dir = fresh();
+  setupTool(dir, { action: 'setup' }, { host: 'antigravity' });
+  const outputs = hookPair(fakeAgy(), dir, {}, { conversationId: 'c2' }, true);
+  assert.equal(outputs.filter((p) => p.includes(ASK)).length, 1);
+});
+test('No ask', () => {
+  const cases = [
+    ...['acp', '-p', '--print', '--prompt=hi', '--remote-agent'].map((arg) => ({ args: [arg] })),
+    { input: { artifactDirectoryPath: brain('c1', [message()]) } },
+    { env: { PLUGIN_ROOT: undefined } }, { env: { PLUGIN_ROOT: '/tmp/"root' } },
+    { input: { hookEventName: 'SessionStart' } },
+  ];
+  for (const { args = [], input = {}, env = {} } of cases) {
+    clearKeys();
+    const r = fakeAgy(args).run(payload(fresh(), input), env);
+    cleanResult(r);
+    assert.ok(!partsOf(r.stdout).includes(ASK));
+    assert.deepEqual(keyNames(), []);
+  }
+  clearKeys();
+  assert.ok(!hook(fresh(), fresh(), {}, { PLUGIN_ROOT: ROOT }).includes(ASK));
+  assert.deepEqual(keyNames(), []);
+  const [compact, next] = hookPair(fakeAgy(), fresh(), { lastUserInput: '/compact' }, { lastUserInput: 'hi' });
+  assert.ok(!compact.includes(ASK));
+  assert.ok(next.includes(ASK));
+});
+test('Prune at ask time', () => {
+  clearKeys();
+  fs.mkdirSync(keyDir(), { recursive: true });
+  const dead = spawnSync(process.execPath, ['-e', '']);
+  const owners = [{ pid: dead.pid, start: 'dead' }, { pid: process.pid, start: 'other' }, { pid: process.pid, start: processBirth(process.pid) }];
+  for (const owner of owners) fs.writeFileSync(keyFile(owner), JSON.stringify(owner));
+  for (const name of ['x.tmp', 'y.tmp']) fs.writeFileSync(path.join(keyDir(), name), '');
+  const old = new Date(Date.now() - 7200000);
+  fs.utimesSync(path.join(keyDir(), 'x.tmp'), old, old);
+  const r = fakeAgy().run(payload(fresh()));
+  cleanResult(r);
+  assert.ok(partsOf(r.stdout).includes(ASK));
+  assert.ok(!fs.existsSync(keyFile(owners[0])) && !fs.existsSync(keyFile(owners[1])));
+  assert.ok(fs.existsSync(keyFile(owners[2])));
+  assert.ok(!fs.existsSync(path.join(keyDir(), 'x.tmp')));
+  assert.ok(fs.existsSync(path.join(keyDir(), 'y.tmp')));
+  assert.equal(keyNames().length, 3);
+});
+test('Register command', () => {
+  const env = { FAKE_AGY_SCRIPT: REGISTER, ANTIGRAVITY_LS_ADDRESS: 'localhost:4567', ANTIGRAVITY_CSRF_TOKEN: TEST_TOKEN };
+  for (const token of [TEST_TOKEN, '']) {
+    clearKeys();
+    const r = fakeAgy().run('', { ...env, ANTIGRAVITY_CSRF_TOKEN: token });
+    cleanResult(r);
+    assert.equal(r.stdout, 'head-context: 깨우기 등록됨\n');
+    const [record] = keyValues();
+    assert.deepEqual(Object.keys(record), ['pid', 'start', 'address', 'token', 'registered_at']);
+    assert.ok(record.token === token, 'recorded key matches');
+    assert.equal(record.address, 'localhost:4567');
+    assert.equal(fs.statSync(keyFile(record)).mode & 0o777, 0o600);
+  }
+  clearKeys();
+  const fake = fakeAgy();
+  fake.script(`"$FAKE_AGY_NODE" "${ROOT}/scripts/antigravity-hook.mjs"\ncp "${keyDir()}"/*.json "${fake.dir}/asked.json"\n"$FAKE_AGY_NODE" "$FAKE_AGY_SCRIPT"`);
+  const asked = fake.run(payload(fresh()), env);
+  cleanResult(asked);
+  const [record] = keyValues();
+  assert.deepEqual(Object.keys(record), ['pid', 'start', 'asked_at', 'address', 'token', 'registered_at']);
+  assert.equal(record.asked_at, JSON.parse(fs.readFileSync(path.join(fake.dir, 'asked.json'), 'utf8')).asked_at);
+  assert.ok(partsOf(asked.stdout.slice(0, asked.stdout.indexOf('\n'))).includes(ASK));
+  assert.ok(asked.stdout.endsWith('head-context: 깨우기 등록됨\n'));
+  const failures = [
+    [{ ANTIGRAVITY_LS_ADDRESS: undefined, ANTIGRAVITY_CSRF_TOKEN: undefined }, 'agy가 깨울 주소를 넘기지 않았습니다.'],
+    ...['10.0.0.1:1', 'localhost:0', 'localhost:99999'].map((address) => [{ ANTIGRAVITY_LS_ADDRESS: address }, 'agy가 넘긴 주소를 쓸 수 없습니다.']),
+  ];
+  for (const [extra, reason] of failures) {
+    clearKeys();
+    const r = fakeAgy().run('', { ...env, ...extra });
+    cleanResult(r);
+    assert.equal(r.stdout, `head-context: 깨우기 등록 안 됨 — ${reason}\n`);
+    assert.deepEqual(keyNames(), []);
+  }
+  const absent = spawnSync(process.execPath, [REGISTER], { encoding: 'utf8', env: { ...process.env, ...env } });
+  cleanResult(absent);
+  assert.equal(absent.stdout, 'head-context: 깨우기 등록 안 됨 — agy 프로세스를 찾지 못했습니다.\n');
+  assert.deepEqual(keyNames(), []);
+  fs.mkdirSync(path.dirname(keyDir()), { recursive: true });
+  fs.writeFileSync(keyDir(), 'unchanged');
+  try {
+    const r = fakeAgy().run('', env);
+    cleanResult(r);
+    assert.match(r.stdout, /^head-context: 깨우기 등록 안 됨 — 기록을 쓰지 못했습니다\([A-Za-z0-9_]+\)\.\n$/);
+    assert.equal(fs.readFileSync(keyDir(), 'utf8'), 'unchanged');
+  } finally { clearKeys(); }
+});
+test('PreToolUse decides', () => {
+  const command = registerCommand(ROOT);
+  const input = (CommandLine = command, name = 'run_command') => ({ toolCall: { name, args: { CommandLine } } });
+  assert.deepEqual(decide(input(), { PLUGIN_ROOT: ROOT }), { decision: 'auto_approve', reason: 'head-context 깨우기 등록 명령' });
+  for (const changed of [command + ' ', command.replaceAll('"', "'"), command + '; ls', 'cd /tmp && ' + command])
+    assert.deepEqual(decide(input(changed), { PLUGIN_ROOT: ROOT }), { decision: 'allow' });
+  assert.deepEqual(decide(input(command, 'view_file'), { PLUGIN_ROOT: ROOT }), { decision: 'allow' });
+  for (const env of [{}, { PLUGIN_ROOT: 'relative' }]) assert.deepEqual(decide(input(), env), { decision: 'allow' });
+  for (const stdin of [JSON.stringify(input()), '', 'not json', '{}']) {
+    const r = spawnSync(process.execPath, [PRETOOL], { input: stdin, encoding: 'utf8', env: { ...process.env, PLUGIN_ROOT: ROOT } });
+    cleanResult(r);
+    assert.notEqual(r.stdout, '{}\n');
+    if (stdin === JSON.stringify(input())) assert.equal(JSON.parse(r.stdout).decision, 'auto_approve');
+    else assert.equal(r.stdout, '{"decision":"allow"}\n');
+  }
+  const hooks = JSON.parse(fs.readFileSync(path.join(ROOT, 'hooks.json'), 'utf8'));
+  const entry = hooks['head-context-pretool'].PreToolUse[0];
+  assert.equal(entry.matcher, 'run_command');
+  assert.equal(entry.hooks[0].command, 'node "${PLUGIN_ROOT}/scripts/antigravity-pretool.mjs"');
+  for (const [key, event] of [['head-context-start', 'SessionStart'], ['head-context-invocation', 'PreInvocation']])
+    assert.deepEqual(hooks[key], { [event]: [{ type: 'command', command: 'node "${PLUGIN_ROOT}/scripts/antigravity-hook.mjs"', timeout: 20 }] });
+});
+test('Terminal wake', async () => {
+  clearKeys();
+  const dir = fresh(), presence = path.join(locations(dir).state, 'presence');
+  fs.mkdirSync(presence, { recursive: true });
+  const requests = [];
+  let status = 200;
+  const server = http.createServer(async (req, res) => {
+    let body = '';
+    for await (const chunk of req) body += chunk;
+    requests.push({ url: req.url, token: req.headers['x-codeium-csrf-token'], body: JSON.parse(body) });
+    res.writeHead(status).end('{}');
+  });
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  const owners = [];
+  const startHolder = async (id, open = true) => {
+    const child = holder(lockFile(id), [], open);
+    owners.push(child);
+    await once(child.stdout, 'data');
+    return child;
+  };
+  const owner = await startHolder('target');
+  const identity = (child = owner) => ({ pid: child.pid, start: processBirth(child.pid) });
+  const address = `localhost:${server.address().port}`;
+  const put = (value) => fs.writeFileSync(path.join(presence, 'antigravity-target.json'), JSON.stringify(value));
+  const inbox = path.join(locations(dir).state, 'inbox/antigravity-target');
+  let count = 0;
+  const send = async (expected) => {
+    assert.equal(await antigravityPeer.send('antigravity:target', 'PRIVATE_MESSAGE_BODY', { project: dir, from: 'claude:sender' }), expected);
+    assert.equal(fs.readdirSync(inbox).filter((n) => n.endsWith('.json')).length, ++count);
+  };
+  const record = (child = owner, extra = {}) => writeKey(identity(child), { address, token: TEST_TOKEN, ...extra });
+  try {
+    put(identity()); record();
+    assert.ok(holdsLock(owner.pid, 'target'));
+    await send('started');
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].url, '/exa.language_server_pb.LanguageServerService/SendAgentMessage');
+    assert.ok(requests[0].token === TEST_TOKEN, 'request key matches');
+    assert.deepEqual(requests[0].body, { recipient: 'target', content: '다른 대화에서 메시지가 도착했습니다.', senderId: 'head-context' });
+    fs.rmSync(keyFile(identity()));
+    await send('queued'); assert.equal(requests.length, 1);
+    record();
+    const file = keyFile(identity()), wrong = JSON.parse(fs.readFileSync(file, 'utf8'));
+    wrong.start = 'other'; fs.writeFileSync(file, JSON.stringify(wrong));
+    await send('queued'); assert.equal(requests.length, 1);
+    record(owner, { token: '' });
+    await send('queued'); assert.equal(requests.length, 1);
+    record(owner, { address: `10.0.0.1:${server.address().port}` });
+    await send('queued'); assert.equal(requests.length, 1);
+    record(); fs.unlinkSync(lockFile('target'));
+    await send('queued'); assert.equal(requests.length, 1);
+    fs.writeFileSync(lockFile('target'), '');
+    const unopened = await startHolder('target', false);
+    put(identity(unopened)); record(unopened);
+    await send('queued'); assert.equal(requests.length, 1);
+    const other = await startHolder('other');
+    put(identity(other)); record(other);
+    await send('queued'); assert.equal(requests.length, 1);
+    const current = await startHolder('target');
+    put(identity(current)); record(current); status = 401;
+    await send('queued'); assert.equal(requests.length, 2);
+    current.kill(); await once(current, 'exit');
+    await send('queued'); assert.equal(requests.length, 2);
+  } finally {
+    for (const child of owners) child.kill();
+    await new Promise((resolve) => server.close(resolve));
+    clearKeys();
+  }
+});
+test('ACP path unchanged', async () => {
+  const dir = fresh(), presence = path.join(locations(dir).state, 'presence');
+  fs.mkdirSync(presence, { recursive: true });
+  const owner = holder(lockFile('acp-target'), ['acp']);
+  await once(owner.stdout, 'data');
+  const requests = [];
+  const server = http.createServer(async (req, res) => {
+    for await (const chunk of req) {}
+    requests.push(req.headers);
+    res.writeHead(200).end('{}');
+  });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  const identity = { pid: owner.pid, start: processBirth(owner.pid) };
+  const logs = path.join(os.homedir(), '.gemini/antigravity-cli/log');
+  fs.mkdirSync(logs, { recursive: true });
+  const log = path.join(logs, `acp-server-20261123_120000-${owner.pid}.log`);
+  try {
+    fs.writeFileSync(path.join(presence, 'antigravity-target.json'), JSON.stringify(identity));
+    writeKey(identity, { address: `localhost:${server.address().port}`, token: TEST_TOKEN });
+    fs.writeFileSync(log, `Language server listening on random port at ${server.address().port} for HTTP\n`);
+    assert.equal(await antigravityPeer.send('antigravity:target', 'MESSAGE', { project: dir, from: 'claude:sender' }), 'started');
+    assert.equal(requests.length, 1);
+    assert.ok(!('x-codeium-csrf-token' in requests[0]));
+  } finally {
+    owner.kill();
+    await new Promise((resolve) => server.close(resolve));
+    fs.rmSync(log, { force: true }); clearKeys();
+  }
+});
+test('Old Node', () => {
+  clearKeys();
+  const fake = fakeAgy();
+  fake.script(`"$FAKE_AGY_NODE" --require "${ROOT}/scripts/fixtures/no-sqlite.cjs" "$FAKE_AGY_SCRIPT"`);
+  const r = fake.run(payload(fresh()));
+  cleanResult(r);
+  assert.ok(partsOf(r.stdout).includes(ASK));
+  assert.ok(!r.stdout.includes('node:sqlite'));
+  const registered = fake.run('', { FAKE_AGY_SCRIPT: REGISTER, ANTIGRAVITY_LS_ADDRESS: 'localhost:4567', ANTIGRAVITY_CSRF_TOKEN: TEST_TOKEN });
+  cleanResult(registered);
+  assert.equal(registered.stdout, 'head-context: 깨우기 등록됨\n');
+  const approved = fake.run(JSON.stringify({ toolCall: { name: 'run_command', args: { CommandLine: registerCommand(ROOT) } } }), { FAKE_AGY_SCRIPT: PRETOOL });
+  cleanResult(approved);
+  assert.equal(JSON.parse(approved.stdout).decision, 'auto_approve');
+  clearKeys();
 });

@@ -4,7 +4,7 @@ import { coreParts, guide, refreshCore } from '../../core/project.mjs';
 import { instructionsFor, SUBAGENT_NOTICE } from '../../core/mcp.mjs';
 import { UNCONNECTED, HOOK_BUDGET } from '../../core/recovery.mjs';
 import { locations, takeNotices } from '../../core/storage.mjs';
-import { runtimeProblem } from '../../core/platform.mjs';
+import { runtimeProblem, processOf } from '../../core/platform.mjs';
 import { compactInstruction } from '../claude/compact.mjs';
 import { register, registered } from './register.mjs';
 import { writePresence, dropPresence, take } from './threads.mjs';
@@ -12,13 +12,27 @@ import { parentOf } from './subagent.mjs';
 import { asMessage } from '../../core/inbox.mjs';
 import { steps, checkpointOf, recentPart } from './transcript.mjs';
 import { takeStart } from './start.mjs';
+import { claimAsk } from './wake-key.mjs';
+import { safeRoot, registerCommand } from './wake-command.mjs';
 
 const hookOutput = (parts) => ({
   injectSteps: parts.filter(Boolean).map((text) => ({ systemMessage: { systemMessage: text } })),
 });
 
+// A terminal agy (not ACP, not print mode, not remote agents) can be woken only after it hands
+// its LS address and CSRF token to a command the model runs. Ask once per agy process.
+const REMOTE_OR_PRINT = new Set(['p', 'print', 'prompt', 'remote-agent']);
+const terminalAgy = (argv) =>
+  Array.isArray(argv) &&
+  !argv.includes('acp') &&
+  !argv.some((arg) => /^--?[a-z-]+(=.*)?$/.test(arg) && REMOTE_OR_PRINT.has(arg.replace(/^--?/, '').split('=')[0]));
+const WAKE_ASK = (command) => `head-context 깨우기 등록: 이 agy 프로세스는 아직 등록되지 않아, 다른 대화가 보낸 메시지로 이 대화를 깨울 수 없습니다. 사용자 물음에 답하기 전에 run_command로 아래 명령을 글자 그대로 한 번만 실행하세요. 인자를 붙이거나 따옴표·경로를 고치지 마세요. 출력은 한 줄이며 사용자에게 따로 설명하지 않아도 됩니다. 실행하지 못했거나 거절되면 다시 시도하지 말고 사용자 물음에 답하세요.
+${command}`;
+
 export async function runHook() {
   let waiting;
+  let ask = '';
+  let presence;
   try {
     const input = JSON.parse(fs.readFileSync(0, 'utf8'));
     const { conversationId: id, cwd: project, transcriptPath: transcript, hookEventName: event } = input;
@@ -36,7 +50,7 @@ export async function runHook() {
     } else {
       // Register even on resume; session/load has no SessionStart, but none of the
       // context is repeated unless a new CHECKPOINT actually appeared.
-      writePresence(project, { conversation_id: id, transcript_path: transcript, said: input.lastUserInput });
+      presence = writePresence(project, { conversation_id: id, transcript_path: transcript, said: input.lastUserInput });
       if (start || restore) {
         refreshCore(project);
         parts.push(...coreParts(project));
@@ -69,6 +83,16 @@ export async function runHook() {
     }
     if (event === 'PreInvocation') {
       if (!parent && input.lastUserInput?.trim() === '/compact' && !runtimeProblem()) parts.push(compactInstruction());
+      if (!parent && input.lastUserInput?.trim() !== '/compact') {
+        try {
+          const root = process.env.PLUGIN_ROOT;
+          if (safeRoot(root) && presence?.pid && presence?.start && terminalAgy(processOf(presence.pid)?.argv) &&
+              claimAsk({ pid: presence.pid, start: presence.start }))
+            parts.push(WAKE_ASK(registerCommand(root)));
+        } catch (error) {
+          console.error(`head-context: 깨우기 등록 요청을 넣지 못했습니다(${error.code || error.name}).`);
+        }
+      }
       // A wake during a running turn reaches a later invocation, not zero.
       // Claim/ack makes each inbox message appear only once across invocations.
       waiting = take(project, id);
