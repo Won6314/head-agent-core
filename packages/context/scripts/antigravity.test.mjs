@@ -692,7 +692,13 @@ test('PreToolUse decides', () => {
   const hooks = JSON.parse(fs.readFileSync(path.join(ROOT, 'hooks.json'), 'utf8'));
   const entry = hooks['head-context-pretool'].PreToolUse[0];
   assert.equal(entry.matcher, 'run_command');
-  assert.equal(entry.hooks[0].command, 'node "${PLUGIN_ROOT}/scripts/antigravity-pretool.mjs"');
+  assert.equal(entry.hooks[0].command, `node "\${PLUGIN_ROOT}/scripts/antigravity-pretool.mjs" || echo '{"decision":"allow"}'`);
+  // agy denies the tool call when this hook fails (measured on 1.5.15), so a node that cannot
+  // start still answers allow through the shell.
+  const missing = fs.mkdtempSync(path.join(os.tmpdir(), 'hc-pretool-missing-'));
+  const fell = spawnSync('sh', ['-c', entry.hooks[0].command], { input: '{}', env: { ...process.env, PLUGIN_ROOT: missing }, encoding: 'utf8' });
+  assert.equal(fell.status, 0);
+  assert.equal(fell.stdout, '{"decision":"allow"}\n');
   for (const [key, event] of [['head-context-start', 'SessionStart'], ['head-context-invocation', 'PreInvocation']])
     assert.deepEqual(hooks[key], { [event]: [{ type: 'command', command: 'node "${PLUGIN_ROOT}/scripts/antigravity-hook.mjs"', timeout: 20 }] });
 });
