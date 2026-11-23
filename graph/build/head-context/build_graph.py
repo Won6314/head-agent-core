@@ -24,11 +24,19 @@ from pathlib import Path
 pkg, build, docs, out_json, out_db = map(Path, sys.argv[1:6])
 COMMIT, VERSION = sys.argv[6], sys.argv[7]  # make.sh가 넘긴다: 커밋 7자, packages/context 플러그인 판
 code = json.loads((out_json.parent / "code.json").read_text())
+# 경로 글이 '.mjs'로 끝나 '경로로 실행'(framework-invoked)으로 잡혔지만 실제로는 실행하지 않는 자리(글을 만들기만 함). 이름으로 뺀다.
+# 0.9.18: registerCommand는 등록 지시에 보이고 자동 승인과 비교할 명령 글을 만들 뿐이다. 그 명령은 모델이 셸에서 돌린다(cli:antigravity-wake-register).
+PATH_TEXT_NOT_RUN = {("code:hosts/antigravity/wake-command.mjs#registerCommand", "code:scripts/antigravity-wake-register.mjs")}
+_before = len(code["refs"])
+code["refs"] = [r for r in code["refs"] if (r["from"], r["to"]) not in PATH_TEXT_NOT_RUN or r["kind"] != "framework-invoked"]
+_path_text_dropped = _before - len(code["refs"])
 purposes = json.loads((build / "purposes.json").read_text())
 common = json.loads((build / "common-modules.json").read_text())
 meaning = json.loads((build / "meaning.json").read_text())
 
 nodes, edges, problems = {}, [], []
+if _path_text_dropped != len(PATH_TEXT_NOT_RUN):
+    problems.append(f"경로 글 제외 {len(PATH_TEXT_NOT_RUN)}건 중 {_path_text_dropped}건만 맞음(규칙이 낡음)")
 
 
 def node(t, id_, **p):
@@ -86,7 +94,9 @@ CHANNEL = {"훅 입력(표준 입력)", "도구 서버 표준 입출력"}
 DATA = {".head/ 상태·기록·색인 파일": "파일", "프로젝트 설정·플러그인 지침 파일": "설정 파일",
         "Codex 플러그인 데이터 폴더(대화 등록)": "파일", "Claude 등록 파일·대화 기록": "호스트 파일", "Codex 대화 기록 파일": "호스트 파일",
         # 0.9.15: Antigravity가 읽는 agy 쪽 파일. 등록 파일(PLUGIN_DATA/conversations)은 공용 도우미로만 읽고 써서 칸을 두지 않는다(그래프 패치 2.4 HEAD 결정 (a))
-        "Antigravity 대화 기록 파일": "호스트 파일", "Antigravity ACP 로그": "호스트 파일", "Antigravity 대화 폴더 메시지(brain)": "호스트 파일"}
+        "Antigravity 대화 기록 파일": "호스트 파일", "Antigravity ACP 로그": "호스트 파일", "Antigravity 대화 폴더 메시지(brain)": "호스트 파일",
+        # 0.9.18: 플러그인이 쓰고 읽는 자기 파일(agy 프로세스 하나에 하나). fs를 직접 불러 연결이 생긴다
+        "Antigravity 깨우기 열쇠 기록": "파일"}
 # 호스트(Claude Code)가 쓴 등록 파일·대화 기록은 바깥 서비스 호출이 아니라 파일 읽기라 데이터로 둔다(검수 지적).
 READ = {"readFileSync", "readSync", "readdirSync", "existsSync", "statSync", "lstatSync", "realpathSync", "readlinkSync",
         "accessSync", "openSync", "fstatSync"}
@@ -140,7 +150,9 @@ for f in code["facts"]:
         else:
             agg.setdefault(("코드→외부 연결", f["def"], tid), set()).add((api, f["line"]))
 # 손으로 잇는 바깥 접근: 추출기가 사실로 잡지 않는 전역 호출(fetch). (정의, 바깥 칸, api, 원문에서 찾을 글)
-MANUAL_OUTSIDE = [("code:hosts/antigravity/wake.mjs#wake", "Antigravity language server(loopback HTTP)", "fetch", "await fetch(")]
+# 0.9.18: wake를 ACP·터미널 두 함수로 나눔(구현 명세 「그래프 패치와 다른 점」 6)
+MANUAL_OUTSIDE = [("code:hosts/antigravity/wake.mjs#acpSignal", "Antigravity language server(loopback HTTP)", "fetch", "await fetch("),
+                  ("code:hosts/antigravity/wake.mjs#terminalSignal", "Antigravity language server(loopback HTTP)", "fetch", "await fetch(")]
 for did, bname, api, text in MANUAL_OUTSIDE:
     d = defs.get(did)
     lns = [i + 1 for i, l in enumerate((pkg / d["file"]).read_text().splitlines()) if text in l and d["line"] <= i + 1 <= d["end_line"]] if d else []
@@ -447,8 +459,16 @@ AGY_CUTS = {
     "PreInvocation": [one(AH, "if (start) parts.push(instructionsFor("), one(AH, "const request = start ? takeStart("),
                       branch_range(AH, "if (request) {", AW), one(AH, "? store.start("), one(AH, "if (start) parts.push(guide(")],
 }
+# 0.9.18: 도구 전 훅(PreToolUse, matcher run_command)은 따로 된 진입(scripts/antigravity-pretool.mjs)과 결정 함수다.
+AGY_OWN_ENTRY = {"PreToolUse": ("code:hosts/antigravity/pretool.mjs#decide", "scripts/antigravity-pretool.mjs")}
 for group, evs in sorted(aj.items()):
     for ev, hs in sorted(evs.items()):
+        if ev in AGY_OWN_ENTRY:
+            did, cmd = AGY_OWN_ENTRY[ev]
+            matcher = ", ".join(h.get("matcher", "") for h in hs if h.get("matcher"))
+            feature(f"hook:antigravity:{ev}", "hook", did, 앱="Antigravity", 근거=f"hooks.json(루트) {group} {ev}" + (f" matcher {matcher}" if matcher else ""))
+            features[f"hook:antigravity:{ev}"]["명령"] = cmd
+            continue
         rng = without(AW, AGY_CUTS.get(ev, []))
         feature(f"hook:antigravity:{ev}", "hook", f"code:hosts/antigravity/hook.mjs#runHook", rng=rng, 앱="Antigravity",
                 근거=f"hooks.json(루트) {group} {ev}")
@@ -475,6 +495,15 @@ for f in sorted((pkg / "scripts").glob("*.mjs")):
             features[f"cli:{f.stem}"]["명령"] = f"node {rel}"
         else:
             feature(f"cli:{f.stem}", "CLI", f"code:{rel}", 근거=f"{rel} (process.argv)")
+# 0.9.18: 인자 없는 명령은 process.argv를 읽지 않아 위 규칙에 걸리지 않는다. 이름 표로 손으로 넣는다(구현 명세 「그래프 패치와 다른 점」 5).
+MANUAL_CLI = {"antigravity-wake-register": ("code:scripts/antigravity-wake-register.mjs#registerWake",
+                                            "scripts/antigravity-wake-register.mjs (인자 없음, 모델이 터미널 agy 셸에서 돌림 — 등록 지시가 보여 주는 명령)")}
+for name, (did, why) in MANUAL_CLI.items():
+    if did not in defs:
+        problems.append(f"B-4: 손으로 넣는 CLI {name}의 처리 코드 {did}가 없음")
+        continue
+    feature(f"cli:{name}", "CLI", did, 근거=why)
+    features[f"cli:{name}"]["명령"] = f"node scripts/{name}.mjs"
 for skill in sorted((pkg / "skills").glob("*/SKILL.md")):
     rel = skill.relative_to(pkg).as_posix()
     feature(f"skill:{skill.parent.name}", "skill", f"code:{rel}", 앱="Claude Code · Codex · Antigravity", 근거="skills/ (start-job 절차 문서, Antigravity는 루트 plugin.json이 같은 skills/를 싣는다)")
@@ -637,7 +666,7 @@ def run_feature(r):
     i = r["입력"]
     if r["종류"] == "hook":
         cmd = i["명령"].split(); ev = i["입력"].get("hook_event_name") or i["입력"].get("hookEventName")
-        if cmd[0] == "antigravity-hook.mjs":
+        if cmd[0] in ("antigravity-hook.mjs", "antigravity-pretool.mjs"):
             return f"hook:antigravity:{ev}"
         if cmd[0] == "hook.mjs":
             return f"hook:claude:SessionStart:{cmd[1]}" if ev == "SessionStart" else f"hook:claude:{ev}"
@@ -763,7 +792,7 @@ for fid, f in features.items():
         if h in nodes:
             reached |= reach(h, rr)
 reached |= {"code:scripts/hook.mjs", "code:scripts/codex-hook.mjs", "code:scripts/mcp.mjs", "code:scripts/codex-mcp.mjs",
-            "code:scripts/antigravity-hook.mjs", "code:scripts/antigravity-mcp.mjs"}
+            "code:scripts/antigravity-hook.mjs", "code:scripts/antigravity-mcp.mjs", "code:scripts/antigravity-pretool.mjs"}
 reached |= {f"code:scripts/{fid[4:]}.mjs" for fid in features if fid.startswith("cli:")}  # CLI 입구 파일
 for entry in ("code:scripts/mcp.mjs", "code:scripts/codex-mcp.mjs", "code:scripts/antigravity-mcp.mjs", "code:hosts/opencode/mcp.mjs"):
     reached |= reach(entry)

@@ -763,5 +763,239 @@ c.close()
 hook("codex-hook.mjs", ["session"], cx4, "Codex SessionStart(startup) · session (긴 작업 세션 — 자르지 않음)")
 hook("codex-hook.mjs", ["session"], {**cx4, "source": "compact"}, "Codex SessionStart(compact) · session (긴 작업 세션 — 머리를 잘라 복원 블록 자리)")
 
+# ---------------------------------------------------------------- 0.9.18 터미널 Antigravity 깨우기(그래프 패치 6절 A33~A42)
+# 실제 agy는 띄우지 않는다. 가짜 agy = 경로가 …/agy로 끝나는 node 스크립트(agyOwner의 이름 규칙에 걸림).
+# ① loopback HTTP로 SendAgentMessage를 흉내(열쇠 헤더 검사, 받은 요청을 파일에 적음) ② agy 내부 잠금 파일을 열어 둠
+# ③ 받은 명령(훅·등록 명령)을 자기 자식으로 돌림(그래야 agyOwner가 이 프로세스를 찾는다). 열쇠·포트·pid는 출력에 남기지 않는다.
+FAKE_SRC = r"""
+const http = require('node:http'), fs = require('node:fs'), path = require('node:path'), cp = require('node:child_process'), rl = require('node:readline');
+const TOKEN = process.env.FAKE_TOKEN, LOG = process.env.FAKE_LOG, acp = process.argv.includes('acp');
+const held = new Map();
+const lockDir = path.join(process.env.HOME, '.gemini', 'antigravity-cli', 'presence');
+const server = http.createServer((req, res) => {
+  let body = '';
+  req.on('data', (d) => (body += d));
+  req.on('end', () => {
+    const ok = acp || req.headers['x-codeium-csrf-token'] === TOKEN;
+    fs.appendFileSync(LOG, JSON.stringify({ path: req.url, token: req.headers['x-codeium-csrf-token'] === TOKEN, body: JSON.parse(body || '{}') }) + '\n');
+    res.writeHead(ok ? 200 : 401, { 'Content-Type': 'application/json' });
+    res.end(ok ? '{}' : '{"code":"unauthenticated"}');
+  });
+});
+server.listen(0, '127.0.0.1', () => {
+  const port = server.address().port;
+  if (acp) {
+    const dir = path.join(process.env.HOME, '.gemini', 'antigravity-cli', 'log');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, `acp-server-20261123_000000-${process.pid}.log`), `Language server listening on random port at ${port} for HTTP\n`);
+  }
+  process.stdout.write(JSON.stringify({ ready: true, port }) + '\n');
+});
+rl.createInterface({ input: process.stdin }).on('line', (line) => {
+  const m = JSON.parse(line);
+  let out = {};
+  if (m.op === 'run') {
+    const r = cp.spawnSync(m.cmd[0], m.cmd.slice(1), { input: m.input || '', env: { ...process.env, ...(m.env || {}) }, cwd: m.cwd, encoding: 'utf8' });
+    out = { stdout: r.stdout, stderr: r.stderr, code: r.status };
+  } else if (m.op === 'hold') {
+    fs.mkdirSync(lockDir, { recursive: true });
+    held.set(m.id, fs.openSync(path.join(lockDir, `${m.id}.lock`), 'a'));
+  } else if (m.op === 'release') {
+    fs.closeSync(held.get(m.id)); held.delete(m.id);
+  } else if (m.op === 'exit') {
+    process.stdout.write('{}\n'); process.exit(0);
+  }
+  process.stdout.write(JSON.stringify(out) + '\n');
+});
+"""
+FAKE_BIN = ROOT / "bin" / "agy"
+FAKE_BIN.parent.mkdir(parents=True, exist_ok=True)
+FAKE_BIN.write_text(FAKE_SRC)
+FAKE_TOKEN = "head-context-test-csrf"
+FAKE_LOG = ROOT / "fake-ls.jsonl"
+FAKE_LOG.write_text("")
+KEY_DIR = HOME / ".gemini" / "antigravity-cli" / "plugin_data" / "head-context" / "wake"
+
+
+class FakeAgy:
+    def __init__(self, *args):
+        self.p = subprocess.Popen(["node", str(FAKE_BIN), *args], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True,
+                                  env={**ENV, "FAKE_TOKEN": FAKE_TOKEN, "FAKE_LOG": str(FAKE_LOG)}, cwd=PROJ)
+        self.port = json.loads(self.p.stdout.readline())["port"]
+        self.args = args
+
+    def ask(self, m):
+        self.p.stdin.write(json.dumps(m) + "\n")
+        self.p.stdin.flush()
+        return json.loads(self.p.stdout.readline())
+
+    def run(self, cmd, env=None, stdin=""):
+        return self.ask({"op": "run", "cmd": cmd, "env": env or {}, "input": stdin, "cwd": str(PROJ)})
+
+    def stop(self):
+        try:
+            self.ask({"op": "exit"})
+        except Exception:
+            pass
+        self.p.wait(timeout=10)
+
+
+def fake_label(f):
+    return "가짜 agy " + (" ".join(f.args) if f.args else "(터미널)")
+
+
+def agy_under(f, payload, what, node="node"):
+    r = f.run([node, str(APKG / "scripts" / "antigravity-hook.mjs")], env={"PLUGIN_ROOT": str(APKG), "PLUGIN_DATA": str(APKG_DATA)},
+              stdin=json.dumps(payload))
+    out = r["stdout"]
+    try:
+        j = json.loads(out.strip().splitlines()[-1]) if out.strip() else None
+        if j and "injectSteps" in j:
+            out = "\n\n".join(x["systemMessage"]["systemMessage"] for x in j["injectSteps"])
+    except Exception:
+        pass
+    record("hook", what, {"명령": "antigravity-hook.mjs", "입력": {k: scrub(v) if isinstance(v, str) else v for k, v in payload.items()},
+                          "실행 자리": fake_label(f), **({"node": node} if node != "node" else {})}, out, r["stderr"], r["code"])
+    return out
+
+
+REG_CMD = f'node "{APKG / "scripts" / "antigravity-wake-register.mjs"}"'  # wake-command.mjs registerCommand(PLUGIN_ROOT)와 같은 글
+
+
+def register_under(f, what, env, shown_env):
+    r = f.run(["sh", "-c", REG_CMD], env=env) if f else None
+    if r is None:
+        p = subprocess.run(["sh", "-c", REG_CMD], capture_output=True, text=True, env={**ENV, **env}, cwd=PROJ)
+        r = {"stdout": p.stdout, "stderr": p.stderr, "code": p.returncode}
+    record("CLI", what, {"명령": "node scripts/antigravity-wake-register.mjs", "실행 자리": fake_label(f) if f else "agy 조상 없음 (run_a 아래 바로)",
+                         "env": shown_env}, r["stdout"], r["stderr"], r["code"])
+    return r
+
+
+def pretool(what, stdin, root=APKG, via_manifest=False):
+    if via_manifest:  # hooks.json의 명령 글 그대로(진입 스크립트가 없으면 셸의 || echo가 allow를 낸다)
+        cmd = ["sh", "-c", 'node "${PLUGIN_ROOT}/scripts/antigravity-pretool.mjs" || echo \'{"decision":"allow"}\'']
+    else:
+        cmd = ["node", str(root / "scripts" / "antigravity-pretool.mjs")]
+    p = subprocess.run(cmd, input=stdin, capture_output=True, text=True, env={**ENV, "PLUGIN_ROOT": str(root), "PLUGIN_DATA": str(APKG_DATA)}, cwd=PROJ)
+    record("hook", what, {"명령": "antigravity-pretool.mjs", "입력": {"hookEventName": "PreToolUse", "stdin": scrub(stdin)},
+                          **({"명령 글": "hooks.json head-context-pretool"} if via_manifest else {}), **({"PLUGIN_ROOT": scrub(str(root))} if root != APKG else {})},
+           scrub(p.stdout), scrub(p.stderr), p.returncode)
+
+
+def key_files():
+    return sorted(KEY_DIR.glob("*.json")) if KEY_DIR.exists() else []
+
+
+def key_state(f):
+    k = next((json.loads(x.read_text()) for x in key_files() if json.loads(x.read_text()).get("pid") == f.p.pid), None)
+    if k is None:
+        return "이 프로세스의 기록 없음"
+    mode = oct(next(x for x in key_files() if json.loads(x.read_text()).get("pid") == f.p.pid).stat().st_mode & 0o777)
+    return (f"기록 있음 · 칸 {', '.join(c for c in ('asked_at', 'address', 'token', 'registered_at') if c in k)} · 권한 {mode}"
+            + (f" · 열쇠 값이 시험 열쇠와 같음 {'예' if k.get('token') == FAKE_TOKEN else '아니오'}" if 'token' in k else ""))
+
+
+def ls_log():
+    return [json.loads(l) for l in FAKE_LOG.read_text().splitlines() if l.strip()]
+
+
+# A33: 가짜 터미널 agy 아래 사람 대화의 첫 모델 호출 — 등록 지시(MSG-03)가 들어가고 요청 표시가 생긴다
+STATE["label"] = "0.9.18 가짜 터미널 agy, 초기설정 뒤 demo 프로젝트"
+G20, G21, G22, G23, G24, G25, G26 = (gid(i) for i in range(20, 27))
+T1 = FakeAgy()
+agy_under(T1, agy_in(G20, "PreInvocation", lastUserInput="안녕"), "Antigravity PreInvocation (가짜 터미널 agy, 첫 모델 호출)")
+measure("등록 요청 뒤 깨우기 열쇠 기록", {"프로세스": "T1"}, key_state(T1))
+# A34: 같은 프로세스의 두 번째 호출과 /clear 뒤 새 대화 — 다시 요청하지 않는다
+agy_under(T1, agy_in(G20, "PreInvocation", lastUserInput="계속"), "Antigravity PreInvocation (같은 가짜 터미널 agy, 두 번째 호출)")
+agy_under(T1, agy_in(G21, "PreInvocation", lastUserInput="새 대화"), "Antigravity PreInvocation (같은 가짜 터미널 agy, /clear 뒤 새 대화)")
+# A35: 등록 명령(agy가 넘기는 주소·열쇠가 있음) — '등록됨' 한 줄, 기록에 주소·열쇠, 열쇠는 출력에 없음
+SHOWN = {"ANTIGRAVITY_LS_ADDRESS": "localhost:<가짜 LS 포트>", "ANTIGRAVITY_CSRF_TOKEN": "<시험 열쇠>"}
+r = register_under(T1, "깨우기 등록 명령 (가짜 터미널 agy 아래, 주소·열쇠 있음)",
+                   {"ANTIGRAVITY_LS_ADDRESS": f"localhost:{T1.port}", "ANTIGRAVITY_CSRF_TOKEN": FAKE_TOKEN}, SHOWN)
+measure("등록 뒤 깨우기 열쇠 기록", {"프로세스": "T1"},
+        key_state(T1) + f" · 출력·stderr에 열쇠 {'있음' if FAKE_TOKEN in r['stdout'] + r['stderr'] else '없음'}")
+# A36: 등록 명령 실패 — 주소 없음 / 주소 꼴 / agy 못 찾음 / 기록 실패
+register_under(T1, "깨우기 등록 명령 (주소·열쇠 없음)", {}, {})
+register_under(T1, "깨우기 등록 명령 (쓸 수 없는 주소)", {"ANTIGRAVITY_LS_ADDRESS": "example.com:80", "ANTIGRAVITY_CSRF_TOKEN": FAKE_TOKEN},
+               {"ANTIGRAVITY_LS_ADDRESS": "example.com:80", "ANTIGRAVITY_CSRF_TOKEN": "<시험 열쇠>"})
+register_under(None, "깨우기 등록 명령 (agy 조상 없음)", {"ANTIGRAVITY_LS_ADDRESS": "localhost:1", "ANTIGRAVITY_CSRF_TOKEN": FAKE_TOKEN},
+               {"ANTIGRAVITY_LS_ADDRESS": "localhost:1", "ANTIGRAVITY_CSRF_TOKEN": "<시험 열쇠>"})
+KEY_DIR.chmod(0o500)
+register_under(T1, "깨우기 등록 명령 (기록 폴더에 쓸 수 없음)", {"ANTIGRAVITY_LS_ADDRESS": f"localhost:{T1.port}", "ANTIGRAVITY_CSRF_TOKEN": FAKE_TOKEN}, SHOWN)
+KEY_DIR.chmod(0o700)
+measure("실패 뒤 깨우기 열쇠 기록", {"프로세스": "T1"}, key_state(T1))
+# A37: 도구 전 훅(PreToolUse) — 등록 명령에만 auto_approve, 나머지·오류는 allow, 진입 스크립트가 없으면 셸이 allow
+STATE["label"] = "0.9.18 Antigravity 도구 전 훅(PreToolUse)"
+pretool("Antigravity PreToolUse (등록 명령과 글자까지 같은 run_command)", json.dumps({"toolCall": {"name": "run_command", "args": {"CommandLine": REG_CMD}}}))
+pretool("Antigravity PreToolUse (다른 셸 명령)", json.dumps({"toolCall": {"name": "run_command", "args": {"CommandLine": "ls"}}}))
+pretool("Antigravity PreToolUse (등록 명령에 인자를 붙임)", json.dumps({"toolCall": {"name": "run_command", "args": {"CommandLine": REG_CMD + " x"}}}))
+pretool("Antigravity PreToolUse (다른 도구)", json.dumps({"toolCall": {"name": "view_file", "args": {"AbsolutePath": "/etc/hosts"}}}))
+pretool("Antigravity PreToolUse (깨진 입력)", "{")
+NOPKG = ROOT / "no-plugin"
+NOPKG.mkdir(parents=True, exist_ok=True)
+pretool("Antigravity PreToolUse (hooks.json 명령 글, 진입 스크립트 없음)", json.dumps({"toolCall": {"name": "run_command", "args": {"CommandLine": "ls"}}}),
+        root=NOPKG, via_manifest=True)
+# A38: 등록된 가짜 터미널 agy가 G20 잠금을 쥔 채 세 보내기 — started, 열쇠 헤더, 본문에 원문 없음, 깨어난 턴에 원문 한 번
+STATE["label"] = "0.9.18 등록된 가짜 터미널 agy가 G20을 화면에 띄움"
+T1.ask({"op": "hold", "id": G20})
+before = len(ls_log())
+cli(["relay.mjs", str(PROJ), f"antigravity:{G20}", f"claude:{C1}"], "Claude → Antigravity 중계(등록된 터미널 대화)", stdin="Claude에서 보냄: 시안 나왔어요")
+c = Server("codex-mcp.mjs", cwd=CPKG)
+c.rpc("initialize", {"protocolVersion": "2025-06-18"})
+c.call("send", {"threadId": f"antigravity:{G20}", "prompt": "Codex에서 보냄: 리뷰 부탁"}, "Codex send(등록된 터미널 Antigravity 대화)", meta={"threadId": X1, "sessionId": X1})
+c.close()
+a = Server("antigravity-mcp.mjs", cwd=APKG)
+a.rpc("initialize", {"protocolVersion": "2025-06-18"})
+a.call("send", {"threadId": f"antigravity:{G20}", "prompt": "Antigravity에서 보냄: 확인했어요"}, "Antigravity send(등록된 터미널 대화)", meta=M(G3))
+a.close()
+got = ls_log()[before:]
+measure("가짜 LS가 받은 깨우기 신호", {"대화": "G20", "보낸 곳": "Claude 중계·Codex send·Antigravity send"},
+        f"신호 {len(got)}건 · 열쇠 헤더 일치 {sum(1 for g in got if g['token'])}건 · 받는 대화 G20 {sum(1 for g in got if g['body'].get('recipient') == G20)}건 · "
+        f"본문에 보낸 글이 든 신호 {sum(1 for g in got if any(w in json.dumps(g['body'], ensure_ascii=False) for w in ('시안', '리뷰', '확인했어요')))}건 · "
+        f"본문 content: {sorted({g['body'].get('content') for g in got})}")
+agy_under(T1, agy_in(G20, "PreInvocation", lastUserInput="안녕"), "Antigravity PreInvocation (깨어난 터미널 대화: 편지함 셋)")
+measure("깨어난 뒤 편지함", {"대화": "G20"},
+        f"남은 메시지 {len(list((STATE_DIR / 'inbox' / f'antigravity-{G20}').glob('*.json'))) if (STATE_DIR / 'inbox' / f'antigravity-{G20}').exists() else 0}개")
+# A39: 화면에서 떠난 대화(잠금을 놓음) — queued, 신호 없음
+STATE["label"] = "0.9.18 G20을 화면에서 떠남(G21을 띄움)"
+T1.ask({"op": "release", "id": G20})
+T1.ask({"op": "hold", "id": G21})
+before = len(ls_log())
+a = Server("antigravity-mcp.mjs", cwd=APKG)
+a.rpc("initialize", {"protocolVersion": "2025-06-18"})
+a.call("send", {"threadId": f"antigravity:{G20}", "prompt": "떠난 대화로 보냄"}, "Antigravity send(화면에서 떠난 터미널 대화)", meta=M(G3))
+a.close()
+measure("떠난 대화로 보낸 뒤 가짜 LS", {"대화": "G20"}, f"새 신호 {len(ls_log()) - before}건")
+# A40: agy를 다시 띄움 — 옛 프로세스로는 queued, 새 프로세스 첫 호출에 다시 요청, 옛 기록은 지워짐
+STATE["label"] = "0.9.18 가짜 터미널 agy를 다시 띄움"
+T1.stop()
+a = Server("antigravity-mcp.mjs", cwd=APKG)
+a.rpc("initialize", {"protocolVersion": "2025-06-18"})
+a.call("send", {"threadId": f"antigravity:{G20}", "prompt": "꺼진 agy로 보냄"}, "Antigravity send(쥔 agy가 꺼진 터미널 대화)", meta=M(G3))
+a.close()
+T2 = FakeAgy()
+agy_under(T2, agy_in(G20, "PreInvocation", lastUserInput="다시 왔어"), "Antigravity PreInvocation (다시 띄운 가짜 터미널 agy, 같은 대화)")
+measure("다시 띄운 뒤 깨우기 열쇠 기록", {"프로세스": "T2"},
+        f"기록 파일 {len(key_files())}개 · 옛 프로세스 기록 {'남음' if any(json.loads(x.read_text()).get('pid') == T1.p.pid for x in key_files()) else '지워짐'} · 새 프로세스: {key_state(T2)}")
+T2.stop()
+# A41: 요청하지 않는 경우 — ACP, print 모드, --remote-agent, 서브에이전트, agy 조상 없음
+STATE["label"] = "0.9.18 등록을 요청하지 않는 실행 자리"
+for args, cid, what in ((("acp",), G22, "가짜 agy acp"), (("-p", "hello"), G23, "가짜 agy -p"), (("--remote-agent",), G24, "가짜 agy --remote-agent")):
+    f = FakeAgy(*args)
+    agy_under(f, agy_in(cid, "PreInvocation", lastUserInput="안녕"), f"Antigravity PreInvocation ({what}, 첫 모델 호출)")
+    measure(f"{what}의 깨우기 열쇠 기록", {"대화": cid}, key_state(f))
+    f.stop()
+T3 = FakeAgy()
+parent_message(sid(10), G3)
+agy_under(T3, agy_in(sid(10), "PreInvocation", lastUserInput=""), "Antigravity PreInvocation (가짜 터미널 agy의 서브에이전트, 첫 모델 호출)")
+measure("서브에이전트 뒤 깨우기 열쇠 기록", {"프로세스": "T3"}, key_state(T3))
+agy(agy_in(G25, "PreInvocation", lastUserInput="안녕"), "Antigravity PreInvocation (agy 조상 없음, 첫 모델 호출)")
+# A42: 옛 Node(node:sqlite 없음)에서도 요청한다
+STATE["label"] = "0.9.18 가짜 터미널 agy, node:sqlite가 없는 Node"
+agy_under(T3, agy_in(G26, "PreInvocation", lastUserInput="안녕"), "옛 Node · Antigravity PreInvocation (가짜 터미널 agy, 첫 모델 호출)", node=OLD)
+measure("옛 Node 요청 뒤 깨우기 열쇠 기록", {"프로세스": "T3"}, key_state(T3))
+T3.stop()
+
 OUT.write_text(json.dumps(runs, ensure_ascii=False, indent=1))
 print(len(runs), "runs")

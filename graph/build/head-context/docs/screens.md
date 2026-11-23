@@ -242,7 +242,7 @@ agent는 일을 시작할 때 start-job을 부른다. 시작 때 연결 안 됨 
 5. **읽기** — 무엇(연결을 바꾸지 않고 기록을 읽음)·언제: 지금 하는 일이나 지난 일을 찾을 때는 무조건 read부터, 물음의 낱말로 read find, 없으면 read recent, 파일·코드는 그다음(0.9.17). → `tool:read` 문구: `작업 세션의 기록을 연결을 바꾸지 않고 읽습니다`
 6. **할 일** — 무엇·언제(todo add/done). → `tool:todo` 문구: `작업 세션에 남는 나중에 할 일입니다`
 7. **다른 대화** — 먼저 목록(conversations)을 보고, 목록의 보낼 곳을 이 앱의 보내기 도구에 그대로 준다. → `tool:conversations` 문구: `이 프로젝트에서 살아 있는 대화와`
-8. **이 앱에서 부르는 도구** — Claude: SendMessage(to), Agent 도구 fork / 다른 subagent_type. Codex: 이 플러그인의 send(threadId, prompt), spawn_agent fork_turns "all"/"none". Antigravity: 기록 도구는 플러그인 MCP 서버 head-context_session의 도구를 call_mcp_tool로, 보내기는 이 플러그인의 send, delivery는 started·queued(0.9.11~). OpenCode에는 없다. → `tool:send` → `tool:send@antigravity` 문구: `이 앱(<앱>)에서 부르는 도구`
+8. **이 앱에서 부르는 도구** — Claude: SendMessage(to), Agent 도구 fork / 다른 subagent_type. Codex: 이 플러그인의 send(threadId, prompt), spawn_agent fork_turns "all"/"none". Antigravity: 기록 도구는 플러그인 MCP 서버 head-context_session의 도구를 call_mcp_tool로, 보내기는 이 플러그인의 send, delivery는 started·queued(0.9.11~). started는 살아 있는 ACP 대화나 깨우기 등록을 마친 터미널 대화(0.9.18), 등록 안 된 터미널 대화와 데스크톱 앱은 queued. OpenCode에는 없다. → `tool:send` → `tool:send@antigravity` 문구: `이 앱(<앱>)에서 부르는 도구`
 
 ### 화면 정책
 - `pol.no-host-tool-names`
@@ -273,8 +273,8 @@ agent는 일을 시작할 때 start-job을 부른다. 시작 때 연결 안 됨 
 7. **todo** — add/list/done, 기한은 실제 날짜로. → `tool:todo` 문구: `작업 세션의 할 일(todo.md)`
 8. **conversations** — 받을 대화 고르는 법 세 단계. 0.9.15부터 "Claude Code·Codex·Antigravity 대화가 한 목록에 함께 나옵니다"(0.9.14까지는 Claude Code와 Codex만 적혀 있었다). → `tool:conversations` 문구: `다른 대화에 말을 전하기 전에 받을 대화를 고르는 목록입니다`
 9. **setup** — 동의했을 때만, 하는 일, never_ask·survey_done. → `tool:setup` 문구: `프로젝트 첫 실행의 유일한 쓰기 도구`
-10. **send** — Codex 도구 서버에만. 받는 쪽마다 delivery 값. 0.9.11부터 Antigravity 대화로도 간다. → `tool:send` 문구: `다른 대화에 메시지를 보냅니다`
-11. **send(Antigravity)** — Antigravity 도구 서버에만. threadId는 conversations의 보낼 곳 그대로, delivery는 started·queued(R171). → `tool:send@antigravity` 문구: `started는 처리가 끝났다는 확인이 아닙니다`
+10. **send** — Codex 도구 서버에만. 받는 쪽마다 delivery 값. 0.9.11부터 Antigravity 대화로도 간다. 0.9.18부터 Antigravity는 살아 있는 ACP 대화와 깨우기 등록을 마친 터미널 대화를 바로 깨우고, 등록 안 된 터미널·화면에서 떠난 대화·데스크톱 앱·깨우기 실패는 다음 입력 때 받는다. → `tool:send` 문구: `다른 대화에 메시지를 보냅니다`
+11. **send(Antigravity)** — Antigravity 도구 서버에만. threadId는 conversations의 보낼 곳 그대로, delivery는 started(살아 있는 ACP 대화나 깨우기 등록을 마친 터미널 대화, 0.9.18)·queued(등록 안 된 터미널 대화·화면에서 떠난 대화·데스크톱 앱·깨우기 실패)(R171). → `tool:send@antigravity` 문구: `started는 처리가 끝났다는 확인이 아닙니다`
 
 ### 화면 정책
 - `pol.no-host-tool-names`
@@ -456,12 +456,12 @@ agent는 이 차례대로 문제를 파악하고, 기존 기록을 read로 먼�
 ## TOL-13 보내기 결과
 
 - 출력 종류: tool 결과(Codex send, Antigravity send)
-- 원문: R74, R178·R179(Antigravity send → queued)
+- 원문: R74, R178·R179(Antigravity send → queued), R274·R275(0.9.18 등록된 터미널 대화 — Codex·Antigravity send started), R279(화면에서 떠난 대화 — queued), R281(쥔 agy가 꺼짐 — queued)
 - 내는 기능: `tool:send`, `tool:send@antigravity`
 - 그리는 코드: `code:hosts/codex/mcp.mjs#sendTool.call`, `code:hosts/antigravity/mcp.mjs#serveAntigravity.call`
 
 ### 화면요소
-1. **JSON 한 줄** — `{"threadId":"<받는 곳>","delivery":"started|app-queued|queued|sent"}`. Antigravity 대상의 delivery는 `started`(살아 있는 ACP 대화를 바로 깨움, 처리 끝 확인은 아님)·`queued`다. ← `tool:send` ← `tool:send@antigravity` 문구: `{"threadId":"<받는 곳>","delivery":"<값>"}`
+1. **JSON 한 줄** — `{"threadId":"<받는 곳>","delivery":"started|app-queued|queued|sent"}`. Antigravity 대상의 delivery는 `started`(살아 있는 ACP 대화나 깨우기 등록을 마친 터미널 대화 중 지금 화면의 대화를 바로 깨움, 일하는 중이면 다음 단계에서 받음, 처리 끝 확인은 아님, 0.9.18부터 터미널 포함)·`queued`(등록 안 된 터미널, 화면에서 떠난 대화, 데스크톱 앱, 깨우기 실패)다. ← `tool:send` ← `tool:send@antigravity` 문구: `{"threadId":"<받는 곳>","delivery":"<값>"}`
 
 ## ERR-01 도구 오류
 
@@ -515,7 +515,7 @@ agent는 이 차례대로 문제를 파악하고, 기존 기록을 read로 먼�
 ## ERR-04 훅 실패 한 줄
 
 - 출력 종류: 시작·입력 훅이 넣는 글
-- 상태: 훅 실행 중 오류
+- 상태: 훅 실행 중 오류. Antigravity 도구 전 훅(PreToolUse)은 실패해도 이 줄을 내지 않고 허락(allow)을 돌려준다(R271·R272, `pol.hook-failure-says`)
 - 원문: R64(.head/config.json이 깨짐), R163(Antigravity 시작 파일의 없는 작업 세션), R231(Antigravity 편지함 폴더를 읽을 수 없음)
 - 내는 기능: `hook:claude:SessionStart:session`, `hook:codex:SessionStart:session`, `hook:codex:UserPromptSubmit:inbox`, `hook:antigravity:SessionStart`, `hook:antigravity:PreInvocation`
 - 그리는 코드: `code:hosts/claude/hook.mjs`, `code:hosts/codex/hook.mjs`, `code:hosts/antigravity/hook.mjs#runHook`
@@ -567,7 +567,7 @@ agent는 이 줄을 사람에게 전한다. 사람이 node를 바꾸고 대화�
 
 - 출력 종류: 입력 훅(Codex)·매 단계 훅(Antigravity)이 넣는 글
 - 상태: 바로 깨우지 못한 동안 이 대화로 온 메시지가 편지함에 있음. Antigravity: 편지함에 메시지가 있음(깨우기로 열린 턴, 서브에이전트 포함)
-- 원문: R79(있음), R80(빈 편지함 — 출력 없음), R166·R183(Antigravity), R189(Antigravity, node:sqlite 없는 Node)
+- 원문: R79(있음), R80(빈 편지함 — 출력 없음), R166·R183(Antigravity), R189(Antigravity, node:sqlite 없는 Node), R277·R282(0.9.18 깨어난 터미널 대화 — 세 앱이 보낸 원문이 한 번씩)
 - 내는 기능: `hook:codex:UserPromptSubmit:inbox`, `hook:antigravity:PreInvocation`
 - 그리는 코드: `code:core/inbox.mjs#asMessage`(0.9.15부터 Codex·Antigravity가 같이 쓴다)
 
@@ -580,13 +580,33 @@ agent는 이 줄을 사람에게 전한다. 사람이 node를 바꾸고 대화�
 
 - 출력 종류: Claude의 SendMessage 결과(호스트가 보여 줌), 그 안의 판정은 중계 출력
 - 상태: Claude 대화가 `codex:<ID>`·`antigravity:<ID>`로 SendMessage
-- 원문: R86(이 프로젝트의 대화가 아님), R87(편지함에 둠) — 중계 스크립트 출력. R181(Antigravity 편지함에 둠), R182(없는 Antigravity 대화)
+- 원문: R86(이 프로젝트의 대화가 아님), R87(편지함에 둠) — 중계 스크립트 출력. R181(Antigravity 편지함에 둠), R182(없는 Antigravity 대화), R273(0.9.18 등록된 터미널 Antigravity 대화 — started)
 - 내는 기능: `hook:claude:session.send`
 - 그리는 코드: `code:hooks/conversations.mjs#register`, `code:scripts/relay.mjs`
 
 ### 화면요소
-1. **보냄** — 호스트에 `isDelivered: true`(중계 출력 `{"delivered":true,"how":"started|app-queued|queued"}`, Antigravity는 started·queued). ← `hook:claude:session.send`
+1. **보냄** — 호스트에 `isDelivered: true`(중계 출력 `{"delivered":true,"how":"started|app-queued|queued"}`, Antigravity는 started·queued, started는 ACP 대화와 등록된 터미널 대화 0.9.18). ← `hook:claude:session.send`
 2. **못 보낸 이유** — `isDelivered: false`와 reason(예: `이 프로젝트에서 연 Codex 대화가 아닙니다: codex:<ID>`, `Codex로 보내는 중 플러그인 오류가 났습니다`). ← `hook:claude:session.send` Antigravity: `받는 Antigravity 대화를 찾을 수 없습니다: antigravity:<ID>`, `Antigravity로 보내지 못했습니다`, `Antigravity로 보내는 중 플러그인 오류가 났습니다`(코드). 문구: `받는 Antigravity 대화를 찾을 수 없습니다`
+
+## MSG-03 깨우기 등록 지시
+
+- 출력 종류: Antigravity 매 턴 훅이 넣는 시스템 메시지
+- 상태: 터미널 agy 프로세스의 사람 대화에서, 그 프로세스에 처음 요청하는 모델 호출(프로세스마다 한 번, 0.9.18). ACP·print 모드(-p·--print·--prompt)·--remote-agent·서브에이전트·/compact 단계·agy를 못 찾은 대화(데스크톱 앱 등)에는 없다. 옛 Node에서도 나온다
+- 원문: R256(가짜 터미널 agy 첫 호출), R282(다시 띄운 agy), R293(옛 Node). 없는 경우 R258·R259·R284·R286·R288·R290·R292
+- 내는 기능: `hook:antigravity:PreInvocation`
+- 그리는 코드: `code:hosts/antigravity/hook.mjs#WAKE_ASK`, 명령 글 `code:hosts/antigravity/wake-command.mjs#registerCommand`
+
+### 개요
+이 agy 프로세스로 오는 다른 대화의 메시지에 이 대화가 깨어나도록, 사람 물음에 답하기 전에 등록 명령을 한 번 돌리게 한다.
+
+### 화면 흐름
+agent는 이 지시대로 run_command로 명령을 글자 그대로 한 번 돌린다(도구 전 훅이 자동 승인해 허락 창이 뜨지 않는다). 출력 한 줄(CLI-02)을 받은 뒤 사람 물음에 답한다. 못 돌렸거나 거절되면 다시 시도하지 않는다.
+
+### 화면요소
+1. **무엇을 위한 지시인지** — `head-context 깨우기 등록:` 머리와 아직 등록되지 않아 깨울 수 없다는 한 줄. ← `hook:antigravity:PreInvocation` 문구: `이 agy 프로세스는 아직 등록되지 않아, 다른 대화가 보낸 메시지로 이 대화를 깨울 수 없습니다`
+2. **실행 지시** — 답하기 전에 run_command로 글자 그대로 한 번, 인자·따옴표·경로를 고치지 말 것, 출력은 한 줄. ← `hook:antigravity:PreInvocation` 문구: `사용자 물음에 답하기 전에 run_command로 아래 명령을 글자 그대로 한 번만 실행하세요`
+3. **등록 명령 한 줄** — 인자 없는 `node "<플러그인 폴더>/scripts/antigravity-wake-register.mjs"`. 도구 전 훅이 이 글과 글자까지 같은 명령에만 자동 승인을 준다. ← `hook:antigravity:PreInvocation` → `cli:antigravity-wake-register` 문구: `scripts/antigravity-wake-register.mjs"`
+4. **실패 때** — 못 돌렸거나 거절되면 다시 시도하지 말고 답한다. ← `hook:antigravity:PreInvocation` 문구: `실행하지 못했거나 거절되면 다시 시도하지 말고 사용자 물음에 답하세요`
 
 ## CMP-01 압축 요약 지시
 
@@ -617,3 +637,15 @@ agent는 이 줄을 사람에게 전한다. 사람이 node를 바꾸고 대화�
 4. **그 브랜치를 가리키던 대화** — 메인으로 n개. ← `cli:migrate-0.7` 문구: `## 이 브랜치를 가리키던 대화 → 메인`
 5. **반복 이름표** — `"(fork)"` 반복을 하나로 n개. ← `cli:migrate-0.7` 문구: `반복 이름표 → 하나로`
 6. **경로 없음** — stderr `프로젝트 경로가 필요합니다: node scripts/migrate-0.7.mjs <프로젝트> [--apply]`, 종료 코드 1. ← `cli:migrate-0.7`
+
+## CLI-02 깨우기 등록 명령 출력
+
+- 출력 종류: CLI 출력(scripts/antigravity-wake-register.mjs, 모델이 터미널 agy 셸에서 run_command로 돌림)
+- 상태: 등록 지시(MSG-03)를 받은 모델이 명령을 돌림(0.9.18)
+- 원문: R260(등록됨), R262(주소를 넘기지 않음), R263(쓸 수 없는 주소), R264(agy 조상 없음), R265(기록 폴더에 쓸 수 없음)
+- 내는 기능: `cli:antigravity-wake-register`
+- 그리는 코드: `code:scripts/antigravity-wake-register.mjs#registerWake`
+
+### 화면요소
+1. **등록됨** — 성공 한 줄. 열쇠·주소를 내지 않는다(R261). ← `cli:antigravity-wake-register` 문구: `head-context: 깨우기 등록됨`
+2. **등록 안 됨과 이유** — `head-context: 깨우기 등록 안 됨 — <이유>` 한 줄. 이유는 `agy가 깨울 주소를 넘기지 않았습니다.` / `agy가 넘긴 주소를 쓸 수 없습니다.` / `agy 프로세스를 찾지 못했습니다.` / `기록을 쓰지 못했습니다(<오류 코드>).` 넷이다. ← `cli:antigravity-wake-register` 문구: `head-context: 깨우기 등록 안 됨 — <이유>`

@@ -5,8 +5,8 @@
 ## 준비
 
 - Python 3 (따로 설치할 것은 없습니다)
-- 이 폴더의 파일 셋: `head-context-0.9.17.sqlite`, `hc_graph.py`, `LLM.md`
-- 코드 원문까지 보게 하려면: head-agent-core 저장소. 그래프는 commit `d2be2ca`(head-context 0.9.17) 기준입니다.
+- 이 폴더의 파일 셋: `head-context-0.9.18.sqlite`, `hc_graph.py`, `LLM.md`
+- 코드 원문까지 보게 하려면: head-agent-core 저장소. 그래프는 commit `e15c110`(head-context 0.9.18) 기준입니다.
 
 ## AI에게 이렇게 말하세요
 
@@ -18,7 +18,7 @@
 코드 원문까지 읽게 하려면 한 줄을 더합니다.
 
 ```
-코드는 <head-agent-core 저장소 경로>에서 commit d2be2ca 기준으로 읽어.
+코드는 <head-agent-core 저장소 경로>에서 commit e15c110 기준으로 읽어.
 ```
 
 ## 이런 걸 물을 수 있습니다
@@ -30,6 +30,6 @@
 
 ## 알아 둘 것
 
-- 그래프는 0.9.17 기준입니다. 그 뒤에 바뀐 코드는 들어 있지 않습니다.
+- 그래프는 0.9.18 기준입니다. 그 뒤에 바뀐 코드는 들어 있지 않습니다.
 - "이걸 바꾸면 무엇이 영향을 받나"에 나오는 유저가 받는 글 목록은 후보입니다. 그 기능이 내는 글 전부를 보여 줍니다.
 - 유저가 하는 일은 0.9.5 때 Claude Code로 실제로 써 보고 썼습니다. Codex·OpenCode·Antigravity 쪽은 실제 앱 없이 훅과 도구 서버를 직접 돌린 출력과 코드로 썼습니다.

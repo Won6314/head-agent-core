@@ -1,5 +1,5 @@
 {
-  "_": "B-6 뜻 파일. 그래프에 직접 쓰는 것: 기능 한 줄, 정책(조건/주체/행위). 근거의 R번호는 runs/A-1-outputs.md, 코드는 d2be2ca(0.9.17) packages/context 기준(0.9.15에서 온 줄은 e96f5aa, 0.9.10에서 온 줄은 7a5896c 때 확인). R112까지 근거는 0.9.5와 같은 차례의 실행이고, R159~R232는 Antigravity 실행, R233~R255는 0.9.16·0.9.17 변경을 보는 실행이다(R247~R255는 독립 검수 M1의 머리 자르기) 파일:줄.",
+  "_": "B-6 뜻 파일. 그래프에 직접 쓰는 것: 기능 한 줄, 정책(조건/주체/행위). 근거의 R번호는 runs/A-1-outputs.md, 코드는 e15c110(0.9.18) packages/context 기준(0.9.17에서 온 줄은 d2be2ca, 0.9.15에서 온 줄은 e96f5aa, 0.9.10에서 온 줄은 7a5896c 때 확인). R112까지 근거는 0.9.5와 같은 차례의 실행이고, R159~R232는 Antigravity 실행, R233~R255는 0.9.16·0.9.17 변경을 보는 실행이다(R247~R255는 독립 검수 M1의 머리 자르기), R256~R294는 0.9.18 터미널 깨우기(가짜 agy)다 파일:줄.",
   "features": {
     "tool:list": "작업 세션 목록을 최근 기록 순으로 돌려준다",
     "tool:load": "작업 세션을 불러와 이 대화를 메인이나 작업 브랜치에 연결하고 작업 맥락을 돌려준다",
@@ -37,7 +37,9 @@
     "skill:start-job": "일을 시작하기 전 문제·목표·조건, 기존 자료, 작업 세션·작업 브랜치, 진행 방식을 정하는 절차를 agent에게 준다. 연결 안 된 대화는 첫 말을 받을 때도 부른다(0.9.17)",
     "tool:send@antigravity": "Antigravity 대화에서 다른 Claude·Codex·Antigravity 대화로 메시지를 보낸다(Antigravity 도구 서버에만)",
     "hook:antigravity:SessionStart": "Antigravity 대화가 처음 시작될 때 대화 정보(presence)와 등록을 쓰고, 코어 지침·서버 안내문·작업 세션 머리(또는 연결 안 됨)·작업 맥락·첫 실행 안내를 시스템 메시지로 넣는다. 클라이언트가 둔 시작 파일이 있으면 그 작업 세션(·작업 브랜치)에 도구 호출 없이 연결한다. 서브에이전트(invoke_subagent)로 판정되면 대화 안 작업 안내 하나만 넣고 대화 정보·작업 세션 연결을 쓰지 않으며 판정을 등록 파일에 남긴다",
-    "hook:antigravity:PreInvocation": "Antigravity 대화의 매 단계 앞에서 대화 정보를 다시 쓰고 편지함 메시지를 넣는다. /compact 입력이면 압축 요약 지시를 넣고, 새 압축 표시(CHECKPOINT)가 보이면 코어·작업 세션·작업 맥락·최근 대화 원문을 한 번 되살린다. 등록 파일에 판정이 없으면 서브에이전트인지 한 번 판정하고, 서브에이전트면 대화 정보를 쓰지 않고 남은 것은 지우며 압축 지시 없이 압축 뒤 대화 안 작업 안내 하나만 넣는다"
+    "hook:antigravity:PreInvocation": "Antigravity 대화의 매 단계 앞에서 대화 정보를 다시 쓰고 편지함 메시지를 넣는다. /compact 입력이면 압축 요약 지시를 넣고, 새 압축 표시(CHECKPOINT)가 보이면 코어·작업 세션·작업 맥락·최근 대화 원문을 한 번 되살린다. 등록 파일에 판정이 없으면 서브에이전트인지 한 번 판정하고, 서브에이전트면 대화 정보를 쓰지 않고 남은 것은 지우며 압축 지시 없이 압축 뒤 대화 안 작업 안내 하나만 넣는다. 터미널 agy(ACP·print·--remote-agent 아님)의 사람 대화이고 그 프로세스에 처음이면 깨우기 열쇠 기록에 요청 표시를 만들고 등록 지시를 넣는다(0.9.18, /compact 단계 제외, 옛 Node도)",
+    "hook:antigravity:PreToolUse": "Antigravity 대화가 셸 명령(run_command)을 부르기 직전, 플러그인 자기 깨우기 등록 명령과 글자까지 같으면 자동 승인(auto_approve)을, 그 밖과 입력 오류에는 허락(allow, agy 기본 정책에 맡김)을 돌려준다. 진입 스크립트가 뜨지 못하면 hooks.json 명령의 셸 대체(|| echo)가 allow를 낸다",
+    "cli:antigravity-wake-register": "터미널 agy 셸에서 모델이 인자 없이 돌리는 깨우기 등록 명령. agy가 그 셸에 넘긴 LS 주소·열쇠와 자기 agy 프로세스(pid·시작 시각)를 깨우기 열쇠 기록에 남기고 '깨우기 등록됨' 한 줄(실패면 이유 한 줄)만 낸다. 열쇠는 내지 않는다"
   },
   "policies": [
     {
@@ -396,9 +398,9 @@
       "kind": "표시",
       "condition": "시작·입력·하위 에이전트 훅(Antigravity 시작·매 단계 훅 포함)이 실패하면",
       "subject": "훅은",
-      "action": "stderr에만 쓰지 않고 대화에 실패 한 줄을 넣는다",
+      "action": "stderr에만 쓰지 않고 대화에 실패 한 줄을 넣는다. 예외: Antigravity 도구 전 훅(PreToolUse)은 실패 줄을 내지 않고 늘 허락(allow)을 돌려준다(빈 답·훅 실패는 agy가 그 셸 명령을 거절하므로). 진입 스크립트가 뜨지 못하면 hooks.json 명령의 '|| echo' 대체가 allow를 낸다. 10초 시간 초과는 셸 대체로도 막지 못해 agy가 거절한다(0.9.18 실제 확인)",
       "features": [],
-      "evidence": "R64 · hosts/antigravity/hook.mjs catch(부분 이름 없는 한 줄) · R163"
+      "evidence": "R64 · hosts/antigravity/hook.mjs catch(부분 이름 없는 한 줄) · R163 · R271(깨진 입력 — allow), R272(진입 스크립트 없음 — 셸 대체 allow) · 실제-확인.md 「훅 실패 관찰」·「보완 확인(e15c110)」"
     },
     {
       "id": "pol.name-chars",
@@ -718,14 +720,14 @@
     {
       "id": "pol.agy-owner-pid",
       "kind": "처리",
-      "condition": "Antigravity 사람 대화의 훅이 presence를 쓸 때",
-      "subject": "훅은",
+      "condition": "Antigravity 사람 대화의 훅이 presence를 쓸 때, 그리고 깨우기 등록 명령이 자기 프로세스를 적을 때",
+      "subject": "훅과 깨우기 등록 명령은",
       "action": "셸·훅 부모를 넘어 올라가 실제 agy 프로세스를 찾아 그 pid와 시작 식별값을 쓴다. 재개하면 앞 프로세스의 값을 지우고 다시 찾는다. 찾지 못하면 pid를 쓰지 않는다",
       "features": [
         "hook:antigravity:SessionStart",
         "hook:antigravity:PreInvocation"
       ],
-      "evidence": "hosts/antigravity/process.mjs agyOwner · threads.mjs writePresence · 시험 antigravity.test.mjs 'Antigravity owner', run_a에는 agy가 없어 pid 없음"
+      "evidence": "hosts/antigravity/process.mjs agyOwner · threads.mjs writePresence · 시험 antigravity.test.mjs 'Antigravity owner', run_a에는 agy가 없어 pid 없음 · scripts/antigravity-wake-register.mjs registerWake(agyOwner) — 판정 차례 ③의 비교가 맞는 근거 · R260(가짜 agy 아래 등록), R264(agy 조상 없음 — 못 찾음)"
     },
     {
       "id": "pol.agy-close-presence",
@@ -741,13 +743,13 @@
       "kind": "처리",
       "condition": "다른 대화가 antigravity:<ID>로 보내면",
       "subject": "보내는 쪽(Antigravity peer)은",
-      "action": "먼저 편지함에 넣는다. 그다음 presence의 소유 pid가 살아 있고 그 명령줄에 acp가 있을 때만 그 pid의 ACP 로그에서 HTTP 포트를 읽어 loopback으로 내용 없는 깨우기 신호를 보내고 started를 돌려준다. 다른 pid로 대신 보내지 않는다. 터미널 agy·데스크톱 앱·살아 있지 않은 대화·신호 실패는 queued다. 깨우기 실패는 이미 넣은 편지함 저장을 실패로 바꾸지 않는다. 신호는 공개되지 않은 agy 내부 통로에 기댄다",
+      "action": "먼저 편지함에 넣는다. 그다음 이 차례로 본다. ① presence의 쥔 pid·시작 시각이 살아 있다 ② 그 프로세스가 ACP(명령줄에 acp)면 ACP 로그의 HTTP 포트로 열쇠 없이 보낸다 ③ ACP가 아니면 presence에 시작 시각이 있고, 같은 pid·시작 시각의 깨우기 열쇠 기록에 쓸 수 있는 주소(localhost·127.0.0.1)와 열쇠가 있다 ④ 그 프로세스가 agy 내부 잠금 파일(~/.gemini/antigravity-cli/presence/<ID>.lock)을 열어 두고 있다(지금 화면의 대화) ⑤ 기록의 주소로 기록의 열쇠를 x-codeium-csrf-token 헤더에 붙여 내용 없는 신호를 보낸다. 성공하면 started, 하나라도 안 맞거나 판정할 수 없으면 신호 없이 queued다. 다른 pid로 대신 보내지 않는다. 깨우기 실패는 이미 넣은 편지함 저장을 실패로 바꾸지 않는다. 신호·잠금 파일·열쇠는 공개되지 않은 agy 내부 통로·파일에 기댄다(Linux 확인, Mac 미확인)",
       "features": [
         "tool:send",
         "tool:send@antigravity",
         "hook:claude:session.send"
       ],
-      "evidence": "hosts/antigravity/peer.mjs send · wake.mjs wake · R178·R179·R181(queued), started는 시험 antigravity.test.mjs 'Antigravity send'와 0.9.14 실제 확인만"
+      "evidence": "hosts/antigravity/peer.mjs send · wake.mjs wake·acpSignal·terminalSignal · wake-key.mjs readKey·holdsLock · R178·R179·R181(queued), R273~R275(가짜 터미널 agy, 등록·화면 — started 셋), R276(신호 셋 모두 열쇠 헤더 일치, 본문에 보낸 글 없음), R279(화면에서 떠난 대화 — queued, 신호 0), R281(쥔 agy가 꺼짐 — queued) · ACP started는 시험 antigravity.test.mjs와 0.9.14 실제 확인, 터미널은 0.9.18 실제 확인(실제-확인.md 3~5)"
     },
     {
       "id": "pol.agy-receiver-known",
@@ -898,6 +900,50 @@
         "hook:antigravity:PreInvocation"
       ],
       "evidence": "core/instruction.mjs instructionLine — 부르는 곳 hosts/claude/process.mjs:159(conversations·현황 데이터), hosts/codex/threads.mjs:129, hosts/antigravity/threads.mjs:22 writePresence(Antigravity SessionStart·PreInvocation) · R245(Antigravity PreInvocation, 사람이 '응') 뒤 R246 presence 측정 said=\"응\" · Claude·Codex 대화 기록에서 고르는 경로는 실행 없음(scripts/conversation.test.mjs에만) · 대화 목록의 '최근 지시'"
+    },
+    {
+      "id": "pol.agy-wake-register-ask",
+      "kind": "처리",
+      "condition": "Antigravity 대화의 모델 호출(PreInvocation) 때, 사람 대화이고(서브에이전트 아님) 입력이 /compact가 아니며, 그 대화의 presence에 쥔 agy의 pid·시작 시각이 있고, 그 프로세스가 터미널 agy(명령줄에 acp, -p·--print·--prompt, --remote-agent가 없음 — =값 꼴 포함)이며, 플러그인 폴더 경로가 쓸 수 있는 꼴이고, 그 프로세스의 깨우기 열쇠 기록이 아직 없으면",
+      "subject": "Antigravity 매 턴 훅은",
+      "action": "그 프로세스의 깨우기 열쇠 기록을 없을 때만 만들기('wx', 0600, 요청 시각만)로 먼저 만들고, 만든 호출만 등록 지시(MSG-03)를 시스템 메시지로 넣는다. 기록이 이미 있으면(요청함·등록됨) 넣지 않는다. 같은 프로세스의 다른 대화(/clear 뒤 새 대화)에도 넣지 않는다. 거절했는지는 기록하지 않는다. agy를 다시 띄우면 새 프로세스라 한 번 더 요청한다. 옛 Node(node:sqlite 없음)에서도 요청한다. 요청을 못 남기면 stderr에 한 줄만 쓰고 넣지 않는다",
+      "features": [
+        "hook:antigravity:PreInvocation"
+      ],
+      "evidence": "hosts/antigravity/hook.mjs runHook(terminalAgy, WAKE_ASK) · wake-key.mjs claimAsk · R256(첫 호출 — 지시), R257(요청 표시: asked_at만, 0600), R258·R259(두 번째 호출·/clear 뒤 새 대화 — 없음), R282(다시 띄운 agy — 다시 지시), R284·R286·R288(acp·-p·--remote-agent — 없음, 기록 없음), R290(서브에이전트 — 없음), R292(agy 조상 없음 — 없음), R293(옛 Node — 지시) · 지시는 systemMessage로(깨우기B-시험 11/11)"
+    },
+    {
+      "id": "pol.agy-wake-register-approve",
+      "kind": "처리",
+      "condition": "Antigravity 대화가 셸 명령(run_command)을 부르기 직전(hooks.json matcher run_command)",
+      "subject": "Antigravity 도구 전 훅은",
+      "action": "플러그인 폴더 경로가 쓸 수 있는 꼴이고 명령 글(args.CommandLine)이 자기 등록 명령(wake-command.mjs registerCommand)과 글자까지 같으면 자동 승인(auto_approve)을 돌려준다. 인자를 붙인 것을 포함해 그 밖의 셸 명령, 입력을 못 읽을 때는 허락(allow, 다음 훅·agy 기본 정책에 맡김)을 돌려준다. 빈 답은 돌려주지 않는다. 사용자 차단·확인 규칙, --sandbox, 관리자 정책은 자동 승인보다 앞선다(agy 쪽 규칙). run_command가 아닌 도구에는 훅이 돌지 않는다",
+      "features": [
+        "hook:antigravity:PreToolUse"
+      ],
+      "evidence": "hosts/antigravity/pretool.mjs decide · scripts/antigravity-pretool.mjs · hooks.json head-context-pretool · R267(auto_approve), R268·R269·R270·R271(allow: 다른 명령·인자 붙임·다른 도구·깨진 입력), R272(진입 없음 — 셸 대체 allow) · 실제-확인.md 1(창 없이 등록)·6(다른 명령은 평소대로, 사용자 deny 규칙이 이김)"
+    },
+    {
+      "id": "pol.agy-wake-key-record",
+      "kind": "처리",
+      "condition": "모델이 깨우기 등록 명령을 돌리면",
+      "subject": "깨우기 등록 명령은",
+      "action": "agy가 그 셸에 넘긴 ANTIGRAVITY_LS_ADDRESS(localhost·127.0.0.1:포트 꼴만)와 ANTIGRAVITY_CSRF_TOKEN, 자기 agy 프로세스(pid·시작 시각)를 그 프로세스의 깨우기 열쇠 기록에 주소·열쇠·등록 시각으로 쓴다(요청 시각은 남김, 임시 파일 0600 → rename). 출력은 한 줄이다: '깨우기 등록됨', 또는 이유(주소를 넘기지 않음 / 주소를 쓸 수 없음 / agy 프로세스를 못 찾음 / 기록을 쓰지 못함(오류 코드)). 열쇠는 출력·명령줄·로그·대화 기록 어디에도 내지 않는다. 인자를 받지 않는다",
+      "features": [
+        "cli:antigravity-wake-register"
+      ],
+      "evidence": "scripts/antigravity-wake-register.mjs registerWake · wake-key.mjs writeKey·portOf · R260(등록됨), R261(칸 asked_at·address·token·registered_at, 0600, 출력에 열쇠 없음), R262~R265(실패 넷), R266(실패 뒤 기록 그대로) · 실제-확인.md 8(열쇠 노출 없음)"
+    },
+    {
+      "id": "pol.agy-wake-key-prune",
+      "kind": "처리",
+      "condition": "매 턴 훅이 터미널 agy의 사람 대화에서 등록 요청을 시도할 때마다(요청 표시를 만들기 전에)",
+      "subject": "Antigravity 매 턴 훅은",
+      "action": "깨우기 열쇠 기록 가운데 읽을 수 없거나, pid가 죽었거나, 그 pid의 지금 시작 시각이 기록과 다른 파일을 지운다. 1시간 지난 임시 파일(.tmp)도 지운다",
+      "features": [
+        "hook:antigravity:PreInvocation"
+      ],
+      "evidence": "hosts/antigravity/wake-key.mjs pruneKeys(claimAsk 첫 줄) · R283(다시 띄운 뒤 옛 프로세스 기록 지워짐, 파일 1개)"
     }
   ],
   "db": {

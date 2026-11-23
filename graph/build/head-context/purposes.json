@@ -39,7 +39,8 @@
         {
           "name": "경로로 실행되는 도구",
           "files": [
-            "relay"
+            "relay",
+            "antigravity-wake-register"
           ]
         },
         {
@@ -68,7 +69,7 @@
       "does": "대화 등록, 엔진 판별·연결, 대화 목록·수신함·보내기"
     },
     "hosts/antigravity": {
-      "does": "Antigravity CLI·ACP 대화 등록, 시작·매 단계 주입, 시작 파일 연결, 살아 있음 판정, 편지함·깨우기, 보내기, 서브에이전트 판정"
+      "does": "Antigravity CLI·ACP 대화 등록, 시작·매 단계 주입, 시작 파일 연결, 살아 있음 판정, 편지함·깨우기, 보내기, 서브에이전트 판정, 터미널 깨우기 등록(요청·열쇠 기록·잠금 판정)·등록 명령 자동 승인"
     },
     "hosts/opencode": {
       "does": "요청마다 작업 맥락 넣기, 도구 호출에 대화 ID 채우기"
@@ -179,12 +180,21 @@
         "touch": {
           "fs": [
             "core/liveness.mjs",
-            "core/platform.mjs"
+            "core/platform.mjs",
+            "hosts/antigravity/wake-key.mjs"
           ],
           "child_process": [
-            "core/platform.mjs"
+            "core/platform.mjs",
+            "hosts/antigravity/wake-key.mjs"
           ]
-        }
+        },
+        "except_defs": [
+          "code:hosts/antigravity/wake-key.mjs#pruneKeys",
+          "code:hosts/antigravity/wake-key.mjs#claimAsk",
+          "code:hosts/antigravity/wake-key.mjs#writeKey",
+          "code:hosts/antigravity/wake-key.mjs#readKey"
+        ],
+        "desc": "0.9.18: Antigravity 터미널 깨우기 판정에서 그 agy pid가 agy 내부 잠금 파일(~/.gemini/antigravity-cli/presence/<대화 ID>.lock, 지금 화면의 대화)을 열어 두었는지 본다(wake-key.mjs holdsLock — 잠금 파일 실제 경로를 구해 Linux /proc/<pid>/fd 링크와 비교, Mac lsof)."
       },
       {
         "name": "Claude 등록 파일·대화 기록",
@@ -265,8 +275,20 @@
         }
       },
       {
+        "name": "Antigravity 깨우기 열쇠 기록",
+        "desc": "~/.gemini/antigravity-cli/plugin_data/head-context/wake/<pid>-<sha256(시작 시각) 앞 16자>.json, agy 프로세스 하나에 하나(0.9.18). 칸 pid·start·asked_at, 등록되면 address·token·registered_at. 폴더 0700·파일 0600. 파일이 있으면 요청함, address·token이 있으면 등록됨(거절은 담지 않음). 매 턴 훅이 요청 때 'wx'로 만들고(그때 죽었거나 시작 시각이 다른 pid의 파일과 1시간 지난 .tmp를 지움), 등록 명령이 임시 파일→rename으로 주소·열쇠를 더하고, 세 앱의 보내기가 읽는다. 홈 아래 고정 자리라 PLUGIN_DATA를 읽지 않는다",
+        "touch": {
+          "fs": [
+            "hosts/antigravity/wake-key.mjs"
+          ]
+        },
+        "except_defs": [
+          "code:hosts/antigravity/wake-key.mjs#holdsLock"
+        ]
+      },
+      {
         "name": "Antigravity language server(loopback HTTP)",
-        "desc": "agy 프로세스의 로컬 language server SendAgentMessage(공개되지 않은 내부 통로). 내용 없는 깨우기 신호만 보낸다. 추출기가 전역 fetch를 잡지 않아 build_graph.py MANUAL_OUTSIDE로 잇는다",
+        "desc": "agy 프로세스의 로컬 language server SendAgentMessage(공개되지 않은 내부 통로). 내용 없는 깨우기 신호만 보낸다. 추출기가 전역 fetch를 잡지 않아 build_graph.py MANUAL_OUTSIDE로 잇는다. 0.9.18: 터미널 agy에는 깨우기 열쇠 기록의 열쇠를 x-codeium-csrf-token 헤더로 붙인다(wake.mjs terminalSignal, ACP는 acpSignal)",
         "touch": {}
       },
       {
