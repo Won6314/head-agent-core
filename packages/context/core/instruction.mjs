@@ -1,7 +1,8 @@
 // What a person typed, as opposed to what reached a conversation on its own: a slash
 // command, a task or channel notice, another conversation's message, a colleague's
 // message relayed into the pane ([동료 …]), the summary a compaction leaves, a plugin's prompt.
-// Returns the line that says it (a paste's first line for a pasted block), or null.
+// Returns the line that says it (a paste's first line for a pasted block), or null. A short
+// reply ("응", "그래. 그렇게 하자") is what the person said last too, so any length counts.
 export function instructionLine(text) {
   if (typeof text !== 'string') return null;
   const lines = text.split(/\r?\n/).map((l) => l.trim());
@@ -20,7 +21,7 @@ export function instructionLine(text) {
     )
   )
     return null;
-  return Array.from(first).length > 10 ? first : null;
+  return first;
 }
 // Who runs a conversation: a person at a terminal or in the desktop app, or a program
 // that started a copy or a worker.
