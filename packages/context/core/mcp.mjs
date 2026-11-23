@@ -4,11 +4,11 @@ import { sessions, CONTEXT_REQUIRED } from './sessions.mjs';
 import { setupTool } from './project.mjs';
 import { takeNotices } from './storage.mjs';
 import { runtimeProblem } from './platform.mjs';
-export const INSTRUCTIONS = `일을 시작할 때는 먼저 start-job 스킬을 불러옵니다.
+export const INSTRUCTIONS = `일을 시작할 때는 먼저 start-job 스킬을 불러옵니다. 이 대화가 아직 작업 세션에 연결되지 않았으면, 첫 말을 받을 때도 불러옵니다.
 
 작업 세션
-- 무엇: 이어지는 큰 일의 묶음입니다. 목적은 context.md에 있습니다. 호스트가 말하는 "세션"은 이 대화이며 작업 세션과 다릅니다.
-- 언제: 대화에서 이어질 일이 시작됐는데 작업 세션이 없으면, 목록(list)에서 맞는 것을 찾아 사용자에게 묻고 불러옵니다. 없으면 사용자와 목적을 정하고, 새로 만들지 물은 뒤 만듭니다. context.md는 사용자 동의 없이 고치지 않습니다.
+- 무엇: 다음 대화에서 이어 가거나 계속 쓰일 일의 묶음입니다. 목적은 context.md에 있습니다. 호스트가 말하는 "세션"은 이 대화이며 작업 세션과 다릅니다.
+- 언제: 연결되지 않은 대화에서는 첫 말에 답하면서 남길 작업 세션을 제안합니다. 목록(list)에 맞는 것이 있으면 그 이름을, 없으면 새 이름을 댑니다. 이어 갈 일인지는 사용자가 정하고, 사용자가 받으면 불러오거나 만듭니다. context.md는 사용자 동의 없이 고치지 않습니다.
 
 작업 브랜치
 - 무엇: 작업 세션 안에서 열리고 닫히는 한 번의 일입니다. 이름이 있고, 여러 개가 동시에 열릴 수 있으며, 닫히면 메인에 합쳐집니다.

@@ -30,7 +30,10 @@ test('unconnected conversation gets one line; list gives name, first sentence, n
   assert.ok(out.indexOf('login-fix') < out.indexOf('- docs'));
   assert.ok(hook(dir, 'n1').startsWith(UNCONNECTED));
   assert.doesNotMatch(hook(dir, 'a'), /아직 작업 세션에 연결되지/);
-  assert.match(INSTRUCTIONS, /작업 세션이 없으면, 목록\(list\)에서 맞는 것을 찾아 사용자에게 묻고/);
+  assert.match(
+    INSTRUCTIONS,
+    /연결되지 않은 대화에서는 첫 말에 답하면서 남길 작업 세션을 제안합니다\. 목록\(list\)에 맞는 것이 있으면/,
+  );
   assert.doesNotMatch(out, /열린 작업 브랜치/);
   api.branch({ action: 'create', branch: 'fix', conversation_id: 'a' });
   assert.match(api.list(), /- login-fix — [^\n]+ \(열린 작업 브랜치 1개\)/);

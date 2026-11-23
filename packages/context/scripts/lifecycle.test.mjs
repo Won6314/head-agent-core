@@ -213,11 +213,18 @@ test('a fork or subagent (agent_id) may read but not write; the tool surface car
   for (const word of ['작업 세션', '작업 브랜치', '저장']) assert.match(INSTRUCTIONS, new RegExp(word));
   assert.doesNotMatch(INSTRUCTIONS, /기본 포크|저장하지 않습니다|부모 대화/); // no fork save rule in the instructions: the tools refuse, the start notice tells
   assert.doesNotMatch(FORK_WRITE_REFUSED, /포크|하위 에이전트/);
-  assert.ok(INSTRUCTIONS.startsWith('일을 시작할 때는 먼저 start-job 스킬을 불러옵니다.\n\n작업 세션\n'));
+  assert.ok(
+    INSTRUCTIONS.startsWith(
+      '일을 시작할 때는 먼저 start-job 스킬을 불러옵니다. 이 대화가 아직 작업 세션에 연결되지 않았으면, 첫 말을 받을 때도 불러옵니다.\n\n작업 세션\n',
+    ),
+  );
   const skill = fs.readFileSync(new URL('../skills/start-job/SKILL.md', import.meta.url), 'utf8');
   assert.match(skill, /^---\nname: start-job\ndescription: 일을 시작하기 전에 불러온다\./);
   assert.doesNotMatch(skill, /disable-model-invocation|delegate-once|context_run|plan-run/);
+  assert.doesNotMatch(skill, /작업 브랜치를 생각한다/); // the session step is a proposal the user decides, not a thought
   for (const step of [
+    '## 연결되지 않은 대화의 첫 말',
+    '이어 갈 일인지는 사용자가 정한다.',
     '## 1. 문제를 파악한다',
     '## 2. 기존 자료를 먼저 찾는다',
     '## 3. 문제·목표·조건을 맞춘다',
