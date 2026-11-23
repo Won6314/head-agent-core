@@ -6,7 +6,7 @@
 
 - Python 3 (따로 설치할 것은 없습니다)
 - 이 폴더의 파일 셋: `head-context-0.9.15.sqlite`, `hc_graph.py`, `LLM.md`
-- 코드 원문까지 보게 하려면: head-agent-core 저장소. 그래프는 commit `e96f5aa`(head-context 0.9.15) 기준입니다.
+- 코드 원문까지 보게 하려면: head-agent-core 저장소. 그래프는 commit `3b3511f`(head-context 0.9.15) 기준입니다.
 
 ## AI에게 이렇게 말하세요
 
@@ -18,7 +18,7 @@
 코드 원문까지 읽게 하려면 한 줄을 더합니다.
 
 ```
-코드는 <head-agent-core 저장소 경로>에서 commit e96f5aa 기준으로 읽어.
+코드는 <head-agent-core 저장소 경로>에서 commit 3b3511f 기준으로 읽어.
 ```
 
 ## 이런 걸 물을 수 있습니다

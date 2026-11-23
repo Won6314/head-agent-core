@@ -30,7 +30,7 @@ AI는 그래프에서 필요한 곳을 먼저 찾고, 그 파일과 줄만 엽�
 
 0.9.10 그래프를 만든 묶음([`../build/head-context/`](../build/head-context/))을 「새 판을 낼 때의 차례」대로 다시 돌렸습니다. 0.9.11~0.9.15에서 더해진 Antigravity 포장과 0.9.15 정리는 그래프 패치(작업 기록 `2026-11-23-군더더기-정리/그래프-패치.md`)를 재료로 넣었습니다.
 
-- **코드**: head-agent-core commit `e96f5aa`(head-context 0.9.15)에서 스크립트로 처음부터 다시 뽑았습니다. 같은 commit이면 몇 번을 만들어도 결과가 같습니다(sqlite sha256 `03e51afb…`, 두 번 같음). 뽑는 규칙에 Antigravity를 더했습니다.
+- **코드**: head-agent-core commit `3b3511f`(head-context 0.9.15)에서 스크립트로 처음부터 다시 뽑았습니다. 같은 commit이면 몇 번을 만들어도 결과가 같습니다(sqlite sha256 `8b1c3a58…`, 두 번 같음). 뽑는 규칙에 Antigravity를 더했습니다.
   - 패키지 루트 `hooks.json`의 두 훅(SessionStart·PreInvocation)과 Antigravity 도구 서버의 앱 도구 `tool:send@antigravity`를 기능으로 뽑습니다.
   - 세 도구 서버가 서로의 peer를 받는 주입 연결과 Antigravity 입구 둘을 넣었습니다.
   - Antigravity가 읽는 agy 쪽 파일 세 칸(대화 기록, ACP 로그, 대화 폴더 메시지)과 language server 외부 연결을 더했습니다.
