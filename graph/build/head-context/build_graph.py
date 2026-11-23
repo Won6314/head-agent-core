@@ -97,9 +97,9 @@ for b in purposes["outside"]["boxes"]:
     if b["name"] in CHANNEL:
         continue
     if b["name"] in DATA:
-        box[b["name"]] = node("데이터", f"data:{b['name']}", name=b["name"], 종류=DATA[b["name"]])
+        box[b["name"]] = node("데이터", f"data:{b['name']}", name=b["name"], 종류=DATA[b["name"]], 한줄=b.get("desc"))
     else:
-        box[b["name"]] = node("외부 연결", f"ext:{b['name']}", name=b["name"])
+        box[b["name"]] = node("외부 연결", f"ext:{b['name']}", name=b["name"], 한줄=b.get("desc"))
 # 재검수 N2(11-15): 한 파일 안에서 닿는 곳이 다르면 줄 단위로 대상을 정하고(fact_targets), 여러 곳을 읽는 도우미는
 # 부르는 쪽에 대상을 잇는다(via). purposes.json에 손으로 쓴다(LLM 판단, 원본 줄로 확인).
 FACT_TARGET = purposes["outside"].get("fact_targets", {})
@@ -415,17 +415,41 @@ for ev, groups in sorted(xj["hooks"].items()):
             feature(f"hook:codex:{ev}:{part}", "hook", f"code:{XH}", rng=rng, 앱="Codex", 근거=f"hooks/codex-hooks.json {ev}")
             features[f"hook:codex:{ev}:{part}"]["명령"] = f"scripts/codex-hook.mjs {part}"
 # Antigravity hook: 패키지 루트 hooks.json({<묶음>: {<이벤트>: [{command}]}}). 처리 = hosts/antigravity/hook.mjs#runHook 한 함수.
-# SessionStart는 PreInvocation 블록(편지함·압축 지시)을 지나지 않는다. PreInvocation은 압축 뒤 복원 때 시작 블록도 지나므로 함수 전체다.
+# 두 이벤트가 한 함수를 지나므로, 이벤트마다 실행하지 않는 줄을 뺀 범위를 준다(독립 검수 1, 11-23).
+# SessionStart(start=true, restore=false): PreInvocation 블록, 복원 때만의 recentPart, 삼항의 store.locate 쪽을 지나지 않는다.
+# PreInvocation(start=false): 시작 때만의 instructionsFor·takeStart·시작 파일 처리 블록·store.start·guide를 지나지 않는다.
 AH = "hosts/antigravity/hook.mjs"
 aj = json.loads((pkg / "hooks.json").read_text())
 arun = defs["code:hosts/antigravity/hook.mjs#runHook"]
-apre = branch_range(AH, "if (event === 'PreInvocation') {", (arun["line"], arun["end_line"]))
+AW = (arun["line"], arun["end_line"])
+def line_of(rel, text, within):
+    hits = [i + 1 for i in range(within[0] - 1, within[1]) if text in src_lines(rel)[i]]
+    if len(hits) != 1:
+        problems.append(f"B-4: {rel}에서 '{text}' 줄을 하나로 찾지 못함({len(hits)})")
+        return None
+    return hits[0]
+def without(window, cuts):
+    """window(줄 범위)에서 cuts(줄 범위들)를 뺀 범위 목록."""
+    out, lo = [], window[0]
+    for a, b in sorted(c for c in cuts if c):
+        if a > lo:
+            out.append((lo, a - 1))
+        lo = max(lo, b + 1)
+    if lo <= window[1]:
+        out.append((lo, window[1]))
+    return out
+def one(rel, text):
+    ln = line_of(rel, text, AW)
+    return (ln, ln) if ln else None
+AGY_CUTS = {
+    "SessionStart": [branch_range(AH, "if (event === 'PreInvocation') {", AW), one(AH, "if (restore) parts.push(recentPart("),
+                     one(AH, ": store.locate(where)")],
+    "PreInvocation": [one(AH, "if (start) parts.push(instructionsFor("), one(AH, "const request = start ? takeStart("),
+                      branch_range(AH, "if (request) {", AW), one(AH, "? store.start("), one(AH, "if (start) parts.push(guide(")],
+}
 for group, evs in sorted(aj.items()):
     for ev, hs in sorted(evs.items()):
-        if ev == "SessionStart":
-            rng = [(arun["line"], apre[0] - 1), (apre[1] + 1, arun["end_line"])]
-        else:
-            rng = [(arun["line"], arun["end_line"])]
+        rng = without(AW, AGY_CUTS.get(ev, []))
         feature(f"hook:antigravity:{ev}", "hook", f"code:hosts/antigravity/hook.mjs#runHook", rng=rng, 앱="Antigravity",
                 근거=f"hooks.json(루트) {group} {ev}")
         features[f"hook:antigravity:{ev}"]["명령"] = "scripts/antigravity-hook.mjs"
@@ -670,6 +694,7 @@ RUN_LINK_EXCLUDE = {
     ("tool:setup", "STA-01#3"): "setup 결과 안의 코어 본문은 TOL-12#3(tool 결과)이고 시작 훅 출력 STA-01이 아니다",
     # 0.9.15(11-23): Antigravity 출력이 같은 글로 맞았지만 출력 종류가 다른 것
     ("hook:antigravity:SessionStart", "ERR-01#4"): "시작 파일의 없는 작업 세션(R163)은 훅 실패 한 줄 ERR-04#3이고 도구 오류 ERR-01#4가 아니다",
+    ("hook:claude:session.send", "ERR-01#7"): "Claude 중계의 '받는 Antigravity 대화를 찾을 수 없습니다'(R182)는 중계 결과 MSG-02#2이고 MCP 도구 오류 ERR-01#7이 아니다(독립 검수 2)",
     ("tool:send@antigravity", "MSG-02#2"): "Antigravity send의 '받는 Antigravity 대화를 찾을 수 없습니다'(R177)는 도구 오류 ERR-01#7이고 Claude 중계 결과 MSG-02가 아니다",
 }
 for k in RUN_LINK_EXCLUDE:

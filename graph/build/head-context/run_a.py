@@ -671,5 +671,29 @@ parent_message(H[0], G3, name="z-late-parent.json")
 agy(agy_in(H[0], "PreInvocation", lastUserInput="계속"), "Antigravity PreInvocation (사람 대화로 판정된 뒤 부모 메시지 꼴 파일이 생김)")   # A26
 measure("판정이 남은 사람 대화", {"대화": "A17 첫째"}, f"parent={(registered(H[0]) or {}).get('parent')}")
 
+# A27(독립 검수 4, 11-23): 등록 안 된 Antigravity 대화의 도구 10개 — 모두 도구를 고르기 전에 프로젝트를 모른다며 멈춘다
+STATE["label"] = "Antigravity: 등록 안 된 대화의 도구 호출 — 모든 도구"
+a = Server("antigravity-mcp.mjs", cwd=APKG)
+a.rpc("initialize", {"protocolVersion": "2025-06-18"})
+GU = "eeeeeeee-0000-4000-8000-000000000002"
+for name, args in (("list", {}), ("load", {"name": "demo"}), ("create", {"name": "d4", "context": "x"}), ("save", {"summary": "s", "history": "h"}),
+                   ("branch", {"action": "create", "branch": "b"}), ("read", {"action": "map"}), ("todo", {"action": "list"}),
+                   ("conversations", {}), ("setup", {"action": "setup"}), ("send", {"threadId": f"antigravity:{G3}", "prompt": "x"})):
+    a.call(name, args, f"등록 안 된 Antigravity 대화의 {name}", meta=M(GU))
+a.close()
+
+# A28(독립 검수 1·5, 11-23): 편지함 폴더는 있는데 읽을 수 없음 — Antigravity는 실패 한 줄, Codex는 빈 편지함
+STATE["label"] = "편지함 폴더를 읽을 수 없음(chmod 000)"
+ainbox = STATE_DIR / "inbox" / f"antigravity-{G2}"
+ainbox.mkdir(parents=True, exist_ok=True)
+ainbox.chmod(0)
+agy(agy_in(G2, "PreInvocation", lastUserInput="계속"), "Antigravity PreInvocation (편지함 폴더를 읽을 수 없음)")
+ainbox.chmod(0o755)
+cinbox = STATE_DIR / "inbox" / f"codex-{X1}"
+cinbox.mkdir(parents=True, exist_ok=True)
+cinbox.chmod(0)
+hook("codex-hook.mjs", ["inbox"], {"hook_event_name": "UserPromptSubmit", "session_id": X1, "cwd": str(PROJ), "prompt": "계속"}, "Codex UserPromptSubmit · inbox (편지함 폴더를 읽을 수 없음)")
+cinbox.chmod(0o755)
+
 OUT.write_text(json.dumps(runs, ensure_ascii=False, indent=1))
 print(len(runs), "runs")

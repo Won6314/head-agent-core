@@ -674,7 +674,7 @@
         "hook:codex:UserPromptSubmit:inbox",
         "hook:antigravity:PreInvocation"
       ],
-      "evidence": "hosts/codex/threads.mjs take(readdir 실패 → 빈 값) · hosts/antigravity/threads.mjs take(existsSync 뒤 readdirSync) · 시험 antigravity.test.mjs 'unreadable inbox differs from Codex', 실행 안 함"
+      "evidence": "hosts/codex/threads.mjs take(readdir 실패 → 빈 값) · hosts/antigravity/threads.mjs take(existsSync 뒤 readdirSync) · 시험 antigravity.test.mjs 'unreadable inbox differs from Codex' · R231(Antigravity — 실패 한 줄), R232(Codex — 빈 출력)"
     },
     {
       "id": "pol.agy-start-file",
@@ -710,7 +710,7 @@
         "tool:send",
         "tool:send@antigravity"
       ],
-      "evidence": "hosts/antigravity/process.mjs antigravityAlive · threads.mjs antigravityLive · R184~R186(살아 있는 G7만, pid 없는 G2 안 나옴)"
+      "evidence": "hosts/antigravity/process.mjs antigravityAlive · threads.mjs antigravityLive · R184~R186(살아 있는 pid의 G7과 정리 전 서브에이전트 S2가 나오고, pid 없는 G2는 안 나옴) · R205·R206(S2 정리 뒤 G7만)"
     },
     {
       "id": "pol.agy-owner-pid",
@@ -814,12 +814,12 @@
       "kind": "처리",
       "condition": "Antigravity 대화의 시작 훅 때(늘), 또는 등록 파일에 parent 칸이 없는 대화의 모델 호출(PreInvocation) 때",
       "subject": "Antigravity 훅은",
-      "action": "훅 입력의 artifactDirectoryPath 아래 .system_generated/messages/에서 제목이 'Message from Parent Agent'이고 sender가 자기 아닌 대화 ID(UUID)인 메시지를 찾는다. 있으면 가장 이른 것의 sender를 부모로 삼아 대화 안 작업으로 판정하고 등록 파일 parent에 남긴다. 없거나, 폴더 이름이 대화 ID와 맞지 않거나, 읽지 못하면 사람 대화로 보고 parent: null을 남긴다(오류 줄 없음). 판정이 남은 대화는 다시 판정하지 않는다. agy 대화 요약 DB와 lastUserInput은 쓰지 않는다. 근거는 공개되지 않은 agy 내부 파일이다",
+      "action": "훅 입력의 artifactDirectoryPath 아래 .system_generated/messages/에서 제목이 'Message from Parent Agent'이고 sender가 자기 아닌 대화 ID(UUID)인 메시지를 찾는다. 있으면 가장 이른 것의 sender를 부모로 삼아 대화 안 작업으로 판정하고 등록 파일 parent에 남긴다. 없거나, 폴더 이름이 대화 ID와 맞지 않거나, 읽지 못하면 사람 대화로 보고 parent: null을 남긴다(오류 줄 없음). 모델 호출(PreInvocation)은 등록 파일에 판정이 남아 있으면 그 값을 쓰고 다시 판정하지 않는다. 시작 훅은 판정이 남아 있어도 늘 다시 판정한다. agy 대화 요약 DB와 lastUserInput은 쓰지 않는다. 근거는 공개되지 않은 agy 내부 파일이다",
       "features": [
         "hook:antigravity:SessionStart",
         "hook:antigravity:PreInvocation"
       ],
-      "evidence": "hosts/antigravity/subagent.mjs parentOf · hook.mjs runHook · R193·R194, R195·R196(0.9.14 잔재), R199~R204(사람 대화), R215~R220"
+      "evidence": "hosts/antigravity/subagent.mjs parentOf · hook.mjs runHook(28줄: !start && 'parent' in previous일 때만 저장값) · R193·R194, R195·R196(0.9.14 잔재), R199~R204(사람 대화), R215~R220"
     },
     {
       "id": "pol.task-not-listed",

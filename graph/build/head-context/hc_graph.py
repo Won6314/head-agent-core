@@ -18,6 +18,7 @@ DB는 이 스크립트 옆의 head-context-<판>.sqlite(하나일 때), 다른 �
 import hashlib
 import json
 import os
+import re
 import sqlite3
 import sys
 
@@ -248,6 +249,13 @@ def screen(g, sid):
         fs_out = [x["dst"] for x in g.out(e["dst"], "화면요소→기능")]
         uas = [x["src"] for x in g.inn(e["dst"], "유저 활동→화면요소")]
         p(f"- {e['dst']}: ← {', '.join(fs_in) or '-'} | → {', '.join(fs_out) or '-'} | 유저 활동 {', '.join(uas) or '-'}")
+    # 화면→정책은 표시 정책만 잇는다(02a). 화면설계서 글이 이름으로 가리킨 처리 정책은 내는 기능 쪽으로 이어져 있으므로 여기서 함께 보인다.
+    named = sorted(set(re.findall(r"`(pol\.[\w-]+)`", n["body"] or "")) - {e["dst"] for e in g.out(sid, "화면→정책")})
+    for pid in named:
+        pn = g.node(pid)
+        if pn and pn["kind"] == "처리":
+            fs = [e["dst"] for e in g.out(pid, "정책→기능")]
+            p(f"- 글이 가리키는 처리 정책 {g.label(pid)} — 지키는 기능 {', '.join(fs) or '-'}")
 
 
 def policy(g, pid):
@@ -261,6 +269,10 @@ def policy(g, pid):
             p(f"    {role} 코드 {g.label(cid)}" + (f" 줄 {show_rng(rng)}" if rng else ""))
     for e in g.inn(pid, "화면→정책"):
         p(f"- 지키는 화면 {g.label(e['src'])}")
+    if n["kind"] == "처리":  # 처리 정책이 드러나는 출력: 지키는 기능이 내는 화면요소 가운데 화면설계서 글이 이 정책을 이름으로 가리킨 화면
+        shown = sorted({sid for (sid,) in g.db.execute("SELECT id FROM nodes WHERE type='화면' AND body LIKE ?", (f"%`{pid}`%",)).fetchall()})
+        for sid in shown:
+            p(f"- 이 정책을 글로 가리키는 화면 {g.label(sid)}")
 
 
 def reach(g, start, rng=None):

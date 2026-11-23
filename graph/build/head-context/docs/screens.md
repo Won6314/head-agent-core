@@ -216,7 +216,7 @@ agent는 일을 시작할 때 start-job을 부르고, 이어질 일이 생기면
 4. **저장** — 무엇(다음에 이 일을 이어 갈 대화가 읽는 기록, 무엇을 남길지는 그 대화에 필요할 것으로 정함)·언제, 다음/정리, 참조파일(기록이 기대는 파일은 save의 files에, 경로는 `~/` 전체 경로로), 작업 파일 자리(작업 맥락 맨 위 '작업 세션 폴더' 줄의 `work/YYYY-MM/YYYY-MM-DD-<이름>.md`, 작업 브랜치 이름 폴더는 기록 자리라 그 밖에). → `tool:save` 문구: `작업 브랜치에 남기는 기록 한 번입니다`
 5. **할 일** — 무엇·언제(todo add/done). → `tool:todo` 문구: `작업 세션에 남는 나중에 할 일입니다`
 6. **다른 대화** — 먼저 목록(conversations)을 보고, 목록의 보낼 곳을 이 앱의 보내기 도구에 그대로 준다. → `tool:conversations` 문구: `이 프로젝트에서 살아 있는 대화와`
-7. **이 앱에서 부르는 도구** — Claude: SendMessage(to), Agent 도구 fork / 다른 subagent_type. Codex: 이 플러그인의 send(threadId, prompt), spawn_agent fork_turns "all"/"none". Antigravity: 기록 도구는 플러그인 MCP 서버 head-context_session의 도구를 call_mcp_tool로, 보내기는 이 플러그인의 send, delivery는 started·queued(0.9.11~). OpenCode에는 없다. → `tool:send` 문구: `이 앱(<앱>)에서 부르는 도구`
+7. **이 앱에서 부르는 도구** — Claude: SendMessage(to), Agent 도구 fork / 다른 subagent_type. Codex: 이 플러그인의 send(threadId, prompt), spawn_agent fork_turns "all"/"none". Antigravity: 기록 도구는 플러그인 MCP 서버 head-context_session의 도구를 call_mcp_tool로, 보내기는 이 플러그인의 send, delivery는 started·queued(0.9.11~). OpenCode에는 없다. → `tool:send` → `tool:send@antigravity` 문구: `이 앱(<앱>)에서 부르는 도구`
 
 ### 화면 정책
 - `pol.no-host-tool-names`
@@ -399,7 +399,7 @@ agent는 이 차례대로 문제를 파악하고, 기존 기록을 찾고, 사�
 
 ### 화면요소
 1. **머리와 보내기 안내** — `# 살아 있는 대화 (작업 세션 → 작업 브랜치 → 대화)`와 그 앱의 보내기 도구 한 줄(Claude: 'SendMessage(to: 보낼 곳)', Codex·Antigravity: 'send(threadId: 보낼 곳, prompt)'), 문구: `보내기: <도구>. 이름은 여러 대화가 같을 수 있어`. ← `tool:conversations`
-2. **대화 줄** — 작업 세션 → 작업 브랜치 → 대화, 대화마다 이름·보낼 곳·종류(사람/포크·워커)·마지막 활동·하는 일, 포크·워커는 띄운 대화 아래 들여씀(코드·도구 설명). ← `tool:conversations` → `tool:send` 문구: `하는 일: <일>` Antigravity 대화는 보낼 곳 `antigravity:<ID>`, 앱 표시 ` · antigravity`로 나온다. 살아 있음은 presence의 pid·시작 식별값으로 본다(`pol.agy-alive`). Antigravity 서브에이전트 줄은 없다(`pol.task-not-listed`). 0.9.14가 남긴 서브에이전트 presence는 그 서브에이전트가 다시 모델을 부를 때까지 남을 수 있다(R184 → R205).
+2. **대화 줄** — 작업 세션 → 작업 브랜치 → 대화, 대화마다 이름·보낼 곳·종류(사람/포크·워커)·마지막 활동·하는 일, 포크·워커는 띄운 대화 아래 들여씀(코드·도구 설명). ← `tool:conversations` → `tool:send` → `tool:send@antigravity` 문구: `하는 일: <일>` Antigravity 대화는 보낼 곳 `antigravity:<ID>`, 앱 표시 ` · antigravity`로 나온다. 살아 있음은 presence의 pid·시작 식별값으로 본다(`pol.agy-alive`). Antigravity 서브에이전트 줄은 없다(`pol.task-not-listed`). 0.9.14가 남긴 서브에이전트 presence는 그 서브에이전트가 다시 모델을 부를 때까지 남을 수 있다(R184 → R205).
 3. **안 붙은 대화** — 작업 세션에 안 붙은 대화 묶음(코드). 문구: `## 작업 세션 없음`
 4. **없음** — `(살아 있는 대화 없음)`. ← `tool:conversations`
 
@@ -472,27 +472,27 @@ agent는 이 차례대로 문제를 파악하고, 기존 기록을 찾고, 사�
 
 - 출력 종류: tool 결과(isError, Codex·Antigravity)
 - 상태: Codex 대화의 시작 훅이 돌지 않아 등록이 없음(대개 훅 신뢰 전). Antigravity: 대화의 훅이 아직 돌지 않아 등록 파일에 작업 폴더가 없음
-- 원문: R78, R174(Antigravity)
-- 내는 기능: `tool:list`, `tool:load`, `tool:read`
-- 그리는 코드: `code:hosts/codex/register.mjs`, `code:core/mcp.mjs#PROJECT_UNKNOWN`
+- 원문: R78, R174·R221~R230(Antigravity, 등록 안 된 대화의 도구 10개)
+- 내는 기능: `tool:list`, `tool:load`, `tool:read`(Codex). Antigravity: core 도구 9개(`tool:list`·`tool:load`·`tool:create`·`tool:save`·`tool:branch`·`tool:read`·`tool:todo`·`tool:conversations`·`tool:setup`)와 `tool:send@antigravity` — 도구를 고르기 전에 같은 오류로 멈춘다(`core/mcp.mjs` serve tools/call, R174·R221~R230)
+- 그리는 코드: `code:hosts/codex/register.mjs`, `code:core/mcp.mjs#PROJECT_UNKNOWN`, `code:hosts/antigravity/mcp.mjs#serveAntigravity.projectOf`
 
 ### 화면요소
 1. **이유** — `이 대화의 프로젝트를 알 수 없습니다. head-context의 시작 훅이 이 대화에서 돌지 않았습니다. …` ← `tool:list`
 2. **사람에게 전할 신뢰 경로** — 터미널 Codex: Hooks need review → Trust all and continue. Codex 앱: 설정 → 코딩 → Hook → 플러그인에서 제공 → Head Context → 모두 신뢰. 그 뒤 새 대화. 문구: `Trust all and continue`
-3. **Antigravity 이유** — `이 대화의 프로젝트를 알 수 없습니다. 대화를 새로 시작하거나 다시 열어 주세요(시작할 때 프로젝트를 등록합니다).` 문구: `대화를 새로 시작하거나 다시 열어 주세요` ← `tool:list`
+3. **Antigravity 이유** — `이 대화의 프로젝트를 알 수 없습니다. 대화를 새로 시작하거나 다시 열어 주세요(시작할 때 프로젝트를 등록합니다).` 문구: `대화를 새로 시작하거나 다시 열어 주세요` ← `tool:list` ← `tool:load` ← `tool:create` ← `tool:save` ← `tool:branch` ← `tool:read` ← `tool:todo` ← `tool:conversations` ← `tool:setup` ← `tool:send@antigravity` 정책: `pol.agy-needs-hook-first`
 
 ## ERR-04 훅 실패 한 줄
 
 - 출력 종류: 시작·입력 훅이 넣는 글
 - 상태: 훅 실행 중 오류
-- 원문: R64(.head/config.json이 깨짐), R163(Antigravity 시작 파일의 없는 작업 세션)
+- 원문: R64(.head/config.json이 깨짐), R163(Antigravity 시작 파일의 없는 작업 세션), R231(Antigravity 편지함 폴더를 읽을 수 없음)
 - 내는 기능: `hook:claude:SessionStart:session`, `hook:codex:SessionStart:session`, `hook:codex:UserPromptSubmit:inbox`, `hook:antigravity:SessionStart`, `hook:antigravity:PreInvocation`
 - 그리는 코드: `code:hosts/claude/hook.mjs`, `code:hosts/codex/hook.mjs`, `code:hosts/antigravity/hook.mjs#runHook`
 
 ### 화면요소
 1. **실패 한 줄** — `head-context: 이 훅(<부분>)이 작업 맥락을 넣지 못했습니다: <이유>`. Claude는 시작·하위 에이전트 훅, Codex는 시작·입력·하위 에이전트 훅이 실패하면 낸다(각 훅의 catch). ← `hook:claude:SessionStart:session` ← `hook:claude:SessionStart:context` ← `hook:claude:SessionStart:core` ← `hook:claude:SessionStart:recent` ← `hook:claude:SubagentStart` ← `hook:codex:SessionStart:session` ← `hook:codex:SessionStart:context` ← `hook:codex:SessionStart:core` ← `hook:codex:SessionStart:instructions` ← `hook:codex:UserPromptSubmit:inbox` ← `hook:codex:SubagentStart:subagent`
 2. **설정 파일 이유** — `설정 파일을 읽을 수 없습니다(JSON 오류). 고치기 전에는 기록 위치를 알 수 없어 기록을 읽거나 쓰지 않습니다: <경로> …` 기록 위치를 읽는 훅이 낸다. ← `hook:claude:SessionStart:session` ← `hook:claude:SessionStart:context` ← `hook:codex:SessionStart:session` ← `hook:codex:SessionStart:context` ← `hook:codex:UserPromptSubmit:inbox`
-3. **Antigravity 실패 한 줄** — 부분 이름 없이 `head-context: 작업 맥락을 넣지 못했습니다: <이유>`. 시작 파일 오류(`시작 파일의 session은 …`, `작업 세션 '<이름>'이 없습니다.`)와 읽을 수 없는 편지함 폴더도 이 꼴이다. 서브에이전트 판정은 실패해도 이 줄을 내지 않는다(R218). ← `hook:antigravity:SessionStart` ← `hook:antigravity:PreInvocation`
+3. **Antigravity 실패 한 줄** — 부분 이름 없이 `head-context: 작업 맥락을 넣지 못했습니다: <이유>`. 시작 파일 오류(`시작 파일의 session은 …`, `작업 세션 '<이름>'이 없습니다.`)와 읽을 수 없는 편지함 폴더도 이 꼴이다(R231. Codex는 같은 경우 빈 편지함으로 보아 아무것도 내지 않는다 R232, `pol.inbox-unreadable-per-app`). 서브에이전트 판정은 실패해도 이 줄을 내지 않는다(R218). ← `hook:antigravity:SessionStart` ← `hook:antigravity:PreInvocation`
 
 ### 화면 정책
 - `pol.hook-failure-says`
@@ -541,9 +541,9 @@ agent는 이 줄을 사람에게 전한다. 사람이 node를 바꾸고 대화�
 - 그리는 코드: `code:core/inbox.mjs#asMessage`(0.9.15부터 Codex·Antigravity가 같이 쓴다)
 
 ### 화면요소
-1. **메시지** — `<cross-session-message from="<보낸 곳>">` 본문 `</cross-session-message>`. ← `hook:codex:UserPromptSubmit:inbox` ← `hook:antigravity:PreInvocation` → `tool:send` 문구: `cross-session-message from=`
+1. **메시지** — `<cross-session-message from="<보낸 곳>">` 본문 `</cross-session-message>`. ← `hook:codex:UserPromptSubmit:inbox` ← `hook:antigravity:PreInvocation` → `tool:send` → `tool:send@antigravity` 문구: `cross-session-message from=`
 2. **못 읽은 메시지 알림** — `head-context: 이 대화로 온 메시지 n개를 읽을 수 없어 전하지 못하고 따로 두었습니다: …`(코드). 문구: `이 대화로 온 메시지 <n>개를 읽을 수 없어` Codex만 이 문구다.
-3. **Antigravity 못 읽은 메시지 알림** — `head-context: 읽을 수 없는 메시지를 따로 두었습니다: <경로>`(R166). 편지함 폴더가 있는데 읽지 못하면 Antigravity는 ERR-04 한 줄을, Codex는 빈 편지함으로 본다(`pol.inbox-unreadable-per-app`). 문구: `읽을 수 없는 메시지를 따로 두었습니다` ← `hook:antigravity:PreInvocation`
+3. **Antigravity 못 읽은 메시지 알림** — `head-context: 읽을 수 없는 메시지를 따로 두었습니다: <경로>`(R166). 편지함 폴더가 있는데 읽지 못하면 Antigravity는 ERR-04 한 줄을, Codex는 빈 편지함으로 본다(`pol.inbox-unreadable-per-app`, R231·R232). 문구: `읽을 수 없는 메시지를 따로 두었습니다` ← `hook:antigravity:PreInvocation`
 
 ## MSG-02 Claude에서 Codex·Antigravity로 보낸 결과
 
