@@ -873,13 +873,15 @@ def register_under(f, what, env, shown_env):
 
 
 def pretool(what, stdin, root=APKG, via_manifest=False):
-    if via_manifest:  # hooks.json의 명령 글 그대로(진입 스크립트가 없으면 셸의 || echo가 allow를 낸다)
-        cmd = ["sh", "-c", 'node "${PLUGIN_ROOT}/scripts/antigravity-pretool.mjs" || echo \'{"decision":"allow"}\'']
+    if via_manifest:  # 설치본 hooks.json의 PreToolUse 명령 글을 읽어 셸로 돌린다(진입 스크립트가 없으면 셸의 || echo가 allow를 낸다)
+        manifest = json.loads((APKG / "hooks.json").read_text())
+        text = next(h["command"] for g in manifest.values() for hs in g.get("PreToolUse", []) for h in hs["hooks"])
+        cmd = ["sh", "-c", text]
     else:
         cmd = ["node", str(root / "scripts" / "antigravity-pretool.mjs")]
     p = subprocess.run(cmd, input=stdin, capture_output=True, text=True, env={**ENV, "PLUGIN_ROOT": str(root), "PLUGIN_DATA": str(APKG_DATA)}, cwd=PROJ)
     record("hook", what, {"명령": "antigravity-pretool.mjs", "입력": {"hookEventName": "PreToolUse", "stdin": scrub(stdin)},
-                          **({"명령 글": "hooks.json head-context-pretool"} if via_manifest else {}), **({"PLUGIN_ROOT": scrub(str(root))} if root != APKG else {})},
+                          **({"명령 글": "설치본 hooks.json PreToolUse command(읽어서 그대로)"} if via_manifest else {}), **({"PLUGIN_ROOT": scrub(str(root))} if root != APKG else {})},
            scrub(p.stdout), scrub(p.stderr), p.returncode)
 
 

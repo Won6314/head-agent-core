@@ -65,7 +65,7 @@ python3 hc_graph.py overview
 - 플러그인이 따로 띄우는 스크립트 안으로는 따라가지 않는다. 그 자리에서 "경계에서 멈춤"을 보인다.
 - 값을 읽기만 하는 참조(상수 읽기 등)는 잇지 않았다. 상수를 바꿨을 때의 영향은 `find`나 원문 검색으로 찾는다.
 - 유저 활동은 0.9.5 때 Claude Code로 실제로 써 보고 썼고, 0.9.10·0.9.15·0.9.17·0.9.18에서는 다시 써 보지 않았다(뒤 판에서 바뀐 것은 해당 줄에 적었다). Codex와 OpenCode 쪽은 실제 앱 없이 훅·도구 서버·플러그인 훅 함수를 직접 돌린 출력과 코드로 썼다.
-- Antigravity 쪽(0.9.11~)도 실제 agy 없이 훅(`scripts/antigravity-hook.mjs`)과 도구 서버를 agy가 주는 꼴의 입력으로 직접 돌린 출력(R159~R232)과 코드로 썼다. 서브에이전트는 실측(agy 1.5.13의 `invoke_subagent` self·research)에서 본 입력 꼴만 따랐다. 깨우기가 `started`를 돌려주는 경우는 실제 ACP 프로세스가 있어야 해서 run에 없다. 그 연결은 코드와 시험으로만 이었다.
+- Antigravity 쪽(0.9.11~)도 실제 agy 없이 훅(`scripts/antigravity-hook.mjs`)과 도구 서버를 agy가 주는 꼴의 입력으로 직접 돌린 출력(R159~R232)과 코드로 썼다. 서브에이전트는 실측(agy 1.5.13의 `invoke_subagent` self·research)에서 본 입력 꼴만 따랐다. ACP 깨우기가 `started`를 돌려주는 경우는 실제 ACP 프로세스가 있어야 해서 run에 없다. 그 연결은 코드와 시험으로만 이었다. 터미널 깨우기의 `started`(R273~R275)는 가짜 agy 프로세스로 본 것이다.
 - Antigravity의 깨우기 신호(loopback `SendAgentMessage`)와 서브에이전트 판정(agy 대화 폴더의 부모 메시지)은 agy의 공개되지 않은 내부 통로·파일에 기댄다. agy가 꼴을 바꾸면 깨우기는 `queued`로, 서브에이전트는 사람 대화로 다뤄진다. 0.9.18 터미널 깨우기는 여기에 셋을 더 기댄다: agy가 모델 셸에만 넘기는 LS 주소·열쇠 환경 변수, agy 내부 잠금 파일(`~/.gemini/antigravity-cli/presence/<ID>.lock`)을 그 pid가 열어 두었는지(Linux `/proc/<pid>/fd`, Mac `lsof` — Mac 미확인), 도구 전 훅의 `auto_approve`. 깨우기 열쇠 기록과 잠금 파일 자리는 홈 아래 고정이라 agy를 다른 데이터 폴더로 띄우면 늘 `queued`다. 도구 전 훅이 10초를 넘기면 agy가 그 셸 명령을 거절한다(셸 대체로도 못 막음).
 - Antigravity 등록 파일(`${PLUGIN_DATA}/conversations/<ID>.json`, 칸 `cwd`·`checkpoint`·`parent`)은 그래프에 데이터 칸이 없다. 읽기·쓰기가 공용 도우미(readLoose·atomicJSON)만 거쳐 「.head/ 상태·기록·색인 파일」로 보인다. 위 공용 도우미 줄과 같은 한계다.
 - 전역 `fetch`는 추출기가 접근 사실로 잡지 않는다. Antigravity language server로 가는 외부 연결 둘(ACP·터미널 신호)은 빌드가 손으로 이었다(build_graph.py MANUAL_OUTSIDE).

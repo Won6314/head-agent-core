@@ -194,7 +194,7 @@
           "code:hosts/antigravity/wake-key.mjs#writeKey",
           "code:hosts/antigravity/wake-key.mjs#readKey"
         ],
-        "desc": "0.9.18: Antigravity 터미널 깨우기 판정에서 그 agy pid가 agy 내부 잠금 파일(~/.gemini/antigravity-cli/presence/<대화 ID>.lock, 지금 화면의 대화)을 열어 두었는지 본다(wake-key.mjs holdsLock — 잠금 파일 실제 경로를 구해 Linux /proc/<pid>/fd 링크와 비교, Mac lsof)."
+        "desc": "운영체제 프로세스 정보를 읽는 곳: 프로세스가 살아 있는지, 명령줄(argv)·부모 pid, 시작 시각(Linux /proc/<pid>/stat, 다른 Unix ps, Windows PowerShell), 부팅 ID, 소켓이 있는지. 대화 생존 판정, Antigravity 쥔 agy 찾기, 깨우기 판정에 쓴다. 0.9.18: Antigravity 터미널 깨우기 판정에서 그 agy pid가 agy 내부 잠금 파일(~/.gemini/antigravity-cli/presence/<대화 ID>.lock, 지금 화면의 대화)을 열어 두었는지 본다(wake-key.mjs holdsLock — 잠금 파일 실제 경로를 구해 Linux /proc/<pid>/fd 링크와 비교, Mac lsof)."
       },
       {
         "name": "Claude 등록 파일·대화 기록",

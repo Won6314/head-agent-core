@@ -515,7 +515,7 @@ agent는 이 차례대로 문제를 파악하고, 기존 기록을 read로 먼�
 ## ERR-04 훅 실패 한 줄
 
 - 출력 종류: 시작·입력 훅이 넣는 글
-- 상태: 훅 실행 중 오류. Antigravity 도구 전 훅(PreToolUse)은 실패해도 이 줄을 내지 않고 허락(allow)을 돌려준다(R271·R272, `pol.hook-failure-says`)
+- 상태: 훅 실행 중 오류. Antigravity 도구 전 훅(PreToolUse)은 실패해도 이 줄을 내지 않는다. 입력 오류(R271)와 진입 스크립트가 뜨지 못할 때(R272, 셸 대체)는 허락(allow)이 나가지만, 10초 시간 초과에는 agy가 그 셸 명령을 거절한다(`pol.hook-failure-says`, `pol.agy-wake-register-approve`)
 - 원문: R64(.head/config.json이 깨짐), R163(Antigravity 시작 파일의 없는 작업 세션), R231(Antigravity 편지함 폴더를 읽을 수 없음)
 - 내는 기능: `hook:claude:SessionStart:session`, `hook:codex:SessionStart:session`, `hook:codex:UserPromptSubmit:inbox`, `hook:antigravity:SessionStart`, `hook:antigravity:PreInvocation`
 - 그리는 코드: `code:hosts/claude/hook.mjs`, `code:hosts/codex/hook.mjs`, `code:hosts/antigravity/hook.mjs#runHook`
