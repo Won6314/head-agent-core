@@ -215,13 +215,18 @@ test('a fork or subagent (agent_id) may read but not write; the tool surface car
   assert.doesNotMatch(FORK_WRITE_REFUSED, /포크|하위 에이전트/);
   assert.ok(
     INSTRUCTIONS.startsWith(
-      '일을 시작할 때는 먼저 start-job 스킬을 불러옵니다. 이 대화가 아직 작업 세션에 연결되지 않았으면, 첫 말을 받을 때도 불러옵니다.\n\n작업 세션\n',
+      '일을 시작할 때는 먼저 start-job 스킬을 불러옵니다. 시작할 때 작업 세션에 연결되지 않았다는 안내를 받은 대화는 첫 말을 받을 때도 불러옵니다.\n\n작업 세션\n',
     ),
   );
   const skill = fs.readFileSync(new URL('../skills/start-job/SKILL.md', import.meta.url), 'utf8');
   assert.match(skill, /^---\nname: start-job\ndescription: 일을 시작하기 전에 불러온다\./);
   assert.doesNotMatch(skill, /disable-model-invocation|delegate-once|context_run|plan-run/);
   assert.doesNotMatch(skill, /작업 브랜치를 생각한다/); // the session step is a proposal the user decides, not a thought
+  // Aligned with the core: an unclear case goes to another context, results come back packaged,
+  // a work branch opens once the problem, goal and conditions are agreed.
+  assert.match(skill, /- 어느 쪽인지 애매하면 맡긴다\./);
+  assert.match(skill, /- 맡긴 일은 결과, 판단을 바꿀 수 있는 제약·예외·불확실한 것, 근거가 있는 곳으로 돌려받는다\./);
+  assert.match(INSTRUCTIONS, /- 언제: 문제·목표·조건을 맞춘 일에 착수할 때, 이어서 할 일이면 엽니다\./);
   for (const step of [
     '## 연결되지 않은 대화의 첫 말',
     '이어 갈 일인지는 사용자가 정한다.',
