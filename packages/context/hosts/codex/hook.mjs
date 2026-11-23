@@ -33,8 +33,8 @@ import { asMessage } from '../../core/inbox.mjs';
 // compaction Codex keeps what the user said, so no recent exchanges are added.
 const part = process.argv[2];
 // What was set right on the way (a broken record moved aside) goes with the output.
-const out = (text, event = 'SessionStart') => {
-  text = [text, ...takeNotices()].filter(Boolean).join('\n\n');
+const out = (text, event = 'SessionStart', tail = '') => {
+  text = [text, ...takeNotices(), tail].filter(Boolean).join('\n\n');
   if (text) console.log(hookOutput(event, { additionalContext: text }));
 };
 let event = null;
@@ -107,7 +107,16 @@ try {
       } catch (error) {
         console.error(`head-context: ${error.message}`);
       }
-      if (!quiet) out([place ? store.parts(place).head : UNCONNECTED, first].filter(Boolean).join('\n\n'));
+      if (!quiet) {
+        const recovery = source === 'compact' && !input.agent_id ? store.compactRecovery(place) : '';
+        const parts = place ? store.parts(place) : null;
+        let head = parts ? parts.head : UNCONNECTED;
+        if (recovery && head.length + recovery.length + 2 > HOOK_BUDGET) {
+          const tail = `\n…(context.md 뒷부분 생략 — 전문: ${parts.contextFile})`;
+          head = head.slice(0, Math.max(0, HOOK_BUDGET - recovery.length - tail.length - 2)) + tail;
+        }
+        out([head, first].filter(Boolean).join('\n\n'), 'SessionStart', recovery);
+      }
     } else if (quiet) {
       // nothing
     } else if (part === 'core') out(coreParts(project)[0] || '');

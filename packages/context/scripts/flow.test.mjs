@@ -87,7 +87,7 @@ test('Claude start hook: each part is its own output; the work context over the 
   const big = start('seed', 'compact').parts;
   assert.match(
     big.session,
-    /^# 작업 세션: demo\n작업 세션 폴더: [^\n]+\/\.head\/sessions\/demo\n\nFLOW DIRECTION\n\n이 대화의 작업 브랜치: big$/,
+    /^# 작업 세션: demo\n작업 세션 폴더: [^\n]+\/\.head\/sessions\/demo\n\nFLOW DIRECTION\n\n이 대화의 작업 브랜치: big\n\n## 컴팩트 뒤 먼저 할 것\n/,
   );
   assert.ok(big.context.length <= 9000);
   assert.doesNotMatch(big.context, /load를 불러/);

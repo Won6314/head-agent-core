@@ -70,7 +70,7 @@ test('fresh project: start hook asks setup on startup/clear only, setup writes t
   assert.match(hook(dir), /초기설정 해도 될까요/);
   assert.match(hook(dir, { source: 'clear' }), /초기설정 해도 될까요/);
   assert.equal(guidePart(hook(dir, { source: 'resume' })), '');
-  assert.equal(guidePart(hook(dir, { source: 'compact' })), '');
+  assert.doesNotMatch(hook(dir, { source: 'compact' }), /# 프로젝트 첫 실행|초기설정 해도 될까요/);
   assert.equal(fs.existsSync(path.join(dir, 'CLAUDE.md')), false);
   const out = tool(dir, { action: 'setup' });
   assert.ok(out.includes(core.trimEnd()));

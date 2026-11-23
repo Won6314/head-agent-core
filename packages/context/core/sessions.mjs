@@ -10,6 +10,7 @@ import {
   fittedContext,
   topicList,
   openBranches,
+  compactRecovery,
   RECENT_COUNT,
   SUMMARY_LIMIT,
 } from './recovery.mjs';
@@ -679,6 +680,7 @@ export function sessions(
     // replaced, the one it was copied from) — session and branch whole — or the session
     // named for it, on main. Several start hooks may ask at once; the answer is the same.
     locate,
+    compactRecovery: (place) => withGraphRead(project, (g) => compactRecovery(g, place)),
     // Start hook: give the conversation its place (nothing is opened or closed here).
     start({ conversation_id, session_name, origins = [], info = {} }) {
       const place = locate({ conversation_id, session_name, origins });

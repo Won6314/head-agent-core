@@ -42,8 +42,8 @@ const heldCore = (transcript) => {
 };
 const part = process.argv[2];
 // What was set right on the way (a broken record moved aside) goes with the output.
-const out = (event, text) => {
-  text = [text, ...takeNotices()].filter(Boolean).join('\n\n');
+const out = (event, text, tail = '') => {
+  text = [text, ...takeNotices(), tail].filter(Boolean).join('\n\n');
   if (text) console.log(hookOutput(event, { additionalContext: text }));
 };
 let event = null;
@@ -100,6 +100,8 @@ try {
         if (parent && parent !== input.session_id) info.parent = parent;
       }
       const place = store.start({ ...where(), info });
+      const recovery = source === 'compact' && !copy ? store.compactRecovery(place) : '';
+      const recoverySpace = recovery ? recovery.length + 2 : 0;
       if (!place && person) store.note(input.session_id, { person: true, entrypoint });
       // First run: refresh the project copy of the core (applies next start, since CLAUDE.md
       // is read before this hook), and on a fresh start add the short setup/survey guide.
@@ -117,11 +119,11 @@ try {
         const tail = `\n…(context.md 뒷부분 생략 — 전문: ${contextFile})`;
         head = fit(
           text,
-          HOOK_BUDGET - first.length - 2,
-          () => text.slice(0, Math.max(0, HOOK_BUDGET - first.length - tail.length - 2)) + tail,
+          HOOK_BUDGET - first.length - recoverySpace - 2,
+          () => text.slice(0, Math.max(0, HOOK_BUDGET - first.length - recoverySpace - tail.length - 2)) + tail,
         );
       }
-      out('SessionStart', [head, first].filter(Boolean).join('\n\n'));
+      out('SessionStart', [head, first].filter(Boolean).join('\n\n'), recovery);
     } else if (part === 'context' && !quiet) {
       const place = store.locate(where());
       if (place) {
