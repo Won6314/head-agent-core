@@ -92,7 +92,8 @@ try {
       // A headless conversation its starter marked as a person's is not a copy.
       const person = process.env.HEAD_CONTEXT_PERSON === '1';
       if (person) info.person = true;
-      if (isCopy(entrypoint) && !person) {
+      const copy = isCopy(entrypoint) && !person;
+      if (copy) {
         const parent =
           process.env.HEAD_CONTEXT_PARENT ||
           (input.transcript_path ? copiedFrom(input.transcript_path, input.session_id) : null);
@@ -105,12 +106,12 @@ try {
       let first = '';
       try {
         refreshCore(project);
-        if (source === 'startup' || source === 'clear') first = guide(project);
+        if ((place || !copy) && (source === 'startup' || source === 'clear')) first = guide(project);
       } catch (error) {
         console.error(`head-context: ${error.message}`);
       }
       let head = '';
-      if (!place) head = UNCONNECTED;
+      if (!place) head = copy ? '' : UNCONNECTED;
       else if (!quiet) {
         const { head: text, contextFile } = store.parts(place);
         const tail = `\n…(context.md 뒷부분 생략 — 전문: ${contextFile})`;

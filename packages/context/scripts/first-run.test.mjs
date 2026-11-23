@@ -39,6 +39,32 @@ const mcp = (dir, args) => {
     .map((l) => JSON.parse(l));
 };
 
+test('unconnected program starts omit both notices; person starts keep both', () => {
+  for (const entrypoint of ['', 'cli', 'claude-desktop', 'sdk-cli', 'sdk-ts', 'sdk-py']) {
+    for (const person of ['', '0', '1']) {
+      const dir = fresh();
+      for (const source of ['startup', 'clear']) {
+        const { parts } = runStart(
+          { session_id: 'c1', source, cwd: dir },
+          {
+            env: {
+              CLAUDE_PROJECT_DIR: dir,
+              CLAUDE_CODE_ENTRYPOINT: entrypoint,
+              HEAD_CONTEXT_PERSON: person,
+            },
+          },
+        );
+        if (entrypoint.startsWith('sdk-') && person !== '1') {
+          assert.equal(parts.session, '', `${entrypoint}/${person}/${source}`);
+        } else {
+          assert.match(parts.session, /이 대화는 아직 작업 세션에 연결되지 않았습니다/);
+          assert.match(parts.session, /# 프로젝트 첫 실행[\s\S]*초기설정 해도 될까요/);
+        }
+      }
+    }
+  }
+});
+
 test('fresh project: start hook asks setup on startup/clear only, setup writes the core copy, leaves CLAUDE.md alone and returns the core', () => {
   const dir = fresh();
   assert.match(hook(dir), /초기설정 해도 될까요/);
