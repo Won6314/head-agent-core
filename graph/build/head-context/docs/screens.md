@@ -120,7 +120,7 @@ node:sqlite를 쓸 수 없는 Node에서는 이 출력 대신 ERR-05의 이유 �
 
 - 출력 종류: 시작 훅이 넣는 글
 - 상태: 대화가 작업 세션에 연결되지 않음(첫 실행 전이면 안내가 붙음) Antigravity: 시작, 또는 압축 뒤 복원 때 연결 없음(첫 실행 안내는 시작 때만, 서브에이전트에는 나오지 않음)
-- 원문: R3(첫 실행 전), R60(/clear 뒤 이어받을 대화를 못 찾음), R67(Codex, 초기설정 뒤), R159(Antigravity 첫 실행 전), R160(Antigravity 연결 안 됨)
+- 원문: R3(첫 실행 전), R60(/clear 뒤 이어받을 대화를 못 찾음), R67(Codex, 초기설정 뒤), R159(Antigravity 첫 실행 전), R160(Antigravity 연결 안 됨), R240~R244(0.9.17 Claude 프로그램 실행 sdk-cli — 빈 출력, HEAD_CONTEXT_PERSON=1이면 연결 안 됨, 초기설정 전 사람 대화와 대조)
 - 공통 영역: CMN-03
 - 내는 기능: `hook:claude:SessionStart:session`, `hook:codex:SessionStart:session`, `hook:antigravity:SessionStart`, `hook:antigravity:PreInvocation`
 - 그리는 코드: `code:core/project.mjs#guide`
@@ -129,7 +129,7 @@ node:sqlite를 쓸 수 없는 Node에서는 이 출력 대신 ERR-05의 이유 �
 아직 자리가 없는 대화에 그 사실을 알리고, 첫 실행이면 초기설정을 묻게 한다.
 
 ### 화면 흐름
-첫 실행 전: agent는 사람의 첫 입력에 답하기 전에 "초기설정 해도 될까요?"를 묻고 답에 따라 setup을 부른 뒤 원래 이야기로 돌아간다. 연결 안 됨만 있으면: 이어질 일이 생기면 작업 세션 목록을 보고 고른다.
+첫 실행 전: agent는 사람의 첫 입력에 답하기 전에 "초기설정 해도 될까요?"를 묻고 답에 따라 setup을 부른 뒤 원래 이야기로 돌아간다. 연결 안 됨만 있으면: 첫 말에 답하면서 남길 작업 세션을 제안한다(0.9.17, SRV-01#2·SRV-03#1). Claude 프로그램 실행(entrypoint sdk-*, HEAD_CONTEXT_PERSON=1 아님)은 연결이 없어도 이 출력 둘 다 받지 않는다(0.9.17).
 
 ### 화면요소
 1. **연결 안 됨 한 줄** — `이 대화는 아직 작업 세션에 연결되지 않았습니다.` ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session` ← `hook:antigravity:SessionStart` ← `hook:antigravity:PreInvocation` → `tool:list`
@@ -140,6 +140,7 @@ node:sqlite를 쓸 수 없는 Node에서는 이 출력 대신 ERR-05의 이유 �
 ### 화면 정책
 - `pol.first-run-guide`
 - `pol.never-ask`
+- `pol.program-quiet-unconnected`
 
 ## STA-04 시작 때 작업 맥락
 
@@ -192,8 +193,32 @@ node:sqlite를 쓸 수 없는 Node에서는 이 출력 대신 ERR-05의 이유 �
 OpenCode에서는 시작 훅 대신 요청마다 서버 안내문 공용 부분과 작업 맥락을 넣는다.
 
 ### 화면요소
-1. **서버 안내문 공용 부분** — SRV-01의 #1~#6(앱별 부분 없음). 하위 세션에도 들어간다(R156). 글이 SRV-01과 같아 문구로 잇지 않는다 — 실행 R155가 그 기능을 SRV-01#1~#6에 잇는다. ← `hook:opencode:experimental.chat.system.transform`
+1. **서버 안내문 공용 부분** — SRV-01의 #1~#7(앱별 부분 없음). 하위 세션에도 들어간다(R156). 글이 SRV-01과 같아 문구로 잇지 않는다 — 실행 R155가 그 기능을 SRV-01#1~#6에 잇는다. ← `hook:opencode:experimental.chat.system.transform`
 2. **작업 맥락** — 연결됐으면 CMN-01·CMN-02(R155). 하위 세션(부모가 있고 연결이 없는 세션)에는 넣지 않는다(R156). 글이 CMN-01·CMN-02와 같아 문구로 잇지 않는다 — 실행 R155가 그 기능을 CMN-01·CMN-02 화면요소에 잇는다. ← `hook:opencode:experimental.chat.system.transform`
+
+## STA-07 컴팩트 뒤 먼저 할 것
+
+- 출력 종류: 시작 훅이 넣는 글(session 출력의 끝)
+- 상태: Claude·Codex 사람 대화의 압축 뒤 시작(source compact). 하위 에이전트(Codex agent_id)·Claude 프로그램 실행(sdk-*)·재개에는 없다. Antigravity에는 없다
+- 원문: R53(Claude, 메인에 연결), R234(Claude, 작업 브랜치 ctx-1), R235(Claude, 연결 안 됨), R238(Codex, 작업 브랜치 ctx-1), R239(Codex 하위 에이전트 — 없음), R242(Claude sdk-cli — 없음)
+- 공통 영역: 없음
+- 내는 기능: `hook:claude:SessionStart:session`, `hook:codex:SessionStart:session`
+- 그리는 코드: `code:core/recovery.mjs#compactRecovery`
+
+### 개요
+압축 뒤 하던 일을 잇기 전에, 이 대화가 처음 무엇을 하려 했는지와 지금 할 일을 먼저 되찾게 한다(0.9.17). 압축 요약에 붙은 "이어서 하라"는 말보다 복원을 먼저 하게 한다.
+
+### 화면 흐름
+agent는 이 블록대로 작업 브랜치를 시작한 목적을 `read entry`로 읽고, 마지막 기록의 다음이 사람이 정한 일인지 최근 대화에서 확인한 뒤 잇는다.
+
+### 화면요소
+1. **머리** — `## 컴팩트 뒤 먼저 할 것`과 복원을 먼저 하라는 한 줄. ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session` 문구: `하던 일을 잇기 전에 복원부터 한다`
+2. **최초 목적** — 작업 브랜치면 read entry와 첫 기록 짧은 ID, 첫 기록 요약. 메인이면 최근 대화와 read recent, 연결이 없으면 최근 대화에서 사람이 정한 일. ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session` → `tool:read` 문구: `로 이 작업 브랜치를 시작한 목적(문제·목표·조건)을 읽는다`
+3. **지금 할 일** — 작업 브랜치면 마지막 기록의 다음과 '사람이 정한 일인지 확인한 뒤 잇는다', 아니면 최근 대화에서 사람이 마지막으로 정한 일. ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session` 문구: `이 다음은 기록을 남긴 대화가 적은 계획이다`
+
+### 화면 정책
+- `pol.compact-recovery`
+- `pol.hook-budget`
 
 ## SRV-01 서버 안내문
 
@@ -207,22 +232,25 @@ OpenCode에서는 시작 훅 대신 요청마다 서버 안내문 공용 부분�
 agent에게 이 플러그인의 개념(작업 세션, 작업 브랜치, 저장, 할 일, 다른 대화)과 언제 무엇을 부르는지를 한 번 알려 준다.
 
 ### 화면 흐름
-agent는 일을 시작할 때 start-job을 부르고, 이어질 일이 생기면 작업 세션을 고르고, 착수할 때 작업 브랜치를 열고, 결과가 생기면 저장한다.
+agent는 일을 시작할 때 start-job을 부른다. 시작 때 연결 안 됨 안내를 받은 대화는 첫 말을 받을 때도 부르고, 첫 말에 답하면서 남길 작업 세션을 제안한다(0.9.17). 지금 하는 일이나 지난 일을 찾을 때는 read부터 쓰고, 착수할 때 이어서 할 일이면 작업 브랜치를 열고, 결과가 생기면 저장한다.
 
 ### 화면요소
-1. **첫 줄** — `일을 시작할 때는 먼저 start-job 스킬을 불러옵니다.` ← `mcp:initialize` → `skill:start-job` ← `hook:antigravity:SessionStart`
-2. **작업 세션** — 무엇·언제. 없으면 목록에서 찾아 사람에게 묻고 불러오고, 없으면 목적을 정해 만들지 물은 뒤 만든다. context.md는 사람 동의 없이 고치지 않는다. → `tool:list` → `tool:load` → `tool:create` 문구: `이어지는 큰 일의 묶음입니다`
-3. **작업 브랜치** — 무엇·언제. 착수할 때 열고, 이어 갈 것이 있으면 골라 잇는다. → `tool:branch` 문구: `작업 세션 안에서 열리고 닫히는 한 번의 일입니다`
+1. **첫 줄** — `일을 시작할 때는 먼저 start-job 스킬을 불러옵니다.` 0.9.17부터 같은 줄에 연결 안 됨 안내를 받은 대화는 첫 말을 받을 때도 부른다는 말이 붙는다. 문구: `첫 말을 받을 때도 불러옵니다` ← `mcp:initialize` → `skill:start-job` ← `hook:antigravity:SessionStart`
+2. **작업 세션** — 무엇(다음 대화에서 이어 가거나 계속 쓰일 일의 묶음, 0.9.17)·언제. 시작 때 연결 안 됨 안내를 받은 대화는 첫 말에 답하면서 남길 작업 세션을 제안한다(목록에 맞는 것이 있으면 그 이름, 없으면 새 이름). 이어 갈 일인지는 사람이 정하고, 받으면 불러오거나 만든다. context.md는 사람이 동의한 뒤에 고친다. → `tool:list` → `tool:load` → `tool:create` 문구: `다음 대화에서 이어 가거나 계속 쓰일 일의 묶음입니다`
+3. **작업 브랜치** — 무엇·언제. 문제·목표·조건을 맞춘 일에 착수할 때 이어서 할 일이면 열고, 짧게 끝날 일이면 열지 않아도 된다(0.9.17). 이어 갈 것이 있으면 골라 잇는다. → `tool:branch` 문구: `작업 세션 안에서 열리고 닫히는 한 번의 일입니다`
 4. **저장** — 무엇(다음에 이 일을 이어 갈 대화가 읽는 기록, 무엇을 남길지는 그 대화에 필요할 것으로 정함)·언제, 다음/정리, 참조파일(기록이 기대는 파일은 save의 files에, 경로는 `~/` 전체 경로로), 작업 파일 자리(작업 맥락 맨 위 '작업 세션 폴더' 줄의 `work/YYYY-MM/YYYY-MM-DD-<이름>.md`, 작업 브랜치 이름 폴더는 기록 자리라 그 밖에). → `tool:save` 문구: `작업 브랜치에 남기는 기록 한 번입니다`
-5. **할 일** — 무엇·언제(todo add/done). → `tool:todo` 문구: `작업 세션에 남는 나중에 할 일입니다`
-6. **다른 대화** — 먼저 목록(conversations)을 보고, 목록의 보낼 곳을 이 앱의 보내기 도구에 그대로 준다. → `tool:conversations` 문구: `이 프로젝트에서 살아 있는 대화와`
-7. **이 앱에서 부르는 도구** — Claude: SendMessage(to), Agent 도구 fork / 다른 subagent_type. Codex: 이 플러그인의 send(threadId, prompt), spawn_agent fork_turns "all"/"none". Antigravity: 기록 도구는 플러그인 MCP 서버 head-context_session의 도구를 call_mcp_tool로, 보내기는 이 플러그인의 send, delivery는 started·queued(0.9.11~). OpenCode에는 없다. → `tool:send` → `tool:send@antigravity` 문구: `이 앱(<앱>)에서 부르는 도구`
+5. **읽기** — 무엇(연결을 바꾸지 않고 기록을 읽음)·언제: 지금 하는 일이나 지난 일을 찾을 때는 무조건 read부터, 물음의 낱말로 read find, 없으면 read recent, 파일·코드는 그다음(0.9.17). → `tool:read` 문구: `작업 세션의 기록을 연결을 바꾸지 않고 읽습니다`
+6. **할 일** — 무엇·언제(todo add/done). → `tool:todo` 문구: `작업 세션에 남는 나중에 할 일입니다`
+7. **다른 대화** — 먼저 목록(conversations)을 보고, 목록의 보낼 곳을 이 앱의 보내기 도구에 그대로 준다. → `tool:conversations` 문구: `이 프로젝트에서 살아 있는 대화와`
+8. **이 앱에서 부르는 도구** — Claude: SendMessage(to), Agent 도구 fork / 다른 subagent_type. Codex: 이 플러그인의 send(threadId, prompt), spawn_agent fork_turns "all"/"none". Antigravity: 기록 도구는 플러그인 MCP 서버 head-context_session의 도구를 call_mcp_tool로, 보내기는 이 플러그인의 send, delivery는 started·queued(0.9.11~). OpenCode에는 없다. → `tool:send` → `tool:send@antigravity` 문구: `이 앱(<앱>)에서 부르는 도구`
 
 ### 화면 정책
 - `pol.no-host-tool-names`
 - `pol.ask-before-load`
 - `pol.save-when-result`
 - `pol.start-job-agree`
+- `pol.read-first`
+- `pol.first-word-session`
 
 ## SRV-02 도구 목록
 
@@ -264,17 +292,20 @@ agent는 일을 시작할 때 start-job을 부르고, 이어질 일이 생기면
 일을 받으면 만들기 전에 거칠 차례를 agent에게 준다. 코드가 검사하지 않고 글로만 지킨다.
 
 ### 화면 흐름
-agent는 이 차례대로 문제를 파악하고, 기존 기록을 찾고, 사람과 문제·목표·조건을 맞춘 뒤 작업 세션·작업 브랜치와 진행 방식을 정한다.
+agent는 이 차례대로 문제를 파악하고, 기존 기록을 read로 먼저 찾고, 사람과 문제·목표·조건을 맞춘 뒤 작업 세션·작업 브랜치와 진행 방식을 정한다. 연결 안 된 대화는 첫 말에 답하면서 남길 작업 세션을 제안한다(0.9.17).
 
 ### 화면요소
-1. **문제 파악** — 요청과 대화에서 문제와 원하는 결과, 이미 정해진 것과 조건을 확인하고 뜻이 흐리면 묻는다. ← `skill:start-job` 문구: `## 1. 문제를 파악한다`
-2. **기존 자료 먼저** — 작업 세션 기록과 프로젝트 파일에서 비슷한 자료·결정·도구를 먼저 찾는다. ← `skill:start-job` → `tool:list` → `tool:read` 문구: `## 2. 기존 자료를 먼저 찾는다`
-3. **문제·목표·조건 맞추기** — 짧은 불릿으로 보이고 사람과 맞춘다. 맞춰지면 작업 세션을 맞추거나 만들고, 이어질 일이면 작업 브랜치를 열어 첫 기록으로 남긴다. 짧게 끝날 일이면 열지 않아도 된다. ← `skill:start-job` → `tool:load` → `tool:create` → `tool:branch` → `tool:save` 문구: `## 3. 문제·목표·조건을 맞춘다`
-4. **진행 방식 고르기** — 직접 / 기본 포크 / 사이드 포크 / 에이전트 표. 기본 포크는 이 대화가 세부에 깊이 들어가 있으면 그 상태로 시작하고, 에이전트에는 해석 없는 관측을 브리프로 준다(0.9.10 글). 자기 결과의 검수는 에이전트에, 맡긴 결과는 받은 쪽이 확인한다. ← `skill:start-job` 문구: `## 4. 진행 방식을 고른다`
+1. **연결되지 않은 대화의 첫 말** — 시작 때 연결 안 됨 안내를 받았으면 첫 말에 답하면서 남길 작업 세션을 제안한다. 물음이면 답 먼저·제안은 끝에 한 줄, 일을 맡기는 말이면 이해한 목적 한 줄과 제안. 목록에 맞는 것이 있으면 그 이름, 없으면 새 이름. 사람이 받으면 불러오거나 확인한 목적으로 만들고, 받지 않으면 작업 세션 없이 잇는다(0.9.17). ← `skill:start-job` → `tool:list` → `tool:load` → `tool:create` 문구: `## 연결되지 않은 대화의 첫 말`
+2. **문제 파악** — 요청과 대화에서 문제와 원하는 결과, 이미 정해진 것과 조건을 확인하고 뜻이 흐리면 묻는다. 고를 것이 여럿이면 결과를 바꾸는 것만 추천과 함께 묻고 나머지는 정해서 알린다(0.9.17). ← `skill:start-job` 문구: `## 1. 문제를 파악한다`
+3. **기존 자료 먼저** — 작업 세션 기록은 read로 먼저 찾고(find, 없으면 recent), 그다음 프로젝트 파일에서 비슷한 자료·결정·도구를 찾는다. 찾은 것은 지금 일에 맞는 근거인지 읽어서 확인한 뒤 쓴다(0.9.17). ← `skill:start-job` → `tool:list` → `tool:read` 문구: `## 2. 기존 자료를 먼저 찾는다`
+4. **문제·목표·조건 맞추기** — 짧은 불릿으로 보이고 사람과 맞춘다. 맞춰졌는데 연결 안 된 대화면 첫 말 절처럼 작업 세션을 제안하고, 착수할 때 이어서 할 일이면 작업 브랜치를 열어 첫 기록으로 남긴다. 짧게 끝날 일이면 작업 브랜치는 열지 않아도 된다. ← `skill:start-job` → `tool:load` → `tool:create` → `tool:branch` → `tool:save` 문구: `## 3. 문제·목표·조건을 맞춘다`
+5. **진행 방식 고르기** — 직접 / 기본 포크 / 사이드 포크 / 에이전트 표. 기본 포크는 이 대화가 세부에 깊이 들어가 있으면 그 상태로 시작하고, 에이전트에는 해석 없는 관측을 브리프로 준다. 자기 결과의 검수는 에이전트에, 맡긴 결과는 받은 쪽이 확인한다. 0.9.17부터 애매하면 맡기고(전에는 직접), 맡긴 일은 결과와 판단을 바꿀 수 있는 제약·예외·불확실한 것, 근거 자리로 돌려받는다. ← `skill:start-job` 문구: `## 4. 진행 방식을 고른다`
 
 ### 화면 정책
 - `pol.start-job-agree`
 - `pol.delegate-check`
+- `pol.read-first`
+- `pol.first-word-session`
 
 ## TOL-01 작업 세션 목록
 
@@ -393,13 +424,13 @@ agent는 이 차례대로 문제를 파악하고, 기존 기록을 찾고, 사�
 ## TOL-11 살아 있는 대화 목록
 
 - 출력 종류: tool 결과(conversations)
-- 원문: R33(Claude), R73(Codex) — 둘 다 살아 있는 대화 없음. R184(Claude)·R185(Codex)·R186(Antigravity) — 살아 있는 Antigravity 대화와 0.9.14가 남긴 서브에이전트 줄, R205·R206 — 서브에이전트 정리 뒤
+- 원문: R33(Claude), R73(Codex) — 둘 다 살아 있는 대화 없음. R184(Claude)·R185(Codex)·R186(Antigravity) — 살아 있는 Antigravity 대화와 0.9.14가 남긴 서브에이전트 줄, R205·R206 — 서브에이전트 정리 뒤, R246 — 짧은 말('응')도 said로 남음(0.9.16)
 - 내는 기능: `tool:conversations`
 - 그리는 코드: `code:core/sessions.mjs#sessions.conversations`
 
 ### 화면요소
 1. **머리와 보내기 안내** — `# 살아 있는 대화 (작업 세션 → 작업 브랜치 → 대화)`와 그 앱의 보내기 도구 한 줄(Claude: 'SendMessage(to: 보낼 곳)', Codex·Antigravity: 'send(threadId: 보낼 곳, prompt)'), 문구: `보내기: <도구>. 이름은 여러 대화가 같을 수 있어`. ← `tool:conversations`
-2. **대화 줄** — 작업 세션 → 작업 브랜치 → 대화, 대화마다 이름·보낼 곳·종류(사람/포크·워커)·마지막 활동·하는 일, 포크·워커는 띄운 대화 아래 들여씀(코드·도구 설명). ← `tool:conversations` → `tool:send` → `tool:send@antigravity` 문구: `하는 일: <일>` Antigravity 대화는 보낼 곳 `antigravity:<ID>`, 앱 표시 ` · antigravity`로 나온다. 살아 있음은 presence의 pid·시작 식별값으로 본다(`pol.agy-alive`). Antigravity 서브에이전트 줄은 없다(`pol.task-not-listed`). 0.9.14가 남긴 서브에이전트 presence는 그 서브에이전트가 다시 모델을 부를 때까지 남을 수 있다(R184 → R205).
+2. **대화 줄** — 작업 세션 → 작업 브랜치 → 대화, 대화마다 이름·보낼 곳·종류(사람/포크·워커)·마지막 활동·하는 일, 포크·워커는 띄운 대화 아래 들여씀(코드·도구 설명). ← `tool:conversations` → `tool:send` → `tool:send@antigravity` 문구: `하는 일: <일>` Antigravity 대화는 보낼 곳 `antigravity:<ID>`, 앱 표시 ` · antigravity`로 나온다. 살아 있음은 presence의 pid·시작 식별값으로 본다(`pol.agy-alive`). 하는 일의 `최근 지시`는 사람이 마지막으로 친 말의 첫 줄이고, 0.9.16부터 길이와 상관없이 고른다(전에는 10자 이하를 버려 '그래. 그렇게 하자' 대신 앞의 긴 지시가 보였다. 처리 정책 `pol.said-any-length`). Antigravity 서브에이전트 줄은 없다(`pol.task-not-listed`). 0.9.14가 남긴 서브에이전트 presence는 그 서브에이전트가 다시 모델을 부를 때까지 남을 수 있다(R184 → R205).
 3. **안 붙은 대화** — 작업 세션에 안 붙은 대화 묶음(코드). 문구: `## 작업 세션 없음`
 4. **없음** — `(살아 있는 대화 없음)`. ← `tool:conversations`
 

@@ -695,5 +695,49 @@ cinbox.chmod(0)
 hook("codex-hook.mjs", ["inbox"], {"hook_event_name": "UserPromptSubmit", "session_id": X1, "cwd": str(PROJ), "prompt": "계속"}, "Codex UserPromptSubmit · inbox (편지함 폴더를 읽을 수 없음)")
 cinbox.chmod(0o755)
 
+# A29(0.9.17): 컴팩트 뒤 먼저 할 것 — Claude·Codex 사람 대화의 compact 시작 출력 끝에 붙는다(작업 브랜치·연결 안 됨), 하위 에이전트·프로그램 실행에는 없다
+STATE["label"] = "0.9.17 컴팩트 뒤 복원 — 작업 브랜치 ctx-1에 연결"
+C9 = "99999999-9999-4999-8999-999999999999"
+s = Server("mcp.mjs")
+s.rpc("initialize", {"protocolVersion": "2025-06-18"})
+s.call("load", {"name": "demo", "branch": "ctx-1", "conversation_id": C9}, "작업 브랜치 ctx-1 불러오기(컴팩트 복원 시험용)")
+s.close()
+claude_start("compact", C9, parts=("session",))
+STATE["label"] = "0.9.17 컴팩트 뒤 복원 — 연결 안 된 Claude 대화"
+claude_start("compact", "99999999-9999-4999-8999-000000000010", parts=("session",))
+STATE["label"] = "0.9.17 컴팩트 뒤 복원 — Codex 대화"
+X3 = "019a0000-0000-7000-8000-0000000000dd"
+cx3 = {"hook_event_name": "SessionStart", "session_id": X3, "cwd": str(PROJ), "source": "startup", "transcript_path": str(HOME / ".codex" / "sessions" / f"{X3}.jsonl")}
+hook("codex-hook.mjs", ["session"], cx3, "Codex SessionStart(startup) · session (컴팩트 복원 시험용 Codex 대화)")
+c = Server("codex-mcp.mjs", cwd=CPKG)
+c.rpc("initialize", {"protocolVersion": "2025-06-18"})
+c.call("load", {"name": "demo", "branch": "ctx-1"}, "Codex 대화가 작업 브랜치 ctx-1 불러오기", meta={"threadId": X3, "sessionId": X3})
+c.close()
+hook("codex-hook.mjs", ["session"], {**cx3, "source": "compact"}, "Codex SessionStart(compact) · session (작업 브랜치 ctx-1)")
+hook("codex-hook.mjs", ["session"], {**cx3, "source": "compact", "agent_id": "a"}, "Codex SessionStart(compact) · session (하위 에이전트)")
+
+# A30(0.9.17): Claude 프로그램 실행(sdk-*, HEAD_CONTEXT_PERSON 아님)은 연결 안 됐을 때 연결 안 됨 안내·첫 실행 안내를 받지 않는다
+STATE["label"] = "0.9.17 Claude 프로그램 실행(sdk-cli), 연결 안 됨"
+SDK = {"CLAUDE_CODE_ENTRYPOINT": "sdk-cli"}
+sdk_in = lambda conv, source="startup", project=PROJ: {"hook_event_name": "SessionStart", "session_id": conv, "cwd": str(project), "source": source,
+                                                        "transcript_path": str(HOME / ".claude" / "projects" / "demo" / f"{conv}.jsonl")}
+hook("hook.mjs", ["session"], sdk_in("99999999-9999-4999-8999-000000000011"), "Claude SessionStart(startup) · session (sdk-cli, 연결 안 됨)", env=SDK)
+hook("hook.mjs", ["session"], sdk_in("99999999-9999-4999-8999-000000000012"), "Claude SessionStart(startup) · session (sdk-cli + HEAD_CONTEXT_PERSON=1, 연결 안 됨)",
+     env={**SDK, "HEAD_CONTEXT_PERSON": "1"})
+hook("hook.mjs", ["session"], sdk_in("99999999-9999-4999-8999-000000000013", "compact"), "Claude SessionStart(compact) · session (sdk-cli, 연결 안 됨)", env=SDK)
+STATE["label"] = "0.9.17 Claude 프로그램 실행(sdk-cli), 초기설정 전 프로젝트"
+CFRESH = ROOT / "claude-fresh"
+CFRESH.mkdir(parents=True, exist_ok=True)
+hook("hook.mjs", ["session"], sdk_in("99999999-9999-4999-8999-000000000014", project=CFRESH), "Claude SessionStart(startup) · session (sdk-cli, 초기설정 전)",
+     env={**SDK, "CLAUDE_PROJECT_DIR": str(CFRESH)})
+hook("hook.mjs", ["session"], sdk_in("99999999-9999-4999-8999-000000000015", project=CFRESH), "Claude SessionStart(startup) · session (사람 대화, 초기설정 전 — 대조)",
+     env={"CLAUDE_PROJECT_DIR": str(CFRESH)})
+
+# A31(0.9.16): 짧은 말도 사람이 마지막으로 한 말(said)이 된다 — Antigravity presence의 said
+STATE["label"] = "0.9.16 짧은 말 — Antigravity 사람 대화"
+G16 = gid(16)
+agy(agy_in(G16, "PreInvocation", lastUserInput="응"), "Antigravity PreInvocation (사람이 '응'이라고 함)")
+measure("짧은 말의 said", {"대화": "G16", "lastUserInput": "응"}, f"presence said={json.dumps((json.loads(presence_of(G16).read_text()) if presence_of(G16).exists() else {}).get('said'), ensure_ascii=False)}")
+
 OUT.write_text(json.dumps(runs, ensure_ascii=False, indent=1))
 print(len(runs), "runs")
