@@ -34,38 +34,38 @@ export async function runHook() {
       dropPresence(project, id);
       if (start || restore) parts.push(SUBAGENT_NOTICE);
     } else {
-    // Register even on resume; session/load has no SessionStart, but none of the
-    // context is repeated unless a new CHECKPOINT actually appeared.
-    writePresence(project, { conversation_id: id, transcript_path: transcript, said: input.lastUserInput });
-    if (start || restore) {
-      refreshCore(project);
-      parts.push(...coreParts(project));
-      if (start) parts.push(instructionsFor('antigravity'));
-      const problem = runtimeProblem();
-      if (problem) parts.push(problem);
-      else {
-        const store = sessions(project, { host: 'antigravity' });
-        const request = start ? takeStart(project, id) : null;
-        if (request) {
-          if (!store.names().includes(request.session)) throw new Error(`작업 세션 '${request.session}'이 없습니다.`);
-          if (request.branch !== undefined)
-            store.load({ name: request.session, branch: request.branch, conversation_id: id });
+      // Register even on resume; session/load has no SessionStart, but none of the
+      // context is repeated unless a new CHECKPOINT actually appeared.
+      writePresence(project, { conversation_id: id, transcript_path: transcript, said: input.lastUserInput });
+      if (start || restore) {
+        refreshCore(project);
+        parts.push(...coreParts(project));
+        if (start) parts.push(instructionsFor('antigravity'));
+        const problem = runtimeProblem();
+        if (problem) parts.push(problem);
+        else {
+          const store = sessions(project, { host: 'antigravity' });
+          const request = start ? takeStart(project, id) : null;
+          if (request) {
+            if (!store.names().includes(request.session)) throw new Error(`작업 세션 '${request.session}'이 없습니다.`);
+            if (request.branch !== undefined)
+              store.load({ name: request.session, branch: request.branch, conversation_id: id });
+          }
+          const where = {
+            conversation_id: id,
+            session_name: process.env.HEAD_CONTEXT_SESSION || request?.session,
+          };
+          const place = start
+            ? store.start({ ...where, info: { transcript_path: transcript, entrypoint: 'antigravity-acp' } })
+            : store.locate(where);
+          if (place) {
+            const content = store.parts(place, { budget: HOOK_BUDGET });
+            parts.push(content.head, content.context);
+          } else parts.push(UNCONNECTED);
         }
-        const where = {
-          conversation_id: id,
-          session_name: process.env.HEAD_CONTEXT_SESSION || request?.session,
-        };
-        const place = start
-          ? store.start({ ...where, info: { transcript_path: transcript, entrypoint: 'antigravity-acp' } })
-          : store.locate(where);
-        if (place) {
-          const content = store.parts(place, { budget: HOOK_BUDGET });
-          parts.push(content.head, content.context);
-        } else parts.push(UNCONNECTED);
+        if (start) parts.push(guide(project, { host: 'antigravity' }));
+        if (restore) parts.push(recentPart(rows, transcript, { timeZone: locations(project).timezone }));
       }
-      if (start) parts.push(guide(project, { host: 'antigravity' }));
-      if (restore) parts.push(recentPart(rows, transcript, { timeZone: locations(project).timezone }));
-    }
     }
     if (event === 'PreInvocation') {
       if (!parent && input.lastUserInput?.trim() === '/compact' && !runtimeProblem()) parts.push(compactInstruction());
