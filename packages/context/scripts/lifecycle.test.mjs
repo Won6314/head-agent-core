@@ -227,6 +227,9 @@ test('a fork or subagent (agent_id) may read but not write; the tool surface car
   assert.match(skill, /- 어느 쪽인지 애매하면 맡긴다\./);
   assert.match(skill, /- 맡긴 일은 결과, 판단을 바꿀 수 있는 제약·예외·불확실한 것, 근거가 있는 곳으로 돌려받는다\./);
   assert.match(INSTRUCTIONS, /- 언제: 문제·목표·조건을 맞춘 일에 착수할 때, 이어서 할 일이면 엽니다\./);
+  // Past or current work is looked up in the records first.
+  assert.match(INSTRUCTIONS, /\n\n읽기\n- 무엇: [^\n]+\n- 언제: 지금 하는 일이나 지난 일을 찾을 때는 무조건 read부터 씁니다\./);
+  assert.match(skill, /작업 세션 기록은 read로 먼저 찾는다/);
   for (const step of [
     '## 연결되지 않은 대화의 첫 말',
     '이어 갈 일인지는 사용자가 정한다.',
