@@ -11,7 +11,7 @@ const fileOf = (id) => {
 export const registered = (id) => (id ? readLoose(fileOf(id)) : null);
 export function register(id, value) {
   if (!path.isAbsolute(value.cwd || '')) throw new Error('절대 작업 폴더가 필요합니다.');
-  atomicJSON(fileOf(id), { ...value, conversation_id: id });
+  atomicJSON(fileOf(id), value);
 }
 export function callerOf(request) {
   const meta = request?.params?._meta || {};

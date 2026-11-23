@@ -7,11 +7,12 @@ import { locations, takeNotices } from '../../core/storage.mjs';
 import { runtimeProblem } from '../../core/platform.mjs';
 import { compactInstruction } from '../claude/compact.mjs';
 import { register, registered } from './register.mjs';
-import { writePresence, take, asMessage } from './threads.mjs';
+import { writePresence, take } from './threads.mjs';
+import { asMessage } from '../../core/inbox.mjs';
 import { steps, checkpointOf, recentPart } from './transcript.mjs';
 import { takeStart } from './start.mjs';
 
-export const hookOutput = (parts) => ({
+const hookOutput = (parts) => ({
   injectSteps: parts.filter(Boolean).map((text) => ({ systemMessage: { systemMessage: text } })),
 });
 
@@ -47,7 +48,6 @@ export async function runHook() {
         const where = {
           conversation_id: id,
           session_name: process.env.HEAD_CONTEXT_SESSION || request?.session,
-          origins: [],
         };
         const place = start
           ? store.start({ ...where, info: { transcript_path: transcript, entrypoint: 'antigravity-acp' } })
@@ -76,7 +76,6 @@ export async function runHook() {
     waiting?.done();
     register(id, {
       cwd: project,
-      transcript_path: transcript,
       checkpoint: start || restore ? checkpoint : (previous?.checkpoint ?? null),
     });
   } catch (error) {

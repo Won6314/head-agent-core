@@ -1,6 +1,6 @@
 {
   "name": "head-context",
-  "version": "0.9.14",
+  "version": "0.9.15",
   "description": "HEAD 코어 지침과 작업 맥락, 세 앱이 함께 쓰는 작업 기록과 대화 메시지.",
   "author": "Won6314"
 }

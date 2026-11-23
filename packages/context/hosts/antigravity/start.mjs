@@ -1,13 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { locations, recordFile, noSymlink } from '../../core/storage.mjs';
+import { locations, recordFile } from '../../core/storage.mjs';
 
 // Client writes after session/new, before the first prompt. Only SessionStart
 // consumes it; no model/tool call is needed to choose this conversation's work.
-export function takeStart(project, id, { now = Date.now() } = {}) {
+export function takeStart(project, id) {
+  const now = Date.now();
   const state = locations(project).state;
   const file = recordFile(state, 'start', id, 'antigravity');
-  const dir = noSymlink(path.dirname(file));
+  const dir = path.dirname(file);
   let entries;
   try {
     entries = fs.readdirSync(dir, { withFileTypes: true });

@@ -185,7 +185,7 @@ test('Codex tool server: the conversation from _meta.threadId, the project from 
     ],
     { HEAD_CONTEXT_CODEX_DATA: data },
   );
-  assert.equal(init.result.serverInfo.version, '0.9.11');
+  assert.equal(init.result.serverInfo.version, JSON.parse(fs.readFileSync('.claude-plugin/plugin.json', 'utf8')).version);
   assert.equal(load.result.isError, undefined);
   assert.match(load.result.content[0].text, /MCP DIRECTION/);
   const bound = JSON.parse(fs.readFileSync(path.join(dir, '.head/state/conversations/codex-th1.json'), 'utf8'));
@@ -269,6 +269,7 @@ test('one package carries both hosts: Codex manifest, hooks and a relative tool 
   const m = JSON.parse(fs.readFileSync('.codex-plugin/plugin.json', 'utf8')),
     c = JSON.parse(fs.readFileSync('.claude-plugin/plugin.json', 'utf8'));
   assert.equal(m.version, c.version);
+  assert.equal(JSON.parse(fs.readFileSync('plugin.json', 'utf8')).version, c.version);
   assert.equal(m.name, c.name);
   const server = JSON.parse(fs.readFileSync(m.mcpServers, 'utf8')).mcpServers.session;
   assert.deepEqual(server.args, ['scripts/codex-mcp.mjs']);

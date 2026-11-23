@@ -13,6 +13,7 @@ import { compactInstruction } from '../hosts/claude/compact.mjs';
 import { checkpointOf, steps, recentPart } from '../hosts/antigravity/transcript.mjs';
 import { callerOf } from '../hosts/antigravity/register.mjs';
 import { queue, readPresence } from '../hosts/antigravity/threads.mjs';
+import { take as takeCodex } from '../hosts/codex/threads.mjs';
 import { register as registerClaudeSend } from '../hooks/conversations.mjs';
 import { locations } from '../core/storage.mjs';
 import { agyOwner } from '../hosts/antigravity/process.mjs';
@@ -162,6 +163,7 @@ test('Antigravity lists: shared owner, close removes only one, process exit remo
         peers: [{ host: 'antigravity', live: (known) => antigravityPeer.live(dir, known) }],
       }).conversations();
       assert.match(out, /antigravity:one/);
+      assert.match(out, /antigravity:one · antigravity/);
       assert.match(out, /antigravity:two/);
       assert.doesNotMatch(out, /antigravity:(legacy|reused)/);
     }
@@ -244,6 +246,7 @@ test('Antigravity hook: camelCase -> injectSteps, consent, registration; ordinar
   assert.equal(first.filter((s) => s.includes('연결되지 않았습니다')).length, 1);
   assert.equal(first.filter((s) => s.startsWith('일을 시작할 때는 먼저')).length, 1);
   assert.equal(JSON.parse(fs.readFileSync(path.join(data, 'conversations/c1.json'))).cwd, dir);
+  assert.deepEqual(Object.keys(JSON.parse(fs.readFileSync(path.join(data, 'conversations/c1.json')))).sort(), ['checkpoint', 'cwd']);
   assert.deepEqual(hook(dir, data), []);
   setupTool(dir, { action: 'setup' }, { host: 'antigravity' });
   assert.ok(
@@ -358,11 +361,30 @@ test('Claude sends Antigravity addresses through its relay; non-ACP owner queued
   });
   assert.match(hook(dir, data).join('\n'), /CLAUDE_TO_AGY/);
   assert.deepEqual(hook(dir, data), []);
-  assert.match(
-    sessions(dir, {
-      host: 'claude',
-      peers: [{ host: 'antigravity', live: () => [{ conversation_id: 'c1', address: 'antigravity:c1' }] }],
-    }).conversations(),
-    /antigravity:c1 · antigravity/,
-  );
+});
+test('Antigravity inbox: all broken files are set aside without claims; unreadable inbox differs from Codex', () => {
+  const dir = fresh(), data = fresh();
+  queue(dir, 'c1', { from: 'claude:other', text: 'broken' });
+  const inbox = path.join(locations(dir).state, 'inbox/antigravity-c1');
+  const [name] = fs.readdirSync(inbox);
+  fs.writeFileSync(path.join(inbox, name), '{broken');
+  const broken = hook(dir, data);
+  assert.equal(broken.length, 1);
+  assert.match(broken[0], /^head-context: 읽을 수 없는 메시지를 따로 두었습니다: .+$/);
+  assert.ok(!fs.readdirSync(inbox).some((f) => f.startsWith('.taking-')));
+  assert.deepEqual(fs.readdirSync(path.join(inbox, '.broken')), [name]);
+  if (process.getuid?.() === 0) return;
+  fs.chmodSync(inbox, 0);
+  try {
+    const out = hook(dir, data, {}, {}, true);
+    assert.equal(out.length, 1);
+    assert.match(out[0], /^head-context: 작업 맥락을 넣지 못했습니다: [^\n]+$/);
+    // Both hosts read the same blocked folder, addressed by their own prefix.
+    fs.renameSync(inbox, path.join(locations(dir).state, 'inbox/codex-c1'));
+    const { messages, broken } = takeCodex(dir, 'c1');
+    assert.deepEqual({ messages, broken }, { messages: [], broken: [] });
+  } finally {
+    const codex = path.join(locations(dir).state, 'inbox/codex-c1');
+    fs.chmodSync(fs.existsSync(codex) ? codex : inbox, 0o700);
+  }
 });

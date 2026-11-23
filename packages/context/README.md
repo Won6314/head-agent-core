@@ -1,4 +1,4 @@
-# head-context 0.9.14 — 작업 세션·작업 브랜치·저장
+# head-context 0.9.15 — 작업 세션·작업 브랜치·저장
 
 작업 세션마다 메인과 작업 브랜치로 기록과 할 일을 남기고, 시작·/clear·압축 때 작업 맥락을 다시 불러온다.
 살아 있는 대화를 작업 세션·작업 브랜치와 묶어 보여 준다. 포크·새 대화·대화 사이 메시지는 호스트(Claude Code) 기능을 그대로 쓴다.
@@ -143,7 +143,7 @@ Row = {conversation_id,host:'claude'|'codex',title,address,reachable,last_at,ent
 - 이름표에 ` (fork)`가 반복되면 하나만 남긴다.
   다시 돌려도 더 할 일이 없다.
 
-## Antigravity CLI·ACP 포장 (0.9.14)
+## Antigravity CLI·ACP 포장 (0.9.15)
 
 Google Antigravity CLI 1.5.13의 `agy acp`가 기준이다. Claude·Codex와 같은 프로젝트 기록을 읽고 쓴다.
 루트 `plugin.json`, `hooks.json`, `mcp_config.json`만 Antigravity가 읽고, 기존 `skills/`를 공유한다.
@@ -156,14 +156,11 @@ agy plugin install /절대/경로/head-agent-core/packages/context
 agy plugin install https://github.com/Won6314/head-agent-core/tree/main/packages/context
 ```
 
-- MCP·훅 경로는 `${PLUGIN_ROOT}`로 설치 위치에서 풀린다. MCP 서버는 `head-context_session`, 도구는 `call_mcp_tool`로 부른다.
 - SessionStart는 코어 지침, 서버 안내문, 작업 세션/연결 안 됨(+첫 실행 안내), 작업 맥락을 각각 `injectSteps` 시스템 메시지로 넣는다.
 - PreInvocation은 `/compact`에 공용 `compactInstruction()`을 넣고, 기록의 새 CHECKPOINT가 있으면 코어·작업 세션·작업 맥락·최근 주고받기 5번 원문을 한 번 되살린다. 새 프로세스 `session/load`는 새 CHECKPOINT가 없으면 아무것도 다시 넣지 않는다.
-  - agy 1.5.13 실제 시험에서 `<summary>` 본문은 한 줄 포인터가 됐다. 호스트가 그 바깥에 붙이는 `User Requests`(이전 사용자 입력)와 `Conversation Logs` 경로 안내는 남는다.
 - 매 도구 호출의 `_meta`의 `antigravity.google/conversation_id`가 대화 ID(ACP sessionId)다. `root_conversation_id`가 다르면 부른 대화의 프로젝트를 쓰고 기록 쓰기는 거절한다.
-- 등록과 마지막 처리 CHECKPOINT: `${PLUGIN_DATA}/conversations/<ID>.json` (`cwd`, `conversation_id`, `transcript_path`, `checkpoint`). `PLUGIN_DATA`는 agy가 제공한다(기본 `~/.gemini/antigravity-cli/plugin_data/head-context`).
-- 세 앱이 같은 Antigravity peer(`host`, `live`, `accepts`, `send`)를 사용한다. 주소는 **`antigravity:<ACP sessionId>`**, 앱 표시는 **`antigravity`**다. Antigravity 보내기의 delivery는 `started`(살아 있는 ACP 대화를 바로 깨움), `queued`(다음 입력 때 받음)다. `started`는 깨우기 신호가 수락됐다는 뜻이지 메시지 처리가 끝났다는 확인은 아니다. 일하는 중이면 다음 단계에서 받는다. TUI·데스크톱 앱·살아 있지 않은 대화·깨우기 실패는 `queued`다.
-- 먼저 inbox에 넣고, presence의 pid/start가 살아 있으면 **그 pid의** `~/.gemini/antigravity-cli/log/acp-server-<시각>-<pid>.log`에서 HTTP 포트(HTTPS 아님)를 읽어 loopback `SendAgentMessage`를 부른다. 신호에는 메시지 원문을 싣지 않는다. 다른 pid의 서버로 대신 보내지 않으며 호출 실패도 이미 성공한 inbox 저장을 실패시키지 않는다. 이 로컬 RPC는 비공개 구현에 의존한다.
+- 주소는 **`antigravity:<ACP sessionId>`**, 앱 표시는 **`antigravity`**다. Antigravity 보내기의 delivery는 `started`(살아 있는 ACP 대화를 바로 깨움), `queued`(다음 입력 때 받음)다. `started`는 깨우기 신호가 수락됐다는 뜻이지 메시지 처리가 끝났다는 확인은 아니다. 일하는 중이면 다음 단계에서 받는다. TUI·데스크톱 앱·살아 있지 않은 대화·깨우기 실패는 `queued`다.
+- 먼저 inbox에 넣고, 그 대화를 쥔 살아 있는 ACP 프로세스에만 깨우기 신호를 보낸다. 다른 프로세스로 대신 보내지 않고, 신호가 실패해도 inbox 저장은 성공으로 남는다(`queued`). 이 신호는 공개되지 않은 agy 내부 통로에 기댄다.
 
 ### 클라이언트가 쓰는 대화별 시작 작업 세션 파일
 
@@ -204,7 +201,7 @@ ACP 클라이언트는 `session/close`로 대화를 놓을 때 그 대화의 `<p
 }
 ```
 
-SessionStart 및 매 PreInvocation에 원자적으로 갱신한다. `pid`는 셸 부모를 넘어 찾은 실제 agy 프로세스 번호다. `start`는 Linux `/proc/<pid>/stat`의 starttime, 다른 Unix는 `ps lstart`, Windows는 프로세스 StartTime의 UTC ticks이며, 구하지 못하면 생략하고 pid만 쓴다. agy 부모를 찾지 못하면 pid도 쓰지 않는다. 살아 있음은 pid가 살아 있고, start가 있으면 현재 시작 식별값과 같은 것이다. pid 없는 옛 presence는 살아 있지 않으며 파일은 그대로 둔다. 7일 기준은 없다. `at`는 마지막 활동·정렬에만 쓴다. conversations, Claude·Codex peer 목록, claudeTree는 모두 이 같은 판정을 쓴다. `transcript_path`, `said`는 해당 값이 있을 때만 있으며 `/compact`는 `said`를 덮지 않는다. `title`이 있으면 목록에 쓴다.
+SessionStart 및 매 PreInvocation에 원자적으로 갱신한다. `pid`는 셸 부모를 넘어 찾은 실제 agy 프로세스 번호다. `start`는 Linux `/proc/<pid>/stat`의 starttime, 다른 Unix는 `ps lstart`, Windows는 프로세스 StartTime의 UTC ticks이며, 구하지 못하면 생략하고 pid만 쓴다. agy 부모를 찾지 못하면 pid도 쓰지 않는다. 살아 있음은 pid가 살아 있고, start가 있으면 현재 시작 식별값과 같은 것이다. pid 없는 옛 presence는 살아 있지 않으며 파일은 그대로 둔다. 7일 기준은 없다. `at`는 마지막 활동·정렬에만 쓴다. `transcript_path`, `said`는 해당 값이 있을 때만 있으며 `/compact`는 `said`를 덮지 않는다. `title`이 있으면 목록에 쓴다.
 
 `<project>/.head/state/inbox/antigravity-<ACP sessionId>/<ISO시각의 콜론·점을 하이픈으로 바꾼 값>-<UUID>.json`:
 
@@ -247,9 +244,9 @@ SessionStart 및 매 PreInvocation에 원자적으로 갱신한다. `pid`는 셸
 
   - 신뢰 전에 도구를 부르면 도구 결과가 이 신뢰 경로를 알려 준다(모델이 사용자에게 전한다).
 
-## 대화 간 메시지 (Claude Code ↔ Codex)
+## 대화 간 메시지 (Claude Code ↔ Codex ↔ Antigravity)
 
-LLM은 자기 앱의 보내기 도구에 대화 목록(`conversations`)의 보낼 곳을 그대로 준다. 두 앱의 대화가 한 목록에 함께 나온다.
+LLM은 자기 앱의 보내기 도구에 대화 목록(`conversations`)의 보낼 곳을 그대로 준다. 세 앱(Claude Code·Codex·Antigravity)의 대화가 한 목록에 함께 나온다. Antigravity로 보내고 받는 길은 위 「Antigravity CLI·ACP 포장」 절에 있다.
 
 | 보내는 쪽   | 도구                                 | 받는 쪽                | 가는 길                                                                                                                                                                                                                                                                    |
 | ----------- | ------------------------------------ | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

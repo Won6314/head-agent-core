@@ -8,7 +8,8 @@ import { register } from './register.mjs';
 import { engineOf } from './mode.mjs';
 import { hookOutput } from '../../core/protocol.mjs';
 import { runtimeProblem } from '../../core/platform.mjs';
-import { writePresence, readPresence, engineFrom, take, asMessage } from './threads.mjs';
+import { writePresence, readPresence, engineFrom, take } from './threads.mjs';
+import { asMessage } from '../../core/inbox.mjs';
 
 // Codex hooks, one process per part like the Claude hook. Codex says which start it is
 // (source: startup, resume, clear, compact, fork); hooks.json turns its output cap off.
