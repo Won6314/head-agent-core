@@ -2,6 +2,7 @@ import path from 'node:path';
 import { mapSummary, contentBody } from './history.mjs';
 import { renderMap, clock, shortStem } from './map-view.mjs';
 import { isOpen } from './lifecycle.mjs';
+import { rebuild, treeSection } from './problem-tree.mjs';
 import { todoLine, dueSoon } from './todo.mjs';
 export const RECENT_COUNT = 3;
 export const SUMMARY_LIMIT = 30;
@@ -50,6 +51,17 @@ const cut = (text, n) => {
 export function branchTitle(b) {
   const short = shortStem(b.name);
   return short === b.name ? b.name : `${short} ${b.label || ''}`.trim();
+}
+// The problem tree of one work branch, rebuilt from its saves; null when it has no problem.
+export function branchProblems(g, name, stem) {
+  if (stem === 'main') return null;
+  const header = g.header(name, stem);
+  if (!header) return null;
+  const state = rebuild(
+    g.own(name, stem).map((r) => g.detail(r)),
+    branchTitle({ name: stem, ...header }),
+  );
+  return state.count === 0 ? null : { state, mark: isOpen(header.status) ? '← 지금' : '← 마지막' };
 }
 // The open work branches of a session, newest activity first, each with its last save.
 export function openBranches(g, name) {
@@ -146,6 +158,7 @@ export function contextPart(
     branchCount = null,
     soonCount = null,
     map: withMap = true,
+    tree = 'full',
   },
 ) {
   const time = clock(g.timezone),
@@ -169,6 +182,14 @@ export function contextPart(
         ),
       );
     if (shown.length < open.length) lines.push(`(외 ${open.length - shown.length}개 — 전부는 load)`);
+  }
+  if (!overview && stem !== 'main') {
+    const problems = branchProblems(g, name, stem);
+    if (problems)
+      lines.push(
+        ...(lines.length ? [''] : []),
+        ...treeSection(problems.state, { mode: tree, mark: problems.mark, stem }),
+      );
   }
   if (todos.length) {
     const due = todos.filter((t) => dueSoon(t, today)),
@@ -216,6 +237,7 @@ export function contextPart(
 // branches (this conversation's stays) and due to-dos with a pointer to the rest. The open
 // work branches, the to-dos and the last next always stay. The last step is bounded by
 // its counts and line lengths, so it fits any budget the hooks use.
+// 지도를 뺄 때부터 문제 트리는 지금 경로만 남기고 접는다.
 export const FIT_STEPS = [
   { count: 3 },
   { count: 2 },
@@ -226,10 +248,10 @@ export const FIT_STEPS = [
   { count: 1, bodyChars: 0, limit: 15 },
   { count: 1, bodyChars: 0, limit: 5 },
   { count: 1, bodyChars: 0, limit: 5, lineChars: 300 },
-  { count: 1, bodyChars: 0, map: false, lineChars: 200 },
-  { count: 1, bodyChars: 0, map: false, lineChars: 150, branchCount: 30, soonCount: 10 },
-  { count: 1, bodyChars: 0, map: false, lineChars: 150, branchCount: 10, soonCount: 5 },
-  { count: 1, bodyChars: 0, map: false, lineChars: 100, branchCount: 3, soonCount: 3 },
+  { count: 1, bodyChars: 0, map: false, tree: 'path', lineChars: 200 },
+  { count: 1, bodyChars: 0, map: false, tree: 'path', lineChars: 150, branchCount: 30, soonCount: 10 },
+  { count: 1, bodyChars: 0, map: false, tree: 'path', lineChars: 150, branchCount: 10, soonCount: 5 },
+  { count: 1, bodyChars: 0, map: false, tree: 'path', lineChars: 100, branchCount: 3, soonCount: 3 },
 ];
 export function fittedContext(g, options, budget) {
   let text = '';

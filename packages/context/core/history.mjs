@@ -7,6 +7,15 @@ function summaryLine(line) {
   if (/^[-*_`~#\s]+$/.test(text)) return '';
   return text;
 }
+// Header indices in a record: the first nonblank line after its title must be 요약:.
+function headerRange(lines) {
+  let start = 1;
+  while (start < lines.length && lines[start].trim() === '') start++;
+  if (!lines[start]?.startsWith('요약:')) return [0, 0];
+  let end = start;
+  while (end < lines.length && lines[end].trim() !== '') end++;
+  return [start, end];
+}
 export function parseHistory(text) {
   // Date-only descriptive headings inside a checkpoint are Markdown body, not records.
   const matches = [
@@ -48,7 +57,20 @@ export function parseHistory(text) {
     bytes += Buffer.byteLength(text.slice(position, m.index + body.length));
     position = m.index + body.length;
     const end = bytes;
+    const rawLines = body.split('\n');
+    const [headStart, headEnd] = headerRange(rawLines);
+    const header = rawLines.slice(headStart, headEnd);
     return {
+      problem:
+        header
+          .find((l) => l.startsWith('지금 문제:'))
+          ?.slice(6)
+          .trim() || '',
+      relation:
+        header
+          .find((l) => l.startsWith('문제 관계:'))
+          ?.slice(6)
+          .trim() || '',
       timestamp: tokens[0],
       label: index?.[1] || '',
       source: index?.[2] || '',
@@ -91,7 +113,9 @@ export function mapSummary(entry) {
 // The body as a reader needs it: no heading, no summary/marker lines, no trailing cursor.
 // Summary lives in the map line, and only the newest entry's cursor is shown by the load.
 export function contentBody(entry) {
-  const lines = entry.body.split('\n').slice(1);
+  const rawLines = entry.body.split('\n');
+  const [start, end] = headerRange(rawLines);
+  const lines = rawLines.filter((l, i) => !(i >= start && i < end && /^(지금 문제:|문제 관계:)/.test(l))).slice(1);
   if (lines.length && /^다음:/.test(lines.findLast((l) => l.trim())?.trim() || ''))
     lines.splice(
       lines.findLastIndex((l) => l.trim()),

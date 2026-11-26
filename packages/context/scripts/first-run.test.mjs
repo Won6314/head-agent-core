@@ -276,7 +276,7 @@ test('setup turns the built-in fork on in the project settings, keeping what is 
   assert.equal(firstRun(four).setup, 'done');
 });
 const METHOD_QUESTION =
-  '"방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."';
+  '"방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬로 담은 거예요."';
 const settingsOf = (dir) => JSON.parse(read(dir, '.claude/settings.json'));
 const writeSettings = (dir, text) => {
   fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });

@@ -56,6 +56,8 @@ export const VERSION = JSON.parse(
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
 const missing = { create: { context: CONTEXT_REQUIRED } };
+// 값이 틀렸을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
+const invalid = { save: { relation: '관계(relation)는 아래·옆·위 중 하나입니다.' } };
 // Tools that change a record or a connection. A call made by a task running inside the
 // conversation that called it (the host fills agent_id) may read but not write.
 const WRITES = { load: true, create: true, save: true, branch: true, todo: (args) => args.action !== 'list' };
@@ -112,6 +114,8 @@ export const DEFINITIONS = [
         items: string,
         description: '이 기록이 기대는 파일. `~/`로 시작하는 전체 경로. 없으면 생략.',
       },
+      problem: { type: 'string', description: '선택.' },
+      relation: { type: 'string', enum: ['아래', '옆', '위'], description: '선택.' },
     },
     ['summary', 'history'],
   ],
@@ -209,7 +213,7 @@ export function callTool(store, name, args, conversation_id, project, readOnly =
       (schema.enum && !schema.enum.includes(value)) ||
       (schema.minimum !== undefined && value < schema.minimum)
     )
-      throw new Error(`유효하지 않은 인자: ${key}`);
+      throw new Error(invalid[name]?.[key] || `유효하지 않은 인자: ${key}`);
   }
   for (const key of tool.inputSchema.required)
     if (!(key in args)) throw new Error(missing[name]?.[key] || `필수 인자: ${key}`);

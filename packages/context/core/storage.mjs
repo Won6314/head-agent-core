@@ -204,9 +204,12 @@ export function entry({
   reason,
   index,
   files = [],
+  problem,
+  relation,
   timestamp = new Date().toISOString(),
 }) {
   summary = line(summary, 'summary');
+  if (problem) problem = line(problem, 'problem');
   if (next !== undefined && next !== null && next !== '' && (typeof next !== 'string' || /[\r\n]/.test(next)))
     throw new Error('next는 한 줄이어야 합니다.');
   next = typeof next === 'string' ? next.trim() : '';
@@ -218,5 +221,6 @@ export function entry({
   // The main line keeps one index line per save: the label and the file holding the body.
   const marker = `${status ? `상태: ${status}\n${branch ? `브랜치: ${validName(branch)}\n` : ''}${record ? `기록: ${record}\n` : ''}${reason ? `이유: ${line(reason, 'reason')}\n` : ''}` : ''}${index ? `이름표: ${line(index.label, 'label')} · 본문: ${index.record}\n` : ''}`;
   const refs = files.length ? `참조파일: ${files.map((f) => `\`${f}\``).join(', ')}\n` : '';
-  return `\n\n## ${timestamp}\n\n요약: ${summary}\n${marker}${refs}\n${history.trim()}\n${next ? `\n다음: ${next}\n` : ''}\n`;
+  const problemLines = problem ? `지금 문제: ${problem}\n${relation ? `문제 관계: ${relation}\n` : ''}` : '';
+  return `\n\n## ${timestamp}\n\n요약: ${summary}\n${marker}${problemLines}${refs}\n${history.trim()}\n${next ? `\n다음: ${next}\n` : ''}\n`;
 }

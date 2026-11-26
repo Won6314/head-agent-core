@@ -8,6 +8,8 @@ import { parseHistory } from './history.mjs';
 import { branchHeader } from './branch-format.mjs';
 import { renderMap, shortIds, matchShort } from './map-view.mjs';
 import { sqlite } from './platform.mjs';
+import { branchProblems } from './recovery.mjs';
+import { treeSection } from './problem-tree.mjs';
 
 // node:sqlite is loaded on first use (platform.mjs): an older Node gets the reason, not a crash at import.
 const database = (file) => new (sqlite().DatabaseSync)(file, { timeout: 5000 });
@@ -316,8 +318,10 @@ class Graph {
   map(session, stem, limit = 30) {
     this.session(session);
     const { lines, omitted, name } = renderMap(this, session, { stem, limit });
+    const problems = stem && stem !== 'main' ? branchProblems(this, session, stem) : null;
     return [
       `# 지도: ${session}${stem && stem !== 'main' ? ' / ' + name(stem) : ''}`,
+      ...(problems ? [...treeSection(problems.state, { mode: 'full', mark: problems.mark, stem }), ''] : []),
       ...lines,
       ...(omitted ? [`그 앞 ${omitted}개`] : []),
     ].join('\n');

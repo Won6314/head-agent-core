@@ -3,8 +3,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { parseHistory } from './history.mjs';
+import { rebuild, judge, applyRecord, spotOf } from './problem-tree.mjs';
 import {
   identity,
+  branchTitle,
   overview,
   sessionPart,
   fittedContext,
@@ -303,7 +305,7 @@ export function sessions(
     withGraph(project, (g) => g.branches(session), [file, main]);
     return true;
   };
-  const save = ({ summary, history, next, recap, files, conversation_id }) => {
+  const save = ({ summary, history, next, recap, files, problem, relation, conversation_id }) => {
     if (typeof history !== 'string' || !history.trim()) throw new Error('history(본문)가 필요합니다.');
     const bound = withGraphRead(project, (g) => resolve(conversation_id, g)),
       dir = directory(bound.session);
@@ -323,23 +325,37 @@ export function sessions(
       main = path.join(dir, 'history.md'),
       record = `work/${bound.stem}/history.md`,
       refs = referenceFiles(files, [path.dirname(file), dir]);
-    locked(file, () => {
+    const spot = locked(file, () => {
       const text = optionalRead(file),
         header = branchHeader(text);
       if (!header) throw new Error('작업 브랜치 파일을 읽지 못했습니다.');
+      const state = rebuild(parseHistory(text), branchTitle({ name: bound.stem, ...header }));
+      const got = judge(state, { problem, relation });
+      if (got.problem) applyRecord(state, got.problem, got.relation);
       const updated = next ? text : withRecap(text, recap);
       if (updated !== text) atomicText(file, updated);
-      fs.appendFileSync(file, uniqueEntry(file, { summary, history: fromBranch(history), next, files: refs.files }));
+      fs.appendFileSync(
+        file,
+        uniqueEntry(file, {
+          summary,
+          history: fromBranch(history),
+          next,
+          files: refs.files,
+          problem: got.problem,
+          relation: got.relation,
+        }),
+      );
       locked(main, () =>
         fs.appendFileSync(main, uniqueEntry(main, { summary, index: { label: header.label || bound.stem, record } })),
       );
+      return state.count > 0 ? spotOf(state) : null;
     });
     withGraph(project, (g) => g.recent(bound.session, bound.stem, 1), [file, main]);
     if (next)
-      return `작업 세션 '${bound.session}' 작업 브랜치 '${bound.stem}'에 기록했습니다.\n요약: ${summary}\n다음: ${next}${referenceNotice(refs)}`;
+      return `작업 세션 '${bound.session}' 작업 브랜치 '${bound.stem}'에 기록했습니다.\n요약: ${summary}\n다음: ${next}${spot ? `\n지금 문제: ${spot}` : ''}${referenceNotice(refs)}`;
     closeBranch(bound.session, bound.stem);
     bind(bound.session, 'main', conversation_id);
-    return `작업 세션 '${bound.session}' 작업 브랜치 '${bound.stem}'에 기록하고, 다음이 없어 작업 브랜치를 닫아 메인에 합쳤습니다.\n요약: ${summary}\n이 대화는 이제 메인에 기록합니다.${referenceNotice(refs)}`;
+    return `작업 세션 '${bound.session}' 작업 브랜치 '${bound.stem}'에 기록하고, 다음이 없어 작업 브랜치를 닫아 메인에 합쳤습니다.\n요약: ${summary}${spot ? `\n마지막 문제: ${spot}` : ''}\n이 대화는 이제 메인에 기록합니다.${referenceNotice(refs)}`;
   };
   const abandon = ({ branch, reason, conversation_id }) => {
     line(reason, 'reason');

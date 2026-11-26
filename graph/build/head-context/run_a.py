@@ -1070,5 +1070,88 @@ s.call("setup", {"action": "never_ask", "step": "method"}, "never_ask step=metho
 measure("never_ask step=method 뒤 상태", {"프로젝트": "project-method"}, method_state(PROJ_M))
 s.close()
 
+# A45(0.9.20): 문제 트리 — 저장 관계, 돌려보내기, 네 앱 맥락, 긴 트리 접기와 닫고 다시 열기
+STATE["label"] = "0.9.20 문제 트리 — Claude 첫 문제"
+s = Server("mcp.mjs")
+s.rpc("initialize", {"protocolVersion": "2025-06-18"})
+s.call("load", {"name": "demo", "branch": "main", "conversation_id": C1}, "문제 트리 시험 전 Claude 연결 준비")
+s.call("branch", {"action": "create", "branch": "tree-demo", "conversation_id": C1}, "문제 트리 작업 브랜치 열기")
+
+
+def tree_save(what, **args):
+    return s.call("save", {"summary": what, "history": "문제 트리 시험 기록.", "next": "계속 확인", "conversation_id": C1, **args}, what)
+
+
+tree_save("문제 없이 저장")
+tree_save("첫 문제 저장", problem="로그인이 안 된다")
+claude_start("startup", C1, parts=("context",))
+STATE["label"] = "0.9.20 문제 트리 — 그대로·아래·옆·위·맨 위"
+tree_save("같은 문제 그대로", problem="로그인이 안 된다")
+tree_save("아래 문제", problem="토큰이 만료된다", relation="아래")
+tree_save("옆 문제", problem="세션 쿠키가 없다", relation="옆")
+tree_save("한 칸 위 문제", problem="로그인이 안 된다", relation="위")
+tree_save("아래 첫 단", problem="응답이 늦다", relation="아래")
+tree_save("아래 둘째 단", problem="조회가 느리다", relation="아래")
+tree_save("맨 위로 돌아감", problem="tree-demo", relation="위")
+tree_save("맨 위 뒤 문제 없이 저장")
+tree_save("새 첫 문제와 관계 무시", problem="결제 화면이 느리다", relation="아래")
+STATE["label"] = "0.9.20 문제 트리 — 돌려보내기 다섯"
+for what, args in (
+    ("바뀌었는데 관계 없음", {"problem": "다른 문제"}),
+    ("지금 문제 빈 글", {"problem": ""}),
+    ("관계만 적음", {"relation": "아래"}),
+    ("위에 조상 아닌 글자", {"problem": "다른 문제", "relation": "위"}),
+    ("121자 문제", {"problem": "가" * 121}),
+    ("경로 구분자 포함 문제", {"problem": "문제 › 글자"}),
+    ("줄바꿈 포함 문제", {"problem": "문제\n글자"}),
+    ("잘못된 관계 값", {"problem": "결제 화면이 느리다", "relation": "아무거나"}),
+):
+    tree_save(what, **args)
+s.call("read", {"action": "map", "name": "demo", "branch": "tree-demo"}, "문제 트리 전체 지도")
+STATE["label"] = "0.9.20 문제 트리 — Codex 작업 맥락"
+c = Server("codex-mcp.mjs", cwd=CPKG)
+c.rpc("initialize", {"protocolVersion": "2025-06-18"})
+c.call("load", {"name": "demo", "branch": "tree-demo"}, "Codex 문제 트리 불러오기", meta={"threadId": X1, "sessionId": X1})
+c.close()
+hook("codex-hook.mjs", ["context"], {"hook_event_name": "SessionStart", "session_id": X1, "cwd": str(PROJ), "source": "startup"}, "Codex 문제 트리 작업 맥락")
+STATE["label"] = "0.9.20 문제 트리 — Antigravity 작업 맥락"
+a = Server("antigravity-mcp.mjs", cwd=APKG)
+a.rpc("initialize", {"protocolVersion": "2025-06-18"})
+a.call("load", {"name": "demo", "branch": "tree-demo"}, "Antigravity 문제 트리 불러오기", meta=M(G3))
+a.close()
+agy(agy_in(G3, "SessionStart", lastUserInput="문제 트리 확인"), "Antigravity 문제 트리 작업 맥락")
+STATE["label"] = "0.9.20 문제 트리 — OpenCode 작업 맥락"
+# OpenCode's server takes its project as argv[2] (hosts/opencode/mcp.mjs), and the
+# plugin fills the native ses_ ID as conversation_id (tool.execute.before).
+class OpenCodeTreeServer(Server):
+    def __init__(self):
+        self.p = subprocess.Popen(["node", str(PKG / "hosts" / "opencode" / "mcp.mjs"), str(PROJ)],
+                                  stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                  text=True, env=ENV, cwd=PROJ)
+        self.n = 0
+        self.script = "hosts/opencode/mcp.mjs <project>"
+
+
+oc = OpenCodeTreeServer()
+oc.rpc("initialize", {"protocolVersion": "2025-06-18"})
+oc.call("load", {"name": "demo", "branch": "tree-demo", "conversation_id": "ses_tree_demo"}, "OpenCode 문제 트리 불러오기")
+oc.close()
+opencode("OpenCode 문제 트리 작업 맥락", "ses_tree_demo")
+STATE["label"] = "0.9.20 문제 트리 — 긴 트리 접기"
+s.call("branch", {"action": "create", "branch": "tree-long", "conversation_id": C1}, "긴 트리 작업 브랜치 열기")
+for i in range(90):
+    tree_save(f"긴 트리 형제 {i + 1}", problem=f"{i:03d}" + "가" * 107, **({"relation": "옆"} if i else {}))
+for i in range(3):
+    tree_save(f"긴 트리 아래 {i + 1}단", problem=f"{i}단" + "나" * 108, relation="아래")
+claude_start("startup", C1, parts=("context",))
+s.call("read", {"action": "map", "name": "demo", "branch": "tree-long"}, "긴 트리 전체 지도")
+STATE["label"] = "0.9.20 문제 트리 — 닫고 다시 열기"
+s.call("load", {"name": "demo", "branch": "tree-demo", "conversation_id": C1}, "닫기 전 문제 트리 다시 붙이기")
+s.call("save", {"summary": "문제 트리 확인 끝", "history": "확인했다.", "problem": "결제 화면이 느리다", "recap": "문제 관계와 트리를 확인했다.", "conversation_id": C1}, "마지막 문제와 함께 닫는 저장")
+s.call("read", {"action": "map", "name": "demo", "branch": "tree-demo"}, "닫힌 문제 트리 마지막 표시")
+s.call("load", {"name": "demo", "branch": "tree-demo", "conversation_id": C1}, "닫힌 문제 트리 다시 열기")
+tree_save("닫는 저장의 문제 그대로", problem="결제 화면이 느리다")
+s.close()
+
 OUT.write_text(json.dumps(runs, ensure_ascii=False, indent=1))
 print(len(runs), "runs")

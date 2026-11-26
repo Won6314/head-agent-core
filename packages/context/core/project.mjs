@@ -209,7 +209,7 @@ export const claudeImports = (project) => hasImport(optionalRead(files(project).
 const surveyQuestion = () =>
   `"프로젝트 조사해볼까요?"를 물으세요. 예면 ${SURVEY_SOURCE} 절차를 따르고 끝나면 setup(action=survey_done). 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=survey).`;
 const methodQuestion = () =>
-  `"방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method).`;
+  `"방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method).`;
 // The questions still to ask once setup is done, in order: the add-on (one yes or no) before
 // the survey (a long procedure).
 const pendingQuestions = (s) => [
