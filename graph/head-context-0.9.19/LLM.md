@@ -1,6 +1,6 @@
 # head-context 0.9.19 제품 그래프 — LLM용 조회 안내
 
-이 그래프는 head-context 플러그인(head-agent-core commit `9dec306`, `packages/context`)을 노드와 연결로 기록한 인덱스다. 새 애드온 `packages/method`(head-method)는 들어 있지 않다. 이 판은 독립 검수를 반영했고 재확인 전이다. 물음을 받으면 그래프로 볼 곳을 좁히고, 그래프가 가리킨 원문을 읽은 뒤 답한다.
+이 그래프는 head-context 플러그인(head-agent-core commit `9dec306`, `packages/context`)을 노드와 연결로 기록한 인덱스다. 새 애드온 `packages/method`(head-method)는 들어 있지 않다. 이 판은 독립 검수를 반영했고 재확인을 통과했다. 물음을 받으면 그래프로 볼 곳을 좁히고, 그래프가 가리킨 원문을 읽은 뒤 답한다.
 
 ## 시작
 
