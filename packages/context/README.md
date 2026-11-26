@@ -5,6 +5,12 @@
 기준 환경은 이 플러그인만 붙은 Claude Code, Codex(데스크톱 앱 포함), Antigravity CLI·ACP다. 한 패키지에 세 앱의 포장이 있다(`.claude-plugin`, `.codex-plugin`, 루트 `plugin.json`). 세 앱은 프로젝트의 같은 기록을 같이 읽고 쓴다. 플러그인이 따로 띄우는 상주 프로세스는 없다. 사용자가 직접 치는 명령(스킬)은 두지 않는다: 모든 것은 자연어로 하고 모델이 도구를 부른다.
 스킬은 모델이 부르는 둘이다. `start-job`(`skills/start-job`, 호스트 목록에는 `head-context:start-job`)은 일을 시작할 때, `research`(`skills/research`, `head-context:research`)는 판단에 쓸 사실을 모으거나 만드는 법·해결책을 찾기 시작할 때 부른다. start-job을 부르라는 지침은 서버 안내문 첫 줄에, research는 코어 지침의 'Use separate contexts for detailed work' 문단과 start-job 2·4절에서 가리킨다. 조사 스킬은 찾을 것이 정해진 조사는 직접 읽는 것을 기본으로, 무엇이 나올지 모르는 탐색은 서로 모르는 여럿에게 따로, 결과는 항목마다 출처를 달아 원본과 대조하게 한다(0.9.19).
 첫 실행 초기설정은 프로젝트 `.claude/settings.json`에 `env.CLAUDE_CODE_FORK_SUBAGENT="1"`도 넣는다(기본 포크 켜기, 다른 설정은 그대로, 이미 값이 있거나 JSON이 깨졌으면 손대지 않고 알린다).
+첫 실행은 프로젝트마다 한 번씩 묻는 단계들이다(`.head/config.json`의 `first_run.setup·method·survey`, 각각 `done`이나 `never_ask`). 쓰기는 모두 `setup` 도구가 하고 모델은 파일을 직접 쓰지 않는다. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 `never_ask`를 적고, 아니면 다음 시작(시작·/clear)에 다시 묻는다.
+
+1. 초기설정(`action=setup`): 코어 지침 켜기와 사본 `.head/core.md`, 위 `.claude/settings.json` 설정.
+2. 방법론 애드온(`action=method_on`, 0.9.19): 초기설정을 마친 직후에, 이미 초기설정이 끝난 프로젝트에서는 다음 시작에 한 번 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 묻는다. 예면 Claude Code는 프로젝트 `.claude/settings.json`의 `enabledPlugins`에 `"head-method@head-agent-core": true`를 더한다(마켓은 초기설정이 넣음, 다음 대화부터 켜짐, 이미 값이 있거나 파일이 JSON 객체가 아니면 손대지 않고 알린다). Codex는 `codex plugin add head-method@head-agent-core`, Antigravity는 `agy plugin install https://github.com/Won6314/head-agent-core/tree/main/packages/method`를 사용자에게 알리고 설정은 바꾸지 않는다. 어느 앱이든 이 단계를 끝남으로 적는다.
+3. 프로젝트 조사(`action=survey_done`): 플러그인에 조사 절차(`instructions/survey.md`)가 있을 때만, 애드온 물음 다음에 묻는다.
+
 현황판·채널·대화 상태 표시는 코어 밖(추가기능)이다.
 
 ## 용어
@@ -45,7 +51,7 @@ Claude Code에서는 `mcp__plugin_head-context_session__<도구>`, Codex에서�
 | read           | overview(둘러보기: 연결 없이 작업 맥락을 읽기 전용으로, 최근 기록은 작업 세션 전체에서)/map/recent/entry/find/files, 연결을 바꾸지 않음. files는 기록(id) 또는 작업 브랜치(branch)가 가리킨 파일과 그 파일들이 링크·백틱 경로로 가리킨 파일을 나무 모양으로(depth 1~3, 기본 2, 50개까지) |
 | todo           | add/list/done                                                                                                                                                                                                                                                                            |
 | conversations  | 살아 있는 대화: 작업 세션 → 작업 브랜치 → 대화, 안 붙은 대화 묶음. 대화마다 제목·주소·종류·마지막 활동·하는 일. 포크·워커는 띄운 대화가 살아 있으면 그 아래에 한 번만                                                                                                                    |
-| setup          | 첫 실행 초기설정(코어 지침 켜기와 사본 .head/core.md, .claude/settings.json)                                                                                                                                                                                                             |
+| setup          | 첫 실행의 쓰기: setup(코어 지침 켜기와 사본 .head/core.md, .claude/settings.json), method_on(방법론 애드온), survey_done, never_ask(step=setup·method·survey)                                                                                                                                 |
 | send (Codex만) | 다른 대화에 메시지 보내기. threadId에 대화 목록의 보낼 곳(`claude:<ID>`·`codex:<ID>`), prompt에 보낼 말. Claude Code는 원래 SendMessage를 쓴다                                                                                                                                           |
 
 ## 작업 맥락 (시작 훅·load)

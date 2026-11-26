@@ -3,9 +3,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { optionalRead, readSettings, atomicText, atomicJSON, noSymlink, projectRoot } from './storage.mjs';
 import { locked } from './lock.mjs';
-// Project first run. Two steps, each asked once per project: setup (the core instructions
-// turned on for the project) and survey (asked only when the plugin carries its procedure).
-// State lives in .head/config.json under first_run: {setup, survey}, each 'done' or 'never_ask'.
+// Project first run. Three steps, each asked once per project: setup (the core instructions
+// turned on for the project), method (the head-method add-on from the same marketplace,
+// asked after setup) and survey (asked only when the plugin carries its procedure).
+// State lives in .head/config.json under first_run: {setup, survey, method}, each 'done' or 'never_ask'.
 // From 0.8 the core reaches the model through the start hook of every host (corePart), not
 // through a CLAUDE.md import: Claude Code puts imported files back after a compaction, so
 // an import arrived twice. .head/core.md stays as the project copy for hosts and tools that
@@ -15,7 +16,7 @@ export const CORE_SOURCE = path.join(plugin, 'instructions', 'HEAD_CORE.md');
 export const SURVEY_SOURCE = path.join(plugin, 'instructions', 'survey.md');
 // The line 0.7 setup put in CLAUDE.md; the Claude start hook takes it out again (migrateImport).
 const IMPORT_LINE = '@.head/core.md';
-const STEPS = ['setup', 'survey'];
+const STEPS = ['setup', 'survey', 'method'];
 const VALUES = ['done', 'never_ask'];
 const files = (project) => {
   project = projectRoot(project);
@@ -36,26 +37,36 @@ const FORK_ENV = 'CLAUDE_CODE_FORK_SUBAGENT';
 // on for the project.
 const MARKETPLACE = 'head-agent-core',
   MARKETPLACE_REPO = 'Won6314/head-agent-core',
-  PLUGIN_ID = `head-context@${MARKETPLACE}`;
+  PLUGIN_ID = `head-context@${MARKETPLACE}`,
+  METHOD_ID = `head-method@${MARKETPLACE}`;
+// The add-on as it is installed where setup does not write the app's settings.
+const METHOD_INSTALL = {
+  codex: `codex plugin add ${METHOD_ID}`,
+  antigravity: `agy plugin install https://github.com/${MARKETPLACE_REPO}/tree/main/packages/method`,
+};
 const isObject = (v) => Boolean(v) && typeof v === 'object' && !Array.isArray(v);
+// The project settings as an object ({} for a missing or empty file), or why they are left alone.
+function readProjectSettings(file) {
+  const text = optionalRead(file);
+  if (!text.trim()) return { text, settings: {} };
+  let settings;
+  try {
+    settings = JSON.parse(text);
+  } catch {
+    return { why: '읽을 수 없는 JSON이라 고치지 않았습니다' };
+  }
+  return isObject(settings) ? { text, settings } : { why: 'JSON 객체가 아니라 고치지 않았습니다' };
+}
 // Adds the fork switch, the marketplace (autoUpdate) and the plugin switch to the project
 // settings, keeping every other key. A settings file that is not a JSON object is left
 // alone and reported; a value already set is kept.
 function projectSettings(file) {
-  const text = optionalRead(file);
-  let settings = {};
-  const leave = (why) => ({
-    fork: `${why}. 기본 포크를 쓰려면 env.${FORK_ENV}="1"을 직접 넣어 주세요`,
-    market: `${why}. 자동 업데이트를 받으려면 extraKnownMarketplaces.${MARKETPLACE}와 enabledPlugins."${PLUGIN_ID}"를 직접 넣어 주세요`,
-  });
-  if (text.trim()) {
-    try {
-      settings = JSON.parse(text);
-    } catch {
-      return leave('읽을 수 없는 JSON이라 고치지 않았습니다');
-    }
-    if (!isObject(settings)) return leave('JSON 객체가 아니라 고치지 않았습니다');
-  }
+  const { text, settings, why } = readProjectSettings(file);
+  if (why)
+    return {
+      fork: `${why}. 기본 포크를 쓰려면 env.${FORK_ENV}="1"을 직접 넣어 주세요`,
+      market: `${why}. 자동 업데이트를 받으려면 extraKnownMarketplaces.${MARKETPLACE}와 enabledPlugins."${PLUGIN_ID}"를 직접 넣어 주세요`,
+    };
   const next = { ...settings },
     added = [];
   let fork, market;
@@ -111,6 +122,17 @@ function projectSettings(file) {
   market = parts.join(', ');
   if (added.length) atomicJSON(file, next);
   return { fork, market };
+}
+// Turns the add-on on in the project settings, keeping every other key and a value already set.
+function methodSettings(file) {
+  const { settings, why } = readProjectSettings(file);
+  if (why) return `${why}. 켜려면 enabledPlugins."${METHOD_ID}": true를 직접 넣어 주세요`;
+  if (settings.enabledPlugins !== undefined && !isObject(settings.enabledPlugins))
+    return `enabledPlugins가 객체가 아니라 고치지 않았습니다. 켜려면 enabledPlugins."${METHOD_ID}": true를 직접 넣어 주세요`;
+  if (settings.enabledPlugins?.[METHOD_ID] !== undefined)
+    return `이미 있어(${JSON.stringify(settings.enabledPlugins[METHOD_ID])}) 그대로 두었습니다`;
+  atomicJSON(file, { ...settings, enabledPlugins: { ...(settings.enabledPlugins || {}), [METHOD_ID]: true } });
+  return '더했습니다. 다음 대화부터 켜집니다';
 }
 const readConfig = readSettings;
 export function firstRun(project) {
@@ -186,6 +208,15 @@ export function migrateImport(project) {
 export const claudeImports = (project) => hasImport(optionalRead(files(project).claude));
 const surveyQuestion = () =>
   `"프로젝트 조사해볼까요?"를 물으세요. 예면 ${SURVEY_SOURCE} 절차를 따르고 끝나면 setup(action=survey_done). 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=survey).`;
+const methodQuestion = () =>
+  `"방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method).`;
+// The questions still to ask once setup is done, in order: the add-on (one yes or no) before
+// the survey (a long procedure).
+const pendingQuestions = (s) => [
+  ...(s.method ? [] : [methodQuestion()]),
+  ...(!s.survey && surveyReady() ? [surveyQuestion()] : []),
+];
+const STEP_NAMES = { setup: '초기설정을', survey: '프로젝트 조사를', method: '방법론 애드온을' };
 // Start-hook guide, kept short to stay inside the hook cap together with the identity.
 // What setup writes, as told on each host. The .claude/settings.json lines are Claude Code
 // settings: on Codex they are written too (the same project may be opened with Claude Code
@@ -200,22 +231,23 @@ export function guide(project, { host = 'claude' } = {}) {
   const s = firstRun(project);
   if (!s.setup)
     return `# 프로젝트 첫 실행 (head-context)\n이 프로젝트는 초기설정 전입니다. 사용자의 첫 입력에 답하기 전에 먼저 짧게 "초기설정 해도 될까요?"를 물으세요. 초기설정은 HEAD 코어 지침을 이 프로젝트에서 켜고(시작할 때마다 들어가며, 사본을 \`.head/core.md\`에 둡니다), ${settingsWhat(host)}.\n- 예: setup(action=setup)을 부르고, 돌려받은 코어 지침을 이 대화부터 따르세요.\n- 아니오: "다시는 묻지 않을까요?"를 물으세요. 예면 setup(action=never_ask, step=setup), 아니오면 아무것도 기록하지 않습니다(다음 시작에 다시 묻습니다).\n답을 받은 뒤 사용자의 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.`;
-  if (s.setup === 'done' && !s.survey && surveyReady())
-    return `# 프로젝트 조사 (head-context)\n사용자의 첫 입력에 답하기 전에 먼저 짧게 ${surveyQuestion()} 답을 받은 뒤 원래 이야기로 이어가세요.`;
-  return '';
+  const ask = s.setup === 'done' ? pendingQuestions(s) : [];
+  if (!ask.length) return '';
+  return `# 프로젝트 첫 실행 이어서 (head-context)\n사용자의 첫 입력에 답하기 전에 먼저 짧게 ${ask.join(' 그 답을 받은 뒤 ')} 답을 받은 뒤 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.`;
 }
 // The one writer of the project files. The LLM guides; this code writes.
 export function setupTool(project, { action, step }, { host = 'claude' } = {}) {
   if (action === 'never_ask') {
-    if (!STEPS.includes(step)) throw new Error('never_ask에는 step(setup 또는 survey)이 필요합니다.');
+    if (!STEPS.includes(step)) throw new Error('never_ask에는 step(setup, survey, method 중 하나)이 필요합니다.');
     mark(project, step, 'never_ask');
-    return `이 프로젝트에서는 ${step === 'setup' ? '초기설정' : '프로젝트 조사'}을 다시 묻지 않습니다. 기록: .head/config.json first_run.${step}=never_ask`;
+    return `이 프로젝트에서는 ${STEP_NAMES[step]} 다시 묻지 않습니다. 기록: .head/config.json first_run.${step}=never_ask`;
   }
+  if (action === 'method_on') return methodOn(project, host);
   if (action === 'survey_done') {
     mark(project, 'survey', 'done');
     return '프로젝트 조사를 끝남으로 기록했습니다.';
   }
-  if (action !== 'setup') throw new Error('action은 setup, never_ask, survey_done 중 하나입니다.');
+  if (action !== 'setup') throw new Error('action은 setup, never_ask, survey_done, method_on 중 하나입니다.');
   const f = files(project),
     body = fs.readFileSync(CORE_SOURCE, 'utf8');
   fs.mkdirSync(f.root, { recursive: true });
@@ -230,7 +262,8 @@ export function setupTool(project, { action, step }, { host = 'claude' } = {}) {
     mark(project, 'setup', 'done');
     return { already: was, ...result };
   });
-  const next = surveyReady() && firstRun(project).survey === null ? `\n\n이어서 ${surveyQuestion()}` : '';
+  const ask = pendingQuestions(firstRun(project)),
+    next = ask.length ? `\n\n이어서 ${ask.join(' 그 답을 받은 뒤 ')}` : '';
   const claudeOnly =
     host === 'antigravity'
       ? ' (Claude Code용, Antigravity에서는 쓰이지 않음)'
@@ -246,4 +279,20 @@ export function setupTool(project, { action, step }, { host = 'claude' } = {}) {
   // The core given here carries the same tag as the start hook's, so a resume of this
   // conversation knows it already holds the core.
   return `${already ? '이 프로젝트는 이미 초기설정되어 있었습니다(다른 대화가 먼저 했을 수 있습니다). 이미 있던 값은 그대로 두었습니다.\n' : ''}초기설정을 마쳤습니다.\n- 코어 지침: 이 프로젝트에서 켰습니다(사본: .head/core.md).\n- .claude/settings.json의 env.${FORK_ENV}="1"(기본 포크 켜기)${claudeOnly}: ${fork}.\n- .claude/settings.json의 마켓 ${MARKETPLACE}(GitHub ${MARKETPLACE_REPO}, 자동 업데이트)와 enabledPlugins."${PLUGIN_ID}"${claudeOnly}: ${market}.\n${after} 이 대화에서는 아래 코어 지침을 지금부터 따르세요.${next}\n\n${body.trimEnd()}\n\n${CORE_MARK}1 — 초기설정이 돌려준 코어)`;
+}
+// The user said yes to the add-on. Claude Code: the project settings get the plugin switch
+// (setup already put the marketplace there), under the settings lock. Codex and Antigravity:
+// their settings are left alone and the install command goes back to the user. Either way
+// the step is done.
+function methodOn(project, host) {
+  const f = files(project);
+  let result;
+  if (METHOD_INSTALL[host])
+    result = `${host === 'codex' ? 'Codex' : 'Antigravity'} 설정은 바꾸지 않았습니다. 사용자에게 이 설치 명령을 알려 주세요: \`${METHOD_INSTALL[host]}\``;
+  else {
+    fs.mkdirSync(path.dirname(f.settings), { recursive: true });
+    result = `.claude/settings.json의 enabledPlugins."${METHOD_ID}": ${locked(f.settings, () => methodSettings(f.settings))}.`;
+  }
+  mark(project, 'method', 'done');
+  return `방법론 애드온(head-method)을 끝남으로 기록했습니다.\n- ${result}`;
 }

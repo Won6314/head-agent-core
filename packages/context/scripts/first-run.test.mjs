@@ -78,7 +78,8 @@ test('fresh project: start hook asks setup on startup/clear only, setup writes t
   assert.match(out, /새로 만들었습니다/);
   assert.equal(read(dir, '.head/core.md'), core);
   assert.equal(fs.existsSync(path.join(dir, 'CLAUDE.md')), false);
-  assert.deepEqual(firstRun(dir), { setup: 'done', survey: null });
+  assert.deepEqual(firstRun(dir), { setup: 'done', survey: null, method: null });
+  tool(dir, { action: 'never_ask', step: 'method' });
   assert.equal(guidePart(hook(dir)), '');
   assert.equal(guide(dir), '');
   tool(dir, { action: 'setup' });
@@ -101,7 +102,7 @@ test('declining: never_ask stops the question; not recording asks again next sta
   assert.match(hook(dir), /다시는 묻지 않을까요/);
   assert.match(hook(dir, { id: 'c2' }), /초기설정 해도 될까요/);
   assert.match(tool(dir, { action: 'never_ask', step: 'setup' }), /다시 묻지 않습니다/);
-  assert.deepEqual(firstRun(dir), { setup: 'never_ask', survey: null });
+  assert.deepEqual(firstRun(dir), { setup: 'never_ask', survey: null, method: null });
   assert.equal(guidePart(hook(dir, { id: 'c3' })), '');
   assert.equal(fs.existsSync(path.join(dir, 'CLAUDE.md')), false);
   assert.equal(fs.existsSync(path.join(dir, '.head/core.md')), false);
@@ -122,6 +123,7 @@ test('start refreshes .head/core.md from the plugin only after setup', () => {
 test('survey is asked only after setup and only when the plugin carries its procedure', () => {
   const dir = fresh();
   tool(dir, { action: 'setup' });
+  tool(dir, { action: 'never_ask', step: 'method' });
   assert.equal(fs.existsSync(SURVEY_SOURCE), false);
   assert.equal(guidePart(hook(dir)), '');
   fs.writeFileSync(SURVEY_SOURCE, 'SURVEY PROCEDURE');
@@ -130,9 +132,16 @@ test('survey is asked only after setup and only when the plugin carries its proc
     const other = fresh();
     assert.match(hook(other), /초기설정 해도 될까요/);
     assert.doesNotMatch(hook(other), /프로젝트 조사/);
-    assert.match(tool(other, { action: 'setup' }), /이어서 "프로젝트 조사해볼까요\?"/);
+    // the add-on (one yes or no) is asked before the survey (a long procedure)
+    assert.match(
+      tool(other, { action: 'setup' }),
+      /이어서 "방법론 애드온\(head-method\)도 켤까요\?[^\n]* 그 답을 받은 뒤 "프로젝트 조사해볼까요\?"/,
+    );
+    assert.match(hook(other), /방법론 애드온\(head-method\)도 켤까요\?[\s\S]*프로젝트 조사해볼까요/);
+    tool(other, { action: 'method_on' });
+    assert.doesNotMatch(hook(other), /방법론 애드온/);
     tool(dir, { action: 'survey_done' });
-    assert.deepEqual(firstRun(dir), { setup: 'done', survey: 'done' });
+    assert.deepEqual(firstRun(dir), { setup: 'done', survey: 'done', method: 'never_ask' });
     assert.equal(guidePart(hook(dir)), '');
     tool(other, { action: 'never_ask', step: 'survey' });
     assert.equal(guidePart(hook(other)), '');
@@ -266,6 +275,109 @@ test('setup turns the built-in fork on in the project settings, keeping what is 
   assert.equal(read(four, '.claude/settings.json'), '{ broken');
   assert.equal(firstRun(four).setup, 'done');
 });
+const METHOD_QUESTION =
+  '"방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."';
+const settingsOf = (dir) => JSON.parse(read(dir, '.claude/settings.json'));
+const writeSettings = (dir, text) => {
+  fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
+  fs.writeFileSync(path.join(dir, '.claude/settings.json'), text);
+};
+test('method add-on: asked right after setup in the approved words; yes on Claude Code adds one enabledPlugins line', () => {
+  const dir = fresh();
+  assert.doesNotMatch(hook(dir), /방법론 애드온/);
+  const out = tool(dir, { action: 'setup' });
+  assert.ok(out.includes(`이어서 ${METHOD_QUESTION}를 물으세요. 예면 setup(action=method_on)`));
+  const before = settingsOf(dir);
+  const on = tool(dir, { action: 'method_on' });
+  assert.match(on, /enabledPlugins\."head-method@head-agent-core": 더했습니다\. 다음 대화부터 켜집니다/);
+  assert.deepEqual(settingsOf(dir), {
+    ...before,
+    enabledPlugins: { 'head-context@head-agent-core': true, 'head-method@head-agent-core': true },
+  });
+  assert.deepEqual(firstRun(dir), { setup: 'done', survey: null, method: 'done' });
+  assert.equal(guidePart(hook(dir)), '');
+  assert.doesNotMatch(tool(dir, { action: 'setup' }), /방법론 애드온/);
+});
+test('method add-on: a project set up before this step is asked once on the next fresh start', () => {
+  const dir = fresh();
+  fs.mkdirSync(path.join(dir, '.head'));
+  fs.writeFileSync(path.join(dir, '.head/config.json'), JSON.stringify({ first_run: { setup: 'done' } }));
+  for (const source of ['startup', 'clear']) assert.ok(hook(dir, { source }).includes(METHOD_QUESTION), source);
+  for (const source of ['resume', 'compact']) assert.doesNotMatch(hook(dir, { source }), /방법론 애드온/, source);
+  for (const host of ['codex', 'antigravity']) assert.ok(guide(dir, { host }).includes(METHOD_QUESTION), host);
+  const never = fresh();
+  fs.mkdirSync(path.join(never, '.head'));
+  fs.writeFileSync(path.join(never, '.head/config.json'), JSON.stringify({ first_run: { setup: 'never_ask' } }));
+  assert.equal(guide(never), '');
+});
+test('method add-on: no then not recording asks again; never_ask stops it and leaves the settings alone', () => {
+  const dir = fresh();
+  tool(dir, { action: 'setup' });
+  const settings = read(dir, '.claude/settings.json');
+  assert.match(
+    hook(dir),
+    /방법론 애드온[\s\S]*아니오면 "다시는 묻지 않을까요\?"를 물어 예일 때만 setup\(action=never_ask, step=method\)/,
+  );
+  assert.ok(hook(dir, { id: 'c2' }).includes(METHOD_QUESTION));
+  assert.match(
+    tool(dir, { action: 'never_ask', step: 'method' }),
+    /방법론 애드온을 다시 묻지 않습니다\. 기록: \.head\/config\.json first_run\.method=never_ask/,
+  );
+  assert.deepEqual(firstRun(dir), { setup: 'done', survey: null, method: 'never_ask' });
+  assert.equal(guidePart(hook(dir, { id: 'c3' })), '');
+  assert.equal(read(dir, '.claude/settings.json'), settings);
+});
+test('method add-on on Claude Code keeps a value already set and leaves a settings file it cannot read', () => {
+  const kept = fresh();
+  writeSettings(
+    kept,
+    JSON.stringify({ permissions: { allow: ['x'] }, enabledPlugins: { 'head-method@head-agent-core': false } }),
+  );
+  assert.match(
+    tool(kept, { action: 'method_on' }),
+    /"head-method@head-agent-core": 이미 있어\(false\) 그대로 두었습니다/,
+  );
+  assert.deepEqual(settingsOf(kept), {
+    permissions: { allow: ['x'] },
+    enabledPlugins: { 'head-method@head-agent-core': false },
+  });
+  assert.equal(firstRun(kept).method, 'done');
+  for (const [text, why] of [
+    [
+      '{ broken',
+      /읽을 수 없는 JSON이라 고치지 않았습니다\. 켜려면 enabledPlugins\."head-method@head-agent-core": true를 직접/,
+    ],
+    ['[1]', /JSON 객체가 아니라 고치지 않았습니다\. 켜려면/],
+    ['{"enabledPlugins": []}', /enabledPlugins가 객체가 아니라 고치지 않았습니다\. 켜려면/],
+  ]) {
+    const dir = fresh();
+    writeSettings(dir, text);
+    assert.match(tool(dir, { action: 'method_on' }), why);
+    assert.equal(read(dir, '.claude/settings.json'), text);
+    assert.equal(firstRun(dir).method, 'done');
+  }
+});
+test('method add-on on Codex and Antigravity: settings unchanged, the install command comes back, the step is done', () => {
+  for (const [host, app, command] of [
+    ['codex', 'Codex', 'codex plugin add head-method@head-agent-core'],
+    [
+      'antigravity',
+      'Antigravity',
+      'agy plugin install https://github.com/Won6314/head-agent-core/tree/main/packages/method',
+    ],
+  ]) {
+    const dir = fresh();
+    callTool(sessions(dir), 'setup', { action: 'setup' }, undefined, dir, false, host);
+    const settings = read(dir, '.claude/settings.json');
+    const out = callTool(sessions(dir), 'setup', { action: 'method_on' }, undefined, dir, false, host);
+    assert.ok(
+      out.includes(`${app} 설정은 바꾸지 않았습니다. 사용자에게 이 설치 명령을 알려 주세요: \`${command}\``),
+      host,
+    );
+    assert.equal(read(dir, '.claude/settings.json'), settings);
+    assert.equal(firstRun(dir).method, 'done');
+  }
+});
 test('real MCP process lists setup and runs it in CLAUDE_PROJECT_DIR', () => {
   const dir = fresh(),
     [list, call] = mcp(dir, { action: 'setup' });
@@ -278,6 +390,8 @@ test('real MCP process lists setup and runs it in CLAUDE_PROJECT_DIR', () => {
     );
   const def = list.result.tools.find((t) => t.name === 'setup');
   assert.ok(def);
+  assert.deepEqual(def.inputSchema.properties.action.enum, ['setup', 'never_ask', 'survey_done', 'method_on']);
+  assert.deepEqual(def.inputSchema.properties.step.enum, ['setup', 'survey', 'method']);
   assert.equal('conversation_id' in def.inputSchema.properties, false);
   assert.equal(call.result.isError, undefined);
   assert.ok(call.result.content[0].text.includes(core.trimEnd()));

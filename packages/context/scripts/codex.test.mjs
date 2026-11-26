@@ -35,8 +35,9 @@ const joinCore = (...parts) =>
     .map((t, i) => (i ? t.replace(/^# HEAD Core \(계속 \d+\/\d+\)\n\n/, '') : t.replace(/\n\n\(HEAD Core 1\/\d+[^\n]*\)$/, '')))
     .filter(Boolean)
     .join('\n\n');
-// Another test file may lay a survey procedure down for a moment; the guide line may follow.
-const UNCONNECTED_FIRST = /^이 대화는 아직 작업 세션에 연결되지 않았습니다\.(\n\n# 프로젝트 조사[\s\S]*)?$/;
+// After setup the add-on question (and the survey, when another test file lays its procedure
+// down for a moment) may follow.
+const UNCONNECTED_FIRST = /^이 대화는 아직 작업 세션에 연결되지 않았습니다\.(\n\n# 프로젝트 첫 실행 이어서[\s\S]*)?$/;
 const codexScript = path.resolve('scripts/codex-hook.mjs');
 const codex = (dir, part, { id = 't1', source = 'startup', data, env = {} } = {}) => {
   const r = spawnSync(process.execPath, [codexScript, part], {

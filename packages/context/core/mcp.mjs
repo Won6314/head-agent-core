@@ -50,7 +50,9 @@ export const APP_INSTRUCTIONS = {
 // host without one, e.g. OpenCode).
 export const instructionsFor = (host) =>
   APP_INSTRUCTIONS[host] ? `${INSTRUCTIONS}\n\n${APP_INSTRUCTIONS[host]}` : INSTRUCTIONS;
-export const VERSION = JSON.parse(fs.readFileSync(new URL('../.claude-plugin/plugin.json', import.meta.url), 'utf8')).version;
+export const VERSION = JSON.parse(
+  fs.readFileSync(new URL('../.claude-plugin/plugin.json', import.meta.url), 'utf8'),
+).version;
 const string = { type: 'string' };
 // 필수 인자가 빠졌을 때 이유까지 알리는 문구. 없으면 일반 문구를 쓴다.
 const missing = { create: { context: CONTEXT_REQUIRED } };
@@ -176,12 +178,12 @@ export const DEFINITIONS = [
 DEFINITIONS.push({
   name: 'setup',
   description:
-    '프로젝트 첫 실행의 유일한 쓰기 도구. 사용자가 동의했을 때만 부릅니다. action=setup: 이 프로젝트에서 코어 지침을 켜고(다음 시작부터 시작·/clear·압축 때 들어감, 사본은 .head/core.md), 프로젝트 .claude/settings.json에 기본 포크를 켜는 env.CLAUDE_CODE_FORK_SUBAGENT="1"과 이 플러그인의 마켓(extraKnownMarketplaces, 자동 업데이트)·enabledPlugins를 더하고(다른 설정은 그대로, 이미 있으면 그대로) 초기설정을 끝남으로 기록한 뒤 코어 지침 본문을 돌려줍니다. 이 대화부터 그 지침을 따르세요. action=never_ask: 사용자가 다시 묻지 말라고 한 단계(step=setup 또는 survey)를 기록합니다. action=survey_done: 프로젝트 조사를 끝남으로 기록합니다.',
+    '프로젝트 첫 실행의 유일한 쓰기 도구. 사용자가 동의했을 때만 부릅니다. action=setup: 이 프로젝트에서 코어 지침을 켜고(다음 시작부터 시작·/clear·압축 때 들어감, 사본은 .head/core.md), 프로젝트 .claude/settings.json에 기본 포크를 켜는 env.CLAUDE_CODE_FORK_SUBAGENT="1"과 이 플러그인의 마켓(extraKnownMarketplaces, 자동 업데이트)·enabledPlugins를 더하고(다른 설정은 그대로, 이미 있으면 그대로) 초기설정을 끝남으로 기록한 뒤 코어 지침 본문을 돌려줍니다. 이 대화부터 그 지침을 따르세요. action=method_on: 사용자가 방법론 애드온(head-method)을 켜자고 했을 때 부릅니다. Claude Code는 프로젝트 .claude/settings.json의 enabledPlugins에 "head-method@head-agent-core": true를 더하고(다른 설정은 그대로, 이미 있으면 그대로, 다음 대화부터 켜짐), Codex·Antigravity는 설정을 바꾸지 않고 사용자에게 알릴 설치 명령을 돌려줍니다. 어느 앱이든 이 단계를 끝남으로 기록합니다. action=never_ask: 사용자가 다시 묻지 말라고 한 단계(step=setup, survey, method)를 기록합니다. action=survey_done: 프로젝트 조사를 끝남으로 기록합니다.',
   inputSchema: {
     type: 'object',
     properties: {
-      action: { type: 'string', enum: ['setup', 'never_ask', 'survey_done'] },
-      step: { type: 'string', enum: ['setup', 'survey'] },
+      action: { type: 'string', enum: ['setup', 'never_ask', 'survey_done', 'method_on'] },
+      step: { type: 'string', enum: ['setup', 'survey', 'method'] },
     },
     required: ['action'],
     additionalProperties: false,
