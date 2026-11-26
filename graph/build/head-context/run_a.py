@@ -1016,5 +1016,59 @@ measure("새 프로세스가 처음 요청받은 뒤", {"죽은 프로세스의 
 T4.stop()
 T5.stop()
 
+
+# A44(0.9.19, e57f8be): 방법론 애드온 단계(first_run.method) — setup(action=method_on)은 Codex·Antigravity에는 설치 명령,
+# Claude에는 프로젝트 설정 한 줄. 단계를 끝내면 시작 안내가 더 묻지 않는다. 설정 파일이 JSON 객체가 아니면 손대지 않는다
+def method_state(project):
+    cfg = json.loads((project / ".head" / "config.json").read_text()).get("first_run", {})
+    f = project / ".claude" / "settings.json"
+    text = f.read_text() if f.exists() else ""
+    try:
+        st = json.loads(text) if text.strip() else {}
+    except ValueError:
+        st = None
+    plugins = st.get("enabledPlugins") if isinstance(st, dict) else None
+    keys = ", ".join(sorted(st)) if isinstance(st, dict) else f"객체 아님({text.strip()})"
+    on = plugins.get("head-method@head-agent-core") if isinstance(plugins, dict) else None
+    return (f"first_run.method={cfg.get('method')} · settings.json 키 {keys} · "
+            f"enabledPlugins.\"head-method@head-agent-core\"={json.dumps(on)}")
+
+
+STATE["label"] = "0.9.19 방법론 애드온 단계 — demo 프로젝트(초기설정·조사 끝남, 애드온 물음 전)"
+measure("애드온 단계 전 상태", {"프로젝트": "demo"}, method_state(PROJ))
+c = Server("codex-mcp.mjs", cwd=CPKG)
+c.rpc("initialize", {"protocolVersion": "2025-06-18"})
+c.call("setup", {"action": "method_on"}, "Codex setup(action=method_on)", meta={"threadId": X1, "sessionId": X1})
+c.close()
+measure("Codex method_on 뒤 상태", {"프로젝트": "demo"}, method_state(PROJ))
+a = Server("antigravity-mcp.mjs", cwd=APKG)
+a.rpc("initialize", {"protocolVersion": "2025-06-18"})
+a.call("setup", {"action": "method_on"}, "Antigravity setup(action=method_on)", meta=M(G3))
+a.close()
+s = Server("mcp.mjs")
+s.rpc("initialize", {"protocolVersion": "2025-06-18"})
+s.call("setup", {"action": "method_on"}, "Claude setup(action=method_on)")
+measure("Claude method_on 뒤 상태", {"프로젝트": "demo"}, method_state(PROJ))
+s.call("setup", {"action": "method_on"}, "Claude setup(action=method_on, 이미 켜짐)")
+s.close()
+STATE["label"] = "0.9.19 방법론 애드온 단계를 끝낸 demo 프로젝트"
+claude_start("startup", C1, parts=("session",))
+hook("codex-hook.mjs", ["session"], {"hook_event_name": "SessionStart", "session_id": X1, "cwd": str(PROJ), "source": "startup",
+                                     "transcript_path": str(HOME / ".codex" / "sessions" / f"{X1}.jsonl")}, "Codex SessionStart(startup) · session (애드온 단계 끝남)")
+STATE["label"] = "0.9.19 방법론 애드온 단계 — 새 프로젝트(설정 파일이 JSON 객체가 아님)"
+PROJ_M = ROOT / "project-method"
+(PROJ_M / ".claude").mkdir(parents=True, exist_ok=True)
+s = Server("mcp.mjs", env={"CLAUDE_PROJECT_DIR": str(PROJ_M)}, cwd=PROJ_M)
+s.rpc("initialize", {"protocolVersion": "2025-06-18"})
+(PROJ_M / ".claude" / "settings.json").write_text("[]\n")
+s.call("setup", {"action": "method_on"}, "Claude setup(action=method_on, settings.json이 배열)")
+measure("배열 설정 파일에 method_on 뒤 상태", {"프로젝트": "project-method"}, method_state(PROJ_M))
+(PROJ_M / ".claude" / "settings.json").write_text('{"enabledPlugins": []}\n')
+s.call("setup", {"action": "method_on"}, "Claude setup(action=method_on, enabledPlugins가 배열)")
+measure("enabledPlugins 배열에 method_on 뒤 상태", {"프로젝트": "project-method"}, method_state(PROJ_M))
+s.call("setup", {"action": "never_ask", "step": "method"}, "never_ask step=method")
+measure("never_ask step=method 뒤 상태", {"프로젝트": "project-method"}, method_state(PROJ_M))
+s.close()
+
 OUT.write_text(json.dumps(runs, ensure_ascii=False, indent=1))
 print(len(runs), "runs")

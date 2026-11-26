@@ -81,13 +81,13 @@ agent는 열린 작업 브랜치와 '다음'을 보고 이어 갈 일을 고른�
 - 그리는 코드: `code:core/project.mjs#coreParts`
 
 ### 개요
-agent가 일하는 방식(HEAD Core 지침)을 매 시작마다 넣는다. 본문은 패키지의 `instructions/HEAD_CORE.md`이고 영어다.
+agent가 일하는 방식(HEAD Core 지침)을 매 시작마다 넣는다. 본문은 패키지의 `instructions/HEAD_CORE.md`이고 영어다. 0.9.19에서 세 문단이 바뀌었다: Evidence 문단에 남이 읽고 요약한 발견은 되짚을 수 있는 만큼만 근거라는 두 문장, 'Where HEAD sits'는 다른 컨텍스트가 하는 일을 high-resolution production and review로, 'Use separate contexts for detailed work'는 맡기는 일을 production and review로 좁히고 판단의 근거 읽기는 HEAD가 직접(양이 많을 때 빼고), 열린 탐색은 서로 모르는 여러 컨텍스트로, 방법은 research 스킬(SRV-04)이라고 적는다(R46·R65·R160).
 
 ### 화면 흐름
-agent는 이 지침대로 일한다. 0.9.10 코어 지침(HEAD Core 1/1)은 HEAD가 일하는 원칙(How context works, How HEAD works)만 담고 start-job을 부르라는 줄이 없다. 그 줄은 서버 안내문(SRV-01#1)에만 있다.
+agent는 이 지침대로 일한다. 0.9.10 코어 지침(HEAD Core 1/1)은 HEAD가 일하는 원칙(How context works, How HEAD works)만 담고 start-job을 부르라는 줄이 없다. 그 줄은 서버 안내문(SRV-01#1)에만 있다. 0.9.19 코어는 조사할 때 research 스킬(SRV-04)을 가리킨다.
 
 ### 화면요소
-1. **앞부분** — # HEAD Core로 시작. Claude에서는 출력 상한(9,000자)에 맞춰 나눈 것의 첫째이고 끝에 몇째인지 꼬리표가 붙는다. 0.9.10 코어(약 6,900자)는 한 출력에 들어가 꼬리표가 `(HEAD Core 1/1)`이다. ← `hook:claude:SessionStart:core` 문구: `(HEAD Core 1/1)`
+1. **앞부분** — # HEAD Core로 시작. Claude에서는 출력 상한(9,000자)에 맞춰 나눈 것의 첫째이고 끝에 몇째인지 꼬리표가 붙는다. 0.9.10 코어(약 6,900자)는 한 출력에 들어가 꼬리표가 `(HEAD Core 1/1)`이다. 0.9.19 코어(약 7,500자)도 한 출력이다(R46 7,509자, R47 빈 출력). ← `hook:claude:SessionStart:core` 문구: `(HEAD Core 1/1)`
 2. **뒷부분** — 코어가 상한을 넘을 때만 `# HEAD Core (계속 <n>/<n>)`로 시작하는 둘째 출력. 0.9.10에서는 둘째 출력이 비어 있다(R47, 코드). ← `hook:claude:SessionStart:core`
 3. **Codex·Antigravity 한 출력** — Codex는 출력 상한을 꺼서 지침 전체가 꼬리표 없이 한 출력. Antigravity도 지침 전체가 꼬리표 없이 시스템 메시지 하나로 들어간다(0.9.11~, R160·R168). 0.9.10에서는 Claude 출력(#1)도 본문 전체라 글이 겹치지만 Claude 쪽은 #1이고, setup 결과 안의 본문은 TOL-12#3이다(빌드가 이 두 연결을 이름으로 뺀다). ← `hook:codex:SessionStart:core` 문구: `HEAD owns the whole outcome…Prohibitions belong in review criteria, where they are checked against a finished result.` ← `hook:antigravity:SessionStart` ← `hook:antigravity:PreInvocation`
 
@@ -119,28 +119,30 @@ node:sqlite를 쓸 수 없는 Node에서는 이 출력 대신 ERR-05의 이유 �
 ## STA-03 연결 안 됨과 첫 실행 안내
 
 - 출력 종류: 시작 훅이 넣는 글
-- 상태: 대화가 작업 세션에 연결되지 않음(첫 실행 전이면 안내가 붙음) Antigravity: 시작, 또는 압축 뒤 복원 때 연결 없음(첫 실행 안내는 시작 때만, 서브에이전트에는 나오지 않음)
-- 원문: R3(첫 실행 전), R60(/clear 뒤 이어받을 대화를 못 찾음), R67(Codex, 초기설정 뒤), R159(Antigravity 첫 실행 전), R160(Antigravity 연결 안 됨), R240~R244(0.9.17 Claude 프로그램 실행 sdk-cli — 빈 출력, HEAD_CONTEXT_PERSON=1이면 연결 안 됨, 초기설정 전 사람 대화와 대조)
+- 상태: 대화가 작업 세션에 연결되지 않음(첫 실행 전이면 안내가 붙음). 0.9.19부터 초기설정을 마쳤고 방법론 애드온 단계가 기록되지 않았으면 연결 여부와 상관없이 이어서 안내가 붙는다(연결된 대화는 STA-02 뒤) Antigravity: 시작, 또는 압축 뒤 복원 때 연결 없음(첫 실행 안내는 시작 때만, 서브에이전트에는 나오지 않음)
+- 원문: R3(첫 실행 전), R60(/clear 뒤 이어받을 대화를 못 찾음), R67(Codex, 초기설정 뒤), R159(Antigravity 첫 실행 전), R160(Antigravity 연결 안 됨), R240~R244(0.9.17 Claude 프로그램 실행 sdk-cli — 빈 출력, HEAD_CONTEXT_PERSON=1이면 연결 안 됨, 초기설정 전 사람 대화와 대조), R48·R60·R63·R67·R108·R160(0.9.19 이어서 안내 — 애드온 물음), R307·R308(0.9.19 애드온 단계를 끝낸 뒤 — 안내 없음)
 - 공통 영역: CMN-03
 - 내는 기능: `hook:claude:SessionStart:session`, `hook:codex:SessionStart:session`, `hook:antigravity:SessionStart`, `hook:antigravity:PreInvocation`
 - 그리는 코드: `code:core/project.mjs#guide`
 
 ### 개요
-아직 자리가 없는 대화에 그 사실을 알리고, 첫 실행이면 초기설정을 묻게 한다.
+아직 자리가 없는 대화에 그 사실을 알리고, 첫 실행이면 초기설정을 묻게 한다. 0.9.19부터 초기설정이 끝난 프로젝트에서 남은 첫 실행 단계(방법론 애드온)가 있으면 그것을 묻게 한다.
 
 ### 화면 흐름
-첫 실행 전: agent는 사람의 첫 입력에 답하기 전에 "초기설정 해도 될까요?"를 묻고 답에 따라 setup을 부른 뒤 원래 이야기로 돌아간다. 연결 안 됨만 있으면: 첫 말에 답하면서 남길 작업 세션을 제안한다(0.9.17, SRV-01#2·SRV-03#1). Claude 프로그램 실행(entrypoint sdk-*, HEAD_CONTEXT_PERSON=1 아님)은 연결이 없어도 이 출력 둘 다 받지 않는다(0.9.17).
+첫 실행 전: agent는 사람의 첫 입력에 답하기 전에 "초기설정 해도 될까요?"를 묻고 답에 따라 setup을 부른 뒤 원래 이야기로 돌아간다. 초기설정 뒤 애드온 단계가 남았으면(0.9.19): 첫 입력에 답하기 전에 애드온을 켤지 묻고 예면 setup(action=method_on), 아니오면 다시 묻지 않을지 물어 예일 때만 never_ask(step=method)를 부른다. 어느 앱에서 기록했든 같은 프로젝트에서는 다시 묻지 않는다(R301 Codex 기록 뒤 R307 Claude·R308 Codex 시작에 안내 없음). 연결 안 됨만 있으면: 첫 말에 답하면서 남길 작업 세션을 제안한다(0.9.17, SRV-01#2·SRV-03#1). Claude 프로그램 실행(entrypoint sdk-*, HEAD_CONTEXT_PERSON=1 아님)은 연결이 없어도 이 출력 둘 다 받지 않는다(0.9.17).
 
 ### 화면요소
 1. **연결 안 됨 한 줄** — `이 대화는 아직 작업 세션에 연결되지 않았습니다.` ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session` ← `hook:antigravity:SessionStart` ← `hook:antigravity:PreInvocation` → `tool:list`
 2. **첫 실행 안내** — `# 프로젝트 첫 실행 (head-context)`: 초기설정이 하는 일(코어 지침 켜기, `.claude/settings.json`에 기본 포크 env·마켓·플러그인 켜기), 예/아니오일 때 부를 것, "파일은 직접 쓰지 말고 이 도구만 쓰세요". 초기설정 전이고 시작·/clear일 때만. → `tool:setup` Antigravity 문구는 "나중에 같은 프로젝트를 Claude Code로 열 때 쓰도록 … Antigravity 설정은 바꾸지 않습니다"다(R159). 문구: `Antigravity 설정은 바꾸지 않습니다` ← `hook:antigravity:SessionStart`
+3. **첫 실행 이어서 안내** — `# 프로젝트 첫 실행 이어서 (head-context)`: 사용자의 첫 입력에 답하기 전에 "방법론 애드온(head-method)도 켤까요? …"를 묻게 하고, 예면 setup(action=method_on), 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method), "파일은 직접 쓰지 말고 이 도구만 쓰세요". 초기설정을 마쳤고 first_run.method가 없을 때 시작·/clear마다(0.9.19, Claude·Codex·Antigravity 같은 글). 연결된 대화에서는 작업 세션 머리 뒤에 붙는다(R48). Claude 시작 훅은 이 안내 자리까지 더해 상한을 재므로 긴 작업 세션 머리가 그만큼 더 잘린다(R250). → `tool:setup` 문구: `# 프로젝트 첫 실행 이어서 (head-context)` ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session` ← `hook:antigravity:SessionStart`
 
-관찰: 0.9.10 패키지에도(0.9.5와 같이) 조사 절차 파일(`instructions/survey.md`)이 없어 프로젝트 조사 질문(`# 프로젝트 조사 (head-context)`)은 나오지 않는다(core/project.mjs surveyReady). 그래서 화면요소로 두지 않았다.
+관찰: 0.9.19 패키지에도(0.9.5와 같이) 조사 절차 파일(`instructions/survey.md`)이 없어 프로젝트 조사 물음은 나오지 않는다(core/project.mjs surveyReady·pendingQuestions). 0.9.18까지의 따로 된 조사 안내 머리(`# 프로젝트 조사 (head-context)`)는 0.9.19에서 없어졌고, 조사 물음도 있으면 애드온 물음 뒤에 같은 이어서 안내(#3)로 붙는다. 그래서 조사 물음은 화면요소로 두지 않았다.
 
 ### 화면 정책
 - `pol.first-run-guide`
 - `pol.never-ask`
 - `pol.program-quiet-unconnected`
+- `pol.method-ask`
 
 ## STA-04 시작 때 작업 맥락
 
@@ -272,7 +274,7 @@ agent는 일을 시작할 때 start-job을 부른다. 시작 때 연결 안 됨 
 6. **read** — overview/map/recent/entry/find/files. → `tool:read` 문구: `연결을 바꾸지 않고 기록을 읽습니다`
 7. **todo** — add/list/done, 기한은 실제 날짜로. → `tool:todo` 문구: `작업 세션의 할 일(todo.md)`
 8. **conversations** — 받을 대화 고르는 법 세 단계. 0.9.15부터 "Claude Code·Codex·Antigravity 대화가 한 목록에 함께 나옵니다"(0.9.14까지는 Claude Code와 Codex만 적혀 있었다). → `tool:conversations` 문구: `다른 대화에 말을 전하기 전에 받을 대화를 고르는 목록입니다`
-9. **setup** — 동의했을 때만, 하는 일, never_ask·survey_done. → `tool:setup` 문구: `프로젝트 첫 실행의 유일한 쓰기 도구`
+9. **setup** — 동의했을 때만, 하는 일, never_ask·survey_done. 0.9.19부터 method_on(방법론 애드온 켜기: Claude Code는 프로젝트 설정 한 줄, Codex·Antigravity는 설치 명령을 돌려줌)과 never_ask의 step=method가 더해졌다(R7·R71·R130·R171). → `tool:setup` 문구: `프로젝트 첫 실행의 유일한 쓰기 도구`
 10. **send** — Codex 도구 서버에만. 받는 쪽마다 delivery 값. 0.9.11부터 Antigravity 대화로도 간다. 0.9.18부터 Antigravity는 살아 있는 ACP 대화와 깨우기 등록을 마친 터미널 대화를 바로 깨우고, 등록 안 된 터미널·화면에서 떠난 대화·데스크톱 앱·깨우기 실패는 다음 입력 때 받는다. → `tool:send` 문구: `다른 대화에 메시지를 보냅니다`
 11. **send(Antigravity)** — Antigravity 도구 서버에만. threadId는 conversations의 보낼 곳 그대로, delivery는 started(살아 있는 ACP 대화나 깨우기 등록을 마친 터미널 대화, 0.9.18)·queued(등록 안 된 터미널 대화·화면에서 떠난 대화·데스크톱 앱·깨우기 실패)(R171). → `tool:send@antigravity` 문구: `started는 처리가 끝났다는 확인이 아닙니다`
 
@@ -292,20 +294,47 @@ agent는 일을 시작할 때 start-job을 부른다. 시작 때 연결 안 됨 
 일을 받으면 만들기 전에 거칠 차례를 agent에게 준다. 코드가 검사하지 않고 글로만 지킨다.
 
 ### 화면 흐름
-agent는 이 차례대로 문제를 파악하고, 기존 기록을 read로 먼저 찾고, 사람과 문제·목표·조건을 맞춘 뒤 작업 세션·작업 브랜치와 진행 방식을 정한다. 연결 안 된 대화는 첫 말에 답하면서 남길 작업 세션을 제안한다(0.9.17).
+agent는 이 차례대로 문제를 파악하고, 기존 기록을 read로 먼저 찾고, 사람과 문제·목표·조건을 맞춘 뒤 작업 세션·작업 브랜치와 진행 방식을 정한다. 연결 안 된 대화는 첫 말에 답하면서 남길 작업 세션을 제안한다(0.9.17). 기존 자료를 찾을 때와 판단에 쓸 사실을 읽을 때는 research 스킬(SRV-04)로 간다(0.9.19).
 
 ### 화면요소
 1. **연결되지 않은 대화의 첫 말** — 시작 때 연결 안 됨 안내를 받았으면 첫 말에 답하면서 남길 작업 세션을 제안한다. 물음이면 답 먼저·제안은 끝에 한 줄, 일을 맡기는 말이면 이해한 목적 한 줄과 제안. 목록에 맞는 것이 있으면 그 이름, 없으면 새 이름. 사람이 받으면 불러오거나 확인한 목적으로 만들고, 받지 않으면 작업 세션 없이 잇는다(0.9.17). ← `skill:start-job` → `tool:list` → `tool:load` → `tool:create` 문구: `## 연결되지 않은 대화의 첫 말`
 2. **문제 파악** — 요청과 대화에서 문제와 원하는 결과, 이미 정해진 것과 조건을 확인하고 뜻이 흐리면 묻는다. 고를 것이 여럿이면 결과를 바꾸는 것만 추천과 함께 묻고 나머지는 정해서 알린다(0.9.17). ← `skill:start-job` 문구: `## 1. 문제를 파악한다`
-3. **기존 자료 먼저** — 작업 세션 기록은 read로 먼저 찾고(find, 없으면 recent), 그다음 프로젝트 파일에서 비슷한 자료·결정·도구를 찾는다. 찾은 것은 지금 일에 맞는 근거인지 읽어서 확인한 뒤 쓴다(0.9.17). ← `skill:start-job` → `tool:list` → `tool:read` 문구: `## 2. 기존 자료를 먼저 찾는다`
+3. **기존 자료 먼저** — 작업 세션 기록은 read로 먼저 찾고(find, 없으면 recent), 그다음 프로젝트 자료에서 관련된 내용·결정·도구를 찾는다. 프로젝트가 정한 조사 시작점(제품 그래프 같은 것)이 있으면 거기서 시작하고, 직접 읽을지 맡길지와 받은 결과 확인은 조사 스킬을 따른다(0.9.19, SRV-04). 찾은 것은 지금 일에 맞는 근거인지 읽어서 확인한 뒤 쓴다(0.9.17). ← `skill:start-job` → `tool:list` → `tool:read` 문구: `## 2. 기존 자료를 먼저 찾는다`
 4. **문제·목표·조건 맞추기** — 짧은 불릿으로 보이고 사람과 맞춘다. 맞춰졌는데 연결 안 된 대화면 첫 말 절처럼 작업 세션을 제안하고, 착수할 때 이어서 할 일이면 작업 브랜치를 열어 첫 기록으로 남긴다. 짧게 끝날 일이면 작업 브랜치는 열지 않아도 된다. ← `skill:start-job` → `tool:load` → `tool:create` → `tool:branch` → `tool:save` 문구: `## 3. 문제·목표·조건을 맞춘다`
-5. **진행 방식 고르기** — 직접 / 기본 포크 / 사이드 포크 / 에이전트 표. 기본 포크는 이 대화가 세부에 깊이 들어가 있으면 그 상태로 시작하고, 에이전트에는 해석 없는 관측을 브리프로 준다. 자기 결과의 검수는 에이전트에, 맡긴 결과는 받은 쪽이 확인한다. 0.9.17부터 애매하면 맡기고(전에는 직접), 맡긴 일은 결과와 판단을 바꿀 수 있는 제약·예외·불확실한 것, 근거 자리로 돌려받는다. ← `skill:start-job` 문구: `## 4. 진행 방식을 고른다`
+5. **진행 방식 고르기** — 직접 / 기본 포크 / 사이드 포크 / 에이전트 표. 기본 포크는 이 대화가 세부에 깊이 들어가 있으면 그 상태로 시작하고, 에이전트에는 해석 없는 관측을 브리프로 준다. 자기 결과의 검수는 에이전트에, 맡긴 결과는 받은 쪽이 확인한다. 0.9.17부터 애매하면 맡기고(전에는 직접), 맡긴 일은 결과와 판단을 바꿀 수 있는 제약·예외·불확실한 것, 근거 자리로 돌려받는다. 0.9.19부터 에이전트 줄은 사실 조사 대신 무엇이 나올지 모르는 탐색(여럿에게 따로)과 분량이 많은 자료 조사를 들고, '애매하면 맡긴다'는 만들기·검수에만 걸리며 사실 읽기는 조사 스킬을 따른다. 조사로 모은 사실과 찾은 안은 항목마다 확인한 위치를 달아 받는다. ← `skill:start-job` 문구: `## 4. 진행 방식을 고른다`
 
 ### 화면 정책
 - `pol.start-job-agree`
 - `pol.delegate-check`
 - `pol.read-first`
 - `pol.first-word-session`
+- `pol.research-read-split`
+- `pol.research-trace`
+
+## SRV-04 조사 절차
+
+- 출력 종류: skill 본문(research). agent가 skill을 부르면 들어오는 글
+- 상태: agent가 판단에 쓸 사실을 모으거나 만드는 법·원인·해결책을 찾기 시작함. 코어 지침 'Use separate contexts for detailed work'(STA-01)와 start-job 2·4절(SRV-03#3·#5)이 가리킨다
+- 원문: 실행 기록 없음(0.9.19에서 새로 생겼고, skill 본문은 앱이 `skills/research/SKILL.md`를 그대로 싣는다)
+- 내는 기능: `skill:research`
+- 그리는 코드: `code:skills/research/SKILL.md`
+
+### 개요
+조사를 찾을 것이 정해져 있는지로 두 갈래로 나누고, 갈래마다 직접 읽을지·누구에게 맡길지와 받은 결과를 확인하는 법을 agent에게 준다. 코드가 검사하지 않고 글로만 지킨다(0.9.19).
+
+### 화면 흐름
+agent는 찾을 것이 정해진 조사면 작업 기록 → 프로젝트 조사 시작점 → 원본 차례로 직접 읽고(양이 많으면 에이전트 하나), 무엇이 나올지 모르는 탐색이면 서로 모르는 여러 에이전트에게 따로 맡긴다. 받은 결과는 항목마다 적힌 위치를 원본과 대조한 뒤 판단에 쓴다.
+
+### 화면요소
+1. **두 갈래** — 무엇을 찾는지 말할 수 있고 답이 있는 곳을 짐작할 수 있으면 찾을 것이 정해진 조사, 찾아봐야 후보가 생기면 무엇이 나올지 모르는 탐색. 어느 쪽이든 결과는 항목마다 출처를 달아 받는다(코드). ← `skill:research` 문구: `조사는 찾을 것이 정해져 있는지에 따라 두 가지로 한다.`
+2. **정해진 조사는 직접 읽기** — 판단에 쓸 원본은 직접 읽는다: 작업 기록부터, 그다음 프로젝트가 정한 조사 시작점(제품 그래프 같은 것)에서 원본을 좁혀 읽는다. 읽기 전에 읽을 곳의 목록과 크기를 보고, 맥락을 유지하기 어려울 만큼 많으면 에이전트 하나에게 물음과 읽을 곳을 정해 맡긴다. 구현·검수·산출물 만들기는 이 절이 아니라 start-job 진행 방식(코드). ← `skill:research` → `tool:read` 문구: `## 1. 찾을 것이 정해진 조사는 직접 읽는 것이 기본이다`
+3. **탐색은 여럿에게 따로** — 같은 물음을 서로 모르는 여러 에이전트에게 새 컨텍스트로(쓸 수 있으면 모델도 다르게) 맡긴다. 브리프에는 문제·목표·조건과 확인된 사실만 주고 미리 생각한 안은 적지 않는다. 돌아온 안은 여럿이 같이 낸 것·하나만 낸 것·부딪히는 것으로 나누고, 결론이 달라지는 안만 추천과 함께 사람에게 보인다(코드). ← `skill:research` 문구: `## 2. 무엇이 나올지 모르는 탐색은 여럿에게 따로 맡긴다`
+4. **출처와 대조** — 맡길 때 항목마다 확인한 위치를 달고 본 것·추론한 것·찾지 못한 것을 나눠 받는다. 안에는 출처·동작하는 예시·확인 못 한 점을 함께 받는다. 판단에 영향을 주는 항목은 원본과 대조한 뒤 쓰고, 틀린 곳이 나오면 같은 결과의 다른 항목도 더 대조한다. 직접 조사한 것을 넘길 때도 위치를 단다. 맡겨서 만든 산출물에는 쓰지 않는다(코드). ← `skill:research` 문구: `## 3. 받은 결과는 출처와 대조해 확인한다`
+
+### 화면 정책
+- `pol.research-read-split`
+- `pol.research-trace`
+- `pol.no-host-tool-names`
 
 ## TOL-01 작업 세션 목록
 
@@ -441,7 +470,7 @@ agent는 이 차례대로 문제를 파악하고, 기존 기록을 read로 먼�
 ## TOL-12 초기설정 결과
 
 - 출력 종류: tool 결과(setup)
-- 원문: R11(setup), R12(survey_done), R91·R119(이미 초기설정된 프로젝트)
+- 원문: R11(setup), R12(survey_done), R91·R119(이미 초기설정된 프로젝트), R301~R314(0.9.19 method_on·never_ask step=method와 그 뒤 설정·기록)
 - 내는 기능: `tool:setup`
 - 그리는 코드: `code:core/project.mjs#setupTool`
 
@@ -451,7 +480,9 @@ agent는 이 차례대로 문제를 파악하고, 기존 기록을 read로 먼�
 3. **코어 지침 본문** — STA-01과 같은 본문과 꼬리표. "이 대화부터 따르세요". ← `tool:setup` 문구: `이 대화에서는 아래 코어 지침을 지금부터 따르세요`
 4. **한 줄 결과** — never_ask: `이 프로젝트에서는 … 다시 묻지 않습니다.`, survey_done: `프로젝트 조사를 끝남으로 기록했습니다.` ← `tool:setup`
 5. **이미 초기설정됨** — 이미 초기설정된 프로젝트에서 다시 승인하면 맨 앞에 한 줄(0.9.6부터). 문구: `이 프로젝트는 이미 초기설정되어 있었습니다(다른 대화가 먼저 했을 수 있습니다). 이미 있던 값은 그대로 두었습니다.` 설정 파일은 잠그고 고친다. ← `tool:setup`
-6. **Antigravity에서 부른 초기설정** — (코드) 설정 항목 끝에 `(Claude Code용, Antigravity에서는 쓰이지 않음)`, 다음 시작 줄은 `다음 시작부터는 시작·압축 뒤에 코어 지침이 들어갑니다. Antigravity 설정은 바꾸지 않았습니다.` 문구: `Antigravity 설정은 바꾸지 않았습니다` ← `tool:setup`
+6. **Antigravity에서 부른 초기설정** — (코드) 설정 항목 끝에 `(Claude Code용, Antigravity에서는 쓰이지 않음)`, 다음 시작 줄은 `다음 시작부터는 시작·압축 뒤에 코어 지침이 들어갑니다. Antigravity 설정은 바꾸지 않았습니다.` ← `tool:setup` 0.9.19부터 Antigravity method_on 결과(TOL-12#8)도 'Antigravity 설정은 바꾸지 않았습니다'로 시작하므로, 이 요소는 초기설정 결과에만 있는 위 두 글로 잇는다.
+7. **애드온 물음 이어서** — 초기설정 결과 끝(코어 본문 앞)에 `이어서 "방법론 애드온(head-method)도 켤까요? …`와 예·아니오일 때 부를 것. 이미 초기설정된 프로젝트에서 다시 승인해도 애드온 단계가 남았으면 붙는다(0.9.19, R11·R91·R119). ← `tool:setup` 문구: `이어서 "방법론 애드온(head-method)도 켤까요?`
+8. **애드온 결과** — method_on: `방법론 애드온(head-method)을 끝남으로 기록했습니다.`와 앱별 한 줄. Claude Code는 프로젝트 `.claude/settings.json`의 enabledPlugins에 한 줄을 더하고 다른 키는 그대로 둔다(R304·R305 — 더했습니다, R306 — 이미 있어 그대로, R309·R311 — 파일이나 enabledPlugins가 JSON 객체가 아니면 고치지 않고 직접 넣으라고 알림, R310·R312 파일 그대로). Codex·Antigravity는 설정을 바꾸지 않고 사용자에게 알릴 설치 명령을 돌려준다(R301·R303, R302 settings.json 그대로). 어느 앱이든 first_run.method=done을 적는다(0.9.19). never_ask step=method는 #4 한 줄(`이 프로젝트에서는 방법론 애드온을 다시 묻지 않습니다.`, R313·R314). ← `tool:setup` 문구: `방법론 애드온(head-method)을 끝남으로 기록했습니다.` 문구: `사용자에게 이 설치 명령을 알려 주세요`
 
 ## TOL-13 보내기 결과
 
@@ -479,7 +510,7 @@ agent는 이 차례대로 문제를 파악하고, 기존 기록을 read로 먼�
 3. **저장 규칙** — 다음·정리 없이 저장(`…recap으로 주세요. 이어 갈 일이 남았다면 next를 주세요.`), 다음과 정리를 함께(`다음이 있는 저장에는 recap을 받지 않습니다. …`). 0.9.7부터 본문에 기록 제목이나 예약 줄(`요약:`·`다음:`·`참조파일:` 등)이 있으면 거절하고(R149), files 경로에 백틱·줄바꿈이 있으면 거절한다(R150). 문구: `본문에 기록 제목 또는 예약 줄을 넣을 수 없습니다. 참조파일은 files로 줍니다.` 문구: `files의 경로에는 백틱이나 줄바꿈을 넣을 수 없습니다.` ← `tool:save`
 4. **없는 대상** — `세션 '<이름>'이 없습니다.`, `작업 브랜치가 없습니다: <이름>`. ← `tool:load` ← `tool:read`
 5. **branch 규칙** — `reason는 비어 있지 않은 한 줄이어야 합니다.`, `작업 브랜치 '<이름>'이 이미 있습니다. 이어 가려면 attach하세요.`(코드) ← `tool:branch`
-6. **setup 규칙** — `never_ask에는 step(setup 또는 survey)이 필요합니다.` ← `tool:setup`
+6. **setup 규칙** — `never_ask에는 step(setup, survey, method 중 하나)이 필요합니다.` 0.9.19에서 step에 method가 더해져 문구가 바뀌었다(R13). 잘못된 action은 `action은 setup, never_ask, survey_done, method_on 중 하나입니다.`(코드). ← `tool:setup`
 7. **send 규칙** — `이 대화 자신에게는 보낼 수 없습니다.`, `받는 Claude 대화가 지금 실행 중이 아닙니다: <보낼 곳>` ← `tool:send` Antigravity send: `이 대화 자신에게는 보낼 수 없습니다.`, `보낼 곳을 알 수 없습니다: <보낼 곳>`, `받는 Antigravity 대화를 찾을 수 없습니다: <보낼 곳>`, `threadId와 비어 있지 않은 prompt가 필요합니다.` ← `tool:send@antigravity`
 8. **이름 규칙** — `이름은 영문·숫자·한글·._-만 허용하며 ..와 경로 구분자는 금지합니다.` 띄어쓰기가 있는 이름은 거절된다(a3 ua.branch·ua.record·ua.todo·ua.resume). 이름을 받는 도구(create·branch·load, name을 준 read·todo)만 이 오류를 낸다(core/sessions.mjs directory, core/graph.mjs Graph.session). ← `tool:create` ← `tool:branch` ← `tool:load` ← `tool:read` ← `tool:todo`
 9. **중단한 작업 브랜치 불러오기** — `중단한 작업 브랜치입니다. 기록은 read로 읽으세요.`(코드) ← `tool:load` ← `tool:branch` → `tool:read`

@@ -321,15 +321,16 @@
       }
     ],
     "fact_targets": {
-      "_": "한 파일 안에서 fs 호출마다 닿는 곳이 다를 때 줄 단위로 정한다(재검수 N2, 원본 7a5896c 줄로 확인. 0.9.15 e96f5aa에서 191줄 뒤가 2줄 밀린 것을 다시 맞춤).",
-      "core/project.mjs:123": ".head/ 상태·기록·색인 파일",
-      "core/project.mjs:130": "프로젝트 설정·플러그인 지침 파일",
-      "core/project.mjs:136": "프로젝트 설정·플러그인 지침 파일",
-      "core/project.mjs:150": "프로젝트 설정·플러그인 지침 파일",
-      "core/project.mjs:183": "프로젝트 설정·플러그인 지침 파일",
-      "core/project.mjs:220": "프로젝트 설정·플러그인 지침 파일",
-      "core/project.mjs:221": ".head/ 상태·기록·색인 파일",
-      "core/project.mjs:226": "프로젝트 설정·플러그인 지침 파일"
+      "_": "한 파일 안에서 fs 호출마다 닿는 곳이 다를 때 줄 단위로 정한다(재검수 N2, 원본 7a5896c 줄로 확인. 0.9.15 e96f5aa에서 191줄 뒤가 2줄 밀린 것을 다시 맞춤. 0.9.19 9dec306에서 project.mjs 줄이 밀린 것을 다시 맞추고, methodOn의 설정 폴더 만들기(293)를 더함).",
+      "core/project.mjs:145": ".head/ 상태·기록·색인 파일",
+      "core/project.mjs:152": "프로젝트 설정·플러그인 지침 파일",
+      "core/project.mjs:158": "프로젝트 설정·플러그인 지침 파일",
+      "core/project.mjs:172": "프로젝트 설정·플러그인 지침 파일",
+      "core/project.mjs:205": "프로젝트 설정·플러그인 지침 파일",
+      "core/project.mjs:252": "프로젝트 설정·플러그인 지침 파일",
+      "core/project.mjs:253": ".head/ 상태·기록·색인 파일",
+      "core/project.mjs:258": "프로젝트 설정·플러그인 지침 파일",
+      "core/project.mjs:293": "프로젝트 설정·플러그인 지침 파일"
     },
     "via": {
       "code:core/storage.mjs#readTail": {

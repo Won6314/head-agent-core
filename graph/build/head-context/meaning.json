@@ -1,5 +1,5 @@
 {
-  "_": "B-6 뜻 파일. 그래프에 직접 쓰는 것: 기능 한 줄, 정책(조건/주체/행위). 근거의 R번호는 runs/A-1-outputs.md, 코드는 043ffdb(0.9.18) packages/context 기준(0.9.17에서 온 줄은 d2be2ca, 0.9.15에서 온 줄은 e96f5aa, 0.9.10에서 온 줄은 7a5896c 때 확인). R112까지 근거는 0.9.5와 같은 차례의 실행이고, R159~R232는 Antigravity 실행, R233~R255는 0.9.16·0.9.17 변경을 보는 실행이다(R247~R255는 독립 검수 M1의 머리 자르기), R256~R299는 0.9.18 터미널 깨우기(가짜 agy)다 파일:줄.",
+  "_": "B-6 뜻 파일. 그래프에 직접 쓰는 것: 기능 한 줄, 정책(조건/주체/행위). 근거의 R번호는 runs/A-1-outputs.md, 코드는 9dec306(0.9.19) packages/context 기준(0.9.18에서 온 줄은 043ffdb, 0.9.17에서 온 줄은 d2be2ca, 0.9.15에서 온 줄은 e96f5aa, 0.9.10에서 온 줄은 7a5896c 때 확인). R112까지 근거는 0.9.5와 같은 차례의 실행이고, R159~R232는 Antigravity 실행, R233~R255는 0.9.16·0.9.17 변경을 보는 실행이다(R247~R255는 독립 검수 M1의 머리 자르기), R256~R299는 0.9.18 터미널 깨우기(가짜 agy), R300~R314는 0.9.19 방법론 애드온 단계(method_on·never_ask step=method)다 파일:줄.",
   "features": {
     "tool:list": "작업 세션 목록을 최근 기록 순으로 돌려준다",
     "tool:load": "작업 세션을 불러와 이 대화를 메인이나 작업 브랜치에 연결하고 작업 맥락을 돌려준다",
@@ -9,7 +9,7 @@
     "tool:read": "연결을 바꾸지 않고 둘러보기·흐름 지도·최근 본문·기록 하나·찾기·가리킨 파일 나무를 읽는다",
     "tool:todo": "작업 세션의 todo.md에 할 일을 더하고, 보이고, 끝낸다",
     "tool:conversations": "살아 있는 Claude Code·Codex·Antigravity 대화를 작업 세션 → 작업 브랜치 → 대화로 보여 준다",
-    "tool:setup": "사용자 동의 뒤 이 프로젝트의 코어 지침과 .claude/settings.json(기본 포크·마켓·플러그인 켜기)을 잠그고 켜고 첫 실행 단계를 기록한다",
+    "tool:setup": "사용자 동의 뒤 이 프로젝트의 코어 지침과 .claude/settings.json(기본 포크·마켓·플러그인 켜기)을 잠그고 켜고 첫 실행 단계를 기록한다. 0.9.19부터 method_on으로 방법론 애드온(head-method)을 Claude Code는 프로젝트 설정 enabledPlugins 한 줄로 켜고, Codex·Antigravity는 설정을 바꾸지 않고 설치 명령을 돌려준다",
     "tool:send": "Codex 대화에서 다른 Codex·Claude·Antigravity 대화로 메시지를 보낸다(Codex 도구 서버에만)",
     "mcp:initialize": "도구 서버가 뜰 때 서버 이름·판(plugin.json과 같은 판)과 그 앱용 서버 안내문을 돌려준다",
     "mcp:tools/list": "도구 서버의 도구 설명과 인자 목록을 돌려준다",
@@ -34,7 +34,8 @@
     "cli:map": "명령줄에서 작업 세션의 흐름 지도를 출력한다",
     "cli:migrate-0.7": "0.6 기록을 0.7 꼴로 맞출 것을 미리 보이고 --apply면 옮긴다",
     "cli:report": "코어 밖 도구의 하위 작업 시작·끝을 .head/state/subtasks/에 남긴다",
-    "skill:start-job": "일을 시작하기 전 문제·목표·조건, 기존 자료, 작업 세션·작업 브랜치, 진행 방식을 정하는 절차를 agent에게 준다. 연결 안 된 대화는 첫 말을 받을 때도 부른다(0.9.17)",
+    "skill:start-job": "일을 시작하기 전 문제·목표·조건, 기존 자료, 작업 세션·작업 브랜치, 진행 방식을 정하는 절차를 agent에게 준다. 연결 안 된 대화는 첫 말을 받을 때도 부른다(0.9.17). 기존 자료를 찾을 때와 판단에 쓸 사실을 읽을 때는 research를 따르게 한다(0.9.19)",
+    "skill:research": "판단에 쓸 사실을 모으거나 만드는 법·원인·해결책을 찾기 시작할 때 부르는 조사 절차를 agent에게 준다 — 찾을 것이 정해진 조사는 직접 읽는 것이 기본(양이 많을 때만 에이전트 하나), 무엇이 나올지 모르는 탐색은 서로 모르는 여럿에게 따로, 결과는 항목마다 확인한 위치를 달아 원본과 대조한다(0.9.19)",
     "tool:send@antigravity": "Antigravity 대화에서 다른 Claude·Codex·Antigravity 대화로 메시지를 보낸다(Antigravity 도구 서버에만)",
     "hook:antigravity:SessionStart": "Antigravity 대화가 처음 시작될 때 대화 정보(presence)와 등록을 쓰고, 코어 지침·서버 안내문·작업 세션 머리(또는 연결 안 됨)·작업 맥락·첫 실행 안내를 시스템 메시지로 넣는다. 클라이언트가 둔 시작 파일이 있으면 그 작업 세션(·작업 브랜치)에 도구 호출 없이 연결한다. 서브에이전트(invoke_subagent)로 판정되면 대화 안 작업 안내 하나만 넣고 대화 정보·작업 세션 연결을 쓰지 않으며 판정을 등록 파일에 남긴다",
     "hook:antigravity:PreInvocation": "Antigravity 대화의 매 단계 앞에서 대화 정보를 다시 쓰고 편지함 메시지를 넣는다. /compact 입력이면 압축 요약 지시를 넣고, 새 압축 표시(CHECKPOINT)가 보이면 코어·작업 세션·작업 맥락·최근 대화 원문을 한 번 되살린다. 등록 파일에 판정이 없으면 서브에이전트인지 한 번 판정하고, 서브에이전트면 대화 정보를 쓰지 않고 남은 것은 지우며 압축 지시 없이 압축 뒤 대화 안 작업 안내 하나만 넣는다. 터미널 agy(ACP·print·--remote-agent 아님)의 사람 대화이고 그 프로세스에 처음이면 깨우기 열쇠 기록에 요청 표시를 만들고 등록 지시를 넣는다(0.9.18, /compact 단계 제외, 옛 Node도)",
@@ -369,7 +370,7 @@
     {
       "id": "pol.no-host-tool-names",
       "kind": "표시",
-      "condition": "공용 서버 안내문·start-job·도구 설명에서",
+      "condition": "공용 서버 안내문·start-job·research·도구 설명에서",
       "subject": "플러그인은",
       "action": "앱의 도구 이름을 쓰지 않고, 앱별 부분('이 앱에서 부르는 도구')에만 그 앱의 도구를 적는다",
       "features": [],
@@ -464,11 +465,31 @@
     {
       "id": "pol.never-ask",
       "kind": "표시",
-      "condition": "사람이 다시 묻지 말라고 해 setup 또는 survey를 never_ask로 기록했으면",
+      "condition": "사람이 다시 묻지 말라고 해 setup·survey·method(0.9.19) 중 한 단계를 never_ask로 기록했으면",
       "subject": "시작 훅(Antigravity 사람 대화의 시작 훅 포함, 서브에이전트 제외)은",
       "action": "그 단계를 다시 묻지 않는다",
       "features": [],
-      "evidence": "core/project.mjs firstRun·guide(B-7 POL-02) · hosts/antigravity/hook.mjs runHook · R159·R160, R210(서브에이전트 — 없음)"
+      "evidence": "core/project.mjs firstRun·guide·pendingQuestions(B-7 POL-02) · hosts/antigravity/hook.mjs runHook · R159·R160, R210(서브에이전트 — 없음) · R313·R314(never_ask step=method)"
+    },
+    {
+      "id": "pol.method-ask",
+      "kind": "표시",
+      "condition": "초기설정을 마친 프로젝트에서 first_run.method가 기록되지 않았으면 — 시작·/clear할 때(초기설정 직후가 아닌 프로젝트는 다음 시작에 한 번)와 setup(action=setup) 결과 끝에서(0.9.19)",
+      "subject": "시작 훅(Claude·Codex·Antigravity 사람 대화의 시작 훅)과 setup 결과는",
+      "action": "사람의 첫 입력에 답하기 전에 방법론 애드온(head-method)을 켤지 묻게 하고, 예면 setup(action=method_on), 아니오면 \"다시는 묻지 않을까요?\"를 물어 예일 때만 setup(action=never_ask, step=method)를 부르게 한다. 조사 절차 파일이 있으면 조사 물음은 애드온 물음 뒤에 붙는다(글로만)",
+      "features": [],
+      "evidence": "core/project.mjs guide·pendingQuestions·methodQuestion·setupTool(e57f8be) · R11·R91·R119(setup 결과), R48·R60·R63·R67·R108·R160(시작 훅), R307·R308(단계를 끝낸 뒤 — 없음)"
+    },
+    {
+      "id": "pol.method-on",
+      "kind": "처리",
+      "condition": "사람이 방법론 애드온을 켜자고 해 setup(action=method_on)을 부르면(0.9.19)",
+      "subject": "setup은",
+      "action": "Claude Code에서는 프로젝트 .claude/settings.json을 잠그고 enabledPlugins.\"head-method@head-agent-core\": true만 더한다(다른 키는 그대로, 이미 값이 있으면 그대로, 파일이나 enabledPlugins가 JSON 객체가 아니면 고치지 않고 직접 넣으라고 알림, 다음 대화부터 켜짐). Codex·Antigravity에서는 설정을 바꾸지 않고 사용자에게 알릴 설치 명령을 돌려준다. 어느 앱이든 first_run.method=done을 적는다",
+      "features": [
+        "tool:setup"
+      ],
+      "evidence": "core/project.mjs methodOn·methodSettings·readProjectSettings·METHOD_INSTALL(e57f8be) · R301·R302(Codex), R303(Antigravity), R304~R306(Claude 더함·이미 있음), R309~R312(객체 아님 — 그대로)"
     },
     {
       "id": "pol.todo-order",
@@ -538,9 +559,9 @@
       "kind": "표시",
       "condition": "일을 포크·에이전트에 맡겼으면",
       "subject": "start-job 글은",
-      "action": "맡긴 결과를 부른 쪽이 확인하게 한다(글로만)",
+      "action": "맡긴 결과를 부른 쪽이 확인하게 한다(글로만). 0.9.19부터 조사로 모은 사실과 찾은 안은 항목마다 확인한 위치를 달아 받는다(pol.research-trace)",
       "features": [],
-      "evidence": "skills/start-job/SKILL.md(B-7 POL-27) · a3 ua.delegate(부른 대화가 원문과 대조 후 저장)"
+      "evidence": "skills/start-job/SKILL.md(B-7 POL-27, 4절 아래 줄 0.9.19 고침) · a3 ua.delegate(부른 대화가 원문과 대조 후 저장)"
     },
     {
       "id": "pol.links-only",
@@ -862,9 +883,27 @@
       "kind": "표시",
       "condition": "agent가 지금 하는 일이나 지난 일을 찾을 때",
       "subject": "서버 안내문 '읽기' 절과 start-job 2단계는",
-      "action": "read부터 쓰게 한다 — 물음의 낱말로 read find, 없으면 read recent, 파일·코드는 그다음. 찾은 것은 지금 일에 맞는 근거인지 읽어서 확인한 뒤 쓴다(글로만, 0.9.17)",
+      "action": "read부터 쓰게 한다 — 물음의 낱말로 read find, 없으면 read recent, 파일·코드는 그다음. 찾은 것은 지금 일에 맞는 근거인지 읽어서 확인한 뒤 쓴다(글로만, 0.9.17). 0.9.19부터 start-job 2단계는 프로젝트 자료를 프로젝트가 정한 조사 시작점(제품 그래프 같은 것)에서 시작하고, 직접 읽을지 맡길지와 받은 결과 확인은 research를 따르게 한다(pol.research-read-split)",
       "features": [],
-      "evidence": "core/mcp.mjs INSTRUCTIONS 읽기 절 · skills/start-job/SKILL.md 2단계 · R6·R66·R70·R170"
+      "evidence": "core/mcp.mjs INSTRUCTIONS 읽기 절 · skills/start-job/SKILL.md 2단계(0.9.19 고침) · R6·R66·R70·R170"
+    },
+    {
+      "id": "pol.research-read-split",
+      "kind": "표시",
+      "condition": "agent가 판단에 쓸 사실을 모으거나 만드는 법·원인·해결책을 찾기 시작하면",
+      "subject": "research 글과 코어 지침 'Use separate contexts for detailed work' 문단은",
+      "action": "찾을 것이 정해진 조사는 직접 읽는 것을 기본으로 하고(작업 기록 → 프로젝트 조사 시작점 → 원본, 읽기 전에 양을 보고 많을 때만 에이전트 하나에게 물음과 읽을 곳을 정해 맡김), 무엇이 나올지 모르는 탐색은 양과 상관없이 서로 모르는 여러 에이전트에게 따로 맡기게 한다 — 브리프에는 문제·목표·조건과 확인된 사실만, 미리 생각한 안은 넣지 않는다(글로만, 0.9.19)",
+      "features": [],
+      "evidence": "skills/research/SKILL.md 1절·2절 · instructions/HEAD_CORE.md 'Use separate contexts for detailed work'(0.9.19) · skills/start-job/SKILL.md 2절·4절 표 에이전트 줄 · R46(코어 원문)"
+    },
+    {
+      "id": "pol.research-trace",
+      "kind": "표시",
+      "condition": "조사를 맡기거나 조사 결과를 받거나 직접 조사한 것을 넘길 때",
+      "subject": "research 글과 코어 지침 Evidence 문단은",
+      "action": "결과의 항목마다 확인한 위치(파일과 줄, 페이지와 문단, 출처 주소)를 달고 본 것·추론한 것·찾지 못한 것을 나눠 받게 하고, 판단에 영향을 주는 항목은 그 위치의 원본과 대조한 뒤 쓰게 한다. 여럿이 같은 안을 낸 것만으로는 근거가 아니다. 맡겨서 만든 산출물은 이 규칙이 아니라 그 작업의 기준으로 확인한다(글로만, 0.9.19)",
+      "features": [],
+      "evidence": "skills/research/SKILL.md 3절 · instructions/HEAD_CORE.md Evidence(0.9.19 두 문장) · skills/start-job/SKILL.md 4절 아래 줄 · R46(코어 원문)"
     },
     {
       "id": "pol.program-quiet-unconnected",

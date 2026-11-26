@@ -1,4 +1,4 @@
-# A-1 조작 기록 — head-context 0.9.18 실제 실행 출력 원문
+# A-1 조작 기록 — head-context 0.9.19 실제 실행 출력 원문
 
 만든 스크립트: [build/run_a.py](../build/run_a.py). 임시 HOME(/tmp/hc-demo/user)·임시 프로젝트(/tmp/hc-demo/project)에 플러그인을 두 앱의 설치 자리 꼴로 복사하고, 호스트가 주는 입력(훅 JSON, 도구 서버 JSON-RPC)을 스크립트가 대신 줬다. Claude Code·Codex 앱 자체는 띄우지 않았다.
 
@@ -138,7 +138,7 @@
 
 ## branch
 작업 브랜치 다루기. create는 branch 이름(필수, 그 일을 나타내는 짧은 이름)으로 새 작업 브랜치를 열고 이 대화를 거기에 둡니다(
-…(이하 2334자 생략 — 전문은 a-runs.json R7)
+…(이하 2613자 생략 — 전문은 a-runs.json R7)
 ```
 
 ## R08 작업 세션 목록(없음)
@@ -192,6 +192,8 @@
 - .claude/settings.json의 마켓 head-agent-core(GitHub Won6314/head-agent-core, 자동 업데이트)와 enabledPlugins."head-context@head-agent-core": 마켓을 더했습니다, 플러그인 켜기를 더했습니다.
 - 다음 시작부터는 시작·/clear·압축 때 코어 지침이 들어가고 기본 포크가 켜지며, 앱이 시작할 때 새 판을 받습니다. 이 대화에서는 아래 코어 지침을 지금부터 따르세요.
 
+이어서 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method).
+
 # HEAD Core
 
 HEAD owns the whole outcome: understanding, judgment, planning, execution strategy, context, integration, and conclusion.
@@ -204,8 +206,8 @@ Before responding, check that what you are about to say rests on something you h
 
 **What carries weight.** An LLM tends to attend most to information that is close, clear, and similar to what it is about to do. What it is told to follow and what actually shapes its next output are therefore not always the same: a recent example or a concrete detail can steer the next action more than a stated principle.
 
-**Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is cle
-…(이하 5837자 생략 — 전문은 a-runs.json R11)
+**Resolution.** High-resolution information is detailed and specific. Summarizing many details into one sta
+…(이하 6645자 생략 — 전문은 a-runs.json R11)
 ```
 
 ## R12 프로젝트 조사 끝남 기록
@@ -229,7 +231,7 @@ Before responding, check that what you are about to say rests on something you h
 
 
 ```text
-[오류] never_ask에는 step(setup 또는 survey)이 필요합니다.
+[오류] never_ask에는 step(setup, survey, method 중 하나)이 필요합니다.
 ```
 
 ## R14 작업 세션 만들기
@@ -294,7 +296,7 @@ Before responding, check that what you are about to say rests on something you h
 - login-fix (이 대화) · 마지막 저장 없음
 
 ## 흐름 (최신이 위)
-* 1592f 11-23 20:12 로그인 화면 문제 정리 (main)
+* d191b 11-26 17:26 로그인 화면 문제 정리 (main)
 
 ## 이 작업 브랜치의 최근 기록: login-fix
 (아직 기록 없음)
@@ -348,7 +350,7 @@ Before responding, check that what you are about to say rests on something you h
 
 ```text
 작업 세션 'demo' 할 일에 더했습니다.
-- [ ] 2026-11-23 기한 2026-11-10(화) "로그인 오류 문구 다듬기 — 사용자: '문구는 나중에'"
+- [ ] 2026-11-26 기한 2026-11-10(화) "로그인 오류 문구 다듬기 — 사용자: '문구는 나중에'"
 ```
 
 ## R21 할 일 목록
@@ -388,15 +390,15 @@ Before responding, check that what you are about to say rests on something you h
 
 ## 열린 작업 브랜치 (2)
 - copy-tone (이 대화) · 마지막 저장 없음
-- login-fix · 마지막 11-23 20:12 · 다음: 구현하고 시험
+- login-fix · 마지막 11-26 17:26 · 다음: 구현하고 시험
 
 ## 할 일 (열린 1개, 기한 임박 1개)
 - 기한 2026-11-10 · 로그인 오류 문구 다듬기 — 사용자: '문구는 나중에'
 
 ## 흐름 (최신이 위)
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함 (login-fix)
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함 (login-fix)
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리 (main)
+* d191b 11-26 17:26 로그인 화면 문제 정리 (main)
 
 ## 이 작업 브랜치의 최근 기록: copy-tone
 (아직 기록 없음)
@@ -449,20 +451,20 @@ Before responding, check that what you are about to say rests on something you h
 이 대화의 작업 브랜치: login-fix
 
 ## 열린 작업 브랜치 (1)
-- login-fix (이 대화) · 마지막 11-23 20:12 · 다음: 구현하고 시험
+- login-fix (이 대화) · 마지막 11-26 17:26 · 다음: 구현하고 시험
 
 ## 할 일 (열린 1개, 기한 임박 1개)
 - 기한 2026-11-10 · 로그인 오류 문구 다듬기 — 사용자: '문구는 나중에'
 
 ## 흐름 (최신이 위)
-* 2f16a 11-23 20:12 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸 (main)
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함 (HEAD -> login-fix)
+* d1593 11-26 17:26 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸 (main)
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함 (HEAD -> login-fix)
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리
+* d191b 11-26 17:26 로그인 화면 문제 정리
 
 ## 이 작업 브랜치의 최근 기록: login-fix
 
-### 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함
+### ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함
 버튼을 누르면 요청이 끝날 때까지 막는다.
 
 다음: 구현하고 시험
@@ -478,10 +480,10 @@ Before responding, check that what you are about to say rests on something you h
 
 ```text
 # 지도: demo
-* 2f16a 11-23 20:12 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸 (main)
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함 (login-fix)
+* d1593 11-26 17:26 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸 (main)
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함 (login-fix)
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리
+* d191b 11-26 17:26 로그인 화면 문제 정리
 ```
 
 ## R27 최근 본문
@@ -493,13 +495,13 @@ Before responding, check that what you are about to say rests on something you h
 
 
 ```text
-## 2026-11-23T11:12:28.397Z
+## 2026-11-26T08:26:15.794Z
 
 요약: 로그인 화면 문제 정리
 
 로그인 버튼이 두 번 눌린다. 근거: [메모](work/2026-11/2026-11-04-login.md)
 
-## 2026-11-23T11:12:30.077Z
+## 2026-11-26T08:26:15.811Z
 
 요약: 버튼 중복 클릭 막기 방향 정함
 
@@ -529,26 +531,26 @@ Before responding, check that what you are about to say rests on something you h
 - 로그인 화면만
 
 ## 열린 작업 브랜치 (1)
-- login-fix · 마지막 11-23 20:12 · 다음: 구현하고 시험
+- login-fix · 마지막 11-26 17:26 · 다음: 구현하고 시험
 
 ## 할 일 (열린 1개, 기한 임박 1개)
 - 기한 2026-11-10 · 로그인 오류 문구 다듬기 — 사용자: '문구는 나중에'
 
 ## 흐름 (최신이 위)
-* 2f16a 11-23 20:12 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸 (main)
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함 (login-fix)
+* d1593 11-26 17:26 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸 (main)
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함 (login-fix)
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리
+* d191b 11-26 17:26 로그인 화면 문제 정리
 
 ## 최근 기록 (작업 세션 전체, 3개)
 
-### 1592f 11-23 20:12 로그인 화면 문제 정리
+### d191b 11-26 17:26 로그인 화면 문제 정리
 로그인 버튼이 두 번 눌린다. 근거: [메모](work/2026-11/2026-11-04-login.md)
 
-### 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함
+### ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함
 버튼을 누르면 요청이 끝날 때까지 막는다.
 
-### 2f16a 11-23 20:12 copy-tone
+### d1593 11-26 17:26 copy-tone
 브랜치 copy-tone 중단 · 이유: 사용자가 문구 작업을 미룸 · 기록: work/copy-tone/history.md
 중단했습니다.
 ```
@@ -562,9 +564,9 @@ Before responding, check that what you are about to say rests on something you h
 
 
 ```text
-demo/main@2026-11-23T11:12:30.078Z · 버튼 중복 클릭 막기 방향 정함
-demo/login-fix@2026-11-23T11:12:30.077Z · 버튼 중복 클릭 막기 방향 정함
-demo/main@2026-11-23T11:12:28.397Z · 로그인 화면 문제 정리
+demo/main@2026-11-26T08:26:15.812Z · 버튼 중복 클릭 막기 방향 정함
+demo/login-fix@2026-11-26T08:26:15.811Z · 버튼 중복 클릭 막기 방향 정함
+demo/main@2026-11-26T08:26:15.794Z · 로그인 화면 문제 정리
 ```
 
 ## R30 기록이 가리킨 파일(branch=main)
@@ -680,13 +682,13 @@ demo/main@2026-11-23T11:12:28.397Z · 로그인 화면 문제 정리
 이 대화의 작업 브랜치: 없음(메인)
 
 ## 흐름 (최신이 위)
-* d9d88 11-23 20:12 Merge branch 'login-fix' (HEAD -> main)
+* deac6 11-26 17:26 Merge branch 'login-fix' (HEAD -> main)
 |\
-| * ad795 11-23 20:12 구현 끝 (login-fix)
-* | 2f16a 11-23 20:12 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함
+| * 0655c 11-26 17:26 구현 끝 (login-fix)
+* | d1593 11-26 17:26 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리
+* d191b 11-26 17:26 로그인 화면 문제 정리
 ```
 
 ## R38 없는 도구
@@ -771,13 +773,13 @@ demo/main@2026-11-23T11:12:28.397Z · 로그인 화면 문제 정리
 
 ```text
 # 지도: demo
-* d9d88 11-23 20:12 Merge branch 'login-fix' (main)
+* deac6 11-26 17:26 Merge branch 'login-fix' (main)
 |\
-| * ad795 11-23 20:12 구현 끝 (login-fix)
-* | 2f16a 11-23 20:12 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함
+| * 0655c 11-26 17:26 구현 끝 (login-fix)
+* | d1593 11-26 17:26 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리
+* d191b 11-26 17:26 로그인 화면 문제 정리
 ```
 
 ## R45 claude -p 대화의 할 일 더하기
@@ -816,7 +818,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 5425자 생략 — 전문은 a-runs.json R46)
+…(이하 6009자 생략 — 전문은 a-runs.json R46)
 ```
 
 ## R47 Claude SessionStart(startup) · core 2 2
@@ -852,6 +854,9 @@ Before responding, check that what you are about to say rests on something you h
 - 로그인 화면만
 
 이 대화의 작업 브랜치: 없음(메인)
+
+# 프로젝트 첫 실행 이어서 (head-context)
+사용자의 첫 입력에 답하기 전에 먼저 짧게 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method). 답을 받은 뒤 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.
 ```
 
 ## R49 Claude SessionStart(startup) · context
@@ -864,13 +869,13 @@ Before responding, check that what you are about to say rests on something you h
 
 ```text
 ## 흐름 (최신이 위)
-* d9d88 11-23 20:12 Merge branch 'login-fix' (HEAD -> main)
+* deac6 11-26 17:26 Merge branch 'login-fix' (HEAD -> main)
 |\
-| * ad795 11-23 20:12 구현 끝 (login-fix)
-* | 2f16a 11-23 20:12 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함
+| * 0655c 11-26 17:26 구현 끝 (login-fix)
+* | d1593 11-26 17:26 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리
+* d191b 11-26 17:26 로그인 화면 문제 정리
 ```
 
 ## R50 Claude SessionStart(startup) · recent
@@ -926,7 +931,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 5425자 생략 — 전문은 a-runs.json R52)
+…(이하 6009자 생략 — 전문은 a-runs.json R52)
 ```
 
 ## R53 Claude SessionStart(compact) · session
@@ -967,13 +972,13 @@ Before responding, check that what you are about to say rests on something you h
 
 ```text
 ## 흐름 (최신이 위)
-* d9d88 11-23 20:12 Merge branch 'login-fix' (HEAD -> main)
+* deac6 11-26 17:26 Merge branch 'login-fix' (HEAD -> main)
 |\
-| * ad795 11-23 20:12 구현 끝 (login-fix)
-* | 2f16a 11-23 20:12 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함
+| * 0655c 11-26 17:26 구현 끝 (login-fix)
+* | d1593 11-26 17:26 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리
+* d191b 11-26 17:26 로그인 화면 문제 정리
 ```
 
 ## R55 Claude SessionStart(compact) · recent
@@ -1024,7 +1029,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 5425자 생략 — 전문은 a-runs.json R56)
+…(이하 6009자 생략 — 전문은 a-runs.json R56)
 ```
 
 ## R57 Claude SessionStart(resume) · session
@@ -1073,6 +1078,9 @@ Before responding, check that what you are about to say rests on something you h
 
 ```text
 이 대화는 아직 작업 세션에 연결되지 않았습니다.
+
+# 프로젝트 첫 실행 이어서 (head-context)
+사용자의 첫 입력에 답하기 전에 먼저 짧게 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method). 답을 받은 뒤 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.
 ```
 
 ## R61 Claude SessionStart(clear) · context
@@ -1110,7 +1118,10 @@ Before responding, check that what you are about to say rests on something you h
 ```text
 이 대화는 아직 작업 세션에 연결되지 않았습니다.
 
-head-context: 읽을 수 없는 기록 파일을 옮겨 두고 없는 것으로 처리했습니다: /tmp/hc-demo/project/.head/state/conversations/claude-11111111-1111-4111-8111-111111111111.json.broken-1795432356280 (Expected property name or '}' in JSON at position 1 (line 1 column 2))
+# 프로젝트 첫 실행 이어서 (head-context)
+사용자의 첫 입력에 답하기 전에 먼저 짧게 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method). 답을 받은 뒤 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.
+
+head-context: 읽을 수 없는 기록 파일을 옮겨 두고 없는 것으로 처리했습니다: /tmp/hc-demo/project/.head/state/conversations/claude-11111111-1111-4111-8111-111111111111.json.broken-1795681576572 (Expected property name or '}' in JSON at position 1 (line 1 column 2))
 ```
 
 ## R64 Claude SessionStart(startup) · session
@@ -1151,7 +1162,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 5408자 생략 — 전문은 a-runs.json R65)
+…(이하 5992자 생략 — 전문은 a-runs.json R65)
 ```
 
 ## R66 Codex SessionStart(startup) · instructions
@@ -1207,6 +1218,9 @@ Before responding, check that what you are about to say rests on something you h
 
 ```text
 이 대화는 아직 작업 세션에 연결되지 않았습니다.
+
+# 프로젝트 첫 실행 이어서 (head-context)
+사용자의 첫 입력에 답하기 전에 먼저 짧게 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method). 답을 받은 뒤 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.
 ```
 
 ## R68 Codex SessionStart(startup) · context
@@ -1231,6 +1245,9 @@ Before responding, check that what you are about to say rests on something you h
 
 ```text
 이 대화는 아직 작업 세션에 연결되지 않았습니다.
+
+# 프로젝트 첫 실행 이어서 (head-context)
+사용자의 첫 입력에 답하기 전에 먼저 짧게 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method). 답을 받은 뒤 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.
 ```
 
 ## R70 Codex 도구 서버 시작
@@ -1303,7 +1320,7 @@ Before responding, check that what you are about to say rests on something you h
 
 ## branch
 작업 브랜치 다루기. create는 branch 이름(필수, 그 일을 나타내는 짧은 이름)으로 새 작업 브랜치를 열고 이 대화를 거기에 둡니다(
-…(이하 2937자 생략 — 전문은 a-runs.json R71)
+…(이하 3216자 생략 — 전문은 a-runs.json R71)
 ```
 
 ## R72 Codex 대화가 작업 세션 불러오기
@@ -1329,13 +1346,13 @@ Before responding, check that what you are about to say rests on something you h
 이 대화의 작업 브랜치: 없음(메인)
 
 ## 흐름 (최신이 위)
-* d9d88 11-23 20:12 Merge branch 'login-fix' (HEAD -> main)
+* deac6 11-26 17:26 Merge branch 'login-fix' (HEAD -> main)
 |\
-| * ad795 11-23 20:12 구현 끝 (login-fix)
-* | 2f16a 11-23 20:12 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함
+| * 0655c 11-26 17:26 구현 끝 (login-fix)
+* | d1593 11-26 17:26 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리
+* d191b 11-26 17:26 로그인 화면 문제 정리
 ```
 
 ## R73 Codex에서 대화 목록
@@ -1461,13 +1478,13 @@ Before responding, check that what you are about to say rests on something you h
 
 ```text
 # 지도: demo
-* d9d88 11-23 20:12 Merge branch 'login-fix' (main)
+* deac6 11-26 17:26 Merge branch 'login-fix' (main)
 |\
-| * ad795 11-23 20:12 구현 끝 (login-fix)
-* | 2f16a 11-23 20:12 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함
+| * 0655c 11-26 17:26 구현 끝 (login-fix)
+* | d1593 11-26 17:26 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리
+* d191b 11-26 17:26 로그인 화면 문제 정리
 ```
 
 ## R83 0.7 정리 미리 보기
@@ -1594,6 +1611,8 @@ Before responding, check that what you are about to say rests on something you h
 - .claude/settings.json의 마켓 head-agent-core(GitHub Won6314/head-agent-core, 자동 업데이트)와 enabledPlugins."head-context@head-agent-core": 마켓은 이미 있어 그대로 두었습니다, 플러그인 켜기는 이미 있어(true) 그대로 두었습니다.
 - 다음 시작부터는 시작·/clear·압축 때 코어 지침이 들어가고 기본 포크가 켜지며, 앱이 시작할 때 새 판을 받습니다. 이 대화에서는 아래 코어 지침을 지금부터 따르세요.
 
+이어서 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method).
+
 # HEAD Core
 
 HEAD owns the whole outcome: understanding, judgment, planning, execution strategy, context, integration, and conclusion.
@@ -1606,8 +1625,8 @@ Before responding, check that what you are about to say rests on something you h
 
 **What carries weight.** An LLM tends to attend most to information that is close, clear, and similar to what it is about to do. What it is told to follow and what actually shapes its next output are therefore not always the same: a recent example or a concrete detail can steer the next action more than a stated principle.
 
-**Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it 
-…(이하 5935자 생략 — 전문은 a-runs.json R91)
+**Resolut
+…(이하 6743자 생략 — 전문은 a-runs.json R91)
 ```
 
 ## R92 대화 안 작업의 todo
@@ -1777,13 +1796,13 @@ Before responding, check that what you are about to say rests on something you h
 이 대화의 작업 브랜치: 없음(메인)
 
 ## 흐름 (최신이 위)
-* d9d88 11-23 20:12 Merge branch 'login-fix' (HEAD -> main)
+* deac6 11-26 17:26 Merge branch 'login-fix' (HEAD -> main)
 |\
-| * ad795 11-23 20:12 구현 끝 (login-fix)
-* | 2f16a 11-23 20:12 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함
+| * 0655c 11-26 17:26 구현 끝 (login-fix)
+* | d1593 11-26 17:26 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리
+* d191b 11-26 17:26 로그인 화면 문제 정리
 ```
 
 ## R105 작업 브랜치 열기(시작 맥락 시험용)
@@ -1812,13 +1831,13 @@ Before responding, check that what you are about to say rests on something you h
 - ctx-1 (이 대화) · 마지막 저장 없음
 
 ## 흐름 (최신이 위)
-* d9d88 11-23 20:12 Merge branch 'login-fix' (main)
+* deac6 11-26 17:26 Merge branch 'login-fix' (main)
 |\
-| * ad795 11-23 20:12 구현 끝 (login-fix)
-* | 2f16a 11-23 20:12 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함
+| * 0655c 11-26 17:26 구현 끝 (login-fix)
+* | d1593 11-26 17:26 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리
+* d191b 11-26 17:26 로그인 화면 문제 정리
 
 ## 이 작업 브랜치의 최근 기록: ctx-1
 (아직 기록 없음)
@@ -1848,7 +1867,7 @@ Before responding, check that what you are about to say rests on something you h
 
 ```text
 작업 세션 'demo' 할 일에 더했습니다.
-- [ ] 2026-11-23 기한 2026-11-05(목) "맥락 시험용 할 일"
+- [ ] 2026-11-26 기한 2026-11-05(목) "맥락 시험용 할 일"
 ```
 
 ## R108 Claude SessionStart(startup) · session
@@ -1872,6 +1891,9 @@ Before responding, check that what you are about to say rests on something you h
 - 로그인 화면만
 
 이 대화의 작업 브랜치: ctx-1
+
+# 프로젝트 첫 실행 이어서 (head-context)
+사용자의 첫 입력에 답하기 전에 먼저 짧게 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method). 답을 받은 뒤 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.
 ```
 
 ## R109 Claude SessionStart(startup) · context
@@ -1884,26 +1906,26 @@ Before responding, check that what you are about to say rests on something you h
 
 ```text
 ## 열린 작업 브랜치 (1)
-- ctx-1 (이 대화) · 마지막 11-23 20:12 · 다음: 다음 확인
+- ctx-1 (이 대화) · 마지막 11-26 17:26 · 다음: 다음 확인
 
 ## 할 일 (열린 1개, 기한 임박 1개)
 - 기한 2026-11-05 · 맥락 시험용 할 일
 
 ## 흐름 (최신이 위)
-|   * bf590 11-23 20:12 맥락 시험 (HEAD -> ctx-1)
+|   * 60f0e 11-26 17:26 맥락 시험 (HEAD -> ctx-1)
 |  /
 |/
-* d9d88 11-23 20:12 Merge branch 'login-fix' (main)
+* deac6 11-26 17:26 Merge branch 'login-fix' (main)
 |\
-| * ad795 11-23 20:12 구현 끝 (login-fix)
-* | 2f16a 11-23 20:12 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함
+| * 0655c 11-26 17:26 구현 끝 (login-fix)
+* | d1593 11-26 17:26 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리
+* d191b 11-26 17:26 로그인 화면 문제 정리
 
 ## 이 작업 브랜치의 최근 기록: ctx-1
 
-### bf590 11-23 20:12 맥락 시험
+### 60f0e 11-26 17:26 맥락 시험
 시작 때 작업 맥락 확인용 기록.
 
 다음: 다음 확인
@@ -1919,22 +1941,22 @@ Before responding, check that what you are about to say rests on something you h
 
 ```text
 ## 열린 작업 브랜치 (1)
-- ctx-1 · 마지막 11-23 20:12 · 다음: 다음 확인
+- ctx-1 · 마지막 11-26 17:26 · 다음: 다음 확인
 
 ## 할 일 (열린 1개, 기한 임박 1개)
 - 기한 2026-11-05 · 맥락 시험용 할 일
 
 ## 흐름 (최신이 위)
-|   * bf590 11-23 20:12 맥락 시험 (ctx-1)
+|   * 60f0e 11-26 17:26 맥락 시험 (ctx-1)
 |  /
 |/
-* d9d88 11-23 20:12 Merge branch 'login-fix' (HEAD -> main)
+* deac6 11-26 17:26 Merge branch 'login-fix' (HEAD -> main)
 |\
-| * ad795 11-23 20:12 구현 끝 (login-fix)
-* | 2f16a 11-23 20:12 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함
+| * 0655c 11-26 17:26 구현 끝 (login-fix)
+* | d1593 11-26 17:26 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리
+* d191b 11-26 17:26 로그인 화면 문제 정리
 ```
 
 ## R111 Codex SessionStart(startup) · session (연결된 대화)
@@ -1958,6 +1980,9 @@ Before responding, check that what you are about to say rests on something you h
 - 로그인 화면만
 
 이 대화의 작업 브랜치: 없음(메인)
+
+# 프로젝트 첫 실행 이어서 (head-context)
+사용자의 첫 입력에 답하기 전에 먼저 짧게 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method). 답을 받은 뒤 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.
 ```
 
 ## R112 열린 작업 브랜치·할 일이 있는 작업 세션 불러오기
@@ -1983,26 +2008,26 @@ Before responding, check that what you are about to say rests on something you h
 이 대화의 작업 브랜치: ctx-1
 
 ## 열린 작업 브랜치 (1)
-- ctx-1 (이 대화) · 마지막 11-23 20:12 · 다음: 다음 확인
+- ctx-1 (이 대화) · 마지막 11-26 17:26 · 다음: 다음 확인
 
 ## 할 일 (열린 1개, 기한 임박 1개)
 - 기한 2026-11-05 · 맥락 시험용 할 일
 
 ## 흐름 (최신이 위)
-|   * bf590 11-23 20:12 맥락 시험 (HEAD -> ctx-1)
+|   * 60f0e 11-26 17:26 맥락 시험 (HEAD -> ctx-1)
 |  /
 |/
-* d9d88 11-23 20:12 Merge branch 'login-fix' (main)
+* deac6 11-26 17:26 Merge branch 'login-fix' (main)
 |\
-| * ad795 11-23 20:12 구현 끝 (login-fix)
-* | 2f16a 11-23 20:12 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함
+| * 0655c 11-26 17:26 구현 끝 (login-fix)
+* | d1593 11-26 17:26 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리
+* d191b 11-26 17:26 로그인 화면 문제 정리
 
 ## 이 작업 브랜치의 최근 기록: ctx-1
 
-### bf590 11-23 20:12 맥락 시험
+### 60f0e 11-26 17:26 맥락 시험
 시작 때 작업 맥락 확인용 기록.
 
 다음: 다음 확인
@@ -2044,7 +2069,7 @@ Before responding, check that what you are about to say rests on something you h
 
 
 ```text
-demo/ctx-1@2026-11-23T11:12:40.456Z · 참조파일 시험
+demo/ctx-1@2026-11-26T08:26:17.517Z · 참조파일 시험
 ```
 
 ## R116 기록이 가리킨 파일(참조파일 포함)
@@ -2101,6 +2126,8 @@ demo/ctx-1@2026-11-23T11:12:40.456Z · 참조파일 시험
 - .claude/settings.json의 마켓 head-agent-core(GitHub Won6314/head-agent-core, 자동 업데이트)와 enabledPlugins."head-context@head-agent-core": 마켓은 이미 있어 그대로 두었습니다, 플러그인 켜기는 이미 있어(true) 그대로 두었습니다.
 - 다음 시작부터는 시작·/clear·압축 때 코어 지침이 들어가고 기본 포크가 켜지며, 앱이 시작할 때 새 판을 받습니다. 이 대화에서는 아래 코어 지침을 지금부터 따르세요.
 
+이어서 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method).
+
 # HEAD Core
 
 HEAD owns the whole outcome: understanding, judgment, planning, execution strategy, context, integration, and conclusion.
@@ -2113,8 +2140,8 @@ Before responding, check that what you are about to say rests on something you h
 
 **What carries weight.** An LLM tends to attend most to information that is close, clear, and similar to what it is about to do. What it is told to follow and what actually shapes its next output are therefore not always the same: a recent example or a concrete detail can steer the next action more than a stated principle.
 
-**Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it 
-…(이하 5935자 생략 — 전문은 a-runs.json R119)
+**Resolut
+…(이하 6743자 생략 — 전문은 a-runs.json R119)
 ```
 
 ## R120 다른 대화가 작업 세션 불러오기
@@ -2140,23 +2167,23 @@ Before responding, check that what you are about to say rests on something you h
 이 대화의 작업 브랜치: 없음(메인)
 
 ## 열린 작업 브랜치 (1)
-- ctx-1 · 마지막 11-23 20:12 · 다음: 다음 확인
+- ctx-1 · 마지막 11-26 17:26 · 다음: 다음 확인
 
 ## 할 일 (열린 1개, 기한 임박 1개)
 - 기한 2026-11-05 · 맥락 시험용 할 일
 
 ## 흐름 (최신이 위)
-|   * 79744 11-23 20:12 참조파일 시험 (ctx-1)
-|   * bf590 11-23 20:12 맥락 시험
+|   * 41e1d 11-26 17:26 참조파일 시험 (ctx-1)
+|   * 60f0e 11-26 17:26 맥락 시험
 |  /
 |/
-* d9d88 11-23 20:12 Merge branch 'login-fix' (HEAD -> main)
+* deac6 11-26 17:26 Merge branch 'login-fix' (HEAD -> main)
 |\
-| * ad795 11-23 20:12 구현 끝 (login-fix)
-* | 2f16a 11-23 20:12 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
-| * 5d6c0 11-23 20:12 버튼 중복 클릭 막기 방향 정함
+| * 0655c 11-26 17:26 구현 끝 (login-fix)
+* | d1593 11-26 17:26 Abandon branch 'copy-tone': 사용자가 문구 작업을 미룸
+| * ebe88 11-26 17:26 버튼 중복 클릭 막기 방향 정함
 |/
-* 1592f 11-23 20:12 로그인 화면 문제 정리
+* d191b 11-26 17:26 로그인 화면 문제 정리
 ```
 
 ## R121 Claude SessionStart(startup) · session
@@ -2180,6 +2207,9 @@ Before responding, check that what you are about to say rests on something you h
 - 로그인 화면만
 
 이 대화의 작업 브랜치: ctx-1
+
+# 프로젝트 첫 실행 이어서 (head-context)
+사용자의 첫 입력에 답하기 전에 먼저 짧게 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method). 답을 받은 뒤 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.
 ```
 
 ## R122 Claude SessionStart(startup) · context
@@ -2192,42 +2222,42 @@ Before responding, check that what you are about to say rests on something you h
 
 ```text
 ## 열린 작업 브랜치 (36)
-- task-35 · 마지막 11-23 20:13 · 다음: 일 35의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-34 · 마지막 11-23 20:13 · 다음: 일 34의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-33 · 마지막 11-23 20:13 · 다음: 일 33의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-32 · 마지막 11-23 20:13 · 다음: 일 32의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-31 · 마지막 11-23 20:13 · 다음: 일 31의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-30 · 마지막 11-23 20:13 · 다음: 일 30의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-29 · 마지막 11-23 20:13 · 다음: 일 29의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-28 · 마지막 11-23 20:13 · 다음: 일 28의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-27 · 마지막 11-23 20:13 · 다음: 일 27의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-26 · 마지막 11-23 20:13 · 다음: 일 26의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-25 · 마지막 11-23 20:13 · 다음: 일 25의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-24 · 마지막 11-23 20:13 · 다음: 일 24의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-23 · 마지막 11-23 20:13 · 다음: 일 23의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-22 · 마지막 11-23 20:13 · 다음: 일 22의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-21 · 마지막 11-23 20:13 · 다음: 일 21의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-20 · 마지막 11-23 20:13 · 다음: 일 20의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-19 · 마지막 11-23 20:13 · 다음: 일 19의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-18 · 마지막 11-23 20:13 · 다음: 일 18의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-17 · 마지막 11-23 20:13 · 다음: 일 17의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-16 · 마지막 11-23 20:13 · 다음: 일 16의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-15 · 마지막 11-23 20:13 · 다음: 일 15의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-14 · 마지막 11-23 20:13 · 다음: 일 14의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-13 · 마지막 11-23 20:13 · 다음: 일 13의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-12 · 마지막 11-23 20:13 · 다음: 일 12의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-11 · 마지막 11-23 20:13 · 다음: 일 11의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-10 · 마지막 11-23 20:13 · 다음: 일 10의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-09 · 마지막 11-23 20:12 · 다음: 일 09의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-08 · 마지막 11-23 20:12 · 다음: 일 08의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-07 · 마지막 11-23 20:12 · 다음: 일 07의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-06 · 마지막 11-23 20:12 · 다음: 일 06의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-05 · 마지막 11-23 20:12 · 다음: 일 05의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-04 · 마지막 11-23 20:12 · 다음: 일 04의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-03 · 마지막 11-23 20:12 · 다음: 일 03의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-02 · 마지막 11-23 20:12 · 다음: 일 02의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-01 · 마지막 11-23 20:12 · 다음: 일 01의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- ctx-1 (이 대화) · 마지막 11-23 20:12 · 다음: 다음 확인
+- task-35 · 마지막 11-26 17:26 · 다음: 일 35의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-34 · 마지막 11-26 17:26 · 다음: 일 34의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-33 · 마지막 11-26 17:26 · 다음: 일 33의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-32 · 마지막 11-26 17:26 · 다음: 일 32의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-31 · 마지막 11-26 17:26 · 다음: 일 31의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-30 · 마지막 11-26 17:26 · 다음: 일 30의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-29 · 마지막 11-26 17:26 · 다음: 일 29의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-28 · 마지막 11-26 17:26 · 다음: 일 28의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-27 · 마지막 11-26 17:26 · 다음: 일 27의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-26 · 마지막 11-26 17:26 · 다음: 일 26의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-25 · 마지막 11-26 17:26 · 다음: 일 25의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-24 · 마지막 11-26 17:26 · 다음: 일 24의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-23 · 마지막 11-26 17:26 · 다음: 일 23의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-22 · 마지막 11-26 17:26 · 다음: 일 22의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-21 · 마지막 11-26 17:26 · 다음: 일 21의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-20 · 마지막 11-26 17:26 · 다음: 일 20의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-19 · 마지막 11-26 17:26 · 다음: 일 19의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-18 · 마지막 11-26 17:26 · 다음: 일 18의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-17 · 마지막 11-26 17:26 · 다음: 일 17의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-16 · 마지막 11-26 17:26 · 다음: 일 16의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-15 · 마지막 11-26 17:26 · 다음: 일 15의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-14 · 마지막 11-26 17:26 · 다음: 일 14의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-13 · 마지막 11-26 17:26 · 다음: 일 13의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-12 · 마지막 11-26 17:26 · 다음: 일 12의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-11 · 마지막 11-26 17:26 · 다음: 일 11의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-10 · 마지막 11-26 17:26 · 다음: 일 10의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-09 · 마지막 11-26 17:26 · 다음: 일 09의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-08 · 마지막 11-26 17:26 · 다음: 일 08의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-07 · 마지막 11-26 17:26 · 다음: 일 07의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-06 · 마지막 11-26 17:26 · 다음: 일 06의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-05 · 마지막 11-26 17:26 · 다음: 일 05의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-04 · 마지막 11-26 17:26 · 다음: 일 04의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-03 · 마지막 11-26 17:26 · 다음: 일 03의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-02 · 마지막 11-26 17:26 · 다음: 일 02의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-01 · 마지막 11-26 17:26 · 다음: 일 01의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- ctx-1 (이 대화) · 마지막 11-26 17:26 · 다음: 다음 확인
 
 ## 할 일 (열린 15개, 기한 임박 6개)
 - 기한 2026-11-05 · 맥락 시험용 할 일
@@ -2239,26 +2269,26 @@ Before responding, check that what you are about to say rests on something you h
 (전체: todo list)
 
 ## 흐름 (최신이 위)
-|                             * 0f37b 11-23 20:13 일 35: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-35)
-|                           * | f6814 11-23 20:13 일 34: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-34)
-|                         * | | 03bc0 11-23 20:13 일 33: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-33)
-|                       * | | | 0aa8b 11-23 20:13 일 32: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-32)
-|                     * | | | | 787e5 11-23 20:13 일 31: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-31)
-|                   * | | | | | 63b7e 11-23 20:13 일 30: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-30)
-|                 * | | | | | | fbc48 11-23 20:13 일 29: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-29)
-|               * | | | | | | | 24fb8 11-23 20:13 일 28: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-28)
-|             * | | | | | | | | 98fb4 11-23 20:13 일 27: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-27)
-|           * | | | | | | | | | 682be 11-23 20:13 일 26: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-26)
-|         * | | | | | | | | | | fa734 11-23 20:13 일 25: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-25)
-|       * | | | | | | | | | | | 30c54 11-23 20:13 일 24: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-24)
-|     * | | | | | | | | | | | | cf1f8 11-23 20:13 일 23: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-23)
-|   * | | | | | | | | | | | | | d25dd 11-23 20:13 일 22: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-22)
-| * | | | | | | | | | | | | | | 3db5c 11-23 20:13 일 21: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-21)
+|                             * f15ff 11-26 17:26 일 35: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-35)
+|                           * | 432eb 11-26 17:26 일 34: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-34)
+|                         * | | c5cd2 11-26 17:26 일 33: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-33)
+|                       * | | | a60ad 11-26 17:26 일 32: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-32)
+|                     * | | | | 4792b 11-26 17:26 일 31: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-31)
+|                   * | | | | | 3a424 11-26 17:26 일 30: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-30)
+|                 * | | | | | | 01f58 11-26 17:26 일 29: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-29)
+|               * | | | | | | | 8660f 11-26 17:26 일 28: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-28)
+|             * | | | | | | | | 99942 11-26 17:26 일 27: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-27)
+|           * | | | | | | | | | 7a358 11-26 17:26 일 26: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-26)
+|         * | | | | | | | | | | 3b169 11-26 17:26 일 25: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-25)
+|       * | | | | | | | | | | | 10793 11-26 17:26 일 24: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-24)
+|     * | | | | | | | | | | | | 47bea 11-26 17:26 일 23: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-23)
+|   * | | | | | | | | | | | | | 844ca 11-26 17:26 일 22: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-22)
+| * | | | | | | | | | | | | | | 82d70 11-26 17:26 일 21: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-21)
 그 앞 27개 — read map
 
 ## 이 작업 브랜치의 최근 기록: ctx-1
 
-### 79744 11-23 20:12 참조파일 시험
+### 41e1d 11-26 17:26 참조파일 시험
 참조파일: `~/notes/login-plan.md`, `/tmp/hc-demo/project/.head/sessions/demo/work/2026-11/2026-11-04-login.md`, `nope/missing.md`
 
 계획은 참조파일에 있다.
@@ -2289,42 +2319,42 @@ Before responding, check that what you are about to say rests on something you h
 이 대화의 작업 브랜치: ctx-1
 
 ## 열린 작업 브랜치 (36)
-- task-35 · 마지막 11-23 20:13 · 다음: 일 35의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-34 · 마지막 11-23 20:13 · 다음: 일 34의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-33 · 마지막 11-23 20:13 · 다음: 일 33의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-32 · 마지막 11-23 20:13 · 다음: 일 32의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-31 · 마지막 11-23 20:13 · 다음: 일 31의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-30 · 마지막 11-23 20:13 · 다음: 일 30의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-29 · 마지막 11-23 20:13 · 다음: 일 29의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-28 · 마지막 11-23 20:13 · 다음: 일 28의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-27 · 마지막 11-23 20:13 · 다음: 일 27의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-26 · 마지막 11-23 20:13 · 다음: 일 26의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-25 · 마지막 11-23 20:13 · 다음: 일 25의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-24 · 마지막 11-23 20:13 · 다음: 일 24의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-23 · 마지막 11-23 20:13 · 다음: 일 23의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-22 · 마지막 11-23 20:13 · 다음: 일 22의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-21 · 마지막 11-23 20:13 · 다음: 일 21의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-20 · 마지막 11-23 20:13 · 다음: 일 20의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-19 · 마지막 11-23 20:13 · 다음: 일 19의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-18 · 마지막 11-23 20:13 · 다음: 일 18의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-17 · 마지막 11-23 20:13 · 다음: 일 17의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-16 · 마지막 11-23 20:13 · 다음: 일 16의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-15 · 마지막 11-23 20:13 · 다음: 일 15의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-14 · 마지막 11-23 20:13 · 다음: 일 14의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-13 · 마지막 11-23 20:13 · 다음: 일 13의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-12 · 마지막 11-23 20:13 · 다음: 일 12의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-11 · 마지막 11-23 20:13 · 다음: 일 11의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-10 · 마지막 11-23 20:13 · 다음: 일 10의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-09 · 마지막 11-23 20:12 · 다음: 일 09의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-08 · 마지막 11-23 20:12 · 다음: 일 08의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-07 · 마지막 11-23 20:12 · 다음: 일 07의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-06 · 마지막 11-23 20:12 · 다음: 일 06의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-05 · 마지막 11-23 20:12 · 다음: 일 05의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-04 · 마지막 11-23 20:12 · 다음: 일 04의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-03 · 마지막 11-23 20:12 · 다음: 일 03의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-02 · 마지막 11-23 20:12 · 다음: 일 02의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-01 · 마지막 11-23 20:12 · 다음: 일 01의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- ctx-1 (이 대화) · 마지막 11-23 20:12 · 다음: 다음 확인
+- task-35 · 마지막 11-26 17:26 · 다음: 일 35의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-34 · 마지막 11-26 17:26 · 다음: 일 34의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-33 · 마지막 11-26 17:26 · 다음: 일 33의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-32 · 마지막 11-26 17:26 · 다음: 일 32의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-31 · 마지막 11-26 17:26 · 다음: 일 31의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-30 · 마지막 11-26 17:26 · 다음: 일 30의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-29 · 마지막 11-26 17:26 · 다음: 일 29의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-28 · 마지막 11-26 17:26 · 다음: 일 28의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-27 · 마지막 11-26 17:26 · 다음: 일 27의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-26 · 마지막 11-26 17:26 · 다음: 일 26의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-25 · 마지막 11-26 17:26 · 다음: 일 25의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-24 · 마지막 11-26 17:26 · 다음: 일 24의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-23 · 마지막 11-26 17:26 · 다음: 일 23의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-22 · 마지막 11-26 17:26 · 다음: 일 22의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-21 · 마지막 11-26 17:26 · 다음: 일 21의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-20 · 마지막 11-26 17:26 · 다음: 일 20의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-19 · 마지막 11-26 17:26 · 다음: 일 19의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-18 · 마지막 11-26 17:26 · 다음: 일 18의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-17 · 마지막 11-26 17:26 · 다음: 일 17의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-16 · 마지막 11-26 17:26 · 다음: 일 16의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-15 · 마지막 11-26 17:26 · 다음: 일 15의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-14 · 마지막 11-26 17:26 · 다음: 일 14의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-13 · 마지막 11-26 17:26 · 다음: 일 13의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-12 · 마지막 11-26 17:26 · 다음: 일 12의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-11 · 마지막 11-26 17:26 · 다음: 일 11의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-10 · 마지막 11-26 17:26 · 다음: 일 10의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-09 · 마지막 11-26 17:26 · 다음: 일 09의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-08 · 마지막 11-26 17:26 · 다음: 일 08의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-07 · 마지막 11-26 17:26 · 다음: 일 07의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-06 · 마지막 11-26 17:26 · 다음: 일 06의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-05 · 마지막 11-26 17:26 · 다음: 일 05의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-04 · 마지막 11-26 17:26 · 다음: 일 04의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-03 · 마지막 11-26 17:26 · 다음: 일 03의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-02 · 마지막 11-26 17:26 · 다음: 일 02의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-01 · 마지막 11-26 17:26 · 다음: 일 01의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- ctx-1 (이 대화) · 마지막 11-26 17:26 · 다음: 다음 확인
 
 ## 할 일 (열린 15개, 기한 임박 6개)
 - 기한 2026-11-05 · 맥락 시험용 할 일
@@ -2336,44 +2366,44 @@ Before responding, check that what you are about to say rests on something you h
 (전체: todo list)
 
 ## 흐름 (최신이 위)
-|                                                           * 0f37b 11-23 20:13 일 35: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-35)
-|                                                         * | f6814 11-23 20:13 일 34: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-34)
-|                                                       * | | 03bc0 11-23 20:13 일 33: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-33)
-|                                                     * | | | 0aa8b 11-23 20:13 일 32: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-32)
-|                                                   * | | | | 787e5 11-23 20:13 일 31: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-31)
-|                                                 * | | | | | 63b7e 11-23 20:13 일 30: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-30)
-|                                               * | | | | | | fbc48 11-23 20:13 일 29: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-29)
-|                                             * | | | | | | | 24fb8 11-23 20:13 일 28: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-28)
-|                                           * | | | | | | | | 98fb4 11-23 20:13 일 27: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-27)
-|                                         * | | | | | | | | | 682be 11-23 20:13 일 26: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-26)
-|                                       * | | | | | | | | | | fa734 11-23 20:13 일 25: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-25)
-|                                     * | | | | | | | | | | | 30c54 11-23 20:13 일 24: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-24)
-|                                   * | | | | | | | | | | | | cf1f8 11-23 20:13 일 23: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-23)
-|                                 * | | | | | | | | | | | | | d25dd 11-23 20:13 일 22: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-22)
-|                               * | | | | | | | | | | | | | | 3db5c 11-23 20:13 일 21: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-21)
-|                             * | | | | | | | | | | | | | | | 14460 11-23 20:13 일 20: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-20)
-|                           * | | | | | | | | | | | | | | | | 8608b 11-23 20:13 일 19: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-19)
-|                         * | | | | | | | | | | | | | | | | | dd579 11-23 20:13 일 18: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-18)
-|                       * | | | | | | | | | | | | | | | | | | 549e3 11-23 20:13 일 17: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-17)
-|                     * | | | | | | | | | | | | | | | | | | | a03c1 11-23 20:13 일 16: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-16)
-|                   * | | | | | | | | | | | | | | | | | | | | bb3fb 11-23 20:13 일 15: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-15)
-|                 * | | | | | | | | | | | | | | | | | | | | | c094d 11-23 20:13 일 14: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-14)
-|               * | | | | | | | | | | | | | | | | | | | | | | 46e8f 11-23 20:13 일 13: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-13)
-|             * | | | | | | | | | | | | | | | | | | | | | | | 46344 11-23 20:13 일 12: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-12)
-|           * | | | | | | | | | | | | | | | | | | | | | | | | b783c 11-23 20:13 일 11: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-11)
-|         * | | | | | | | | | | | | | | | | | | | | | | | | | af2de 11-23 20:13 일 10: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-10)
-|       * | | | | | | | | | | | | | | | | | | | | | | | | | | 4e009 11-23 20:12 일 09: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-09)
-|     * | | | | | | | | | | | | | | | | | | | | | | | | | | | 2a08a 11-23 20:12 일 08: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-08)
-|   * | | | | | | | | | | | | | | | | | | | | | | | | | | | | 4ddfe 11-23 20:12 일 07: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-07)
-| * | | | | | | | | | | | | | | | | | | | | | | | | | | | | | edd62 11-23 20:12 일 06: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-06)
+|                                                           * f15ff 11-26 17:26 일 35: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-35)
+|                                                         * | 432eb 11-26 17:26 일 34: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-34)
+|                                                       * | | c5cd2 11-26 17:26 일 33: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-33)
+|                                                     * | | | a60ad 11-26 17:26 일 32: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-32)
+|                                                   * | | | | 4792b 11-26 17:26 일 31: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-31)
+|                                                 * | | | | | 3a424 11-26 17:26 일 30: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-30)
+|                                               * | | | | | | 01f58 11-26 17:26 일 29: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-29)
+|                                             * | | | | | | | 8660f 11-26 17:26 일 28: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-28)
+|                                           * | | | | | | | | 99942 11-26 17:26 일 27: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-27)
+|                                         * | | | | | | | | | 7a358 11-26 17:26 일 26: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-26)
+|                                       * | | | | | | | | | | 3b169 11-26 17:26 일 25: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-25)
+|                                     * | | | | | | | | | | | 10793 11-26 17:26 일 24: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-24)
+|                                   * | | | | | | | | | | | | 47bea 11-26 17:26 일 23: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-23)
+|                                 * | | | | | | | | | | | | | 844ca 11-26 17:26 일 22: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-22)
+|                               * | | | | | | | | | | | | | | 82d70 11-26 17:26 일 21: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-21)
+|                             * | | | | | | | | | | | | | | | 16af4 11-26 17:26 일 20: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-20)
+|                           * | | | | | | | | | | | | | | | | dcc2a 11-26 17:26 일 19: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-19)
+|                         * | | | | | | | | | | | | | | | | | 559e2 11-26 17:26 일 18: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-18)
+|                       * | | | | | | | | | | | | | | | | | | a485e 11-26 17:26 일 17: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-17)
+|                     * | | | | | | | | | | | | | | | | | | | a03ab 11-26 17:26 일 16: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-16)
+|                   * | | | | | | | | | | | | | | | | | | | | 6981a 11-26 17:26 일 15: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-15)
+|                 * | | | | | | | | | | | | | | | | | | | | | ad0f8 11-26 17:26 일 14: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-14)
+|               * | | | | | | | | | | | | | | | | | | | | | | 61738 11-26 17:26 일 13: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-13)
+|             * | | | | | | | | | | | | | | | | | | | | | | | cdbfe 11-26 17:26 일 12: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-12)
+|           * | | | | | | | | | | | | | | | | | | | | | | | | 57a6d 11-26 17:26 일 11: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-11)
+|         * | | | | | | | | | | | | | | | | | | | | | | | | | 3fe49 11-26 17:26 일 10: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-10)
+|       * | | | | | | | | | | | | | | | | | | | | | | | | | | 774fb 11-26 17:26 일 09: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-09)
+|     * | | | | | | | | | | | | | | | | | | | | | | | | | | | 1eb5d 11-26 17:26 일 08: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-08)
+|   * | | | | | | | | | | | | | | | | | | | | | | | | | | | | 01e58 11-26 17:26 일 07: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-07)
+| * | | | | | | | | | | | | | | | | | | | | | | | | | | | | | 52b08 11-26 17:26 일 06: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-06)
 그 앞 12개 — read map
 
 ## 이 작업 브랜치의 최근 기록: ctx-1
 
-### bf590 11-23 20:12 맥락 시험
+### 60f0e 11-26 17:26 맥락 시험
 시작 때 작업 맥락 확인용 기록.
 
-### 79744 11-23 20:12 참조파일 시험
+### 41e1d 11-26 17:26 참조파일 시험
 참조파일: `~/notes/login-plan.md`, `/tmp/hc-demo/project/.head/sessions/demo/work/2026-11/2026-11-04-login.md`, `nope/missing.md`
 
 계획은 참조파일에 있다.
@@ -2390,7 +2420,7 @@ Before responding, check that what you are about to say rests on something you h
 
 
 ```text
-시작 훅 session 131자, context 7338자(상한 9,000자) · load 결과 10639자(줄이지 않음)
+시작 훅 session 453자, context 7338자(상한 9,000자) · load 결과 10639자(줄이지 않음)
 시작 훅 context의 열린 작업 브랜치 줄 36개, '## 흐름' 절 있음, 끝 줄: 다음: 다음 확인
 ```
 
@@ -2512,7 +2542,7 @@ JSON으로 읽힘: {"cwd": "/tmp/hc-demo/project", "host": "codex", "mode": "unk
 
 ## branch
 작업 브랜치 다루기. create는 branch 이름(필수, 그 일을 나타내는 짧은 이름)으로 새 작업 브랜치를 열고 이 대화를 거기에 둡니다(
-…(이하 2334자 생략 — 전문은 a-runs.json R130)
+…(이하 2613자 생략 — 전문은 a-runs.json R130)
 ```
 
 ## R131 옛 Node에서 도구 호출
@@ -2563,7 +2593,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 5425자 생략 — 전문은 a-runs.json R133)
+…(이하 6009자 생략 — 전문은 a-runs.json R133)
 ```
 
 ## R134 옛 Node · Claude SessionStart(compact) · session
@@ -2832,42 +2862,42 @@ head-context는 node:sqlite를 쓸 수 있는 Node(22.13 이상)가 필요합니
 이 대화의 작업 브랜치: ctx-1
 
 ## 열린 작업 브랜치 (36)
-- ctx-1 (이 대화) · 마지막 11-23 20:13 · 다음: n
-- task-35 · 마지막 11-23 20:13 · 다음: 일 35의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-34 · 마지막 11-23 20:13 · 다음: 일 34의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-33 · 마지막 11-23 20:13 · 다음: 일 33의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-32 · 마지막 11-23 20:13 · 다음: 일 32의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-31 · 마지막 11-23 20:13 · 다음: 일 31의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-30 · 마지막 11-23 20:13 · 다음: 일 30의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-29 · 마지막 11-23 20:13 · 다음: 일 29의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-28 · 마지막 11-23 20:13 · 다음: 일 28의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-27 · 마지막 11-23 20:13 · 다음: 일 27의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-26 · 마지막 11-23 20:13 · 다음: 일 26의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-25 · 마지막 11-23 20:13 · 다음: 일 25의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-24 · 마지막 11-23 20:13 · 다음: 일 24의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-23 · 마지막 11-23 20:13 · 다음: 일 23의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-22 · 마지막 11-23 20:13 · 다음: 일 22의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-21 · 마지막 11-23 20:13 · 다음: 일 21의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-20 · 마지막 11-23 20:13 · 다음: 일 20의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-19 · 마지막 11-23 20:13 · 다음: 일 19의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-18 · 마지막 11-23 20:13 · 다음: 일 18의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-17 · 마지막 11-23 20:13 · 다음: 일 17의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-16 · 마지막 11-23 20:13 · 다음: 일 16의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-15 · 마지막 11-23 20:13 · 다음: 일 15의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-14 · 마지막 11-23 20:13 · 다음: 일 14의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-13 · 마지막 11-23 20:13 · 다음: 일 13의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-12 · 마지막 11-23 20:13 · 다음: 일 12의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-11 · 마지막 11-23 20:13 · 다음: 일 11의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-10 · 마지막 11-23 20:13 · 다음: 일 10의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-09 · 마지막 11-23 20:12 · 다음: 일 09의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-08 · 마지막 11-23 20:12 · 다음: 일 08의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-07 · 마지막 11-23 20:12 · 다음: 일 07의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-06 · 마지막 11-23 20:12 · 다음: 일 06의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-05 · 마지막 11-23 20:12 · 다음: 일 05의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-04 · 마지막 11-23 20:12 · 다음: 일 04의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-03 · 마지막 11-23 20:12 · 다음: 일 03의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-02 · 마지막 11-23 20:12 · 다음: 일 02의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-01 · 마지막 11-23 20:12 · 다음: 일 01의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- ctx-1 (이 대화) · 마지막 11-26 17:26 · 다음: n
+- task-35 · 마지막 11-26 17:26 · 다음: 일 35의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-34 · 마지막 11-26 17:26 · 다음: 일 34의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-33 · 마지막 11-26 17:26 · 다음: 일 33의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-32 · 마지막 11-26 17:26 · 다음: 일 32의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-31 · 마지막 11-26 17:26 · 다음: 일 31의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-30 · 마지막 11-26 17:26 · 다음: 일 30의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-29 · 마지막 11-26 17:26 · 다음: 일 29의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-28 · 마지막 11-26 17:26 · 다음: 일 28의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-27 · 마지막 11-26 17:26 · 다음: 일 27의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-26 · 마지막 11-26 17:26 · 다음: 일 26의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-25 · 마지막 11-26 17:26 · 다음: 일 25의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-24 · 마지막 11-26 17:26 · 다음: 일 24의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-23 · 마지막 11-26 17:26 · 다음: 일 23의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-22 · 마지막 11-26 17:26 · 다음: 일 22의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-21 · 마지막 11-26 17:26 · 다음: 일 21의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-20 · 마지막 11-26 17:26 · 다음: 일 20의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-19 · 마지막 11-26 17:26 · 다음: 일 19의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-18 · 마지막 11-26 17:26 · 다음: 일 18의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-17 · 마지막 11-26 17:26 · 다음: 일 17의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-16 · 마지막 11-26 17:26 · 다음: 일 16의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-15 · 마지막 11-26 17:26 · 다음: 일 15의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-14 · 마지막 11-26 17:26 · 다음: 일 14의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-13 · 마지막 11-26 17:26 · 다음: 일 13의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-12 · 마지막 11-26 17:26 · 다음: 일 12의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-11 · 마지막 11-26 17:26 · 다음: 일 11의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-10 · 마지막 11-26 17:26 · 다음: 일 10의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-09 · 마지막 11-26 17:26 · 다음: 일 09의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-08 · 마지막 11-26 17:26 · 다음: 일 08의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-07 · 마지막 11-26 17:26 · 다음: 일 07의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-06 · 마지막 11-26 17:26 · 다음: 일 06의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-05 · 마지막 11-26 17:26 · 다음: 일 05의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-04 · 마지막 11-26 17:26 · 다음: 일 04의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-03 · 마지막 11-26 17:26 · 다음: 일 03의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-02 · 마지막 11-26 17:26 · 다음: 일 02의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-01 · 마지막 11-26 17:26 · 다음: 일 01의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
 
 ## 할 일 (열린 15개, 기한 임박 6개)
 - 기한 2026-11-05 · 맥락 시험용 할 일
@@ -2879,49 +2909,49 @@ head-context는 node:sqlite를 쓸 수 있는 Node(22.13 이상)가 필요합니
 (전체: todo list)
 
 ## 흐름 (최신이 위)
-| * d572e 11-23 20:13 폴더 참조 (HEAD -> ctx-1)
-| |                                                         * 0f37b 11-23 20:13 일 35: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-35)
-| |                                                       * | f6814 11-23 20:13 일 34: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-34)
-| |                                                     * | | 03bc0 11-23 20:13 일 33: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-33)
-| |                                                   * | | | 0aa8b 11-23 20:13 일 32: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-32)
-| |                                                 * | | | | 787e5 11-23 20:13 일 31: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-31)
-| |                                               * | | | | | 63b7e 11-23 20:13 일 30: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-30)
-| |                                             * | | | | | | fbc48 11-23 20:13 일 29: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-29)
-| |                                           * | | | | | | | 24fb8 11-23 20:13 일 28: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-28)
-| |                                         * | | | | | | | | 98fb4 11-23 20:13 일 27: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-27)
-| |                                       * | | | | | | | | | 682be 11-23 20:13 일 26: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-26)
-| |                                     * | | | | | | | | | | fa734 11-23 20:13 일 25: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-25)
-| |                                   * | | | | | | | | | | | 30c54 11-23 20:13 일 24: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-24)
-| |                                 * | | | | | | | | | | | | cf1f8 11-23 20:13 일 23: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-23)
-| |                               * | | | | | | | | | | | | | d25dd 11-23 20:13 일 22: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-22)
-| |                             * | | | | | | | | | | | | | | 3db5c 11-23 20:13 일 21: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-21)
-| |                           * | | | | | | | | | | | | | | | 14460 11-23 20:13 일 20: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-20)
-| |                         * | | | | | | | | | | | | | | | | 8608b 11-23 20:13 일 19: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-19)
-| |                       * | | | | | | | | | | | | | | | | | dd579 11-23 20:13 일 18: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-18)
-| |                     * | | | | | | | | | | | | | | | | | | 549e3 11-23 20:13 일 17: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-17)
-| |                   * | | | | | | | | | | | | | | | | | | | a03c1 11-23 20:13 일 16: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-16)
-| |                 * | | | | | | | | | | | | | | | | | | | | bb3fb 11-23 20:13 일 15: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-15)
-| |               * | | | | | | | | | | | | | | | | | | | | | c094d 11-23 20:13 일 14: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-14)
-| |             * | | | | | | | | | | | | | | | | | | | | | | 46e8f 11-23 20:13 일 13: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-13)
-| |           * | | | | | | | | | | | | | | | | | | | | | | | 46344 11-23 20:13 일 12: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-12)
-| |         * | | | | | | | | | | | | | | | | | | | | | | | | b783c 11-23 20:13 일 11: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-11)
-| |       * | | | | | | | | | | | | | | | | | | | | | | | | | af2de 11-23 20:13 일 10: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-10)
-| |     * | | | | | | | | | | | | | | | | | | | | | | | | | | 4e009 11-23 20:12 일 09: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-09)
-| |   * | | | | | | | | | | | | | | | | | | | | | | | | | | | 2a08a 11-23 20:12 일 08: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-08)
-| | * | | | | | | | | | | | | | | | | | | | | | | | | | | | | 4ddfe 11-23 20:12 일 07: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-07)
+| * 7956f 11-26 17:26 폴더 참조 (HEAD -> ctx-1)
+| |                                                         * f15ff 11-26 17:26 일 35: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-35)
+| |                                                       * | 432eb 11-26 17:26 일 34: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-34)
+| |                                                     * | | c5cd2 11-26 17:26 일 33: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-33)
+| |                                                   * | | | a60ad 11-26 17:26 일 32: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-32)
+| |                                                 * | | | | 4792b 11-26 17:26 일 31: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-31)
+| |                                               * | | | | | 3a424 11-26 17:26 일 30: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-30)
+| |                                             * | | | | | | 01f58 11-26 17:26 일 29: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-29)
+| |                                           * | | | | | | | 8660f 11-26 17:26 일 28: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-28)
+| |                                         * | | | | | | | | 99942 11-26 17:26 일 27: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-27)
+| |                                       * | | | | | | | | | 7a358 11-26 17:26 일 26: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-26)
+| |                                     * | | | | | | | | | | 3b169 11-26 17:26 일 25: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-25)
+| |                                   * | | | | | | | | | | | 10793 11-26 17:26 일 24: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-24)
+| |                                 * | | | | | | | | | | | | 47bea 11-26 17:26 일 23: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-23)
+| |                               * | | | | | | | | | | | | | 844ca 11-26 17:26 일 22: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-22)
+| |                             * | | | | | | | | | | | | | | 82d70 11-26 17:26 일 21: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-21)
+| |                           * | | | | | | | | | | | | | | | 16af4 11-26 17:26 일 20: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-20)
+| |                         * | | | | | | | | | | | | | | | | dcc2a 11-26 17:26 일 19: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-19)
+| |                       * | | | | | | | | | | | | | | | | | 559e2 11-26 17:26 일 18: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-18)
+| |                     * | | | | | | | | | | | | | | | | | | a485e 11-26 17:26 일 17: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-17)
+| |                   * | | | | | | | | | | | | | | | | | | | a03ab 11-26 17:26 일 16: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-16)
+| |                 * | | | | | | | | | | | | | | | | | | | | 6981a 11-26 17:26 일 15: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-15)
+| |               * | | | | | | | | | | | | | | | | | | | | | ad0f8 11-26 17:26 일 14: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-14)
+| |             * | | | | | | | | | | | | | | | | | | | | | | 61738 11-26 17:26 일 13: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-13)
+| |           * | | | | | | | | | | | | | | | | | | | | | | | cdbfe 11-26 17:26 일 12: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-12)
+| |         * | | | | | | | | | | | | | | | | | | | | | | | | 57a6d 11-26 17:26 일 11: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-11)
+| |       * | | | | | | | | | | | | | | | | | | | | | | | | | 3fe49 11-26 17:26 일 10: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-10)
+| |     * | | | | | | | | | | | | | | | | | | | | | | | | | | 774fb 11-26 17:26 일 09: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-09)
+| |   * | | | | | | | | | | | | | | | | | | | | | | | | | | | 1eb5d 11-26 17:26 일 08: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-08)
+| | * | | | | | | | | | | | | | | | | | | | | | | | | | | | | 01e58 11-26 17:26 일 07: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-07)
 그 앞 13개 — read map
 
 ## 이 작업 브랜치의 최근 기록: ctx-1
 
-### bf590 11-23 20:12 맥락 시험
+### 60f0e 11-26 17:26 맥락 시험
 시작 때 작업 맥락 확인용 기록.
 
-### 79744 11-23 20:12 참조파일 시험
+### 41e1d 11-26 17:26 참조파일 시험
 참조파일: `~/notes/login-plan.md`, `/tmp/hc-demo/project/.head/sessions/demo/work/2026-11/2026-11-04-login.md`, `nope/missing.md`
 
 계획은 참조파일에 있다.
 
-### d572e 11-23 20:13 폴더 참조
+### 7956f 11-26 17:26 폴더 참조
 참조파일: `~/notes`
 
 노트 폴더를 참조로 둔다.
@@ -2939,42 +2969,42 @@ head-context는 node:sqlite를 쓸 수 있는 Node(22.13 이상)가 필요합니
 
 ```text
 ## 열린 작업 브랜치 (36)
-- ctx-1 (이 대화) · 마지막 11-23 20:13 · 다음: n
-- task-35 · 마지막 11-23 20:13 · 다음: 일 35의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-34 · 마지막 11-23 20:13 · 다음: 일 34의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-33 · 마지막 11-23 20:13 · 다음: 일 33의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-32 · 마지막 11-23 20:13 · 다음: 일 32의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-31 · 마지막 11-23 20:13 · 다음: 일 31의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-30 · 마지막 11-23 20:13 · 다음: 일 30의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-29 · 마지막 11-23 20:13 · 다음: 일 29의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-28 · 마지막 11-23 20:13 · 다음: 일 28의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-27 · 마지막 11-23 20:13 · 다음: 일 27의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-26 · 마지막 11-23 20:13 · 다음: 일 26의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-25 · 마지막 11-23 20:13 · 다음: 일 25의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-24 · 마지막 11-23 20:13 · 다음: 일 24의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-23 · 마지막 11-23 20:13 · 다음: 일 23의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-22 · 마지막 11-23 20:13 · 다음: 일 22의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-21 · 마지막 11-23 20:13 · 다음: 일 21의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-20 · 마지막 11-23 20:13 · 다음: 일 20의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-19 · 마지막 11-23 20:13 · 다음: 일 19의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-18 · 마지막 11-23 20:13 · 다음: 일 18의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-17 · 마지막 11-23 20:13 · 다음: 일 17의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-16 · 마지막 11-23 20:13 · 다음: 일 16의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-15 · 마지막 11-23 20:13 · 다음: 일 15의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-14 · 마지막 11-23 20:13 · 다음: 일 14의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-13 · 마지막 11-23 20:13 · 다음: 일 13의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-12 · 마지막 11-23 20:13 · 다음: 일 12의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-11 · 마지막 11-23 20:13 · 다음: 일 11의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-10 · 마지막 11-23 20:13 · 다음: 일 10의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-09 · 마지막 11-23 20:12 · 다음: 일 09의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-08 · 마지막 11-23 20:12 · 다음: 일 08의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-07 · 마지막 11-23 20:12 · 다음: 일 07의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-06 · 마지막 11-23 20:12 · 다음: 일 06의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-05 · 마지막 11-23 20:12 · 다음: 일 05의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-04 · 마지막 11-23 20:12 · 다음: 일 04의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-03 · 마지막 11-23 20:12 · 다음: 일 03의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-02 · 마지막 11-23 20:12 · 다음: 일 02의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-01 · 마지막 11-23 20:12 · 다음: 일 01의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- ctx-1 (이 대화) · 마지막 11-26 17:26 · 다음: n
+- task-35 · 마지막 11-26 17:26 · 다음: 일 35의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-34 · 마지막 11-26 17:26 · 다음: 일 34의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-33 · 마지막 11-26 17:26 · 다음: 일 33의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-32 · 마지막 11-26 17:26 · 다음: 일 32의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-31 · 마지막 11-26 17:26 · 다음: 일 31의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-30 · 마지막 11-26 17:26 · 다음: 일 30의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-29 · 마지막 11-26 17:26 · 다음: 일 29의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-28 · 마지막 11-26 17:26 · 다음: 일 28의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-27 · 마지막 11-26 17:26 · 다음: 일 27의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-26 · 마지막 11-26 17:26 · 다음: 일 26의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-25 · 마지막 11-26 17:26 · 다음: 일 25의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-24 · 마지막 11-26 17:26 · 다음: 일 24의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-23 · 마지막 11-26 17:26 · 다음: 일 23의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-22 · 마지막 11-26 17:26 · 다음: 일 22의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-21 · 마지막 11-26 17:26 · 다음: 일 21의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-20 · 마지막 11-26 17:26 · 다음: 일 20의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-19 · 마지막 11-26 17:26 · 다음: 일 19의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-18 · 마지막 11-26 17:26 · 다음: 일 18의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-17 · 마지막 11-26 17:26 · 다음: 일 17의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-16 · 마지막 11-26 17:26 · 다음: 일 16의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-15 · 마지막 11-26 17:26 · 다음: 일 15의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-14 · 마지막 11-26 17:26 · 다음: 일 14의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-13 · 마지막 11-26 17:26 · 다음: 일 13의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-12 · 마지막 11-26 17:26 · 다음: 일 12의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-11 · 마지막 11-26 17:26 · 다음: 일 11의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-10 · 마지막 11-26 17:26 · 다음: 일 10의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-09 · 마지막 11-26 17:26 · 다음: 일 09의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-08 · 마지막 11-26 17:26 · 다음: 일 08의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-07 · 마지막 11-26 17:26 · 다음: 일 07의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-06 · 마지막 11-26 17:26 · 다음: 일 06의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-05 · 마지막 11-26 17:26 · 다음: 일 05의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-04 · 마지막 11-26 17:26 · 다음: 일 04의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-03 · 마지막 11-26 17:26 · 다음: 일 03의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-02 · 마지막 11-26 17:26 · 다음: 일 02의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-01 · 마지막 11-26 17:26 · 다음: 일 01의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
 
 ## 할 일 (열린 15개, 기한 임박 6개)
 - 기한 2026-11-05 · 맥락 시험용 할 일
@@ -2986,26 +3016,26 @@ head-context는 node:sqlite를 쓸 수 있는 Node(22.13 이상)가 필요합니
 (전체: todo list)
 
 ## 흐름 (최신이 위)
-| * d572e 11-23 20:13 폴더 참조 (HEAD -> ctx-1)
-| |                           * 0f37b 11-23 20:13 일 35: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-35)
-| |                         * | f6814 11-23 20:13 일 34: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-34)
-| |                       * | | 03bc0 11-23 20:13 일 33: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-33)
-| |                     * | | | 0aa8b 11-23 20:13 일 32: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-32)
-| |                   * | | | | 787e5 11-23 20:13 일 31: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-31)
-| |                 * | | | | | 63b7e 11-23 20:13 일 30: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-30)
-| |               * | | | | | | fbc48 11-23 20:13 일 29: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-29)
-| |             * | | | | | | | 24fb8 11-23 20:13 일 28: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-28)
-| |           * | | | | | | | | 98fb4 11-23 20:13 일 27: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-27)
-| |         * | | | | | | | | | 682be 11-23 20:13 일 26: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-26)
-| |       * | | | | | | | | | | fa734 11-23 20:13 일 25: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-25)
-| |     * | | | | | | | | | | | 30c54 11-23 20:13 일 24: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-24)
-| |   * | | | | | | | | | | | | cf1f8 11-23 20:13 일 23: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-23)
-| | * | | | | | | | | | | | | | d25dd 11-23 20:13 일 22: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-22)
+| * 7956f 11-26 17:26 폴더 참조 (HEAD -> ctx-1)
+| |                           * f15ff 11-26 17:26 일 35: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-35)
+| |                         * | 432eb 11-26 17:26 일 34: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-34)
+| |                       * | | c5cd2 11-26 17:26 일 33: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-33)
+| |                     * | | | a60ad 11-26 17:26 일 32: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-32)
+| |                   * | | | | 4792b 11-26 17:26 일 31: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-31)
+| |                 * | | | | | 3a424 11-26 17:26 일 30: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-30)
+| |               * | | | | | | 01f58 11-26 17:26 일 29: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-29)
+| |             * | | | | | | | 8660f 11-26 17:26 일 28: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-28)
+| |           * | | | | | | | | 99942 11-26 17:26 일 27: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-27)
+| |         * | | | | | | | | | 7a358 11-26 17:26 일 26: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-26)
+| |       * | | | | | | | | | | 3b169 11-26 17:26 일 25: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-25)
+| |     * | | | | | | | | | | | 10793 11-26 17:26 일 24: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-24)
+| |   * | | | | | | | | | | | | 47bea 11-26 17:26 일 23: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-23)
+| | * | | | | | | | | | | | | | 844ca 11-26 17:26 일 22: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-22)
 그 앞 28개 — read map
 
 ## 이 작업 브랜치의 최근 기록: ctx-1
 
-### d572e 11-23 20:13 폴더 참조
+### 7956f 11-26 17:26 폴더 참조
 참조파일: `~/notes`
 
 노트 폴더를 참조로 둔다.
@@ -3064,42 +3094,42 @@ head-context는 node:sqlite를 쓸 수 있는 Node(22.13 이상)가 필요합니
 이 대화의 작업 브랜치: 없음(메인)
 
 ## 열린 작업 브랜치 (36)
-- ctx-1 · 마지막 11-23 20:13 · 다음: n
-- task-35 · 마지막 11-23 20:13 · 다음: 일 35의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-34 · 마지막 11-23 20:13 · 다음: 일 34의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-33 · 마지막 11-23 20:13 · 다음: 일 33의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-32 · 마지막 11-23 20:13 · 다음: 일 32의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-31 · 마지막 11-23 20:13 · 다음: 일 31의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-30 · 마지막 11-23 20:13 · 다음: 일 30의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-29 · 마지막 11-23 20:13 · 다음: 일 29의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-28 · 마지막 11-23 20:13 · 다음: 일 28의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-27 · 마지막 11-23 20:13 · 다음: 일 27의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-26 · 마지막 11-23 20:13 · 다음: 일 26의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-25 · 마지막 11-23 20:13 · 다음: 일 25의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-24 · 마지막 11-23 20:13 · 다음: 일 24의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-23 · 마지막 11-23 20:13 · 다음: 일 23의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-22 · 마지막 11-23 20:13 · 다음: 일 22의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-21 · 마지막 11-23 20:13 · 다음: 일 21의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-20 · 마지막 11-23 20:13 · 다음: 일 20의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-19 · 마지막 11-23 20:13 · 다음: 일 19의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-18 · 마지막 11-23 20:13 · 다음: 일 18의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-17 · 마지막 11-23 20:13 · 다음: 일 17의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-16 · 마지막 11-23 20:13 · 다음: 일 16의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-15 · 마지막 11-23 20:13 · 다음: 일 15의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-14 · 마지막 11-23 20:13 · 다음: 일 14의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-13 · 마지막 11-23 20:13 · 다음: 일 13의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-12 · 마지막 11-23 20:13 · 다음: 일 12의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-11 · 마지막 11-23 20:13 · 다음: 일 11의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-10 · 마지막 11-23 20:13 · 다음: 일 10의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-09 · 마지막 11-23 20:12 · 다음: 일 09의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-08 · 마지막 11-23 20:12 · 다음: 일 08의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-07 · 마지막 11-23 20:12 · 다음: 일 07의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-06 · 마지막 11-23 20:12 · 다음: 일 06의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-05 · 마지막 11-23 20:12 · 다음: 일 05의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-04 · 마지막 11-23 20:12 · 다음: 일 04의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-03 · 마지막 11-23 20:12 · 다음: 일 03의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-02 · 마지막 11-23 20:12 · 다음: 일 02의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-01 · 마지막 11-23 20:12 · 다음: 일 01의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- ctx-1 · 마지막 11-26 17:26 · 다음: n
+- task-35 · 마지막 11-26 17:26 · 다음: 일 35의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-34 · 마지막 11-26 17:26 · 다음: 일 34의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-33 · 마지막 11-26 17:26 · 다음: 일 33의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-32 · 마지막 11-26 17:26 · 다음: 일 32의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-31 · 마지막 11-26 17:26 · 다음: 일 31의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-30 · 마지막 11-26 17:26 · 다음: 일 30의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-29 · 마지막 11-26 17:26 · 다음: 일 29의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-28 · 마지막 11-26 17:26 · 다음: 일 28의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-27 · 마지막 11-26 17:26 · 다음: 일 27의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-26 · 마지막 11-26 17:26 · 다음: 일 26의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-25 · 마지막 11-26 17:26 · 다음: 일 25의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-24 · 마지막 11-26 17:26 · 다음: 일 24의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-23 · 마지막 11-26 17:26 · 다음: 일 23의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-22 · 마지막 11-26 17:26 · 다음: 일 22의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-21 · 마지막 11-26 17:26 · 다음: 일 21의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-20 · 마지막 11-26 17:26 · 다음: 일 20의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-19 · 마지막 11-26 17:26 · 다음: 일 19의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-18 · 마지막 11-26 17:26 · 다음: 일 18의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-17 · 마지막 11-26 17:26 · 다음: 일 17의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-16 · 마지막 11-26 17:26 · 다음: 일 16의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-15 · 마지막 11-26 17:26 · 다음: 일 15의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-14 · 마지막 11-26 17:26 · 다음: 일 14의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-13 · 마지막 11-26 17:26 · 다음: 일 13의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-12 · 마지막 11-26 17:26 · 다음: 일 12의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-11 · 마지막 11-26 17:26 · 다음: 일 11의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-10 · 마지막 11-26 17:26 · 다음: 일 10의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-09 · 마지막 11-26 17:26 · 다음: 일 09의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-08 · 마지막 11-26 17:26 · 다음: 일 08의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-07 · 마지막 11-26 17:26 · 다음: 일 07의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-06 · 마지막 11-26 17:26 · 다음: 일 06의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-05 · 마지막 11-26 17:26 · 다음: 일 05의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-04 · 마지막 11-26 17:26 · 다음: 일 04의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-03 · 마지막 11-26 17:26 · 다음: 일 03의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-02 · 마지막 11-26 17:26 · 다음: 일 02의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-01 · 마지막 11-26 17:26 · 다음: 일 01의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
 
 ## 할 일 (열린 15개, 기한 임박 6개)
 - 기한 2026-11-05 · 맥락 시험용 할 일
@@ -3111,36 +3141,36 @@ head-context는 node:sqlite를 쓸 수 있는 Node(22.13 이상)가 필요합니
 (전체: todo list)
 
 ## 흐름 (최신이 위)
-| * d572e 11-23 20:13 폴더 참조 (ctx-1)
-| |                                                         * 0f37b 11-23 20:13 일 35: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-35)
-| |                                                       * | f6814 11-23 20:13 일 34: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-34)
-| |                                                     * | | 03bc0 11-23 20:13 일 33: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-33)
-| |                                                   * | | | 0aa8b 11-23 20:13 일 32: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-32)
-| |                                                 * | | | | 787e5 11-23 20:13 일 31: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-31)
-| |                                               * | | | | | 63b7e 11-23 20:13 일 30: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-30)
-| |                                             * | | | | | | fbc48 11-23 20:13 일 29: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-29)
-| |                                           * | | | | | | | 24fb8 11-23 20:13 일 28: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-28)
-| |                                         * | | | | | | | | 98fb4 11-23 20:13 일 27: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-27)
-| |                                       * | | | | | | | | | 682be 11-23 20:13 일 26: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-26)
-| |                                     * | | | | | | | | | | fa734 11-23 20:13 일 25: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-25)
-| |                                   * | | | | | | | | | | | 30c54 11-23 20:13 일 24: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-24)
-| |                                 * | | | | | | | | | | | | cf1f8 11-23 20:13 일 23: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-23)
-| |                               * | | | | | | | | | | | | | d25dd 11-23 20:13 일 22: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-22)
-| |                             * | | | | | | | | | | | | | | 3db5c 11-23 20:13 일 21: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-21)
-| |                           * | | | | | | | | | | | | | | | 14460 11-23 20:13 일 20: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-20)
-| |                         * | | | | | | | | | | | | | | | | 8608b 11-23 20:13 일 19: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-19)
-| |                       * | | | | | | | | | | | | | | | | | dd579 11-23 20:13 일 18: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-18)
-| |                     * | | | | | | | | | | | | | | | | | | 549e3 11-23 20:13 일 17: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-17)
-| |                   * | | | | | | | | | | | | | | | | | | | a03c1 11-23 20:13 일 16: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-16)
-| |                 * | | | | | | | | | | | | | | | | | | | | bb3fb 11-23 20:13 일 15: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-15)
-| |               * | | | | | | | | | | | | | | | | | | | | | c094d 11-23 20:13 일 14: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-14)
-| |             * | | | | | | | | | | | | | | | | | | | | | | 46e8f 11-23 20:13 일 13: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-13)
-| |           * | | | | | | | | | | | | | | | | | | | | | | | 46344 11-23 20:13 일 12: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-12)
-| |         * | | | | | | | | | | | | | | | | | | | | | | | | b783c 11-23 20:13 일 11: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-11)
-| |       * | | | | | | | | | | | | | | | | | | | | | | | | | af2de 11-23 20:13 일 10: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-10)
-| |     * | | | | | | | | | | | | | | | | | | | | | | | | | | 4e009 11-23 20:12 일 09: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-09)
-| |   * | | | | | | | | | | | | | | | | | | | | | | | | | | | 2a08a 11-23 20:12 일 08: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-08)
-| | * | | | | | | | | | | | | | | | | | | | | | | | | | | | | 4ddfe 11-23 20:12 일 07: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-07)
+| * 7956f 11-26 17:26 폴더 참조 (ctx-1)
+| |                                                         * f15ff 11-26 17:26 일 35: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-35)
+| |                                                       * | 432eb 11-26 17:26 일 34: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-34)
+| |                                                     * | | c5cd2 11-26 17:26 일 33: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-33)
+| |                                                   * | | | a60ad 11-26 17:26 일 32: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-32)
+| |                                                 * | | | | 4792b 11-26 17:26 일 31: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-31)
+| |                                               * | | | | | 3a424 11-26 17:26 일 30: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-30)
+| |                                             * | | | | | | 01f58 11-26 17:26 일 29: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-29)
+| |                                           * | | | | | | | 8660f 11-26 17:26 일 28: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-28)
+| |                                         * | | | | | | | | 99942 11-26 17:26 일 27: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-27)
+| |                                       * | | | | | | | | | 7a358 11-26 17:26 일 26: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-26)
+| |                                     * | | | | | | | | | | 3b169 11-26 17:26 일 25: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-25)
+| |                                   * | | | | | | | | | | | 10793 11-26 17:26 일 24: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-24)
+| |                                 * | | | | | | | | | | | | 47bea 11-26 17:26 일 23: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-23)
+| |                               * | | | | | | | | | | | | | 844ca 11-26 17:26 일 22: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-22)
+| |                             * | | | | | | | | | | | | | | 82d70 11-26 17:26 일 21: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-21)
+| |                           * | | | | | | | | | | | | | | | 16af4 11-26 17:26 일 20: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-20)
+| |                         * | | | | | | | | | | | | | | | | dcc2a 11-26 17:26 일 19: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-19)
+| |                       * | | | | | | | | | | | | | | | | | 559e2 11-26 17:26 일 18: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-18)
+| |                     * | | | | | | | | | | | | | | | | | | a485e 11-26 17:26 일 17: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-17)
+| |                   * | | | | | | | | | | | | | | | | | | | a03ab 11-26 17:26 일 16: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-16)
+| |                 * | | | | | | | | | | | | | | | | | | | | 6981a 11-26 17:26 일 15: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-15)
+| |               * | | | | | | | | | | | | | | | | | | | | | ad0f8 11-26 17:26 일 14: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-14)
+| |             * | | | | | | | | | | | | | | | | | | | | | | 61738 11-26 17:26 일 13: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-13)
+| |           * | | | | | | | | | | | | | | | | | | | | | | | cdbfe 11-26 17:26 일 12: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-12)
+| |         * | | | | | | | | | | | | | | | | | | | | | | | | 57a6d 11-26 17:26 일 11: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-11)
+| |       * | | | | | | | | | | | | | | | | | | | | | | | | | 3fe49 11-26 17:26 일 10: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-10)
+| |     * | | | | | | | | | | | | | | | | | | | | | | | | | | 774fb 11-26 17:26 일 09: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-09)
+| |   * | | | | | | | | | | | | | | | | | | | | | | | | | | | 1eb5d 11-26 17:26 일 08: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-08)
+| | * | | | | | | | | | | | | | | | | | | | | | | | | | | | | 01e58 11-26 17:26 일 07: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-07)
 그 앞 13개 — read map
 ```
 
@@ -3193,7 +3223,7 @@ head-context는 node:sqlite를 쓸 수 있는 Node(22.13 이상)가 필요합니
 ```text
 [오류] 작업 세션 이름이 필요합니다.
 
-head-context: 읽을 수 없는 기록 파일을 옮겨 두고 없는 것으로 처리했습니다: /tmp/hc-demo/project/.head/state/conversations/claude-11111111-1111-4111-8111-111111111111.json.broken-1795432427630 (Expected property name or '}' in JSON at position 1 (line 1 column 2))
+head-context: 읽을 수 없는 기록 파일을 옮겨 두고 없는 것으로 처리했습니다: /tmp/hc-demo/project/.head/state/conversations/claude-11111111-1111-4111-8111-111111111111.json.broken-1795681589863 (Expected property name or '}' in JSON at position 1 (line 1 column 2))
 ```
 
 ## R158 Codex SessionStart(startup) · session (연결 파일이 깨짐)
@@ -3207,7 +3237,10 @@ head-context: 읽을 수 없는 기록 파일을 옮겨 두고 없는 것으로 
 ```text
 이 대화는 아직 작업 세션에 연결되지 않았습니다.
 
-head-context: 읽을 수 없는 기록 파일을 옮겨 두고 없는 것으로 처리했습니다: /tmp/hc-demo/project/.head/state/conversations/codex-019a0000-0000-7000-8000-00000000c0de.json.broken-1795432427704 (Expected property name or '}' in JSON at position 1 (line 1 column 2))
+# 프로젝트 첫 실행 이어서 (head-context)
+사용자의 첫 입력에 답하기 전에 먼저 짧게 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method). 답을 받은 뒤 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.
+
+head-context: 읽을 수 없는 기록 파일을 옮겨 두고 없는 것으로 처리했습니다: /tmp/hc-demo/project/.head/state/conversations/codex-019a0000-0000-7000-8000-00000000c0de.json.broken-1795681589898 (Expected property name or '}' in JSON at position 1 (line 1 column 2))
 ```
 
 ## R159 Antigravity SessionStart (초기설정 전, 사람 대화)
@@ -3284,7 +3317,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 7314자 생략 — 전문은 a-runs.json R160)
+…(이하 8220자 생략 — 전문은 a-runs.json R160)
 ```
 
 ## R161 Antigravity SessionStart (시작 파일: session demo)
@@ -3311,7 +3344,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 14426자 생략 — 전문은 a-runs.json R161)
+…(이하 15332자 생략 — 전문은 a-runs.json R161)
 ```
 
 ## R162 Antigravity SessionStart (시작 파일: session demo, branch ctx-1)
@@ -3338,7 +3371,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 14535자 생략 — 전문은 a-runs.json R162)
+…(이하 15441자 생략 — 전문은 a-runs.json R162)
 ```
 
 ## R163 Antigravity SessionStart (시작 파일: 없는 작업 세션)
@@ -3379,7 +3412,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 7314자 생략 — 전문은 a-runs.json R164)
+…(이하 8220자 생략 — 전문은 a-runs.json R164)
 ```
 
 ## R165 하루 지난 시작 파일
@@ -3451,7 +3484,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 12703자 생략 — 전문은 a-runs.json R168)
+…(이하 13287자 생략 — 전문은 a-runs.json R168)
 ```
 
 ## R169 Antigravity PreInvocation (압축 뒤 둘째 단계)
@@ -3535,7 +3568,7 @@ Before responding, check that what you are about to say rests on something you h
 
 ## branch
 작업 브랜치 다루기. create는 branch 이름(필수, 그 일을 나타내는 짧은 이름)으로 새 작업 브랜치를 열고 이 대화를 거기에 둡니다(
-…(이하 2598자 생략 — 전문은 a-runs.json R171)
+…(이하 2877자 생략 — 전문은 a-runs.json R171)
 ```
 
 ## R172 Antigravity 대화의 작업 세션 목록
@@ -3770,7 +3803,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 7438자 생략 — 전문은 a-runs.json R187)
+…(이하 8344자 생략 — 전문은 a-runs.json R187)
 ```
 
 ## R188 옛 Node · Antigravity PreInvocation (새 CHECKPOINT)
@@ -3797,7 +3830,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 5631자 생략 — 전문은 a-runs.json R188)
+…(이하 6215자 생략 — 전문은 a-runs.json R188)
 ```
 
 ## R189 옛 Node · Antigravity PreInvocation (편지함 메시지)
@@ -3842,14 +3875,14 @@ Before responding, check that what you are about to say rests on something you h
 
 - 상태: 세 도구 서버의 판 번호(serverInfo)
 - 종류: mcp
-- 입력: `{"서버": "mcp.mjs · codex-mcp.mjs · antigravity-mcp.mjs", "method": "initialize", "plugin.json 판": "0.9.18"}`
+- 입력: `{"서버": "mcp.mjs · codex-mcp.mjs · antigravity-mcp.mjs", "method": "initialize", "plugin.json 판": "0.9.19"}`
 - 종료 코드: 0
 
 
 ```text
-mcp.mjs: {"name": "head-context", "version": "0.9.18"}
-codex-mcp.mjs: {"name": "head-context", "version": "0.9.18"}
-antigravity-mcp.mjs: {"name": "head-context", "version": "0.9.18"}
+mcp.mjs: {"name": "head-context", "version": "0.9.19"}
+codex-mcp.mjs: {"name": "head-context", "version": "0.9.19"}
+antigravity-mcp.mjs: {"name": "head-context", "version": "0.9.19"}
 ```
 
 ## R193 Antigravity 서브에이전트 SessionStart
@@ -3948,7 +3981,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 7314자 생략 — 전문은 a-runs.json R199)
+…(이하 8220자 생략 — 전문은 a-runs.json R199)
 ```
 
 ## R200 Antigravity SessionStart (사람 대화, 메시지 폴더에 부모 쪽 서브에이전트 보고만)
@@ -3975,7 +4008,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 7314자 생략 — 전문은 a-runs.json R200)
+…(이하 8220자 생략 — 전문은 a-runs.json R200)
 ```
 
 ## R201 Antigravity SessionStart (사람 대화, 메시지 폴더에 sender system만)
@@ -4002,7 +4035,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 7314자 생략 — 전문은 a-runs.json R201)
+…(이하 8220자 생략 — 전문은 a-runs.json R201)
 ```
 
 ## R202 Antigravity SessionStart (사람 대화, 메시지 폴더에 제목은 맞지만 sender가 자기)
@@ -4029,7 +4062,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 7314자 생략 — 전문은 a-runs.json R202)
+…(이하 8220자 생략 — 전문은 a-runs.json R202)
 ```
 
 ## R203 사람 대화 판정
@@ -4068,7 +4101,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 7314자 생략 — 전문은 a-runs.json R204)
+…(이하 8220자 생략 — 전문은 a-runs.json R204)
 ```
 
 ## R205 Claude에서 대화 목록(서브에이전트 정리 뒤)
@@ -4226,7 +4259,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 7314자 생략 — 전문은 a-runs.json R215)
+…(이하 8220자 생략 — 전문은 a-runs.json R215)
 ```
 
 ## R216 Antigravity SessionStart (artifactDirectoryPath의 폴더 이름이 대화 ID와 다름)
@@ -4253,7 +4286,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 7314자 생략 — 전문은 a-runs.json R216)
+…(이하 8220자 생략 — 전문은 a-runs.json R216)
 ```
 
 ## R217 Antigravity SessionStart (깨진 메시지 파일 옆에 부모 메시지)
@@ -4292,7 +4325,7 @@ Before responding, check that what you are about to say rests on something you h
 **Resolution.** High-resolution information is detailed and specific. Summarizing many details into one statement yields low-resolution information, which has to cover every case and so is abstract; next to high-resolution detail it tends to carry less weight. Abstract is not vague: a statement is clear when what it covers is clear. The whole product or plan sits at low resolution, a feature or stage in the middle, and filling in or checking details at high resolution.
 
 **Narrowing.** As high-resolution information builds up, generation follows it, and what is generated adds more of it. A judgment that should weigh a wide range evenly gets pulled toward the details in front of it. The rest is still there, but the view 
-…(이하 7314자 생략 — 전문은 a-runs.json R218)
+…(이하 8220자 생략 — 전문은 a-runs.json R218)
 ```
 
 ## R219 Antigravity PreInvocation (사람 대화로 판정된 뒤 부모 메시지 꼴 파일이 생김)
@@ -4488,42 +4521,42 @@ head-context: 작업 맥락을 넣지 못했습니다: EACCES: permission denied
 이 대화의 작업 브랜치: ctx-1
 
 ## 열린 작업 브랜치 (36)
-- ctx-1 (이 대화) · 마지막 11-23 20:13 · 다음: n
-- task-35 · 마지막 11-23 20:13 · 다음: 일 35의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-34 · 마지막 11-23 20:13 · 다음: 일 34의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-33 · 마지막 11-23 20:13 · 다음: 일 33의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-32 · 마지막 11-23 20:13 · 다음: 일 32의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-31 · 마지막 11-23 20:13 · 다음: 일 31의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-30 · 마지막 11-23 20:13 · 다음: 일 30의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-29 · 마지막 11-23 20:13 · 다음: 일 29의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-28 · 마지막 11-23 20:13 · 다음: 일 28의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-27 · 마지막 11-23 20:13 · 다음: 일 27의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-26 · 마지막 11-23 20:13 · 다음: 일 26의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-25 · 마지막 11-23 20:13 · 다음: 일 25의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-24 · 마지막 11-23 20:13 · 다음: 일 24의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-23 · 마지막 11-23 20:13 · 다음: 일 23의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-22 · 마지막 11-23 20:13 · 다음: 일 22의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-21 · 마지막 11-23 20:13 · 다음: 일 21의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-20 · 마지막 11-23 20:13 · 다음: 일 20의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-19 · 마지막 11-23 20:13 · 다음: 일 19의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-18 · 마지막 11-23 20:13 · 다음: 일 18의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-17 · 마지막 11-23 20:13 · 다음: 일 17의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-16 · 마지막 11-23 20:13 · 다음: 일 16의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-15 · 마지막 11-23 20:13 · 다음: 일 15의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-14 · 마지막 11-23 20:13 · 다음: 일 14의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-13 · 마지막 11-23 20:13 · 다음: 일 13의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-12 · 마지막 11-23 20:13 · 다음: 일 12의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-11 · 마지막 11-23 20:13 · 다음: 일 11의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-10 · 마지막 11-23 20:13 · 다음: 일 10의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-09 · 마지막 11-23 20:12 · 다음: 일 09의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-08 · 마지막 11-23 20:12 · 다음: 일 08의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-07 · 마지막 11-23 20:12 · 다음: 일 07의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-06 · 마지막 11-23 20:12 · 다음: 일 06의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-05 · 마지막 11-23 20:12 · 다음: 일 05의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-04 · 마지막 11-23 20:12 · 다음: 일 04의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-03 · 마지막 11-23 20:12 · 다음: 일 03의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-02 · 마지막 11-23 20:12 · 다음: 일 02의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-01 · 마지막 11-23 20:12 · 다음: 일 01의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- ctx-1 (이 대화) · 마지막 11-26 17:26 · 다음: n
+- task-35 · 마지막 11-26 17:26 · 다음: 일 35의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-34 · 마지막 11-26 17:26 · 다음: 일 34의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-33 · 마지막 11-26 17:26 · 다음: 일 33의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-32 · 마지막 11-26 17:26 · 다음: 일 32의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-31 · 마지막 11-26 17:26 · 다음: 일 31의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-30 · 마지막 11-26 17:26 · 다음: 일 30의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-29 · 마지막 11-26 17:26 · 다음: 일 29의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-28 · 마지막 11-26 17:26 · 다음: 일 28의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-27 · 마지막 11-26 17:26 · 다음: 일 27의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-26 · 마지막 11-26 17:26 · 다음: 일 26의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-25 · 마지막 11-26 17:26 · 다음: 일 25의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-24 · 마지막 11-26 17:26 · 다음: 일 24의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-23 · 마지막 11-26 17:26 · 다음: 일 23의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-22 · 마지막 11-26 17:26 · 다음: 일 22의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-21 · 마지막 11-26 17:26 · 다음: 일 21의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-20 · 마지막 11-26 17:26 · 다음: 일 20의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-19 · 마지막 11-26 17:26 · 다음: 일 19의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-18 · 마지막 11-26 17:26 · 다음: 일 18의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-17 · 마지막 11-26 17:26 · 다음: 일 17의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-16 · 마지막 11-26 17:26 · 다음: 일 16의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-15 · 마지막 11-26 17:26 · 다음: 일 15의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-14 · 마지막 11-26 17:26 · 다음: 일 14의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-13 · 마지막 11-26 17:26 · 다음: 일 13의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-12 · 마지막 11-26 17:26 · 다음: 일 12의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-11 · 마지막 11-26 17:26 · 다음: 일 11의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-10 · 마지막 11-26 17:26 · 다음: 일 10의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-09 · 마지막 11-26 17:26 · 다음: 일 09의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-08 · 마지막 11-26 17:26 · 다음: 일 08의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-07 · 마지막 11-26 17:26 · 다음: 일 07의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-06 · 마지막 11-26 17:26 · 다음: 일 06의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-05 · 마지막 11-26 17:26 · 다음: 일 05의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-04 · 마지막 11-26 17:26 · 다음: 일 04의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-03 · 마지막 11-26 17:26 · 다음: 일 03의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-02 · 마지막 11-26 17:26 · 다음: 일 02의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-01 · 마지막 11-26 17:26 · 다음: 일 01의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
 
 ## 할 일 (열린 15개, 기한 임박 6개)
 - 기한 2026-11-05 · 맥락 시험용 할 일
@@ -4535,49 +4568,49 @@ head-context: 작업 맥락을 넣지 못했습니다: EACCES: permission denied
 (전체: todo list)
 
 ## 흐름 (최신이 위)
-| * d572e 11-23 20:13 폴더 참조 (HEAD -> ctx-1)
-| |                                                         * 0f37b 11-23 20:13 일 35: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-35)
-| |                                                       * | f6814 11-23 20:13 일 34: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-34)
-| |                                                     * | | 03bc0 11-23 20:13 일 33: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-33)
-| |                                                   * | | | 0aa8b 11-23 20:13 일 32: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-32)
-| |                                                 * | | | | 787e5 11-23 20:13 일 31: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-31)
-| |                                               * | | | | | 63b7e 11-23 20:13 일 30: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-30)
-| |                                             * | | | | | | fbc48 11-23 20:13 일 29: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-29)
-| |                                           * | | | | | | | 24fb8 11-23 20:13 일 28: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-28)
-| |                                         * | | | | | | | | 98fb4 11-23 20:13 일 27: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-27)
-| |                                       * | | | | | | | | | 682be 11-23 20:13 일 26: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-26)
-| |                                     * | | | | | | | | | | fa734 11-23 20:13 일 25: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-25)
-| |                                   * | | | | | | | | | | | 30c54 11-23 20:13 일 24: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-24)
-| |                                 * | | | | | | | | | | | | cf1f8 11-23 20:13 일 23: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-23)
-| |                               * | | | | | | | | | | | | | d25dd 11-23 20:13 일 22: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-22)
-| |                             * | | | | | | | | | | | | | | 3db5c 11-23 20:13 일 21: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-21)
-| |                           * | | | | | | | | | | | | | | | 14460 11-23 20:13 일 20: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-20)
-| |                         * | | | | | | | | | | | | | | | | 8608b 11-23 20:13 일 19: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-19)
-| |                       * | | | | | | | | | | | | | | | | | dd579 11-23 20:13 일 18: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-18)
-| |                     * | | | | | | | | | | | | | | | | | | 549e3 11-23 20:13 일 17: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-17)
-| |                   * | | | | | | | | | | | | | | | | | | | a03c1 11-23 20:13 일 16: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-16)
-| |                 * | | | | | | | | | | | | | | | | | | | | bb3fb 11-23 20:13 일 15: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-15)
-| |               * | | | | | | | | | | | | | | | | | | | | | c094d 11-23 20:13 일 14: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-14)
-| |             * | | | | | | | | | | | | | | | | | | | | | | 46e8f 11-23 20:13 일 13: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-13)
-| |           * | | | | | | | | | | | | | | | | | | | | | | | 46344 11-23 20:13 일 12: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-12)
-| |         * | | | | | | | | | | | | | | | | | | | | | | | | b783c 11-23 20:13 일 11: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-11)
-| |       * | | | | | | | | | | | | | | | | | | | | | | | | | af2de 11-23 20:13 일 10: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-10)
-| |     * | | | | | | | | | | | | | | | | | | | | | | | | | | 4e009 11-23 20:12 일 09: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-09)
-| |   * | | | | | | | | | | | | | | | | | | | | | | | | | | | 2a08a 11-23 20:12 일 08: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-08)
-| | * | | | | | | | | | | | | | | | | | | | | | | | | | | | | 4ddfe 11-23 20:12 일 07: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-07)
+| * 7956f 11-26 17:26 폴더 참조 (HEAD -> ctx-1)
+| |                                                         * f15ff 11-26 17:26 일 35: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-35)
+| |                                                       * | 432eb 11-26 17:26 일 34: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-34)
+| |                                                     * | | c5cd2 11-26 17:26 일 33: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-33)
+| |                                                   * | | | a60ad 11-26 17:26 일 32: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-32)
+| |                                                 * | | | | 4792b 11-26 17:26 일 31: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-31)
+| |                                               * | | | | | 3a424 11-26 17:26 일 30: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-30)
+| |                                             * | | | | | | 01f58 11-26 17:26 일 29: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-29)
+| |                                           * | | | | | | | 8660f 11-26 17:26 일 28: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-28)
+| |                                         * | | | | | | | | 99942 11-26 17:26 일 27: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-27)
+| |                                       * | | | | | | | | | 7a358 11-26 17:26 일 26: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-26)
+| |                                     * | | | | | | | | | | 3b169 11-26 17:26 일 25: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-25)
+| |                                   * | | | | | | | | | | | 10793 11-26 17:26 일 24: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-24)
+| |                                 * | | | | | | | | | | | | 47bea 11-26 17:26 일 23: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-23)
+| |                               * | | | | | | | | | | | | | 844ca 11-26 17:26 일 22: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-22)
+| |                             * | | | | | | | | | | | | | | 82d70 11-26 17:26 일 21: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-21)
+| |                           * | | | | | | | | | | | | | | | 16af4 11-26 17:26 일 20: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-20)
+| |                         * | | | | | | | | | | | | | | | | dcc2a 11-26 17:26 일 19: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-19)
+| |                       * | | | | | | | | | | | | | | | | | 559e2 11-26 17:26 일 18: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-18)
+| |                     * | | | | | | | | | | | | | | | | | | a485e 11-26 17:26 일 17: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-17)
+| |                   * | | | | | | | | | | | | | | | | | | | a03ab 11-26 17:26 일 16: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-16)
+| |                 * | | | | | | | | | | | | | | | | | | | | 6981a 11-26 17:26 일 15: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-15)
+| |               * | | | | | | | | | | | | | | | | | | | | | ad0f8 11-26 17:26 일 14: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-14)
+| |             * | | | | | | | | | | | | | | | | | | | | | | 61738 11-26 17:26 일 13: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-13)
+| |           * | | | | | | | | | | | | | | | | | | | | | | | cdbfe 11-26 17:26 일 12: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-12)
+| |         * | | | | | | | | | | | | | | | | | | | | | | | | 57a6d 11-26 17:26 일 11: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-11)
+| |       * | | | | | | | | | | | | | | | | | | | | | | | | | 3fe49 11-26 17:26 일 10: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-10)
+| |     * | | | | | | | | | | | | | | | | | | | | | | | | | | 774fb 11-26 17:26 일 09: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-09)
+| |   * | | | | | | | | | | | | | | | | | | | | | | | | | | | 1eb5d 11-26 17:26 일 08: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-08)
+| | * | | | | | | | | | | | | | | | | | | | | | | | | | | | | 01e58 11-26 17:26 일 07: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-07)
 그 앞 13개 — read map
 
 ## 이 작업 브랜치의 최근 기록: ctx-1
 
-### bf590 11-23 20:12 맥락 시험
+### 60f0e 11-26 17:26 맥락 시험
 시작 때 작업 맥락 확인용 기록.
 
-### 79744 11-23 20:12 참조파일 시험
+### 41e1d 11-26 17:26 참조파일 시험
 참조파일: `~/notes/login-plan.md`, `/tmp/hc-demo/project/.head/sessions/demo/work/2026-11/2026-11-04-login.md`, `nope/missing.md`
 
 계획은 참조파일에 있다.
 
-### d572e 11-23 20:13 폴더 참조
+### 7956f 11-26 17:26 폴더 참조
 참조파일: `~/notes`
 
 노트 폴더를 참조로 둔다.
@@ -4609,7 +4642,7 @@ head-context: 작업 맥락을 넣지 못했습니다: EACCES: permission denied
 
 ## 컴팩트 뒤 먼저 할 것
 하던 일을 잇기 전에 복원부터 한다. 컴팩트 요약에 붙은 "이어서 하라"는 말은 복원을 마친 뒤에 따른다.
-1. 최초 목적: `read entry bf590`로 이 작업 브랜치를 시작한 목적(문제·목표·조건)을 읽는다. 첫 기록 요약: 맥락 시험
+1. 최초 목적: `read entry 60f0e`로 이 작업 브랜치를 시작한 목적(문제·목표·조건)을 읽는다. 첫 기록 요약: 맥락 시험
 2. 지금 할 일: 마지막 기록의 다음 — n. 이 다음은 기록을 남긴 대화가 적은 계획이다. 사용자가 정한 일인지 최근 대화에서 확인한 뒤 잇는다.
 ```
 
@@ -4639,6 +4672,9 @@ head-context: 작업 맥락을 넣지 못했습니다: EACCES: permission denied
 
 ```text
 이 대화는 아직 작업 세션에 연결되지 않았습니다.
+
+# 프로젝트 첫 실행 이어서 (head-context)
+사용자의 첫 입력에 답하기 전에 먼저 짧게 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method). 답을 받은 뒤 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.
 ```
 
 ## R237 Codex 대화가 작업 브랜치 ctx-1 불러오기
@@ -4664,42 +4700,42 @@ head-context: 작업 맥락을 넣지 못했습니다: EACCES: permission denied
 이 대화의 작업 브랜치: ctx-1
 
 ## 열린 작업 브랜치 (36)
-- ctx-1 (이 대화) · 마지막 11-23 20:13 · 다음: n
-- task-35 · 마지막 11-23 20:13 · 다음: 일 35의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-34 · 마지막 11-23 20:13 · 다음: 일 34의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-33 · 마지막 11-23 20:13 · 다음: 일 33의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-32 · 마지막 11-23 20:13 · 다음: 일 32의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-31 · 마지막 11-23 20:13 · 다음: 일 31의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-30 · 마지막 11-23 20:13 · 다음: 일 30의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-29 · 마지막 11-23 20:13 · 다음: 일 29의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-28 · 마지막 11-23 20:13 · 다음: 일 28의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-27 · 마지막 11-23 20:13 · 다음: 일 27의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-26 · 마지막 11-23 20:13 · 다음: 일 26의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-25 · 마지막 11-23 20:13 · 다음: 일 25의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-24 · 마지막 11-23 20:13 · 다음: 일 24의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-23 · 마지막 11-23 20:13 · 다음: 일 23의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-22 · 마지막 11-23 20:13 · 다음: 일 22의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-21 · 마지막 11-23 20:13 · 다음: 일 21의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-20 · 마지막 11-23 20:13 · 다음: 일 20의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-19 · 마지막 11-23 20:13 · 다음: 일 19의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-18 · 마지막 11-23 20:13 · 다음: 일 18의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-17 · 마지막 11-23 20:13 · 다음: 일 17의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-16 · 마지막 11-23 20:13 · 다음: 일 16의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-15 · 마지막 11-23 20:13 · 다음: 일 15의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-14 · 마지막 11-23 20:13 · 다음: 일 14의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-13 · 마지막 11-23 20:13 · 다음: 일 13의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-12 · 마지막 11-23 20:13 · 다음: 일 12의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-11 · 마지막 11-23 20:13 · 다음: 일 11의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-10 · 마지막 11-23 20:13 · 다음: 일 10의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-09 · 마지막 11-23 20:12 · 다음: 일 09의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-08 · 마지막 11-23 20:12 · 다음: 일 08의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-07 · 마지막 11-23 20:12 · 다음: 일 07의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-06 · 마지막 11-23 20:12 · 다음: 일 06의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-05 · 마지막 11-23 20:12 · 다음: 일 05의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-04 · 마지막 11-23 20:12 · 다음: 일 04의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-03 · 마지막 11-23 20:12 · 다음: 일 03의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-02 · 마지막 11-23 20:12 · 다음: 일 02의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
-- task-01 · 마지막 11-23 20:12 · 다음: 일 01의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- ctx-1 (이 대화) · 마지막 11-26 17:26 · 다음: n
+- task-35 · 마지막 11-26 17:26 · 다음: 일 35의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-34 · 마지막 11-26 17:26 · 다음: 일 34의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-33 · 마지막 11-26 17:26 · 다음: 일 33의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-32 · 마지막 11-26 17:26 · 다음: 일 32의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-31 · 마지막 11-26 17:26 · 다음: 일 31의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-30 · 마지막 11-26 17:26 · 다음: 일 30의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-29 · 마지막 11-26 17:26 · 다음: 일 29의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-28 · 마지막 11-26 17:26 · 다음: 일 28의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-27 · 마지막 11-26 17:26 · 다음: 일 27의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-26 · 마지막 11-26 17:26 · 다음: 일 26의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-25 · 마지막 11-26 17:26 · 다음: 일 25의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-24 · 마지막 11-26 17:26 · 다음: 일 24의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-23 · 마지막 11-26 17:26 · 다음: 일 23의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-22 · 마지막 11-26 17:26 · 다음: 일 22의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-21 · 마지막 11-26 17:26 · 다음: 일 21의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-20 · 마지막 11-26 17:26 · 다음: 일 20의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-19 · 마지막 11-26 17:26 · 다음: 일 19의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-18 · 마지막 11-26 17:26 · 다음: 일 18의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-17 · 마지막 11-26 17:26 · 다음: 일 17의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-16 · 마지막 11-26 17:26 · 다음: 일 16의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-15 · 마지막 11-26 17:26 · 다음: 일 15의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-14 · 마지막 11-26 17:26 · 다음: 일 14의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-13 · 마지막 11-26 17:26 · 다음: 일 13의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-12 · 마지막 11-26 17:26 · 다음: 일 12의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-11 · 마지막 11-26 17:26 · 다음: 일 11의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-10 · 마지막 11-26 17:26 · 다음: 일 10의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-09 · 마지막 11-26 17:26 · 다음: 일 09의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-08 · 마지막 11-26 17:26 · 다음: 일 08의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-07 · 마지막 11-26 17:26 · 다음: 일 07의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-06 · 마지막 11-26 17:26 · 다음: 일 06의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-05 · 마지막 11-26 17:26 · 다음: 일 05의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-04 · 마지막 11-26 17:26 · 다음: 일 04의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-03 · 마지막 11-26 17:26 · 다음: 일 03의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-02 · 마지막 11-26 17:26 · 다음: 일 02의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
+- task-01 · 마지막 11-26 17:26 · 다음: 일 01의 다음: 사용자에게 문구 후보 셋을 보이고 고르게 한다 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하 아자차카타파하
 
 ## 할 일 (열린 15개, 기한 임박 6개)
 - 기한 2026-11-05 · 맥락 시험용 할 일
@@ -4711,49 +4747,49 @@ head-context: 작업 맥락을 넣지 못했습니다: EACCES: permission denied
 (전체: todo list)
 
 ## 흐름 (최신이 위)
-| * d572e 11-23 20:13 폴더 참조 (HEAD -> ctx-1)
-| |                                                         * 0f37b 11-23 20:13 일 35: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-35)
-| |                                                       * | f6814 11-23 20:13 일 34: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-34)
-| |                                                     * | | 03bc0 11-23 20:13 일 33: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-33)
-| |                                                   * | | | 0aa8b 11-23 20:13 일 32: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-32)
-| |                                                 * | | | | 787e5 11-23 20:13 일 31: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-31)
-| |                                               * | | | | | 63b7e 11-23 20:13 일 30: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-30)
-| |                                             * | | | | | | fbc48 11-23 20:13 일 29: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-29)
-| |                                           * | | | | | | | 24fb8 11-23 20:13 일 28: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-28)
-| |                                         * | | | | | | | | 98fb4 11-23 20:13 일 27: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-27)
-| |                                       * | | | | | | | | | 682be 11-23 20:13 일 26: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-26)
-| |                                     * | | | | | | | | | | fa734 11-23 20:13 일 25: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-25)
-| |                                   * | | | | | | | | | | | 30c54 11-23 20:13 일 24: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-24)
-| |                                 * | | | | | | | | | | | | cf1f8 11-23 20:13 일 23: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-23)
-| |                               * | | | | | | | | | | | | | d25dd 11-23 20:13 일 22: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-22)
-| |                             * | | | | | | | | | | | | | | 3db5c 11-23 20:13 일 21: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-21)
-| |                           * | | | | | | | | | | | | | | | 14460 11-23 20:13 일 20: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-20)
-| |                         * | | | | | | | | | | | | | | | | 8608b 11-23 20:13 일 19: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-19)
-| |                       * | | | | | | | | | | | | | | | | | dd579 11-23 20:13 일 18: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-18)
-| |                     * | | | | | | | | | | | | | | | | | | 549e3 11-23 20:13 일 17: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-17)
-| |                   * | | | | | | | | | | | | | | | | | | | a03c1 11-23 20:13 일 16: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-16)
-| |                 * | | | | | | | | | | | | | | | | | | | | bb3fb 11-23 20:13 일 15: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-15)
-| |               * | | | | | | | | | | | | | | | | | | | | | c094d 11-23 20:13 일 14: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-14)
-| |             * | | | | | | | | | | | | | | | | | | | | | | 46e8f 11-23 20:13 일 13: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-13)
-| |           * | | | | | | | | | | | | | | | | | | | | | | | 46344 11-23 20:13 일 12: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-12)
-| |         * | | | | | | | | | | | | | | | | | | | | | | | | b783c 11-23 20:13 일 11: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-11)
-| |       * | | | | | | | | | | | | | | | | | | | | | | | | | af2de 11-23 20:13 일 10: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-10)
-| |     * | | | | | | | | | | | | | | | | | | | | | | | | | | 4e009 11-23 20:12 일 09: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-09)
-| |   * | | | | | | | | | | | | | | | | | | | | | | | | | | | 2a08a 11-23 20:12 일 08: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-08)
-| | * | | | | | | | | | | | | | | | | | | | | | | | | | | | | 4ddfe 11-23 20:12 일 07: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-07)
+| * 7956f 11-26 17:26 폴더 참조 (HEAD -> ctx-1)
+| |                                                         * f15ff 11-26 17:26 일 35: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-35)
+| |                                                       * | 432eb 11-26 17:26 일 34: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-34)
+| |                                                     * | | c5cd2 11-26 17:26 일 33: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-33)
+| |                                                   * | | | a60ad 11-26 17:26 일 32: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-32)
+| |                                                 * | | | | 4792b 11-26 17:26 일 31: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-31)
+| |                                               * | | | | | 3a424 11-26 17:26 일 30: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-30)
+| |                                             * | | | | | | 01f58 11-26 17:26 일 29: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-29)
+| |                                           * | | | | | | | 8660f 11-26 17:26 일 28: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-28)
+| |                                         * | | | | | | | | 99942 11-26 17:26 일 27: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-27)
+| |                                       * | | | | | | | | | 7a358 11-26 17:26 일 26: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-26)
+| |                                     * | | | | | | | | | | 3b169 11-26 17:26 일 25: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-25)
+| |                                   * | | | | | | | | | | | 10793 11-26 17:26 일 24: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-24)
+| |                                 * | | | | | | | | | | | | 47bea 11-26 17:26 일 23: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-23)
+| |                               * | | | | | | | | | | | | | 844ca 11-26 17:26 일 22: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-22)
+| |                             * | | | | | | | | | | | | | | 82d70 11-26 17:26 일 21: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-21)
+| |                           * | | | | | | | | | | | | | | | 16af4 11-26 17:26 일 20: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-20)
+| |                         * | | | | | | | | | | | | | | | | dcc2a 11-26 17:26 일 19: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-19)
+| |                       * | | | | | | | | | | | | | | | | | 559e2 11-26 17:26 일 18: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-18)
+| |                     * | | | | | | | | | | | | | | | | | | a485e 11-26 17:26 일 17: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-17)
+| |                   * | | | | | | | | | | | | | | | | | | | a03ab 11-26 17:26 일 16: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-16)
+| |                 * | | | | | | | | | | | | | | | | | | | | 6981a 11-26 17:26 일 15: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-15)
+| |               * | | | | | | | | | | | | | | | | | | | | | ad0f8 11-26 17:26 일 14: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-14)
+| |             * | | | | | | | | | | | | | | | | | | | | | | 61738 11-26 17:26 일 13: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-13)
+| |           * | | | | | | | | | | | | | | | | | | | | | | | cdbfe 11-26 17:26 일 12: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-12)
+| |         * | | | | | | | | | | | | | | | | | | | | | | | | 57a6d 11-26 17:26 일 11: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-11)
+| |       * | | | | | | | | | | | | | | | | | | | | | | | | | 3fe49 11-26 17:26 일 10: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-10)
+| |     * | | | | | | | | | | | | | | | | | | | | | | | | | | 774fb 11-26 17:26 일 09: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-09)
+| |   * | | | | | | | | | | | | | | | | | | | | | | | | | | | 1eb5d 11-26 17:26 일 08: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-08)
+| | * | | | | | | | | | | | | | | | | | | | | | | | | | | | | 01e58 11-26 17:26 일 07: 로그인 화면의 오류 문구와 버튼 상태를 정리한 결과를 남긴다 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 가나다라마바사 (task-07)
 그 앞 13개 — read map
 
 ## 이 작업 브랜치의 최근 기록: ctx-1
 
-### bf590 11-23 20:12 맥락 시험
+### 60f0e 11-26 17:26 맥락 시험
 시작 때 작업 맥락 확인용 기록.
 
-### 79744 11-23 20:12 참조파일 시험
+### 41e1d 11-26 17:26 참조파일 시험
 참조파일: `~/notes/login-plan.md`, `/tmp/hc-demo/project/.head/sessions/demo/work/2026-11/2026-11-04-login.md`, `nope/missing.md`
 
 계획은 참조파일에 있다.
 
-### d572e 11-23 20:13 폴더 참조
+### 7956f 11-26 17:26 폴더 참조
 참조파일: `~/notes`
 
 노트 폴더를 참조로 둔다.
@@ -4785,7 +4821,7 @@ head-context: 작업 맥락을 넣지 못했습니다: EACCES: permission denied
 
 ## 컴팩트 뒤 먼저 할 것
 하던 일을 잇기 전에 복원부터 한다. 컴팩트 요약에 붙은 "이어서 하라"는 말은 복원을 마친 뒤에 따른다.
-1. 최초 목적: `read entry bf590`로 이 작업 브랜치를 시작한 목적(문제·목표·조건)을 읽는다. 첫 기록 요약: 맥락 시험
+1. 최초 목적: `read entry 60f0e`로 이 작업 브랜치를 시작한 목적(문제·목표·조건)을 읽는다. 첫 기록 요약: 맥락 시험
 2. 지금 할 일: 마지막 기록의 다음 — n. 이 다음은 기록을 남긴 대화가 적은 계획이다. 사용자가 정한 일인지 최근 대화에서 확인한 뒤 잇는다.
 ```
 
@@ -4834,6 +4870,9 @@ head-context: 작업 맥락을 넣지 못했습니다: EACCES: permission denied
 
 ```text
 이 대화는 아직 작업 세션에 연결되지 않았습니다.
+
+# 프로젝트 첫 실행 이어서 (head-context)
+사용자의 첫 입력에 답하기 전에 먼저 짧게 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method). 답을 받은 뒤 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.
 ```
 
 ## R242 Claude SessionStart(compact) · session (sdk-cli, 연결 안 됨)
@@ -5466,16 +5505,11 @@ context.md 12891자
 - 범위 메모 195: 로그인 화면의 문구·버튼·오류 상태를 정리한 줄이다.
 - 범위 메모 196: 로그인 화면의 문구·버튼·오류 상태를 정리한 줄이다.
 - 범위 메모 197: 로그인 화면의 문구·버튼·오류 상태를 정리한 줄이다.
-- 범위 메모 198: 로그인 화면의 문구·버튼·오류 상태를 정리한 줄이다.
-- 범위 메모 199: 로그인 화면의 문구·버튼·오류 상태를 정리한 줄이다.
-- 범위 메모 200: 로그인 화면의 문구·버튼·오류 상태를 정리한 줄이다.
-- 범위 메모 201: 로그인 화면의 문구·버튼·오류 상태를 정리한 줄이다.
-- 범위 메모 202: 로그인 화면의 문구·버튼·오류 상태를 정리한 줄이다.
-- 범위 메모 203: 로그인 화면의 문구·버튼·오류 상태를 정리한 줄이다.
-- 범위 메모 204: 로그인 화면의 문구·버튼·오류 상태를 정리한 줄이다.
-- 범위 메모 205: 로그인 화면의 문구·버튼·오류 상태를 정리한 줄이다.
-- 범위 메모
+- 범위 메모 198: 로그인 화면의 문구·버튼·오류 상
 …(context.md 뒷부분 생략 — 전문: /tmp/hc-demo/project/.head/sessions/big/context.md)
+
+# 프로젝트 첫 실행 이어서 (head-context)
+사용자의 첫 입력에 답하기 전에 먼저 짧게 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method). 답을 받은 뒤 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.
 ```
 
 ## R251 Claude SessionStart(compact) · session
@@ -5698,7 +5732,7 @@ context.md 12891자
 
 ## 컴팩트 뒤 먼저 할 것
 하던 일을 잇기 전에 복원부터 한다. 컴팩트 요약에 붙은 "이어서 하라"는 말은 복원을 마친 뒤에 따른다.
-1. 최초 목적: `read entry 2e459`로 이 작업 브랜치를 시작한 목적(문제·목표·조건)을 읽는다. 첫 기록 요약: 긴 목적 시험 시작
+1. 최초 목적: `read entry 4ad38`로 이 작업 브랜치를 시작한 목적(문제·목표·조건)을 읽는다. 첫 기록 요약: 긴 목적 시험 시작
 2. 지금 할 일: 마지막 기록의 다음 — 압축 뒤 확인. 이 다음은 기록을 남긴 대화가 적은 계획이다. 사용자가 정한 일인지 최근 대화에서 확인한 뒤 잇는다.
 ```
 
@@ -5712,6 +5746,9 @@ context.md 12891자
 
 ```text
 이 대화는 아직 작업 세션에 연결되지 않았습니다.
+
+# 프로젝트 첫 실행 이어서 (head-context)
+사용자의 첫 입력에 답하기 전에 먼저 짧게 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method). 답을 받은 뒤 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.
 ```
 
 ## R253 Codex 대화가 긴 작업 세션의 작업 브랜치 불러오기
@@ -6033,14 +6070,14 @@ context.md 12891자
 이 대화의 작업 브랜치: long-1
 
 ## 열린 작업 브랜치 (1)
-- long-1 (이 대화) · 마지막 11-23 20:14 · 다음: 압축 뒤 확인
+- long-1 (이 대화) · 마지막 11-26 17:26 · 다음: 압축 뒤 확인
 
 ## 흐름 (최신이 위)
-* 2e459 11-23 20:14 긴 목적 시험 시작 (HEAD -> long-1)
+* 4ad38 11-26 17:26 긴 목적 시험 시작 (HEAD -> long-1)
 
 ## 이 작업 브랜치의 최근 기록: long-1
 
-### 2e459 11-23 20:14 긴 목적 시험 시작
+### 4ad38 11-26 17:26 긴 목적 시험 시작
 머리 자르기 확인용 기록.
 
 다음: 압축 뒤 확인
@@ -6363,6 +6400,9 @@ context.md 12891자
 - 범위 메모 299: 로그인 화면의 문구·버튼·오류 상태를 정리한 줄이다.
 
 이 대화의 작업 브랜치: long-1
+
+# 프로젝트 첫 실행 이어서 (head-context)
+사용자의 첫 입력에 답하기 전에 먼저 짧게 "방법론 애드온(head-method)도 켤까요? 이 플러그인을 만든 사람이 실제 제품을 꾸준히 관리하면서 쓰는 개발·기획 방법론을 스킬 두 개로 담은 거예요."를 물으세요. 예면 setup(action=method_on)을 부르고 돌려받은 결과를 사용자에게 알리세요. 아니오면 "다시는 묻지 않을까요?"를 물어 예일 때만 setup(action=never_ask, step=method). 답을 받은 뒤 원래 이야기로 이어가세요. 파일은 직접 쓰지 말고 이 도구만 쓰세요.
 ```
 
 ## R255 Codex SessionStart(compact) · session (긴 작업 세션 — 머리를 잘라 복원 블록 자리)
@@ -6585,7 +6625,7 @@ context.md 12891자
 
 ## 컴팩트 뒤 먼저 할 것
 하던 일을 잇기 전에 복원부터 한다. 컴팩트 요약에 붙은 "이어서 하라"는 말은 복원을 마친 뒤에 따른다.
-1. 최초 목적: `read entry 2e459`로 이 작업 브랜치를 시작한 목적(문제·목표·조건)을 읽는다. 첫 기록 요약: 긴 목적 시험 시작
+1. 최초 목적: `read entry 4ad38`로 이 작업 브랜치를 시작한 목적(문제·목표·조건)을 읽는다. 첫 기록 요약: 긴 목적 시험 시작
 2. 지금 할 일: 마지막 기록의 다음 — 압축 뒤 확인. 이 다음은 기록을 남긴 대화가 적은 계획이다. 사용자가 정한 일인지 최근 대화에서 확인한 뒤 잇는다.
 ```
 
@@ -7147,4 +7187,190 @@ node "/tmp/hc-demo/user/.gemini/config/plugins/head-context/scripts/antigravity-
 
 ```text
 죽은 프로세스의 기록 지워짐
+```
+
+## R300 애드온 단계 전 상태
+
+- 상태: 0.9.19 방법론 애드온 단계 — demo 프로젝트(초기설정·조사 끝남, 애드온 물음 전)
+- 종류: 측정
+- 입력: `{"프로젝트": "demo"}`
+- 종료 코드: 0
+
+
+```text
+first_run.method=None · settings.json 키 enabledPlugins, env, extraKnownMarketplaces · enabledPlugins."head-method@head-agent-core"=null
+```
+
+## R301 Codex setup(action=method_on)
+
+- 상태: 0.9.19 방법론 애드온 단계 — demo 프로젝트(초기설정·조사 끝남, 애드온 물음 전)
+- 종류: mcp tool
+- 입력: `{"서버": "codex-mcp.mjs", "tool": "setup", "인자": {"action": "method_on"}, "_meta": {"threadId": "019a0000-0000-7000-8000-00000000c0de", "sessionId": "019a0000-0000-7000-8000-00000000c0de"}}`
+- 종료 코드: 0
+
+
+```text
+방법론 애드온(head-method)을 끝남으로 기록했습니다.
+- Codex 설정은 바꾸지 않았습니다. 사용자에게 이 설치 명령을 알려 주세요: `codex plugin add head-method@head-agent-core`
+```
+
+## R302 Codex method_on 뒤 상태
+
+- 상태: 0.9.19 방법론 애드온 단계 — demo 프로젝트(초기설정·조사 끝남, 애드온 물음 전)
+- 종류: 측정
+- 입력: `{"프로젝트": "demo"}`
+- 종료 코드: 0
+
+
+```text
+first_run.method=done · settings.json 키 enabledPlugins, env, extraKnownMarketplaces · enabledPlugins."head-method@head-agent-core"=null
+```
+
+## R303 Antigravity setup(action=method_on)
+
+- 상태: 0.9.19 방법론 애드온 단계 — demo 프로젝트(초기설정·조사 끝남, 애드온 물음 전)
+- 종류: mcp tool
+- 입력: `{"서버": "antigravity-mcp.mjs", "tool": "setup", "인자": {"action": "method_on"}, "_meta": {"antigravity.google/conversation_id": "aaaaaaaa-0000-4000-8000-000000000003", "antigravity.google/root_conversation_id": "aaaaaaaa-0000-4000-8000-000000000003"}}`
+- 종료 코드: 0
+
+
+```text
+방법론 애드온(head-method)을 끝남으로 기록했습니다.
+- Antigravity 설정은 바꾸지 않았습니다. 사용자에게 이 설치 명령을 알려 주세요: `agy plugin install https://github.com/Won6314/head-agent-core/tree/main/packages/method`
+```
+
+## R304 Claude setup(action=method_on)
+
+- 상태: 0.9.19 방법론 애드온 단계 — demo 프로젝트(초기설정·조사 끝남, 애드온 물음 전)
+- 종류: mcp tool
+- 입력: `{"서버": "mcp.mjs", "tool": "setup", "인자": {"action": "method_on"}}`
+- 종료 코드: 0
+
+
+```text
+방법론 애드온(head-method)을 끝남으로 기록했습니다.
+- .claude/settings.json의 enabledPlugins."head-method@head-agent-core": 더했습니다. 다음 대화부터 켜집니다.
+```
+
+## R305 Claude method_on 뒤 상태
+
+- 상태: 0.9.19 방법론 애드온 단계 — demo 프로젝트(초기설정·조사 끝남, 애드온 물음 전)
+- 종류: 측정
+- 입력: `{"프로젝트": "demo"}`
+- 종료 코드: 0
+
+
+```text
+first_run.method=done · settings.json 키 enabledPlugins, env, extraKnownMarketplaces · enabledPlugins."head-method@head-agent-core"=true
+```
+
+## R306 Claude setup(action=method_on, 이미 켜짐)
+
+- 상태: 0.9.19 방법론 애드온 단계 — demo 프로젝트(초기설정·조사 끝남, 애드온 물음 전)
+- 종류: mcp tool
+- 입력: `{"서버": "mcp.mjs", "tool": "setup", "인자": {"action": "method_on"}}`
+- 종료 코드: 0
+
+
+```text
+방법론 애드온(head-method)을 끝남으로 기록했습니다.
+- .claude/settings.json의 enabledPlugins."head-method@head-agent-core": 이미 있어(true) 그대로 두었습니다.
+```
+
+## R307 Claude SessionStart(startup) · session
+
+- 상태: 0.9.19 방법론 애드온 단계를 끝낸 demo 프로젝트
+- 종류: hook
+- 입력: `{"명령": "hook.mjs session", "입력": {"hook_event_name": "SessionStart", "session_id": "11111111-1111-4111-8111-111111111111", "cwd": "/tmp/hc-demo/project", "source": "startup", "transcript_path": "/tmp/hc-demo/user/.claude/projects/demo/11111111-1111-4111-8111-111111111111.jsonl"}}`
+- 종료 코드: 0
+
+
+```text
+이 대화는 아직 작업 세션에 연결되지 않았습니다.
+```
+
+## R308 Codex SessionStart(startup) · session (애드온 단계 끝남)
+
+- 상태: 0.9.19 방법론 애드온 단계를 끝낸 demo 프로젝트
+- 종류: hook
+- 입력: `{"명령": "codex-hook.mjs session", "입력": {"hook_event_name": "SessionStart", "session_id": "019a0000-0000-7000-8000-00000000c0de", "cwd": "/tmp/hc-demo/project", "source": "startup", "transcript_path": "/tmp/hc-demo/user/.codex/sessions/019a0000-0000-7000-8000-00000000c0de.jsonl"}}`
+- 종료 코드: 0
+
+
+```text
+이 대화는 아직 작업 세션에 연결되지 않았습니다.
+```
+
+## R309 Claude setup(action=method_on, settings.json이 배열)
+
+- 상태: 0.9.19 방법론 애드온 단계 — 새 프로젝트(설정 파일이 JSON 객체가 아님)
+- 종류: mcp tool
+- 입력: `{"서버": "mcp.mjs", "tool": "setup", "인자": {"action": "method_on"}}`
+- 종료 코드: 0
+
+
+```text
+방법론 애드온(head-method)을 끝남으로 기록했습니다.
+- .claude/settings.json의 enabledPlugins."head-method@head-agent-core": JSON 객체가 아니라 고치지 않았습니다. 켜려면 enabledPlugins."head-method@head-agent-core": true를 직접 넣어 주세요.
+```
+
+## R310 배열 설정 파일에 method_on 뒤 상태
+
+- 상태: 0.9.19 방법론 애드온 단계 — 새 프로젝트(설정 파일이 JSON 객체가 아님)
+- 종류: 측정
+- 입력: `{"프로젝트": "project-method"}`
+- 종료 코드: 0
+
+
+```text
+first_run.method=done · settings.json 키 객체 아님([]) · enabledPlugins."head-method@head-agent-core"=null
+```
+
+## R311 Claude setup(action=method_on, enabledPlugins가 배열)
+
+- 상태: 0.9.19 방법론 애드온 단계 — 새 프로젝트(설정 파일이 JSON 객체가 아님)
+- 종류: mcp tool
+- 입력: `{"서버": "mcp.mjs", "tool": "setup", "인자": {"action": "method_on"}}`
+- 종료 코드: 0
+
+
+```text
+방법론 애드온(head-method)을 끝남으로 기록했습니다.
+- .claude/settings.json의 enabledPlugins."head-method@head-agent-core": enabledPlugins가 객체가 아니라 고치지 않았습니다. 켜려면 enabledPlugins."head-method@head-agent-core": true를 직접 넣어 주세요.
+```
+
+## R312 enabledPlugins 배열에 method_on 뒤 상태
+
+- 상태: 0.9.19 방법론 애드온 단계 — 새 프로젝트(설정 파일이 JSON 객체가 아님)
+- 종류: 측정
+- 입력: `{"프로젝트": "project-method"}`
+- 종료 코드: 0
+
+
+```text
+first_run.method=done · settings.json 키 enabledPlugins · enabledPlugins."head-method@head-agent-core"=null
+```
+
+## R313 never_ask step=method
+
+- 상태: 0.9.19 방법론 애드온 단계 — 새 프로젝트(설정 파일이 JSON 객체가 아님)
+- 종류: mcp tool
+- 입력: `{"서버": "mcp.mjs", "tool": "setup", "인자": {"action": "never_ask", "step": "method"}}`
+- 종료 코드: 0
+
+
+```text
+이 프로젝트에서는 방법론 애드온을 다시 묻지 않습니다. 기록: .head/config.json first_run.method=never_ask
+```
+
+## R314 never_ask step=method 뒤 상태
+
+- 상태: 0.9.19 방법론 애드온 단계 — 새 프로젝트(설정 파일이 JSON 객체가 아님)
+- 종류: 측정
+- 입력: `{"프로젝트": "project-method"}`
+- 종료 코드: 0
+
+
+```text
+first_run.method=never_ask · settings.json 키 enabledPlugins · enabledPlugins."head-method@head-agent-core"=null
 ```

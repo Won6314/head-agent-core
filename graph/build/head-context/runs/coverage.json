@@ -109,7 +109,7 @@
  },
  "hook:claude:SessionStart:session": {
   "실행된 정의": 97,
-  "그래프 도달 범위": 139,
+  "그래프 도달 범위": 141,
   "범위 밖에서 실행됨": [],
   "닿는다고 했는데 안 돎": [
    "code:core/graph.mjs#Graph.applyFileDiff",
@@ -133,6 +133,8 @@
    "code:core/map-view.mjs#renderMap.across",
    "code:core/map-view.mjs#renderMap.forkLines",
    "code:core/platform.mjs#runtimeNeed",
+   "code:core/project.mjs#methodQuestion",
+   "code:core/project.mjs#pendingQuestions",
    "code:core/project.mjs#surveyQuestion",
    "code:core/project.mjs#surveyReady",
    "code:core/recovery.mjs#compactRecovery",

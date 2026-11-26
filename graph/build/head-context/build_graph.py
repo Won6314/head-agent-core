@@ -506,7 +506,7 @@ for name, (did, why) in MANUAL_CLI.items():
     features[f"cli:{name}"]["명령"] = f"node scripts/{name}.mjs"
 for skill in sorted((pkg / "skills").glob("*/SKILL.md")):
     rel = skill.relative_to(pkg).as_posix()
-    feature(f"skill:{skill.parent.name}", "skill", f"code:{rel}", 앱="Claude Code · Codex · Antigravity", 근거="skills/ (start-job 절차 문서, Antigravity는 루트 plugin.json이 같은 skills/를 싣는다)")
+    feature(f"skill:{skill.parent.name}", "skill", f"code:{rel}", 앱="Claude Code · Codex · Antigravity", 근거=f"skills/{skill.parent.name}/SKILL.md (skill 절차 문서, Antigravity는 루트 plugin.json이 같은 skills/를 싣는다)")
 
 for fid, f in sorted(features.items()):
     one = meaning["features"].get(fid)
