@@ -269,11 +269,13 @@ test('setup turns the built-in fork on in the project settings, keeping what is 
 test('real MCP process lists setup and runs it in CLAUDE_PROJECT_DIR', () => {
   const dir = fresh(),
     [list, call] = mcp(dir, { action: 'setup' });
-  assert.deepEqual(fs.readdirSync(path.resolve('skills')), ['start-job']); // one skill the model loads; none for the user to type
-  assert.doesNotMatch(
-    fs.readFileSync(path.resolve('skills/start-job/SKILL.md'), 'utf8'),
-    /disable-model-invocation|argument-hint/,
-  );
+  // skills the model loads (start-job, and research since 0.9.19); none for the user to type
+  assert.deepEqual(fs.readdirSync(path.resolve('skills')).sort(), ['research', 'start-job']);
+  for (const name of ['start-job', 'research'])
+    assert.doesNotMatch(
+      fs.readFileSync(path.resolve(`skills/${name}/SKILL.md`), 'utf8'),
+      /disable-model-invocation|argument-hint/,
+    );
   const def = list.result.tools.find((t) => t.name === 'setup');
   assert.ok(def);
   assert.equal('conversation_id' in def.inputSchema.properties, false);

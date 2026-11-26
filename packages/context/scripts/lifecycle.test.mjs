@@ -224,8 +224,10 @@ test('a fork or subagent (agent_id) may read but not write; the tool surface car
   assert.doesNotMatch(skill, /작업 브랜치를 생각한다/); // the session step is a proposal the user decides, not a thought
   // Aligned with the core: an unclear case goes to another context, results come back packaged,
   // a work branch opens once the problem, goal and conditions are agreed.
-  assert.match(skill, /- 어느 쪽인지 애매하면 맡긴다\./);
-  assert.match(skill, /- 맡긴 일은 결과, 판단을 바꿀 수 있는 제약·예외·불확실한 것, 근거가 있는 곳으로 돌려받는다\./);
+  assert.match(skill, /- 만들기나 검수를 직접 할지 맡길지 애매하면 맡긴다\./);
+  assert.match(skill, /- 맡긴 일을 돌려받을 때는 결과와 함께, 판단이 달라질 수 있는 제약·예외·불확실한 점과 근거 위치를 받는다\./);
+  // 0.9.19: reading the sources a judgment rests on follows the research skill.
+  assert.match(skill, /판단에 쓸 사실을 읽는 일은 조사 스킬을 따른다\./);
   assert.match(INSTRUCTIONS, /- 언제: 문제·목표·조건을 맞춘 일에 착수할 때, 이어서 할 일이면 엽니다\./);
   // Past or current work is looked up in the records first.
   assert.match(INSTRUCTIONS, /\n\n읽기\n- 무엇: [^\n]+\n- 언제: 지금 하는 일이나 지난 일을 찾을 때는 무조건 read부터 씁니다\./);
