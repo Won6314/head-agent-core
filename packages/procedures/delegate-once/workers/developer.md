@@ -2,7 +2,7 @@
 
 Use after `delegate-once` selects `developer` for one bounded implementation result.
 
-HEAD applies the shared [Development Standard](../../../agents/DEVELOPMENT_STANDARD.md) when preparing the result. Supply that standard and the project's adopted conventions to developer, including the selected scope of test creation, modification, and execution in the brief.
+HEAD applies the shared head-method [development skill](../../../method/skills/development/SKILL.md) when preparing the result. Supply that standard and the project's adopted conventions to developer, including the selected scope of test creation, modification, and execution in the brief.
 
 ## Contract
 

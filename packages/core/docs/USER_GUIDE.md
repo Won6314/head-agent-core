@@ -54,7 +54,7 @@ HEAD writes each brief from the worker's starting context — every fact the res
 
 ### Development criteria
 
-The canonical [Development Standard](../../agents/DEVELOPMENT_STANDARD.md) is shared by HEAD during software planning, direct implementation, and review, and by developer during implementation. Link it from the project's authority index for those tasks and include it in developer's instruction sources. Do not add its full text to HEAD's always-loaded principles or to coder's instructions. Coder's task-specific `context.md` is a decided specification, not HEAD's session-memory file.
+The canonical head-method [development skill](../../method/skills/development/SKILL.md) is shared by HEAD during software planning, direct implementation, and review, and by developer during implementation. Link it from the project's authority index for those tasks and include it in developer's instruction sources. Do not add its full text to HEAD's always-loaded principles or to coder's instructions. Coder's task-specific `context.md` is a decided specification, not HEAD's session-memory file.
 
 ## What Core does not provide
 

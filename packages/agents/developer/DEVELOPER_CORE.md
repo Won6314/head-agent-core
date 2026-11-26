@@ -10,7 +10,7 @@ Own one bounded one-shot implementation outcome end to end. HEAD owns the larger
 
 ## Implementation
 
-- Apply the shared [Development Standard](../DEVELOPMENT_STANDARD.md) and the target project's adopted conventions.
+- Apply the shared head-method [development skill](../../method/skills/development/SKILL.md) and the target project's adopted conventions.
 - Own local diagnosis and solution method inside the assigned input/output and result boundary. Parent-owned product behavior and architecture remain fixed inputs.
 - Use actual code and observed execution to choose the method. Investigate facts and failure conditions needed for the assigned result, without expanding into unrelated improvements or general risk searches.
 - Choose names, function/file decomposition, internal data structures, and algorithms that preserve the contract. Use a coherent vocabulary and implementation style for the same responsibility.

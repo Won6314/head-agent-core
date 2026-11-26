@@ -12,6 +12,8 @@ Use this workflow only after HEAD has directly established and retained the whol
 
 - Give each worker one kind of work: investigation, design, implementation, or review.
 - If investigation is needed, delegate only investigation and have the findings returned.
+- Whether to delegate an investigation, and whether to one worker or several independent ones, follows the [research skill](../../context/skills/research/SKILL.md).
+- When delegating investigation, have each finding returned with the location it was read from (file:line, page and paragraph).
 - HEAD reviews the findings, decides what to change and how, then delegates implementation separately.
 - If the assigned work requires a new decision, the worker returns the findings and decision needed to HEAD instead of proceeding to the next stage.
 
