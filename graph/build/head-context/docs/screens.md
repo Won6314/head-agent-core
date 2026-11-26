@@ -94,6 +94,8 @@ agent는 이 지침대로 일한다. 0.9.10 코어 지침(HEAD Core 1/1)은 HEAD
 ### 화면 정책
 - `pol.core-after-setup`
 - `pol.quiet-on-resume`
+- `pol.research-read-split`
+- `pol.research-trace`
 
 ## STA-02 시작 때 작업 세션
 
@@ -129,7 +131,7 @@ node:sqlite를 쓸 수 없는 Node에서는 이 출력 대신 ERR-05의 이유 �
 아직 자리가 없는 대화에 그 사실을 알리고, 첫 실행이면 초기설정을 묻게 한다. 0.9.19부터 초기설정이 끝난 프로젝트에서 남은 첫 실행 단계(방법론 애드온)가 있으면 그것을 묻게 한다.
 
 ### 화면 흐름
-첫 실행 전: agent는 사람의 첫 입력에 답하기 전에 "초기설정 해도 될까요?"를 묻고 답에 따라 setup을 부른 뒤 원래 이야기로 돌아간다. 초기설정 뒤 애드온 단계가 남았으면(0.9.19): 첫 입력에 답하기 전에 애드온을 켤지 묻고 예면 setup(action=method_on), 아니오면 다시 묻지 않을지 물어 예일 때만 never_ask(step=method)를 부른다. 어느 앱에서 기록했든 같은 프로젝트에서는 다시 묻지 않는다(R301 Codex 기록 뒤 R307 Claude·R308 Codex 시작에 안내 없음). 연결 안 됨만 있으면: 첫 말에 답하면서 남길 작업 세션을 제안한다(0.9.17, SRV-01#2·SRV-03#1). Claude 프로그램 실행(entrypoint sdk-*, HEAD_CONTEXT_PERSON=1 아님)은 연결이 없어도 이 출력 둘 다 받지 않는다(0.9.17).
+첫 실행 전: agent는 사람의 첫 입력에 답하기 전에 "초기설정 해도 될까요?"를 묻고 답에 따라 setup을 부른 뒤 원래 이야기로 돌아간다. 초기설정 뒤 애드온 단계가 남았으면(0.9.19): 첫 입력에 답하기 전에 애드온을 켤지 묻고 예면 setup(action=method_on), 아니오면 다시 묻지 않을지 물어 예일 때만 never_ask(step=method)를 부른다. 어느 앱에서 기록했든 같은 프로젝트에서는 다시 묻지 않는다(R301 Codex 기록 뒤 R307 Claude·R308 Codex 시작에 안내 없음). 연결 안 됨만 있으면: 첫 말에 답하면서 남길 작업 세션을 제안한다(0.9.17, SRV-01#2·SRV-03#1). Claude 프로그램 실행(entrypoint sdk-*, HEAD_CONTEXT_PERSON=1 아님)은 연결이 없어도 연결 안 됨과 첫 실행 안내(0.9.19부터 이어서 안내 #3까지)를 받지 않는다(0.9.17, R240·R241).
 
 ### 화면요소
 1. **연결 안 됨 한 줄** — `이 대화는 아직 작업 세션에 연결되지 않았습니다.` ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session` ← `hook:antigravity:SessionStart` ← `hook:antigravity:PreInvocation` → `tool:list`
@@ -470,7 +472,7 @@ agent는 찾을 것이 정해진 조사면 작업 기록 → 프로젝트 조사
 ## TOL-12 초기설정 결과
 
 - 출력 종류: tool 결과(setup)
-- 원문: R11(setup), R12(survey_done), R91·R119(이미 초기설정된 프로젝트), R301~R314(0.9.19 method_on·never_ask step=method와 그 뒤 설정·기록)
+- 원문: R11(setup), R12(survey_done), R91·R119(이미 초기설정된 프로젝트), R301·R303·R304·R306·R309·R311(0.9.19 method_on 결과), R313(never_ask step=method), 측정값 R300·R302·R305·R310·R312·R314(설정 파일·.head/config.json). R307·R308은 단계를 끝낸 뒤 시작 훅 출력이라 STA-03 원문이다
 - 내는 기능: `tool:setup`
 - 그리는 코드: `code:core/project.mjs#setupTool`
 
@@ -482,7 +484,10 @@ agent는 찾을 것이 정해진 조사면 작업 기록 → 프로젝트 조사
 5. **이미 초기설정됨** — 이미 초기설정된 프로젝트에서 다시 승인하면 맨 앞에 한 줄(0.9.6부터). 문구: `이 프로젝트는 이미 초기설정되어 있었습니다(다른 대화가 먼저 했을 수 있습니다). 이미 있던 값은 그대로 두었습니다.` 설정 파일은 잠그고 고친다. ← `tool:setup`
 6. **Antigravity에서 부른 초기설정** — (코드) 설정 항목 끝에 `(Claude Code용, Antigravity에서는 쓰이지 않음)`, 다음 시작 줄은 `다음 시작부터는 시작·압축 뒤에 코어 지침이 들어갑니다. Antigravity 설정은 바꾸지 않았습니다.` ← `tool:setup` 0.9.19부터 Antigravity method_on 결과(TOL-12#8)도 'Antigravity 설정은 바꾸지 않았습니다'로 시작하므로, 이 요소는 초기설정 결과에만 있는 위 두 글로 잇는다.
 7. **애드온 물음 이어서** — 초기설정 결과 끝(코어 본문 앞)에 `이어서 "방법론 애드온(head-method)도 켤까요? …`와 예·아니오일 때 부를 것. 이미 초기설정된 프로젝트에서 다시 승인해도 애드온 단계가 남았으면 붙는다(0.9.19, R11·R91·R119). ← `tool:setup` 문구: `이어서 "방법론 애드온(head-method)도 켤까요?`
-8. **애드온 결과** — method_on: `방법론 애드온(head-method)을 끝남으로 기록했습니다.`와 앱별 한 줄. Claude Code는 프로젝트 `.claude/settings.json`의 enabledPlugins에 한 줄을 더하고 다른 키는 그대로 둔다(R304·R305 — 더했습니다, R306 — 이미 있어 그대로, R309·R311 — 파일이나 enabledPlugins가 JSON 객체가 아니면 고치지 않고 직접 넣으라고 알림, R310·R312 파일 그대로). Codex·Antigravity는 설정을 바꾸지 않고 사용자에게 알릴 설치 명령을 돌려준다(R301·R303, R302 settings.json 그대로). 어느 앱이든 first_run.method=done을 적는다(0.9.19). never_ask step=method는 #4 한 줄(`이 프로젝트에서는 방법론 애드온을 다시 묻지 않습니다.`, R313·R314). ← `tool:setup` 문구: `방법론 애드온(head-method)을 끝남으로 기록했습니다.` 문구: `사용자에게 이 설치 명령을 알려 주세요`
+8. **애드온 결과** — method_on: `방법론 애드온(head-method)을 끝남으로 기록했습니다.`와 앱별 한 줄. Claude Code는 프로젝트 `.claude/settings.json`의 enabledPlugins에 한 줄을 더하고 다른 키는 그대로 둔다(R304·R305 — 더했습니다, R306 — 이미 있어 그대로, R309·R311 — 파일이나 enabledPlugins가 JSON 객체가 아니면 고치지 않고 직접 넣으라고 알림, R310·R312 파일 그대로). Codex·Antigravity는 설정을 바꾸지 않고 사용자에게 알릴 설치 명령을 돌려준다(R301·R303, R302 settings.json 그대로). 어느 앱이든 first_run.method=done을 적는다(0.9.19, 처리 정책 `pol.method-on`). never_ask step=method는 #4 한 줄('이 프로젝트에서는 방법론 애드온을 다시 묻지 않습니다.', R313, 기록은 R314). ← `tool:setup` 문구: `방법론 애드온(head-method)을 끝남으로 기록했습니다.` 문구: `사용자에게 이 설치 명령을 알려 주세요`
+
+### 화면 정책
+- `pol.method-ask`
 
 ## TOL-13 보내기 결과
 

@@ -374,7 +374,7 @@
       "subject": "플러그인은",
       "action": "앱의 도구 이름을 쓰지 않고, 앱별 부분('이 앱에서 부르는 도구')에만 그 앱의 도구를 적는다",
       "features": [],
-      "evidence": "R6·R66 차이"
+      "evidence": "R6·R66 차이 · skills/research/SKILL.md(앱 도구 이름 없음, 0.9.19 원문으로 확인)"
     },
     {
       "id": "pol.subagent-notice",
@@ -469,16 +469,16 @@
       "subject": "시작 훅(Antigravity 사람 대화의 시작 훅 포함, 서브에이전트 제외)은",
       "action": "그 단계를 다시 묻지 않는다",
       "features": [],
-      "evidence": "core/project.mjs firstRun·guide·pendingQuestions(B-7 POL-02) · hosts/antigravity/hook.mjs runHook · R159·R160, R210(서브에이전트 — 없음) · R313·R314(never_ask step=method)"
+      "evidence": "core/project.mjs firstRun·guide·pendingQuestions(B-7 POL-02, pendingQuestions는 done과 never_ask를 같이 다룬다) · hosts/antigravity/hook.mjs runHook · R159·R160, R210(서브에이전트 — 없음) · method: R313·R314는 never_ask 기록만이고, 묻지 않음은 코드(pendingQuestions)와 R307·R308(done 뒤 시작 훅 — 없음)로 본다"
     },
     {
       "id": "pol.method-ask",
       "kind": "표시",
-      "condition": "초기설정을 마친 프로젝트에서 first_run.method가 기록되지 않았으면 — 시작·/clear할 때(초기설정 직후가 아닌 프로젝트는 다음 시작에 한 번)와 setup(action=setup) 결과 끝에서(0.9.19)",
+      "condition": "초기설정을 마친 프로젝트에서 first_run.method가 기록되지 않았으면 — 단계가 기록될 때까지 시작·/clear할 때마다(아니오·아니오로 답해 기록하지 않으면 다음 시작에 또 묻는다)와 setup(action=setup) 결과 끝에서(0.9.19). Claude 프로그램 실행(entrypoint sdk-*, HEAD_CONTEXT_PERSON=1 아님)이 연결되지 않았으면 시작 훅은 넣지 않는다(R240·R241)",
       "subject": "시작 훅(Claude·Codex·Antigravity 사람 대화의 시작 훅)과 setup 결과는",
       "action": "사람의 첫 입력에 답하기 전에 방법론 애드온(head-method)을 켤지 묻게 하고, 예면 setup(action=method_on), 아니오면 \"다시는 묻지 않을까요?\"를 물어 예일 때만 setup(action=never_ask, step=method)를 부르게 한다. 조사 절차 파일이 있으면 조사 물음은 애드온 물음 뒤에 붙는다(글로만)",
       "features": [],
-      "evidence": "core/project.mjs guide·pendingQuestions·methodQuestion·setupTool(e57f8be) · R11·R91·R119(setup 결과), R48·R60·R63·R67·R108·R160(시작 훅), R307·R308(단계를 끝낸 뒤 — 없음)"
+      "evidence": "core/project.mjs guide·pendingQuestions·methodQuestion·setupTool(e57f8be) · R11·R91·R119(setup 결과), R48·R60·R63·R67·R108·R160(시작 훅), R307·R308(단계를 끝낸 뒤 — 없음) · hosts/claude/hook.mjs session(place || !copy일 때만 guide) · R240(sdk-cli 연결 안 됨 — 빈 출력)·R241(HEAD_CONTEXT_PERSON=1 — 이어서 안내 있음)"
     },
     {
       "id": "pol.method-on",
@@ -883,7 +883,7 @@
       "kind": "표시",
       "condition": "agent가 지금 하는 일이나 지난 일을 찾을 때",
       "subject": "서버 안내문 '읽기' 절과 start-job 2단계는",
-      "action": "read부터 쓰게 한다 — 물음의 낱말로 read find, 없으면 read recent, 파일·코드는 그다음. 찾은 것은 지금 일에 맞는 근거인지 읽어서 확인한 뒤 쓴다(글로만, 0.9.17). 0.9.19부터 start-job 2단계는 프로젝트 자료를 프로젝트가 정한 조사 시작점(제품 그래프 같은 것)에서 시작하고, 직접 읽을지 맡길지와 받은 결과 확인은 research를 따르게 한다(pol.research-read-split)",
+      "action": "read부터 쓰게 한다 — 물음의 낱말로 read find, 없으면 read recent, 파일·코드는 그다음. 찾은 것은 지금 일에 맞는 근거인지 읽어서 확인한 뒤 쓴다(글로만, 0.9.17). 0.9.19부터 start-job 2단계는 프로젝트가 정한 조사 시작점(제품 그래프 같은 것)이 있으면 프로젝트 자료를 거기서 시작하고, 직접 읽을지 맡길지와 받은 결과 확인은 research를 따르게 한다(pol.research-read-split)",
       "features": [],
       "evidence": "core/mcp.mjs INSTRUCTIONS 읽기 절 · skills/start-job/SKILL.md 2단계(0.9.19 고침) · R6·R66·R70·R170"
     },
@@ -910,11 +910,11 @@
       "kind": "표시",
       "condition": "Claude 대화가 프로그램 실행(entrypoint sdk-*)이고 HEAD_CONTEXT_PERSON=1이 아니며 작업 세션에 연결되지 않았을 때",
       "subject": "Claude 시작 훅(session)은",
-      "action": "연결 안 됨 안내와 첫 실행 안내를 넣지 않는다. 연결됐으면 작업 세션 머리는 그대로 넣는다(0.9.17)",
+      "action": "연결 안 됨 안내와 첫 실행 안내(초기설정 안내, 0.9.19부터 초기설정 뒤 이어서 안내도)를 넣지 않는다. 연결됐으면 작업 세션 머리는 그대로 넣는다(0.9.17)",
       "features": [
         "hook:claude:SessionStart:session"
       ],
-      "evidence": "hosts/claude/hook.mjs session(copy) · R240(빈 출력), R241(HEAD_CONTEXT_PERSON=1 — 연결 안 됨), R242(compact — 빈 출력), R243(초기설정 전 — 빈 출력)"
+      "evidence": "hosts/claude/hook.mjs session(copy) · R240(빈 출력), R241(HEAD_CONTEXT_PERSON=1 — 연결 안 됨, 0.9.19부터 이어서 안내도), R242(compact — 빈 출력), R243(초기설정 전 — 빈 출력)"
     },
     {
       "id": "pol.compact-recovery",

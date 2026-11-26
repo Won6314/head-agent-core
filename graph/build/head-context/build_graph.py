@@ -113,6 +113,15 @@ for b in purposes["outside"]["boxes"]:
 # 재검수 N2(11-15): 한 파일 안에서 닿는 곳이 다르면 줄 단위로 대상을 정하고(fact_targets), 여러 곳을 읽는 도우미는
 # 부르는 쪽에 대상을 잇는다(via). purposes.json에 손으로 쓴다(LLM 판단, 원본 줄로 확인).
 FACT_TARGET = purposes["outside"].get("fact_targets", {})
+# 고정한 줄은 코드가 바뀌면 밀린다. 밀린 줄은 그 파일의 모든 칸에 이어지므로 problems로 알린다(0.9.19 검수 정보 1).
+fact_lines = {f"{f['file']}:{f['line']}" for f in code["facts"] if f["type"] != "env"}
+for k, target in FACT_TARGET.items():
+    if k == "_":
+        continue
+    if k not in fact_lines:
+        problems.append(f"B-2 fact_targets: {k}에 바깥 접근(fs 등) 호출이 없음 — 코드 줄이 밀렸으면 purposes.json의 줄 번호를 그 호출 줄로 고친다")
+    if target not in box:
+        problems.append(f"B-2 fact_targets: {k}의 대상 '{target}'이 바깥 칸에 없음")
 VIA = purposes["outside"].get("via", {})
 agg = {}
 for helper, callers in VIA.items():
