@@ -41,7 +41,7 @@ export function claudeSaves(file, id) {
     } catch {
       continue;
     }
-    if (Object.hasOwn(row, 'forkedFrom') || row.sessionId !== id) continue;
+    if (row.type !== 'assistant' || Object.hasOwn(row, 'forkedFrom') || row.sessionId !== id) continue;
     if (!Array.isArray(row.message?.content)) continue;
     for (const part of row.message.content)
       if (

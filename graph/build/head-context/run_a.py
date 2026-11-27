@@ -1095,7 +1095,7 @@ old_at = datetime.now(timezone.utc)
 with map_history.open("a") as f:
     f.write(f"\n\n## {old_at.isoformat(timespec='milliseconds').replace('+00:00', 'Z')}\n\n요약: A0 옛 기록\n\n옛 본문\n\n")
 ca_transcript = HOME / ".claude" / "projects" / "demo" / f"{CA}.jsonl"
-call46 = {"sessionId": CA, "timestamp": (old_at - timedelta(seconds=2)).isoformat().replace("+00:00", "Z"),
+call46 = {"type": "assistant", "sessionId": CA, "timestamp": (old_at - timedelta(seconds=2)).isoformat().replace("+00:00", "Z"),
           "message": {"content": [{"type": "tool_use", "name": "mcp__plugin_head-context_session__save", "input": {"summary": "A0 옛 기록"}}]}}
 ca_transcript.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in (call46, {**call46, "forkedFrom": CB}, {**call46, "sessionId": CB})) + "\n")
 s.call("branch", {"action": "create", "branch": "map-job", "conversation_id": CA}, "CA 작업 브랜치 열기(map-job)")
@@ -1141,7 +1141,35 @@ agy_history = HOME / ".gemini" / "antigravity-cli" / "history.jsonl"
 agy_history.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in (
     {"display": "/clear", "type": "slash_command", "workspace": str(PROJ), "conversationId": GA},
     {"display": "새 일", "workspace": str(PROJ), "conversationId": GN})) + "\n")
-agy(agy_in(GN, "SessionStart", lastUserInput="새 일"), "Antigravity SessionStart (/clear GN 이어받기)")
+# /clear counts only when the left conversation ran in the same agy process: a stand-in agy
+# writes GA's presence with its own pid and start, then runs the hook as its child.
+FAKE_AGY = ROOT / "fakebin" / "agy"
+FAKE_AGY.parent.mkdir(parents=True, exist_ok=True)
+FAKE_AGY.write_text(f"""import fs from 'node:fs';
+import path from 'node:path';
+import {{ spawnSync }} from 'node:child_process';
+import {{ processBirth }} from {json.dumps(str(APKG / 'core' / 'platform.mjs'))};
+const [presence, left, hook] = process.argv.slice(2);
+fs.mkdirSync(presence, {{ recursive: true }});
+fs.writeFileSync(path.join(presence, 'antigravity-' + left + '.json'),
+  JSON.stringify({{ host: 'antigravity', conversation_id: left, pid: process.pid, start: processBirth(process.pid) }}));
+const r = spawnSync(process.execPath, [hook], {{ input: fs.readFileSync(0, 'utf8'), encoding: 'utf8' }});
+process.stdout.write(r.stdout); process.stderr.write(r.stderr); process.exit(r.status ?? 1);
+""")
+def agy_under(payload, what, left):
+    cmd = ["node", str(FAKE_AGY), str(PROJ / ".head" / "state" / "presence"), left, str(APKG / "scripts" / "antigravity-hook.mjs")]
+    p = subprocess.run(cmd, input=json.dumps(payload), capture_output=True, text=True,
+                       env={**ENV, "PLUGIN_ROOT": str(APKG), "PLUGIN_DATA": str(APKG_DATA)}, cwd=payload.get("cwd", str(PROJ)))
+    out = p.stdout
+    try:
+        j = json.loads(out.strip().splitlines()[-1]) if out.strip() else None
+        if j and "injectSteps" in j:
+            out = "\n\n".join(x["systemMessage"]["systemMessage"] for x in j["injectSteps"])
+    except Exception:
+        pass
+    record("hook", what, {"명령": "antigravity-hook.mjs", "입력": {k: scrub(v) if isinstance(v, str) else v for k, v in payload.items()}}, out, p.stderr, p.returncode)
+    return out
+agy_under(agy_in(GN, "SessionStart", lastUserInput="새 일"), "Antigravity SessionStart (/clear GN 이어받기)", GA)
 agy(agy_in(GEMPTY, "SessionStart"), "Antigravity SessionStart (history 줄 없는 새 대화)")
 
 OUT.write_text(json.dumps(runs, ensure_ascii=False, indent=1))

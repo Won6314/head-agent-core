@@ -50,6 +50,9 @@ export function conversationRecords(g, { host, chain, calls }) {
           !used.has(row.id) &&
           detail.explicit_summary === call.summary.trim() &&
           detail.source === '' &&
+          detail.status === '열림' &&
+          !detail.branch &&
+          !detail.record &&
           (detail.conversation === '' || detail.conversation === key) &&
           call.at - 5000 <= at &&
           at <= call.at + 600000,

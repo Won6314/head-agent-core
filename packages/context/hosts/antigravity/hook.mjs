@@ -8,7 +8,7 @@ import { locations, takeNotices } from '../../core/storage.mjs';
 import { runtimeProblem, processOf } from '../../core/platform.mjs';
 import { compactInstruction } from '../claude/compact.mjs';
 import { register, registered } from './register.mjs';
-import { writePresence, dropPresence, take } from './threads.mjs';
+import { writePresence, dropPresence, readPresence, take } from './threads.mjs';
 import { parentOf } from './subagent.mjs';
 import { asMessage } from '../../core/inbox.mjs';
 import { steps, checkpointOf, recentPart, agySaves } from './transcript.mjs';
@@ -70,7 +70,16 @@ export async function runHook() {
         else {
           const store = sessions(project, { host: 'antigravity' });
           const request = start ? takeStart(project, id) : null;
-          const cleared = start && !request ? clearedFrom(id) : null;
+          // history.jsonl is shared by every agy on this machine: the /clear line counts only
+          // when the conversation it left ran in this same agy process.
+          let cleared = null;
+          try {
+            const left = start && !request ? clearedFrom(id) : null,
+              owner = left ? readPresence(project, left) : null;
+            if (owner?.pid && owner.pid === presence.pid && owner.start === presence.start) cleared = left;
+          } catch (error) {
+            console.error(`head-context: ${error.message}`);
+          }
           if (request) {
             if (!store.names().includes(request.session)) throw new Error(`작업 세션 '${request.session}'이 없습니다.`);
             if (request.branch !== undefined)
@@ -91,12 +100,23 @@ export async function runHook() {
           const defaultTranscript = (cid) =>
             path.join(appData(), 'brain', cid, '.system_generated', 'logs', 'transcript_full.jsonl');
           const read = (cid, file) => agySaves(cid === id ? rows : steps(file || defaultTranscript(cid)));
-          if (restore) recovery = store.recovery({ place, source: 'compact', starts: [{ id, transcript }], read });
-          else if (cleared && place)
-            recovery = store.recovery({ place, source: 'clear', starts: [{ id, transcript }, { id: cleared }], read });
-          if (cleared && place) {
-            const prevFile = store.connection(cleared)?.transcript_path || defaultTranscript(cleared);
-            clearedRecent = recentPart(steps(prevFile), prevFile, { timeZone: locations(project).timezone });
+          // The recovery block and map fail on their own: the rest of this output still goes in.
+          try {
+            if (restore) recovery = store.recovery({ place, source: 'compact', starts: [{ id, transcript }], read });
+            else if (cleared && place)
+              recovery = store.recovery({
+                place,
+                source: 'clear',
+                starts: [{ id, transcript }, { id: cleared }],
+                read,
+              });
+            if (cleared && place) {
+              const prevFile = store.connection(cleared)?.transcript_path || defaultTranscript(cleared);
+              clearedRecent = recentPart(steps(prevFile), prevFile, { timeZone: locations(project).timezone });
+            }
+          } catch (error) {
+            console.error(`head-context: ${error.message}`);
+            recovery = `head-context: 복원 블록과 이 대화가 남긴 기록 지도를 넣지 못했습니다: ${error.message}`;
           }
         }
         if (start) parts.push(guide(project, { host: 'antigravity' }));

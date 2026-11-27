@@ -304,10 +304,10 @@ export function sessions(
     return true;
   };
   const save = ({ summary, history, next, recap, files, conversation_id }) => {
-    const conversation = conversationKey(host, conversation_id);
     if (typeof history !== 'string' || !history.trim()) throw new Error('history(본문)가 필요합니다.');
     const bound = withGraphRead(project, (g) => resolve(conversation_id, g)),
-      dir = directory(bound.session);
+      dir = directory(bound.session),
+      conversation = conversationKey(host, conversation_id);
     entry({ summary, history, next });
     if (bound.stem === 'main') {
       if (recap !== undefined && String(recap).trim())

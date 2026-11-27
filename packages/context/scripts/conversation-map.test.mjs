@@ -79,6 +79,50 @@ const agy = (dir, id, event, transcript, env = {}) => {
   assert.equal(r.stderr, '');
   return r.stdout ? JSON.parse(r.stdout).injectSteps.map((s) => s.systemMessage.systemMessage) : [];
 };
+// Runs the Antigravity hook under a stand-in agy process, which first writes the presence of
+// the conversation /clear left: with its own pid and start when `same`, another pid otherwise.
+const agyUnder = (dir, id, transcript, { left, same = true }) => {
+  const bin = path.join(dir, 'fakebin');
+  fs.mkdirSync(bin, { recursive: true });
+  const agyBin = path.join(bin, 'agy');
+  fs.writeFileSync(
+    agyBin,
+    `import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { processBirth } from ${JSON.stringify(path.resolve('core/platform.mjs'))};
+const [presence, left, same, input] = process.argv.slice(2);
+fs.mkdirSync(presence, { recursive: true });
+const pid = same === '1' ? process.pid : 1;
+fs.writeFileSync(path.join(presence, 'antigravity-' + left + '.json'),
+  JSON.stringify({ host: 'antigravity', conversation_id: left, pid, start: processBirth(pid) }));
+const r = spawnSync(process.execPath, ['scripts/antigravity-hook.mjs'], { input, encoding: 'utf8' });
+process.stdout.write(r.stdout);
+process.stderr.write(r.stderr);
+process.exit(r.status);
+`,
+  );
+  const r = spawnSync(
+    process.execPath,
+    [
+      agyBin,
+      path.join(locations(dir).state, 'presence'),
+      left,
+      same ? '1' : '0',
+      JSON.stringify({
+        conversationId: id,
+        cwd: dir,
+        hookEventName: 'SessionStart',
+        transcriptPath: transcript,
+        lastUserInput: '새 일',
+      }),
+    ],
+    { encoding: 'utf8', env: { ...process.env, HEAD_CONTEXT_SESSION: '', PLUGIN_DATA: path.join(dir, 'plugin-data') } },
+  );
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stderr, '');
+  return r.stdout ? JSON.parse(r.stdout).injectSteps.map((x) => x.systemMessage.systemMessage) : [];
+};
 const fixture = (host = 'claude') => {
   const dir = fresh();
   let time = at;
@@ -88,6 +132,7 @@ const fixture = (host = 'claude') => {
 };
 const save = (s, id, summary, extra = {}) => s.save({ conversation_id: id, summary, history: '본문', ...extra });
 const tool = (id, summary, time, extra = {}) => ({
+  type: 'assistant',
   sessionId: id,
   timestamp: new Date(time).toISOString(),
   ...extra,
@@ -445,7 +490,16 @@ test('Antigravity clear: history predecessor joins place, map and previous excha
   const current = (id) => ({ display: '새 일', workspace: dir, conversationId: id });
   jsonl(history, ['{partial', command, current('N')]);
   assert.equal(clearedFrom('N'), 'A');
-  const parts = agy(dir, 'N', 'SessionStart', path.join(dir, 'N.jsonl'));
+  // The /clear line alone is not enough: A must have run in this same agy process.
+  jsonl(history, ['{partial', command, current('other-agy')]);
+  assert.ok(
+    agyUnder(dir, 'other-agy', path.join(dir, 'other-agy.jsonl'), { left: 'A', same: false }).some((p) =>
+      p.includes('연결되지 않았'),
+    ),
+  );
+  assert.equal(s.connection('other-agy'), null);
+  jsonl(history, ['{partial', command, current('N')]);
+  const parts = agyUnder(dir, 'N', path.join(dir, 'N.jsonl'), { left: 'A' });
   assert.deepEqual(s.connection('N').previous, ['A']);
   assert.equal(s.connection('N').session, 'demo');
   const recovery = parts.find((p) => p.startsWith(clearTitle));
@@ -471,4 +525,24 @@ test('Antigravity clear: history predecessor joins place, map and previous excha
   assert.equal(s.connection('requested').session, 'chosen');
   assert.equal(s.connection('requested').previous, undefined);
   assert.ok(!requested.some((p) => p.startsWith(clearTitle)));
+});
+
+test('old record matching never takes a merge or abandon entry: a retried save stays one line, another conversation’s abandon stays out', () => {
+  for (const scenario of ['retry-close', 'abandon-by-B']) {
+    const { dir, s } = fixture();
+    s.load({ name: 'demo', conversation_id: 'B' });
+    s.branch({ action: 'create', branch: 'job', conversation_id: 'A' });
+    const summary = scenario === 'retry-close' ? '마무리' : '중간';
+    const file = jsonl(path.join(dir, `${scenario}.jsonl`), [tool('A', summary, at), tool('A', summary, at + 1)]);
+    if (scenario === 'retry-close') s.save({ conversation_id: 'A', summary, history: 'b', recap: '정리' });
+    else {
+      s.save({ conversation_id: 'A', summary, history: 'b', next: '계속' });
+      s.branch({ action: 'abandon', branch: 'job', reason: 'B가 멈춤', conversation_id: 'B' });
+    }
+    const lines = mapLines(claude(dir, 'A', 'compact', { transcript_path: file }));
+    assert.deepEqual(
+      lines.map((l) => l.replace(/^- \S+ \S+ \S+ /, '')),
+      [`job (${scenario === 'retry-close' ? '끝남' : '중단'}) · ${summary}`],
+    );
+  }
 });
