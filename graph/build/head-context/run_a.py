@@ -1172,5 +1172,10 @@ def agy_under(payload, what, left):
 agy_under(agy_in(GN, "SessionStart", lastUserInput="새 일"), "Antigravity SessionStart (/clear GN 이어받기)", GA)
 agy(agy_in(GEMPTY, "SessionStart"), "Antigravity SessionStart (history 줄 없는 새 대화)")
 
+# 그래프 검수 L3: 연결 안 된 Claude 대화의 압축 뒤 recovery — 「연결 안 됨」 블록만, 기록이 없어 지도 절은 없다
+STATE["label"] = "대화 기록 지도 — 연결 안 된 대화"
+hook("hook.mjs", ["recovery"], {"hook_event_name": "SessionStart", "session_id": "cccccccc-0000-4000-8000-000000000346", "cwd": str(PROJ), "source": "compact"},
+     "Claude SessionStart(compact) · recovery (연결 안 된 대화)")
+
 OUT.write_text(json.dumps(runs, ensure_ascii=False, indent=1))
 print(len(runs), "runs")

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """head-context 제품 그래프 조회 — 표준 라이브러리만, 읽기 전용.
 
-  python3 hc_graph.py overview                    처음 볼 때: 노드 타입별 수, 화면 묶음, 유저 활동, 기능, 따라 내려가는 길
-  python3 hc_graph.py feature tool:save           기능 하나: 처리 코드에서 도달하는 코드 트리 + 읽고 쓰는 것·외부 연결, 화면·정책
-  python3 hc_graph.py user ua.record              유저 쪽에서 코드까지: 유저 활동 → 화면요소 → 기능 → 처리 코드 → 데이터
-  python3 hc_graph.py screen STA-04               화면 하나: 화면설계서 원문, 화면요소마다 내는·부르는 기능
-  python3 hc_graph.py policy pol.close-needs-recap  정책: 규칙, 지키는 기능, 그 처리 코드 위치 / 표시 정책은 화면
-  python3 hc_graph.py impact sessions.closeBranch  코드 하나를 바꾸면 걸리는 기능·화면·정책
-  python3 hc_graph.py find 압축                     ID·이름·한 줄에서 찾기 (--type 화면요소 처럼 좁힘)
-  python3 hc_graph.py show STA-04#1               노드 하나: 속성, 들어오고 나가는 연결
+  python3 hc_graph.py overview                    처음 볼 때: 노드 타입별 수, 출력 부분 묶음, 유저 활동, 기능, 따라 내려가는 길
+  python3 hc_graph.py feature tool:save           기능 하나: 처리 코드에서 도달하는 코드 트리 + 읽고 쓰는 것·외부 연결, 출력에 담기는 부분·정책
+  python3 hc_graph.py user ua.record              유저 쪽에서 코드까지: 유저 활동 → 출력 부분 → 기능 → 처리 코드 → 데이터
+  python3 hc_graph.py output STA-04               출력 부분 하나: 출력설계서 원문, 담는 기능·읽고 부르는 기능 (screen도 같음)
+  python3 hc_graph.py policy pol.close-needs-recap  정책: 규칙, 지키는 기능, 그 처리 코드 위치 / 표시 정책은 출력 부분
+  python3 hc_graph.py impact sessions.closeBranch  코드 하나를 바꾸면 걸리는 기능·출력 부분·정책
+  python3 hc_graph.py find 압축                     ID·이름·한 줄에서 찾기 (--type '출력 부분' 처럼 좁힘)
+  python3 hc_graph.py show STA-04                 노드 하나: 속성, 들어오고 나가는 연결
   python3 hc_graph.py source ua.resume            원본 읽기: 문서 노드는 원문 글, 코드 노드는 파일·줄(--repo <packages/context>면 그 줄을 보임)
   python3 hc_graph.py checks                      검사 목록(도달하지 않는 코드, 정합성 검사)
   python3 hc_graph.py schema | sql "SELECT …"     테이블 꼴 / 읽기 전용 SQL 하나
@@ -88,9 +88,9 @@ def overview(g):
     p("## 노드 타입별 수")
     for t, n in g.db.execute("SELECT type, count(*) FROM nodes GROUP BY type ORDER BY 2 DESC"):
         p(f"- {t} {n}")
-    p("\n## 화면 묶음 (화면 = 유저가 받는 출력 한 종류)")
+    p("\n## 출력 부분 묶음 (기능 하나의 출력 = 한 번 돌려주는 응답 하나, 출력 부분 = 그 출력에 담기는 부분)")
     groups = {}
-    for r in g.db.execute("SELECT id, name, json_extract(props,'$.IA묶음') FROM nodes WHERE type='화면' ORDER BY id"):
+    for r in g.db.execute("SELECT id, name, json_extract(props,'$.IA묶음') FROM nodes WHERE type='출력 부분' ORDER BY id"):
         groups.setdefault(r[2], []).append(f"{r[0]} {r[1]}")
     for k in sorted(groups):
         p(f"- {k}: " + ", ".join(groups[k]))
@@ -101,9 +101,9 @@ def overview(g):
     for r in g.db.execute("SELECT kind, id, summary FROM nodes WHERE type='기능' ORDER BY kind, id"):
         p(f"- [{r[0]}] {r[1]}  {r[2]}")
     p("\n## 따라 내려가는 길")
-    p("유저 활동 →(유저 활동→화면요소) 화면요소 →(화면요소→기능) 기능 →(기능→코드) 처리 코드 →(reference call·callback·framework-invoked) 코드 →(read/write) 데이터, (코드→외부 연결) 외부 연결")
-    p("기능 →(기능→화면요소) 결과를 보여 주는 화면요소 ←(화면→화면요소) 화면.  정책 →(정책→기능) 기능.  화면 →(화면→정책) 표시 정책.")
-    p("한 단계씩 조회한다: feature, user, screen, policy, impact. 답은 source로 원본을 읽은 뒤에 한다.")
+    p("유저 활동 →(유저 활동→출력 부분) 출력 부분 ←(기능→출력 부분) 기능 →(기능→코드) 처리 코드 →(reference call·callback·framework-invoked) 코드 →(read/write) 데이터, (코드→외부 연결) 외부 연결")
+    p("출력 부분 →(출력 부분→기능) agent가 읽고 부르는 기능.  출력 부분 →(출력 부분→출력 부분) 같이 붙는 공통 영역.  정책 →(정책→기능) 기능.  출력 부분 →(출력 부분→정책) 표시 정책.")
+    p("한 단계씩 조회한다: feature, user, output, policy, impact. 답은 source로 원본을 읽은 뒤에 한다.")
 
 
 def handlers(g, fid):
@@ -188,14 +188,14 @@ def feature(g, fid):
     for cid, role, rng in sorted(handlers(g, fid), key=lambda x: x[1] != "처리"):
         p(f"\n[{role}]")
         walk(cid, 0, rng)
-    shows = g.out(fid, "기능→화면요소")
+    shows = g.out(fid, "기능→출력 부분")
     if shows:
-        p("\n## 결과를 보여 주는 화면요소 (실행 기록·코드 문구 매칭으로 이은 것)")
+        p("\n## 이 기능의 출력에 담기는 부분 (출력설계서의 '내는 기능' 줄)")
         for e in shows:
-            p(f"- {g.label(e['dst'])}  [{screen_of(g, e['dst'])}] — {json.loads(e['props'] or '{}').get('근거', '')}")
-    called = [e["src"] for e in g.inn(fid, "화면요소→기능")]
+            p(f"- {g.label(e['dst'])} — {json.loads(e['props'] or '{}').get('근거', '')}")
+    called = [e["src"] for e in g.inn(fid, "출력 부분→기능")]
     if called:
-        p("\n## 이 기능을 부르게 하는 화면요소")
+        p("\n## 이 기능을 부르게 하는 출력 부분")
         for s in called:
             p(f"- {g.label(s)}")
     pols = [e["src"] for e in g.inn(fid, "정책→기능")]
@@ -209,16 +209,16 @@ def user(g, uid):
     uid = g.resolve(uid)
     n = g.node(uid)
     p(f"# {uid} {n['summary']}\n문서: {n['doc']}\n")
-    steps = sorted(g.out(uid, "유저 활동→화면요소"), key=lambda e: json.loads(e["props"] or "{}").get("순서", 0))
+    steps = sorted(g.out(uid, "유저 활동→출력 부분"), key=lambda e: json.loads(e["props"] or "{}").get("순서", 0))
     for e in steps:
-        p(f"- {json.loads(e['props'] or '{}').get('단계', '?')}단계 화면요소 {g.label(e['dst'])}")
-        scr = g.inn(e["dst"], "화면→화면요소")[0]["src"]
-        users = [x["src"] for x in g.inn(scr, "화면→화면")]
+        pr = json.loads(e["props"] or "{}")
+        p(f"- {pr.get('단계', '?')}단계 출력 부분 {g.label(e['dst'])}" + (f" ({pr['위치']})" if pr.get("위치") else ""))
+        users = [x["src"] for x in g.inn(e["dst"], "출력 부분→출력 부분")]
         if users:
-            p(f"    (공통 영역 — 붙는 화면 {', '.join(users)})")
-        for f in g.out(e["dst"], "화면요소→기능"):
+            p(f"    (공통 영역 — 같이 붙는 부분 {', '.join(users)})")
+        for f in g.out(e["dst"], "출력 부분→기능"):
             p(f"    → 부르는 기능 {g.label(f['dst'])}")
-        for f in g.inn(e["dst"], "기능→화면요소"):
+        for f in g.inn(e["dst"], "기능→출력 부분"):
             p(f"    ← 내는 기능 {f['src']}")
             for cid, role, rng in handlers(g, f["src"]):
                 if role == "입구":
@@ -236,21 +236,18 @@ def user(g, uid):
 def screen(g, sid):
     sid = g.resolve(sid)
     n = g.node(sid)
-    if n["type"] == "화면요소":
-        sid = g.inn(sid, "화면→화면요소")[0]["src"]
-        n = g.node(sid)
     p(n["body"] or "")
     p("\n## 연결")
+    for e in g.inn(sid, "기능→출력 부분"):
+        p(f"- 담는 기능 {e['src']} — {json.loads(e['props'] or '{}').get('근거', '')}")
     for e in g.out(sid):
-        if e["type"] != "화면→화면요소":
-            p(f"- {e['type']} {g.label(e['dst'])}")
-    for e in g.out(sid, "화면→화면요소"):
-        fs_in = [x["src"] for x in g.inn(e["dst"], "기능→화면요소")]
-        fs_out = [x["dst"] for x in g.out(e["dst"], "화면요소→기능")]
-        uas = [x["src"] for x in g.inn(e["dst"], "유저 활동→화면요소")]
-        p(f"- {e['dst']}: ← {', '.join(fs_in) or '-'} | → {', '.join(fs_out) or '-'} | 유저 활동 {', '.join(uas) or '-'}")
-    # 화면→정책은 표시 정책만 잇는다(02a). 화면설계서 글이 이름으로 가리킨 처리 정책은 내는 기능 쪽으로 이어져 있으므로 여기서 함께 보인다.
-    named = sorted(set(re.findall(r"`(pol\.[\w-]+)`", n["body"] or "")) - {e["dst"] for e in g.out(sid, "화면→정책")})
+        p(f"- {e['type']} {g.label(e['dst'])}")
+    for e in g.inn(sid, "출력 부분→출력 부분"):
+        p(f"- 이 부분을 공통 영역으로 두는 부분 {e['src']}")
+    uas = sorted({e["src"] for e in g.inn(sid, "유저 활동→출력 부분")})
+    p(f"- 유저 활동 {', '.join(uas) or '-'}")
+    # 출력 부분→정책은 표시 정책만 잇는다(02a). 출력설계서 글이 이름으로 가리킨 처리 정책은 내는 기능 쪽으로 이어져 있으므로 여기서 함께 보인다.
+    named = sorted(set(re.findall(r"`(pol\.[\w-]+)`", n["body"] or "")) - {e["dst"] for e in g.out(sid, "출력 부분→정책")})
     for pid in named:
         pn = g.node(pid)
         if pn and pn["kind"] == "처리":
@@ -267,12 +264,12 @@ def policy(g, pid):
         p(f"\n- 지키는 기능 {g.label(e['dst'])}")
         for cid, role, rng in handlers(g, e["dst"]):
             p(f"    {role} 코드 {g.label(cid)}" + (f" 줄 {show_rng(rng)}" if rng else ""))
-    for e in g.inn(pid, "화면→정책"):
-        p(f"- 지키는 화면 {g.label(e['src'])}")
-    if n["kind"] == "처리":  # 처리 정책이 드러나는 출력: 지키는 기능이 내는 화면요소 가운데 화면설계서 글이 이 정책을 이름으로 가리킨 화면
-        shown = sorted({sid for (sid,) in g.db.execute("SELECT id FROM nodes WHERE type='화면' AND body LIKE ?", (f"%`{pid}`%",)).fetchall()})
+    for e in g.inn(pid, "출력 부분→정책"):
+        p(f"- 지키는 출력 부분 {g.label(e['src'])}")
+    if n["kind"] == "처리":  # 처리 정책이 드러나는 출력: 출력설계서 글이 이 정책을 이름으로 가리킨 출력 부분
+        shown = sorted({sid for (sid,) in g.db.execute("SELECT id FROM nodes WHERE type='출력 부분' AND body LIKE ?", (f"%`{pid}`%",)).fetchall()})
         for sid in shown:
-            p(f"- 이 정책을 글로 가리키는 화면 {g.label(sid)}")
+            p(f"- 이 정책을 글로 가리키는 출력 부분 {g.label(sid)}")
 
 
 def reach(g, start, rng=None):
@@ -288,11 +285,6 @@ def reach(g, start, rng=None):
     return got  # 02b 조회 절대로 call·callback·framework-invoked만 따라간다(코드 '포함'으로 넓히지 않는다)
 
 
-def screen_of(g, eid):
-    r = g.inn(eid, "화면→화면요소")
-    return r[0]["src"] if r else "?"
-
-
 def boundaries(g):
     row = g.db.execute("SELECT value FROM meta WHERE key='boundaries'").fetchone()
     return json.loads(row[0]) if row else []
@@ -301,7 +293,7 @@ def boundaries(g):
 def impact(g, key):
     cid = g.resolve(key)
     p(f"# {g.label(cid)}\n이 코드에 도달하는 기능(각 기능의 처리·입구 코드에서 call·callback·framework-invoked로 따라가, 처리 코드의 줄 범위를 지킴).")
-    p("화면요소 목록은 그 기능이 내는 출력 후보다 — 이 코드를 바꾸면 그중 어떤 것이 바뀌는지는 코드 가지별로 따로 봐야 한다.")
+    p("출력 부분은 그 기능의 출력에 담기는 부분 전부다 — 이 코드를 바꾸면 그중 어떤 부분이 바뀌는지는 출력 부분의 그리는 코드와 코드 가지로 본다.")
     for b in boundaries(g):
         if cid in reach(g, b["to"]):
             via = [f for (f,) in g.db.execute("SELECT id FROM nodes WHERE type='기능' ORDER BY id").fetchall()
@@ -312,10 +304,9 @@ def impact(g, key):
             p(f"- {g.label(fid)}")
             for e in g.inn(fid, "정책→기능"):
                 p(f"    정책 {e['src']}")
-            els = [e["dst"] for e in g.out(fid, "기능→화면요소")]
-            if els:
-                p(f"    화면 {', '.join(sorted({screen_of(g, x) for x in els}))}")
-                p(f"    화면요소(출력 후보) {', '.join(els)}")
+            parts = [e["dst"] for e in g.out(fid, "기능→출력 부분")]
+            if parts:
+                p(f"    출력 부분 {', '.join(parts)}")
 
 
 def find(g, text, typ=None):
@@ -374,9 +365,6 @@ def source(g, key, repo=None):
     if n["body"]:
         p(f"문서: {n['doc']}\n\n{n['body']}")
         return
-    parent = [e["src"] for e in g.inn(nid, "화면→화면요소")]
-    if parent:
-        return source(g, parent[0], repo)
     p(f"{nid}: 원문 글이 없는 노드입니다(정책·기능은 그래프에 직접 쓴 한 줄: show로 봅니다).")
 
 
@@ -400,7 +388,7 @@ def main():
         feature(g, need())
     elif cmd == "user":
         user(g, need())
-    elif cmd == "screen":
+    elif cmd in ("output", "screen"):
         screen(g, need())
     elif cmd == "policy":
         policy(g, need())

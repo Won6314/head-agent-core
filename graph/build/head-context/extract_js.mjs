@@ -330,8 +330,15 @@ for (const { fn, index, lambda, sf } of callbackArgs) {
   };
   look(lambda.body);
 }
-// F(this, …)로 받은 매개변수 p의 p.m(…)을 C.m으로 잇는다(같은 규칙, 인자가 this인 경우)
-for (const { fn, index, cls } of thisArgs) {
+// F(this, …)로 받은 매개변수 p의 p.m(…)을 C.m으로 잇는다(같은 규칙, 인자가 this인 경우).
+// F가 p를 또 다른 패키지 함수 H에 그대로 넘기면 H의 그 매개변수도 C다(0.9.20 검수 M1:
+// withGraphRead((g) => recoveryText(g)) → recoveryText가 g를 conversationRecords 등에 넘김). 본 것은 건너뛴다.
+const seenThis = new Set();
+for (let i = 0; i < thisArgs.length; i++) {
+  const { fn, index, cls } = thisArgs[i];
+  const key = `${fn}|${index}|${cls}`;
+  if (seenThis.has(key)) continue;
+  seenThis.add(key);
   const decl = declOfDef.get(fn), f = decl && fnNode(decl);
   const param = f?.parameters?.[index];
   if (!param || !ts.isIdentifier(param.name) || !f.body) continue;
@@ -340,6 +347,11 @@ for (const { fn, index, cls } of thisArgs) {
     if (ts.isCallExpression(n) && ts.isPropertyAccessExpression(n.expression) && ts.isIdentifier(n.expression.expression) && n.expression.expression.text === pname) {
       const target = `${cls}.${n.expression.name.text}`;
       if (defs.has(target)) { addRef(owner.get(n) ?? fn, target, 'call', lineOf(fsf, n.getStart(fsf))); callbackLinks++; }
+    }
+    if (ts.isCallExpression(n)) {
+      const h = defOfSymbol(checker.getSymbolAtLocation(ts.isPropertyAccessExpression(n.expression) ? n.expression.name : n.expression));
+      if (h && FUNC_KINDS.has(defs.get(h).kind))
+        n.arguments.forEach((a, j) => { if (ts.isIdentifier(a) && a.text === pname) thisArgs.push({ fn: h, index: j, cls }); });
     }
     ts.forEachChild(n, look);
   };

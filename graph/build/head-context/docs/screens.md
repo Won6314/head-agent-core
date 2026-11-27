@@ -4,10 +4,10 @@
 >
 > 0.9.15(head-agent-core `e96f5aa`, 11-23): Antigravity 포장(0.9.11~0.9.15)을 더했다. Antigravity 출력은 R159~R220이다. 앞 R158까지는 0.9.10 실행과 같은 차례다(그래프 패치 2.8·5.6, A1~A26). Antigravity 훅 출력은 시스템 메시지(injectSteps)마다 나뉘어 들어가고, 원문에는 빈 줄 하나로 이어 적었다. agy 앱 자체는 띄우지 않았다.
 
-화면이 없는 제품이라 정의서의 '화면이 없는 제품' 절대로 적용했다. 화면 하나 = 유저가 받는 출력 한 종류, 화면요소 = 그 출력 안의 한 부분. 그림 대신 실제로 받은 출력 원문을 `원문:`에 적었다(R번호 = [A-1 조작 기록](../runs/A-1-outputs.md)).
+화면이 없는 제품이라 정의서의 '화면이 없는 제품' 절대로 적용했다. 기능 하나의 출력은 그 기능이 한 번 돌려주는 응답 하나다(상태마다 꼴이 달라도 하나). 이 문서의 절 하나(`## XXX-00`)는 그 출력에 담기는 부분 하나이고, 여러 기능의 출력에 같이 담기기도 한다. 절의 `내는 기능` 줄이 그 부분을 담는 기능 전부이고, 그래프는 이 줄을 그대로 읽어 기능→출력 부분을 잇는다. `공통 영역` 줄은 이 부분에 같이 붙는 부분이다(공통 영역 부분은 자기 `내는 기능` 줄이 없으면 붙는 부분의 기능을 물려받는다). 그림 대신 실제로 받은 출력 원문을 `원문:`에 적었다(R번호 = [A-1 조작 기록](../runs/A-1-outputs.md)).
 유저는 사람과 그 사람의 AI agent다. 대부분의 출력은 agent가 읽고, 사람은 agent가 전하는 말로 받는다.
 
-화면요소 줄의 표시: `←` 뒤 기능은 그 화면요소에 결과를 내는 기능(기능→화면요소), `→` 뒤 기능은 그 화면요소를 읽고 agent가 부르는 기능(화면요소→기능).
+절 안 번호 줄(`### 화면요소`)은 그 부분의 내용이다. 줄의 `→` 뒤 기능은 그 내용을 읽고 agent가 부르는 기능(출력 부분→기능)이다. 줄의 `←` 뒤 기능은 그 줄이 어느 기능의 출력에서 나오는지 적은 설명이고, 연결에는 쓰지 않는다.
 `(코드)`가 붙은 화면요소는 실행에서 나오지 않아 코드에서만 읽은 것이다.
 
 ## CMN-01 작업 세션 머리
@@ -25,7 +25,7 @@ agent는 여기서 이 일의 목적(context.md)과 지금 자리(메인 또는 
 
 ### 화면요소
 1. **작업 세션 이름** — `# 작업 세션: <이름>` 한 줄.
-2. **context.md 전문** — 작업 세션의 목적·방향·범위. 상한(9,000자)을 넘으면 앞부분과 `(context.md 뒷부분 생략 — 전문:` 경로 한 줄. Claude 시작 훅은 시작·/clear·압축 때 첫 실행 안내 자리까지 더해 잰다(R250·R251). Codex 시작 훅은 자르지 않는다(R254·R255). 0.9.19까지는 압축 뒤 복원 블록(STA-07)이 이 출력 끝에 붙어 그 자리까지 쟀다. 0.9.20부터 복원 블록은 따로 나온다.
+2. **context.md 전문** — 작업 세션의 목적·방향·범위. 상한(9,000자)을 넘으면 앞부분과 `(context.md 뒷부분 생략 — 전문:` 경로 한 줄. Claude 시작 훅은 시작·/clear·압축 때 첫 실행 안내 자리까지 더해 잰다(R250·R251). Codex 시작 훅은 자르지 않는다(R254·R255). ← `hook:codex:SessionStart:session` 0.9.19까지는 압축 뒤 복원 블록(STA-07)이 이 출력 끝에 붙어 그 자리까지 쟀다. 0.9.20부터 복원 블록은 따로 나온다.
 3. **이 대화의 작업 브랜치** — `이 대화의 작업 브랜치: <이름 | 없음(메인)>`. 둘러보기(TOL-08)에는 없다.
 4. **작업 세션 폴더** — 이름(#1) 바로 아래 한 줄 `작업 세션 폴더: <절대 경로>`(0.9.6부터). 작업 파일을 둘 자리(`work/YYYY-MM/…`)를 찾지 않아도 된다. 둘러보기(TOL-08)에도 나온다.
 
@@ -61,6 +61,7 @@ agent는 열린 작업 브랜치와 '다음'을 보고 이어 갈 일을 고른�
 - 출력 종류: 공통 영역(훅 출력·도구 결과 끝에 붙음)
 - 상태: 플러그인 자기 기록 파일이 깨져 옮겨 둔 직후
 - 원문: R63(Claude 시작 훅), R157(도구 결과 끝), R158(Codex 시작 훅)
+- 내는 기능: `tool:list`, `tool:load`, `tool:create`, `tool:save`, `tool:branch`, `tool:read`, `tool:todo`, `tool:conversations`, `tool:setup`, `tool:send`, `tool:send@antigravity`, `hook:claude:SessionStart:session`, `hook:claude:SessionStart:context`, `hook:codex:SessionStart:session`, `hook:codex:SessionStart:context`, `hook:codex:UserPromptSubmit:inbox`, `hook:antigravity:SessionStart`, `hook:antigravity:PreInvocation`
 - 그리는 코드: `code:core/storage.mjs#takeNotices`
 
 ### 개요
@@ -149,7 +150,7 @@ node:sqlite를 쓸 수 없는 Node에서는 이 출력 대신 ERR-05의 이유 �
 ## STA-04 시작 때 작업 맥락
 
 - 출력 종류: 시작 훅이 넣는 글
-- 상태: 연결된 대화의 시작·/clear·압축 Antigravity: 시작과 압축 뒤 첫 단계, 사람 대화만
+- 상태: 연결된 대화의 시작·/clear·압축 Antigravity: 시작(시작 파일·HEAD_CONTEXT_SESSION으로 연결됐을 때, 0.9.20부터 터미널 /clear 이어받기 뒤도 R344)과 압축 뒤 첫 단계, 사람 대화만
 - 원문: R49, R54, R122(9,000자를 넘어 줄임), R154(Codex, 작업 브랜치에 연결), R135·R139(node:sqlite 없는 Node — 빈 출력), R161·R162(Antigravity 시작 파일로 연결), R168(Antigravity 압축 뒤)
 - 공통 영역: CMN-02, CMN-03
 - 내는 기능: `hook:claude:SessionStart:context`, `hook:codex:SessionStart:context`, `hook:antigravity:SessionStart`, `hook:antigravity:PreInvocation`
@@ -167,18 +168,18 @@ node:sqlite를 쓸 수 없는 Node에서는 이 출력 대신 ERR-05의 이유 �
 
 ## STA-05 최근 대화
 
-- 출력 종류: 시작 훅(Claude)·매 단계 훅(Antigravity, 압축 뒤 처음 한 번)이 넣는 글
-- 상태: 압축·/clear 직후 Antigravity: 대화 기록에 새 CHECKPOINT가 보인 첫 단계(사람 대화만). 마지막 CHECKPOINT 앞 구간만 쓰고 `/` 명령 입력은 뺀다
-- 원문: R55, R136(node:sqlite 없는 Node에서도 들어감), R168(Antigravity), R188(Antigravity, node:sqlite 없는 Node)
-- 내는 기능: `hook:claude:SessionStart:recent`, `hook:antigravity:PreInvocation`
+- 출력 종류: 시작 훅(Claude)·매 단계 훅(Antigravity, 압축 뒤 처음 한 번)·Antigravity 시작 훅(터미널 /clear 이어받기 뒤)이 넣는 글
+- 상태: 압축·/clear 직후 Antigravity: 대화 기록에 새 CHECKPOINT가 보인 첫 단계(사람 대화만). 마지막 CHECKPOINT 앞 구간만 쓰고 `/` 명령 입력은 뺀다. 0.9.20부터 터미널 /clear로 앞 대화의 자리를 이어받은 첫 시작에도 앞 대화 기록 파일의 주고받기를 넣는다(R344)
+- 원문: R55, R136(node:sqlite 없는 Node에서도 들어감), R168(Antigravity), R188(Antigravity, node:sqlite 없는 Node), R344(Antigravity /clear 이어받기)
+- 내는 기능: `hook:claude:SessionStart:recent`, `hook:antigravity:PreInvocation`, `hook:antigravity:SessionStart`
 - 그리는 코드: `code:core/recent.mjs#renderRecent`(0.9.15부터 Claude·Antigravity가 같이 쓴다)
 
 ### 개요
 호스트 요약 대신 직전 주고받기를 원문 그대로 돌려준다.
 
 ### 화면요소
-1. **머리** — `# 최근 대화 (직전 주고받기 n번, 원문)`. ← `hook:claude:SessionStart:recent` ← `hook:antigravity:PreInvocation`
-2. **주고받기** — 최대 5번. 번호마다 `## n · 사용자 MM-DD HH:MM`(사람이 친 말, 질문 창 답은 tool 결과에서 뽑음)과 `## n · 답`(모델 답 중 보이는 글). 도구 호출·결과·생각·훅 알림은 뺀다. 문구: `## n · 사용자` ← `hook:claude:SessionStart:recent` ← `hook:antigravity:PreInvocation`
+1. **머리** — `# 최근 대화 (직전 주고받기 n번, 원문)`. ← `hook:claude:SessionStart:recent` ← `hook:antigravity:PreInvocation` ← `hook:antigravity:SessionStart`
+2. **주고받기** — 최대 5번. 번호마다 `## n · 사용자 MM-DD HH:MM`(사람이 친 말, 질문 창 답은 tool 결과에서 뽑음)과 `## n · 답`(모델 답 중 보이는 글). 도구 호출·결과·생각·훅 알림은 뺀다. 문구: `## n · 사용자` ← `hook:claude:SessionStart:recent` ← `hook:antigravity:PreInvocation` ← `hook:antigravity:SessionStart`
 3. **넘칠 때 기록 파일 경로** — 오래된 주고받기부터 빼고, 한 번만 남아도 길면 본문을 자르고, 대화 기록 파일 경로를 적는다(코드). 문구: `번은 상한 때문에 뺐습니다. 대화 기록 파일:` ← `hook:claude:SessionStart:recent` ← `hook:antigravity:PreInvocation`
 
 ### 화면 정책
@@ -203,8 +204,8 @@ OpenCode에서는 시작 훅 대신 요청마다 서버 안내문 공용 부분�
 ## STA-07 컴팩트·/clear 뒤 먼저 할 것과 이 대화가 남긴 기록
 
 - 출력 종류: 시작 훅이 넣는 글(Claude·Codex는 따로 나오는 recovery 출력, Antigravity는 시스템 메시지 한 덩어리). 0.9.19까지는 session 출력의 끝이었다
-- 상태: Claude·Codex 사람 대화의 압축 뒤 시작(source compact), Claude 사람 대화의 /clear 뒤 시작, Antigravity 사람 대화의 새 CHECKPOINT 뒤 첫 단계와 터미널 /clear 뒤 첫 시작. 하위 에이전트(Codex agent_id)·Claude 프로그램 실행(sdk-*)·재개·처음 시작에는 없다
-- 원문: R326(Claude 작업 브랜치 map-job), R327(Claude 메인), R329(Claude /clear), R331(/clear 뒤 압축 — 사슬), R332(sdk-cli — 없음), R336(Codex 메인), R337(Codex 하위 에이전트 — 없음), R338(Codex startup — 없음), R343(Antigravity 압축), R344(Antigravity /clear)
+- 상태: Claude·Codex 사람 대화의 압축 뒤 시작(source compact), Claude 사람 대화의 /clear 뒤 시작, Antigravity 사람 대화의 새 CHECKPOINT 뒤 첫 단계와 터미널 /clear 이어받기 뒤 첫 시작. /clear 뒤 이어받을 자리가 없으면 아무것도 없다. 하위 에이전트(Codex agent_id)·Claude 프로그램 실행(sdk-*, HEAD_CONTEXT_PERSON=1 아님)·재개·처음 시작에는 없다
+- 원문: R326(Claude 작업 브랜치 map-job), R327(Claude 메인), R346(Claude 연결 안 됨 — 블록만, 지도 없음), R329(Claude /clear), R331(/clear 뒤 압축 — 사슬), R332(sdk-cli — 없음), R336(Codex 메인), R337(Codex 하위 에이전트 — 없음), R338(Codex startup — 없음), R343(Antigravity 압축), R344(Antigravity /clear)
 - 공통 영역: 없음
 - 내는 기능: `hook:claude:SessionStart:recovery`, `hook:codex:SessionStart:recovery`, `hook:antigravity:PreInvocation`, `hook:antigravity:SessionStart`
 - 그리는 코드: `code:core/conversation-map.mjs#recoveryBlock`, `code:core/conversation-map.mjs#renderConversationMap`
@@ -216,10 +217,10 @@ OpenCode에서는 시작 훅 대신 요청마다 서버 안내문 공용 부분�
 agent는 이 블록대로 작업 브랜치를 시작한 목적을 `read entry`로 읽고, 마지막 기록의 다음이 사람이 정한 일인지 최근 대화에서 확인한 뒤 잇는다. 메인이면 할 일을 지도와 최근 대화에서 찾는다. 지도 줄의 짧은 ID로 `read entry`를 부르면 그 기록의 본문을 읽는다.
 
 ### 화면요소
-1. **머리** — `## 컴팩트 뒤 먼저 할 것`(압축) 또는 `## /clear 뒤 먼저 할 것`(/clear)과 그 아래 한 줄. 압축은 복원을 먼저 하라는 줄, /clear는 '사용자가 하던 일을 이으라고 하면 복원부터, 새 일을 말하면 그 일'이다. ← `hook:claude:SessionStart:recovery` ← `hook:codex:SessionStart:recovery` ← `hook:antigravity:PreInvocation` ← `hook:antigravity:SessionStart` 문구: `하던 일을 잇기 전에 복원부터 한다`
-2. **최초 목적** — 작업 브랜치면 read entry와 첫 기록 짧은 ID, 첫 기록 요약. 메인이면 '메인은 여러 대화가 함께 쓰므로, 메인의 다른 기록은 다른 대화 것일 수 있다'와 할 일을 이 대화가 남긴 기록과 최근 대화에서 찾으라는 말(0.9.20, read recent 권유는 뺌). 연결이 없으면 최근 대화에서 사람이 정한 일. ← `hook:claude:SessionStart:recovery` ← `hook:codex:SessionStart:recovery` → `tool:read` 문구: `로 이 작업 브랜치를 시작한 목적(문제·목표·조건)을 읽는다`
-3. **지금 할 일** — 경우마다 다르다. 작업 브랜치: 마지막 기록의 다음과 '사람이 정한 일인지 최근 대화에서 확인한 뒤 잇는다'(다음이 없으면 최근 대화에서 사람이 마지막으로 정한 일). 메인: '위에서 찾은 일이다. 사람이 정하지 않은 계획은 잇기 전에 확인한다'(R327). 연결 없음: 이 줄이 따로 없고 #2 자리 한 줄('최초 목적과 지금 할 일')에 합쳐 나온다. ← `hook:claude:SessionStart:recovery` ← `hook:codex:SessionStart:recovery` 문구: `이 다음은 기록을 남긴 대화가 적은 계획이다`
-4. **기록 지도 머리** — `## 이 대화가 남긴 기록 (최신이 위)`와 이 대화·앞 대화가 저장한 기록이라는 설명, 본문은 read entry로 읽는다는 줄(0.9.20). 기록이 없으면 `(이 대화가 저장한 기록은 아직 없다)`. ← `hook:claude:SessionStart:recovery` ← `hook:codex:SessionStart:recovery` ← `hook:antigravity:PreInvocation` ← `hook:antigravity:SessionStart` → `tool:read` 문구: `이 대화와 /clear·이어짐으로 이어진 앞 대화가 저장한 기록이다`
+1. **머리** — `## 컴팩트 뒤 먼저 할 것`(압축) 또는 `## /clear 뒤 먼저 할 것`(/clear)과 그 아래 한 줄. 압축은 복원을 먼저 하라는 줄, /clear는 사용자가 하던 일을 이으라고 하면 아래대로 복원부터 하고, 새 일을 말하면 그 일을 하라는 줄이다. ← `hook:claude:SessionStart:recovery` ← `hook:codex:SessionStart:recovery` ← `hook:antigravity:PreInvocation` ← `hook:antigravity:SessionStart` 문구: `하던 일을 잇기 전에 복원부터 한다`
+2. **최초 목적** — 작업 브랜치면 read entry와 첫 기록 짧은 ID, 첫 기록 요약. 메인이면 '메인은 여러 대화가 함께 쓰므로, 메인의 다른 기록은 다른 대화 것일 수 있다'와 할 일을 이 대화가 남긴 기록과 최근 대화에서 찾으라는 말(0.9.20, read recent 권유는 뺌). 연결이 없으면(압축 뒤만) 최근 대화에서 사람이 정한 일(R346). ← `hook:claude:SessionStart:recovery` ← `hook:codex:SessionStart:recovery` ← `hook:antigravity:PreInvocation` ← `hook:antigravity:SessionStart` → `tool:read` 문구: `로 이 작업 브랜치를 시작한 목적(문제·목표·조건)을 읽는다`
+3. **지금 할 일** — 경우마다 다르다. 작업 브랜치: 마지막 기록의 다음과, 그것이 사용자가 정한 일인지 최근 대화에서 확인한 뒤 이으라는 말(다음이 없으면 최근 대화에서 사용자가 마지막으로 정한 일). 메인: 위에서 찾은 일이고 사용자가 정하지 않은 계획은 잇기 전에 사용자에게 확인하라는 말(R327). 연결 없음: 이 줄이 따로 없고 #2 자리 한 줄(최초 목적과 지금 할 일)에 합쳐 나온다(R346). ← `hook:claude:SessionStart:recovery` ← `hook:codex:SessionStart:recovery` ← `hook:antigravity:PreInvocation` ← `hook:antigravity:SessionStart` 문구: `이 다음은 기록을 남긴 대화가 적은 계획이다`
+4. **기록 지도 머리** — `## 이 대화가 남긴 기록 (최신이 위)`와 이 대화·앞 대화가 저장한 기록이라는 설명, 본문은 read entry로 읽는다는 줄(0.9.20). 연결됐는데 기록이 없으면 `(이 대화가 저장한 기록은 아직 없다)`(R168). 연결이 없고 기록도 없으면 이 절이 통째로 빠진다(R346). ← `hook:claude:SessionStart:recovery` ← `hook:codex:SessionStart:recovery` ← `hook:antigravity:PreInvocation` ← `hook:antigravity:SessionStart` → `tool:read` 문구: `이 대화와 /clear·이어짐으로 이어진 앞 대화가 저장한 기록이다`
 5. **기록 지도 줄** — `- <짧은 ID> <MM-DD HH:MM> [<다른 작업 세션>] <작업 브랜치 또는 메인>( (끝남)·(중단)) · <요약>`. 최신 15줄, 요약 120자, 더 있으면 `(그 앞 n개 — 흐름 지도에 있다)`. 짧은 ID는 흐름 지도와 같다. 대화 줄로 찾은 기록과, 대화 기록 파일의 save 호출로 맞춘 옛 기록(R326의 A0, R343의 G0)이 함께 시각 순으로 나온다. ← `hook:claude:SessionStart:recovery` ← `hook:codex:SessionStart:recovery` ← `hook:antigravity:PreInvocation` ← `hook:antigravity:SessionStart` 문구: `— 흐름 지도에 있다`
 
 ### 화면 정책
@@ -230,7 +231,7 @@ agent는 이 블록대로 작업 브랜치를 시작한 목적을 `read entry`�
 - 출력 종류: 도구 서버 안내문(MCP initialize의 instructions). Codex는 시작 훅으로 넣는다. Antigravity는 도구 서버 안내문과 함께 시작 훅으로도 넣는다
 - 상태: 도구 서버가 뜰 때
 - 원문: R6(Claude), R66(Codex 시작 훅), R70(Codex 서버), R159(Antigravity 시작 훅), R170(Antigravity 서버)
-- 내는 기능: `mcp:initialize`, `hook:codex:SessionStart:instructions`, `hook:antigravity:SessionStart`
+- 내는 기능: `mcp:initialize`, `hook:codex:SessionStart:instructions`, `hook:antigravity:SessionStart`, `hook:opencode:experimental.chat.system.transform`
 - 그리는 코드: `code:core/mcp.mjs#instructionsFor`
 
 ### 개요
@@ -419,7 +420,7 @@ agent는 찾을 것이 정해진 조사면 작업 기록 → 프로젝트 조사
 
 - 출력 종류: tool 결과(read overview)
 - 원문: R28
-- 공통 영역: CMN-02
+- 공통 영역: CMN-01, CMN-02
 - 내는 기능: `tool:read`
 - 그리는 코드: `code:core/sessions.mjs#sessions.inspect`
 
@@ -504,7 +505,7 @@ agent는 찾을 것이 정해진 조사면 작업 기록 → 프로젝트 조사
 
 - 출력 종류: tool 결과(isError)
 - 원문: R9, R10, R13, R18, R19, R23, R30, R36, R38, R39, R75, R76, R114, R117, R118, R149, R150, R152, R175~R177·R180(Antigravity send)
-- 내는 기능: `tool:list`, `tool:load`, `tool:create`, `tool:save`, `tool:branch`, `tool:read`, `tool:todo`, `tool:setup`, `tool:send`, `tool:send@antigravity`
+- 내는 기능: `tool:list`, `tool:load`, `tool:create`, `tool:save`, `tool:branch`, `tool:read`, `tool:todo`, `tool:conversations`, `tool:setup`, `tool:send`, `tool:send@antigravity`
 - 그리는 코드: `code:core/mcp.mjs#callTool`
 
 ### 개요
@@ -541,7 +542,7 @@ agent는 찾을 것이 정해진 조사면 작업 기록 → 프로젝트 조사
 - 출력 종류: tool 결과(isError, Codex·Antigravity)
 - 상태: Codex 대화의 시작 훅이 돌지 않아 등록이 없음(대개 훅 신뢰 전). Antigravity: 대화의 훅이 아직 돌지 않아 등록 파일에 작업 폴더가 없음
 - 원문: R78, R174·R221~R230(Antigravity, 등록 안 된 대화의 도구 10개)
-- 내는 기능: `tool:list`, `tool:load`, `tool:read`(Codex). Antigravity: core 도구 9개(`tool:list`·`tool:load`·`tool:create`·`tool:save`·`tool:branch`·`tool:read`·`tool:todo`·`tool:conversations`·`tool:setup`)와 `tool:send@antigravity` — 도구를 고르기 전에 같은 오류로 멈춘다(`core/mcp.mjs` serve tools/call, R174·R221~R230)
+- 내는 기능: `tool:list`, `tool:load`, `tool:read`, `tool:send`(Codex). Antigravity: core 도구 9개(`tool:list`·`tool:load`·`tool:create`·`tool:save`·`tool:branch`·`tool:read`·`tool:todo`·`tool:conversations`·`tool:setup`)와 `tool:send@antigravity` — 도구를 고르기 전에 같은 오류로 멈춘다(`core/mcp.mjs` serve tools/call, R174·R221~R230)
 - 그리는 코드: `code:hosts/codex/register.mjs`, `code:core/mcp.mjs#PROJECT_UNKNOWN`, `code:hosts/antigravity/mcp.mjs#serveAntigravity.projectOf`
 
 ### 화면요소
@@ -554,13 +555,14 @@ agent는 찾을 것이 정해진 조사면 작업 기록 → 프로젝트 조사
 - 출력 종류: 시작·입력 훅이 넣는 글
 - 상태: 훅 실행 중 오류. Antigravity 도구 전 훅(PreToolUse)은 실패해도 이 줄을 내지 않는다. 입력 오류(R271)와 진입 스크립트가 뜨지 못할 때(R272, 셸 대체)는 허락(allow)이 나가지만, 10초 시간 초과에는 agy가 그 셸 명령을 거절한다(`pol.hook-failure-says`, `pol.agy-wake-register-approve`)
 - 원문: R64(.head/config.json이 깨짐), R163(Antigravity 시작 파일의 없는 작업 세션), R231(Antigravity 편지함 폴더를 읽을 수 없음)
-- 내는 기능: `hook:claude:SessionStart:session`, `hook:codex:SessionStart:session`, `hook:codex:UserPromptSubmit:inbox`, `hook:antigravity:SessionStart`, `hook:antigravity:PreInvocation`
+- 내는 기능: `hook:claude:SessionStart:core`, `hook:claude:SessionStart:session`, `hook:claude:SessionStart:context`, `hook:claude:SessionStart:recent`, `hook:claude:SessionStart:recovery`, `hook:claude:SubagentStart`, `hook:codex:SessionStart:core`, `hook:codex:SessionStart:session`, `hook:codex:SessionStart:context`, `hook:codex:SessionStart:instructions`, `hook:codex:SessionStart:recovery`, `hook:codex:UserPromptSubmit:inbox`, `hook:codex:SubagentStart:subagent`, `hook:antigravity:SessionStart`, `hook:antigravity:PreInvocation`
 - 그리는 코드: `code:hosts/claude/hook.mjs`, `code:hosts/codex/hook.mjs`, `code:hosts/antigravity/hook.mjs#runHook`
 
 ### 화면요소
-1. **실패 한 줄** — `head-context: 이 훅(<부분>)이 작업 맥락을 넣지 못했습니다: <이유>`. Claude는 시작·하위 에이전트 훅, Codex는 시작·입력·하위 에이전트 훅이 실패하면 낸다(각 훅의 catch). ← `hook:claude:SessionStart:session` ← `hook:claude:SessionStart:context` ← `hook:claude:SessionStart:core` ← `hook:claude:SessionStart:recent` ← `hook:claude:SubagentStart` ← `hook:codex:SessionStart:session` ← `hook:codex:SessionStart:context` ← `hook:codex:SessionStart:core` ← `hook:codex:SessionStart:instructions` ← `hook:codex:UserPromptSubmit:inbox` ← `hook:codex:SubagentStart:subagent`
+1. **실패 한 줄** — `head-context: 이 훅(<부분>)이 작업 맥락을 넣지 못했습니다: <이유>`. Claude는 시작·하위 에이전트 훅, Codex는 시작·입력·하위 에이전트 훅이 실패하면 낸다(각 훅의 catch). ← `hook:claude:SessionStart:session` ← `hook:claude:SessionStart:context` ← `hook:claude:SessionStart:core` ← `hook:claude:SessionStart:recent` ← `hook:claude:SessionStart:recovery` ← `hook:claude:SubagentStart` ← `hook:codex:SessionStart:session` ← `hook:codex:SessionStart:context` ← `hook:codex:SessionStart:core` ← `hook:codex:SessionStart:instructions` ← `hook:codex:SessionStart:recovery` ← `hook:codex:UserPromptSubmit:inbox` ← `hook:codex:SubagentStart:subagent`
 2. **설정 파일 이유** — `설정 파일을 읽을 수 없습니다(JSON 오류). 고치기 전에는 기록 위치를 알 수 없어 기록을 읽거나 쓰지 않습니다: <경로> …` 기록 위치를 읽는 훅이 낸다. ← `hook:claude:SessionStart:session` ← `hook:claude:SessionStart:context` ← `hook:codex:SessionStart:session` ← `hook:codex:SessionStart:context` ← `hook:codex:UserPromptSubmit:inbox`
 3. **Antigravity 실패 한 줄** — 부분 이름 없이 `head-context: 작업 맥락을 넣지 못했습니다: <이유>`. 시작 파일 오류(`시작 파일의 session은 …`, `작업 세션 '<이름>'이 없습니다.`)와 읽을 수 없는 편지함 폴더도 이 꼴이다(R231. Codex는 같은 경우 빈 편지함으로 보아 아무것도 내지 않는다 R232, `pol.inbox-unreadable-per-app`). 서브에이전트 판정은 실패해도 이 줄을 내지 않는다(R218). ← `hook:antigravity:SessionStart` ← `hook:antigravity:PreInvocation`
+4. **Antigravity 복원 실패 한 줄** — 압축 뒤 첫 단계나 터미널 /clear 이어받기에서 복원 블록·기록 지도·앞 대화 최근 주고받기를 만들다 실패하면 그 덩어리 자리에 이 줄이 들어가고, 코어·작업 세션·작업 맥락 등 나머지 출력은 그대로 나간다(0.9.20, 코드). 문구: `복원 블록과 이 대화가 남긴 기록 지도를 넣지 못했습니다` ← `hook:antigravity:PreInvocation` ← `hook:antigravity:SessionStart`
 
 ### 화면 정책
 - `pol.hook-failure-says`

@@ -96,7 +96,9 @@ DATA = {".head/ 상태·기록·색인 파일": "파일", "프로젝트 설정·
         # 0.9.15: Antigravity가 읽는 agy 쪽 파일. 등록 파일(PLUGIN_DATA/conversations)은 공용 도우미로만 읽고 써서 칸을 두지 않는다(그래프 패치 2.4 HEAD 결정 (a))
         "Antigravity 대화 기록 파일": "호스트 파일", "Antigravity ACP 로그": "호스트 파일", "Antigravity 대화 폴더 메시지(brain)": "호스트 파일",
         # 0.9.18: 플러그인이 쓰고 읽는 자기 파일(agy 프로세스 하나에 하나). fs를 직접 불러 연결이 생긴다
-        "Antigravity 깨우기 열쇠 기록": "파일"}
+        "Antigravity 깨우기 열쇠 기록": "파일",
+        # 0.9.20: agy가 쓰는 사용자 전체 공용 입력 기록. /clear 앞 대화를 찾으려 끝부분을 읽기만 한다(그래프 검수 M2)
+        "Antigravity 입력 기록(history.jsonl)": "호스트 파일"}
 # 호스트(Claude Code)가 쓴 등록 파일·대화 기록은 바깥 서비스 호출이 아니라 파일 읽기라 데이터로 둔다(검수 지적).
 READ = {"readFileSync", "readSync", "readdirSync", "existsSync", "statSync", "lstatSync", "realpathSync", "readlinkSync",
         "accessSync", "openSync", "fstatSync"}
@@ -560,48 +562,49 @@ def split_sections(text, pat):
     return out
 
 
-# ---- 화면·화면요소
-element_text = {}
-element_makers = {}  # 화면요소 글에 ← 로 적은 내는 기능(코드 자리 매칭을 좁힐 때만 쓴다)
-ELEM = re.compile(r"^(\d+(?:-\d+)?)\. \*\*(.+?)\*\* — (.*)$")
+# ---- 출력 부분
+# 기능 하나의 출력은 한 번 돌려주는 응답 하나다(상태마다 꼴이 달라도 하나). 출력설계서(screens.md)의 절 하나는
+# 그 출력에 담기는 부분 하나이고(여러 기능의 출력에 같이 담기기도 한다), 절의 '내는 기능' 줄이 그 부분을 담는 기능이다.
+# 빌드는 그 줄을 그대로 읽어 기능→출력 부분을 잇는다. 공통 영역 부분(CMN)은 그 부분을 공통 영역으로 둔 부분의 기능을 물려받는다.
 screens = split_sections(doc("screens.md"), r"^## ([A-Z]{3}-\d\d) (.+)$")
 pol_kind = {p["id"]: p["kind"] for p in meaning["policies"]}
 screen_policies = {}
+makers, common_of = {}, {}
 for sid, s in screens.items():
     body = "\n".join(s["lines"]).strip()
     fields = dict(re.findall(r"^- (출력 종류|상태|원문|공통 영역|내는 기능|그리는 코드): (.*)$", body, re.M))
     sub = split_sections(body, r"^### (화면요소|화면 정책|개요|화면 흐름)()$")
-    node("화면", sid, name=s["title"], 출력종류=fields.get("출력 종류"), 상태=fields.get("상태"), 원문=fields.get("원문"),
+    node("출력 부분", sid, name=s["title"], 출력종류=fields.get("출력 종류"), 상태=fields.get("상태"), 원문=fields.get("원문"),
          IA묶음=ia_group.get(sid), 문서=f"docs/screens.md#{sid}", 본문=f"## {sid} {s['title']}\n{body}",
          개요=" ".join(l for l in sub.get("개요", {"lines": []})["lines"] if l.strip()) or None)
     if sid not in ia_group:
-        problems.append(f"C: 화면 {sid}가 IA 묶음에 없음")
+        problems.append(f"C: 출력 부분 {sid}가 IA 묶음에 없음")
+    makers[sid] = [fid for fid in dict.fromkeys(TICK.findall(fields.get("내는 기능", ""))) if ":" in fid]
     for c in re.findall(r"[A-Z]{3}-\d\d", fields.get("공통 영역", "")):
-        edge("화면→화면", sid, c, 근거="공통 영역")
-    # '내는 기능'은 화면설계서의 설명 글로만 둔다. 화면요소 ← 기능 연결은 아래 실행 기록·코드 매칭으로 만든다(사용자 결정 11-04).
+        edge("출력 부분→출력 부분", sid, c, 근거="공통 영역")
+        common_of.setdefault(c, []).append(sid)
     for cid in TICK.findall(fields.get("그리는 코드", "")):
-        edge("화면→코드", sid, cid, 근거="그리는 코드")
-    for line in sub.get("화면요소", {"lines": []})["lines"]:
-        m = ELEM.match(line)
-        if not m:
-            continue
-        num, nm, text = m.groups()
-        eid = f"{sid}#{num}"
-        plain = re.sub(r"\s*[←→] `[^`]+`", "", text).strip()  # 연결 표시(← `기능`, → `기능`)만 빼고 글의 화살표는 둔다
-        node("화면요소", eid, name=nm, 한줄=plain, 위치=f"{sid} 화면요소 {num}",
-             문서=f"docs/screens.md#{sid}", 코드에서만="(코드)" in text or None)
-        edge("화면→화면요소", sid, eid)
-        if "-" in num:
-            edge("화면요소→화면요소", f"{sid}#{num.split('-')[0]}", eid)
-        element_text[eid] = plain
-        element_makers[eid] = {fid for arrow, fid in re.findall(r"([←→]) `([^`]+)`", text) if arrow == "←"}
-        for arrow, fid in re.findall(r"([←→]) `([^`]+)`", text):
-            if arrow == "→":  # 이 출력을 읽고 agent가 부르는 기능(화면설계서). ←(내는 기능)는 연결로 쓰지 않는다
-                edge("화면요소→기능", eid, fid, 근거="화면설계서")
+        edge("출력 부분→코드", sid, cid, 근거="그리는 코드")
+    # 이 부분을 읽고 agent가 부르는 기능: 부분 안 줄의 → `기능`
+    for fid in dict.fromkeys(re.findall(r"→ `([^`]+)`", "\n".join(sub.get("화면요소", {"lines": []})["lines"]))):
+        edge("출력 부분→기능", sid, fid, 근거="출력설계서")
     for line in sub.get("화면 정책", {"lines": []})["lines"]:
         for pid in TICK.findall(line):
             screen_policies.setdefault(sid, []).append(pid)
-            edge("화면→정책", sid, pid)
+            edge("출력 부분→정책", sid, pid)
+for sid in screens:
+    own = makers[sid]
+    inherited = {} if own else {fid: s for s in common_of.get(sid, []) for fid in makers[s]}
+    if not own and not inherited:
+        problems.append(f"C: 출력 부분 {sid}에 내는 기능이 없음('내는 기능' 줄도, 이 부분을 공통 영역으로 둔 부분도 없음)")
+    for fid in own:
+        if fid not in features:
+            problems.append(f"C: 출력 부분 {sid}의 내는 기능 {fid}가 기능에 없음")
+            continue
+        edge("기능→출력 부분", fid, sid, 근거="출력설계서 내는 기능")
+    for fid in sorted(inherited):
+        if fid in features:
+            edge("기능→출력 부분", fid, sid, 근거="공통 영역: " + ", ".join(sorted(s for s in common_of[sid] if fid in makers[s])))
 
 # ---- 유저 활동
 acts = split_sections(doc("activities.md"), r"^## (ua\.[\w-]+) (.+)$")
@@ -612,13 +615,17 @@ for uid, a in acts.items():
          얻는것=f.get("얻는 것"), 문서=f"docs/activities.md#{uid}", 본문=f"## {uid} {a['title']}\n{body}")
     steps = body.split("- 차례:", 1)[1].split("- 얻는 것:", 1)[0] if "- 차례:" in body else ""
     order = 0
-    for sline in steps.splitlines():  # 차례 한 줄 = 한 단계. 같은 화면요소가 여러 단계에 나오면 단계마다 잇는다
+    for sline in steps.splitlines():  # 차례 한 줄 = 한 단계. 같은 출력 부분이 여러 단계에 나오면 단계마다 잇는다
         sm = re.match(r"^\s+(\d+)\. ", sline)
         if not sm:
             continue
-        for eid in dict.fromkeys(re.findall(r"`([A-Z]{3}-\d\d#[\d-]+)`", sline)):
+        at = {}
+        for sid, num in re.findall(r"`([A-Z]{3}-\d\d)(?:#([\d-]+))?`", sline):
+            at.setdefault(sid, []).append(num)
+        for sid, nums in at.items():
             order += 1
-            edge("유저 활동→화면요소", uid, eid, 근거="기획서 차례", 단계=int(sm.group(1)), 순서=order)
+            edge("유저 활동→출력 부분", uid, sid, 근거="기획서 차례", 단계=int(sm.group(1)), 순서=order,
+                 위치=", ".join(f"{sid}#{n}" for n in nums if n) or None)
     for nxt in TICK.findall(f.get("다음 활동", "")):
         edge("유저 활동→유저 활동", uid, nxt, 근거="다음 활동")
 
@@ -665,134 +672,8 @@ def reach(start, rng=None):
     return got
 
 
-# ---- 화면요소 ← 내는 기능: 기계로 뽑는다(사용자 결정 11-04)
-# ① 실행 기록(runs/a-runs.json)의 출력 원문과 화면요소 글의 문구를 맞춘다. 맞으면 그 실행이 부른 기능 → 화면요소(근거 '실행 R번호').
-# ② ①에서 한 번도 맞지 않은 화면요소만, 그 문구가 있는 코드 자리(문자열·템플릿)를 찾고 그 자리에 닿는 기능 → 화면요소(근거 '코드 파일:줄').
-# 문구 = 화면요소 글의 백틱 안 글 가운데 (자리표시자를 뺀) 글자 4자 이상이고 한글·빈칸·# 중 하나가 있으며 경로·ID 꼴이 아닌 것.
-# 자리표시자: <…> → 아무 글, … → 아무 글, MM-DD·HH:MM·YYYY-MM-DD → 숫자, n·k 뒤에 개·번 또는 (n) → 숫자, [, …] → 있어도 없어도 됨.
-RUNS = json.loads((docs.parent / "runs" / "a-runs.json").read_text())
-def run_feature(r):
-    i = r["입력"]
-    if r["종류"] == "hook":
-        cmd = i["명령"].split(); ev = i["입력"].get("hook_event_name") or i["입력"].get("hookEventName")
-        if cmd[0] in ("antigravity-hook.mjs", "antigravity-pretool.mjs"):
-            return f"hook:antigravity:{ev}"
-        if cmd[0] == "hook.mjs":
-            return f"hook:claude:SessionStart:{cmd[1]}" if ev == "SessionStart" else f"hook:claude:{ev}"
-        return f"hook:codex:{ev}:{cmd[1]}"
-    if r["종류"] == "mcp":
-        return f"mcp:{i['method']}"
-    if r["종류"] == "mcp tool":
-        own = i["서버"].startswith("antigravity-mcp.mjs") and f"tool:{i['tool']}@antigravity" in features
-        return f"tool:{i['tool']}@antigravity" if own else f"tool:{i['tool']}"
-    if r["종류"] == "CLI":
-        name = i["명령"].split()[1].split("/")[-1][:-4]
-        return "hook:claude:session.send" if name == "relay" else f"cli:{name}"  # relay.mjs는 그 모드의 코드(B-4)
-    if r["종류"] == "opencode hook":
-        return f"hook:opencode:{i['훅']}"
-    return None
-def phrase_regex(seg):
-    lit = re.sub(r"<[^>]+>|…", "", seg)
-    if len(lit.strip()) < 3 or not re.search(r'[가-힣 #"]', lit) or re.fullmatch(r"[\w./@:*-]+", seg):
-        return None
-    out = ""
-    for part in re.split(r"(<[^>]+>|…)", seg):
-        if part.startswith("<") or part == "…":
-            out += ".+?" if part.startswith("<") else ".*?"
-            continue
-        e = re.escape(part)
-        e = re.sub(r"YYYY\\-MM\\-DD", r"\\d{4}-\\d\\d-\\d\\d", e)
-        e = e.replace("MM\\-DD", r"\d\d-\d\d").replace("HH:MM", r"\d\d:\d\d")
-        e = re.sub(r"\\\(n\\\)", r"\\(\\d+\\)", e)
-        e = re.sub(r"(?<![A-Za-z])[nk](?=개|번)", r"\\d+", e)
-        e = re.sub(r"(?<=\\ )n(?=\\ )", r"\\d+", e)
-        e = re.sub(r"\\\[(,\\ .*?)\\\]", r"(?:\1)?", e)
-        e = re.sub(r"(\\ )+", r"\\s+", e)
-        out += e
-    return re.compile(out, re.S)
-def literal_len(seg):
-    return len(re.sub(r"<[^>]+>|…", "", seg).strip())
-def element_phrases(t):
-    segs = [x for x in TICK.findall(t) if phrase_regex(x)]
-    if any(literal_len(x) >= 10 for x in segs):  # 구체적인 문구(10자 이상)가 있으면 짧은 조각(6자 미만)은 매칭에 쓰지 않는다
-        segs = [x for x in segs if literal_len(x) >= 6]
-    return [phrase_regex(x) for x in segs]
-elem_phrases = {eid: element_phrases(t) for eid, t in element_text.items()}
-run_links = {}
-for r in RUNS:
-    fid = run_feature(r)
-    if not fid or fid not in features or not r["출력"].strip():
-        continue
-    for eid, rxs in elem_phrases.items():
-        if any(rx.search(r["출력"]) for rx in rxs):
-            run_links.setdefault((fid, eid), []).append(r["n"])
-# 실행 매칭에서 빼는 연결(검수 M2, 11-15): 글이 같아 맞았지만 그 화면요소가 아닌 것. 이유를 같이 적는다.
-RUN_LINK_EXCLUDE = {
-    ("hook:claude:SessionStart:core", "STA-01#3"): "STA-01#3은 Codex의 꼬리표 없는 한 출력. 0.9.10부터 Claude 코어도 본문 전체가 한 출력이라 글이 겹치지만 Claude 쪽은 STA-01#1이다",
-    ("tool:setup", "STA-01#3"): "setup 결과 안의 코어 본문은 TOL-12#3(tool 결과)이고 시작 훅 출력 STA-01이 아니다",
-    # 0.9.15(11-23): Antigravity 출력이 같은 글로 맞았지만 출력 종류가 다른 것
-    ("hook:antigravity:SessionStart", "ERR-01#4"): "시작 파일의 없는 작업 세션(R163)은 훅 실패 한 줄 ERR-04#3이고 도구 오류 ERR-01#4가 아니다",
-    ("hook:claude:session.send", "ERR-01#7"): "Claude 중계의 '받는 Antigravity 대화를 찾을 수 없습니다'(R182)는 중계 결과 MSG-02#2이고 MCP 도구 오류 ERR-01#7이 아니다(독립 검수 2)",
-    ("tool:send@antigravity", "MSG-02#2"): "Antigravity send의 '받는 Antigravity 대화를 찾을 수 없습니다'(R177)는 도구 오류 ERR-01#7이고 Claude 중계 결과 MSG-02가 아니다",
-}
-for k in RUN_LINK_EXCLUDE:
-    if k not in run_links:
-        problems.append(f"실행 매칭 제외 {k}가 매칭에 없음(규칙이 낡음)")
-    run_links.pop(k, None)
-run_linked = {eid for _, eid in run_links}
-seen_e = {(e["type"], e["from"], e["to"]) for e in edges}
-for (fid, eid), ns in sorted(run_links.items()):
-    edge("기능→화면요소", fid, eid, 근거="실행 " + ", ".join(f"R{n:02d}" for n in ns[:6]) + (f" 외 {len(ns) - 6}" if len(ns) > 6 else ""))
-run_linked = {eid for _, eid in run_links}
-# ②: 코드 자리 — 정의(변수 포함, 가장 안쪽)의 줄. 변수(문구 상수)면 그 값을 쓰는 자리(code.json values)로 옮긴다.
-inner_all = {}
-for d in code["defs"]:
-    if d["kind"] == "module":
-        continue
-    for ln in range(d["line"], d["end_line"] + 1):
-        cur = inner_all.get((d["file"], ln))
-        if not cur or (defs[cur]["end_line"] - defs[cur]["line"]) > (d["end_line"] - d["line"]):
-            inner_all[(d["file"], ln)] = d["id"]
-users_of = {}
-for v in code.get("values", []):
-    users_of.setdefault(v["to"], []).append((v["from"], v["line"]))
+# 코드 파일 목록(file_sha256과 같은 판 확인용). skill 본문도 제품이 내는 글이다
 src_files = list(code["files"]) + sorted(x.relative_to(pkg).as_posix() for x in (pkg / "skills").glob("*/SKILL.md"))  # skill 본문도 제품이 내는 글
-src_text = {f: [re.sub(r"\$\{[^}]*\}", "⟨x⟩", l) for l in (pkg / f).read_text().splitlines()] for f in src_files}
-f_reach = {fid: [(h, rr, reach(h, rr)) for h, _, rr in entries(f) if h in nodes] for fid, f in features.items()}
-def reaches(fid, did, line):
-    for h, rr, got in f_reach[fid]:
-        if did in got and (did != h or not rr or any(lo <= line <= hi for lo, hi in rr)):
-            return True
-    return False
-code_links, unlinked = {}, {}
-# 재검수 N3(11-15): 실행으로 맞은 화면요소도, 화면설계서가 ← 로 내는 기능을 적어 두었으면 그 기능 가운데 그 글의 코드 자리에
-# 닿는 것을 보탠다(실행한 기능만 잇지 않게). 적어 두지 않은 화면요소에 보태면 같이 쓰는 함수(DEFINITIONS, sessions.parts) 때문에
-# 틀린 연결이 크게 늘어(시험: +84, 도구 설명 SRV-02#2~#8 ← 도구 전부 등) 하지 않는다 — 그런 화면요소는 실행한 기능에만 이어진다.
-# 실행 매칭에서 이름으로 뺀 연결(RUN_LINK_EXCLUDE)은 여기서도 잇지 않는다.
-for eid, rxs in sorted(elem_phrases.items()):
-    if eid in run_linked and not (rxs and element_makers.get(eid)):
-        continue
-    if not rxs:
-        unlinked[eid] = "글에 출력 문구(백틱)가 없음"
-        continue
-    spots = [(f, i + 1) for f, ls in src_text.items() for i, l in enumerate(ls) if any(rx.search(l) for rx in rxs)]
-    if not spots:
-        if eid not in run_linked:
-            unlinked[eid] = "실행 기록에도 코드에도 문구가 없음"
-        continue
-    for f, ln in spots:
-        did = inner_all.get((f, ln), f"code:{f}")
-        sites = users_of.get(did, [(did, ln)]) if defs.get(did, {}).get("kind") == "variable" else [(did, ln)]
-        for u, uln in sites:
-            # 글이 든 함수에 닿는 기능을 모두 잇으면, 여러 기능이 같이 쓰는 함수(validName 등)의 글이 부풀려진다.
-            # 화면요소 글에 ← 로 내는 기능을 적었으면 그 기능만 잇는다(검수 M2·L4, 11-15).
-            for fid in (element_makers.get(eid) or features):
-                if fid in features and (fid, eid) not in RUN_LINK_EXCLUDE and (fid, eid) not in run_links and reaches(fid, u, uln):
-                    code_links.setdefault((fid, eid), set()).add(f"{f}:{ln}")
-    if not any(k[1] == eid for k in code_links) and eid not in run_linked:
-        unlinked[eid] = "코드 자리는 있으나 그 자리에 닿는 기능이 없음"
-for (fid, eid), where in sorted(code_links.items()):
-    edges.append({"type": "기능→화면요소", "from": fid, "to": eid, "props": {"근거": "코드 " + ", ".join(sorted(where)[:3])}})
 
 
 reached = set()
@@ -811,18 +692,15 @@ for n, v in nodes.items():  # 파일은 안의 정의 하나라도 도달하면 
 unreached = sorted(n for n, v in nodes.items() if v["type"] == "코드" and v["props"].get("kind") not in ("product", "component", "variable")
                    and n not in reached)
 checks["B-5 어느 기능에서도 도달하지 않는 코드"] = unreached
-checks["화면요소 ← 내는 기능이 이어지지 않음(실행·코드 매칭 실패)"] = [f"{k}: {v}" for k, v in sorted(unlinked.items())]
-el_to_f = {e["from"] for e in edges if e["type"] == "화면요소→기능"}
-el_by_ua = {e["to"] for e in edges if e["type"] == "유저 활동→화면요소"}
-checks["D-4 화면요소→기능이 있는데 가리키는 유저 활동이 없는 화면요소"] = sorted(el_to_f - el_by_ua)
-scr_with_ua = {e.split("#")[0] for e in el_by_ua}
-common_areas = {e["to"] for e in edges if e["type"] == "화면→화면"}
-checks["D-4 어떤 유저 활동도 가리키지 않는 화면"] = sorted(s for s in screens if s not in scr_with_ua and s not in common_areas)
+part_to_f = {e["from"] for e in edges if e["type"] == "출력 부분→기능"}
+part_by_ua = {e["to"] for e in edges if e["type"] == "유저 활동→출력 부분"}
+checks["D-4 출력 부분→기능이 있는데 가리키는 유저 활동이 없는 출력 부분"] = sorted(part_to_f - part_by_ua)
+common_areas = {e["to"] for e in edges if e["type"] == "출력 부분→출력 부분"}
+checks["D-4 어떤 유저 활동도 가리키지 않는 출력 부분"] = sorted(s for s in screens if s not in part_by_ua and s not in common_areas)
 checks["D-4 화면 정책 절과 정책 노드가 다름"] = sorted(f"{s}: {p}" for s, ps in screen_policies.items() for p in ps
                                                 if pol_kind.get(p) != "표시")
-f_no_screen = sorted(f for f in features if not any(e["type"] == "기능→화면요소" and e["from"] == f for e in edges)
-                     and not any(e["type"] == "화면→기능" and e["to"] == f for e in edges))
-checks["기능인데 내는 화면이 없음(기계용 출력·출력 없음)"] = f_no_screen
+checks["기능인데 출력 부분이 없음(기계용 출력·출력 없음)"] = sorted(
+    f for f in features if not any(e["type"] == "기능→출력 부분" and e["from"] == f for e in edges))
 ua_ids = list(acts)
 checks["D-4 유저 활동의 다음 활동이 없는 활동(저니 순서와 대조용)"] = sorted(u for u in ua_ids if not any(e["type"] == "유저 활동→유저 활동" and e["from"] == u for e in edges))
 
