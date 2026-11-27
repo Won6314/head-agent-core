@@ -32,7 +32,9 @@ const claudeCore = (dir, { id = 'c1', source = 'startup', order = [1, 2] } = {})
 // The parts put back together: the first without its tag, the later ones without their heading.
 const joinCore = (...parts) =>
   parts
-    .map((t, i) => (i ? t.replace(/^# HEAD Core \(계속 \d+\/\d+\)\n\n/, '') : t.replace(/\n\n\(HEAD Core 1\/\d+[^\n]*\)$/, '')))
+    .map((t, i) =>
+      i ? t.replace(/^# HEAD Core \(계속 \d+\/\d+\)\n\n/, '') : t.replace(/\n\n\(HEAD Core 1\/\d+[^\n]*\)$/, ''),
+    )
     .filter(Boolean)
     .join('\n\n');
 // After setup the add-on question (and the survey, when another test file lays its procedure
@@ -186,7 +188,10 @@ test('Codex tool server: the conversation from _meta.threadId, the project from 
     ],
     { HEAD_CONTEXT_CODEX_DATA: data },
   );
-  assert.equal(init.result.serverInfo.version, JSON.parse(fs.readFileSync('.claude-plugin/plugin.json', 'utf8')).version);
+  assert.equal(
+    init.result.serverInfo.version,
+    JSON.parse(fs.readFileSync('.claude-plugin/plugin.json', 'utf8')).version,
+  );
   assert.equal(load.result.isError, undefined);
   assert.match(load.result.content[0].text, /MCP DIRECTION/);
   const bound = JSON.parse(fs.readFileSync(path.join(dir, '.head/state/conversations/codex-th1.json'), 'utf8'));
@@ -287,12 +292,12 @@ test('one package carries both hosts: Codex manifest, hooks and a relative tool 
   );
   assert.deepEqual(
     hooks.SessionStart[0].hooks.map((h) => h.command.split(' ').at(-1)),
-    ['core', 'instructions', 'session', 'context'],
+    ['core', 'instructions', 'session', 'context', 'recovery'],
   );
   const claude = JSON.parse(fs.readFileSync('hooks/hooks.json', 'utf8')).hooks.SessionStart[0].hooks.map((h) =>
     h.args.slice(1).join(' '),
   );
-  assert.deepEqual(claude, ['core 1 2', 'core 2 2', 'session', 'context', 'recent']);
+  assert.deepEqual(claude, ['core 1 2', 'core 2 2', 'session', 'context', 'recent', 'recovery']);
 });
 
 // Review findings (검수 B1 first branch, B2, I1, I2), each as the reviewer reproduced it.

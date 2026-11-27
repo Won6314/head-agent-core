@@ -54,6 +54,12 @@
               "recent"
             ],
             "timeout": 20
+          },
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs", "recovery"],
+            "timeout": 20
           }
         ]
       }

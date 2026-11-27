@@ -296,6 +296,20 @@ class Graph {
     if (!this.short.has(session)) this.short.set(session, shortIds(this.checkpoints(session).map((r) => r.id)));
     return this.short.get(session);
   }
+  byConversation(key) {
+    return this.db
+      .prepare(`SELECT ${NODE_FIELDS} FROM nodes WHERE kind='checkpoint' AND instr(body, ?) > 0`)
+      .all('\n대화: ' + key + '\n')
+      .filter((row) => this.detail(row).conversation === key);
+  }
+  stampedBetween(fromMs, toMs) {
+    return this.db
+      .prepare(
+        `SELECT ${NODE_FIELDS} FROM nodes WHERE kind='checkpoint' AND substr(stamp,1,10)>=? AND substr(stamp,1,10)<=?`,
+      )
+      .all(new Date(fromMs - 86400000).toISOString().slice(0, 10), new Date(toMs + 86400000).toISOString().slice(0, 10))
+      .filter((row) => fromMs <= Date.parse(row.stamp) && Date.parse(row.stamp) <= toMs);
+  }
   // A map ID: the full checkpoint ID, or a short ID read inside `session`.
   entry(id, session) {
     if (id.includes('@')) return this.item(id);

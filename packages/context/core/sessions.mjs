@@ -10,11 +10,11 @@ import {
   fittedContext,
   topicList,
   openBranches,
-  compactRecovery,
   RECENT_COUNT,
   SUMMARY_LIMIT,
 } from './recovery.mjs';
 import { withGraph, withGraphRead, resolveRef } from './graph.mjs';
+import { conversationKey, chainOf, recoveryText } from './conversation-map.mjs';
 import { clock } from './map-view.mjs';
 import { branchPath, branchText, branchHeader, withStatus, withRecap, WORK_MONTH } from './branch-format.mjs';
 import { mergeArgs, isOpen, OPEN, CLOSED, ABANDONED } from './lifecycle.mjs';
@@ -304,6 +304,7 @@ export function sessions(
     return true;
   };
   const save = ({ summary, history, next, recap, files, conversation_id }) => {
+    const conversation = conversationKey(host, conversation_id);
     if (typeof history !== 'string' || !history.trim()) throw new Error('history(본문)가 필요합니다.');
     const bound = withGraphRead(project, (g) => resolve(conversation_id, g)),
       dir = directory(bound.session);
@@ -313,7 +314,9 @@ export function sessions(
         throw new Error('메인 기록에는 recap을 받지 않습니다. 정리는 작업 브랜치를 닫는 저장에만 씁니다.');
       const main = path.join(dir, 'history.md'),
         refs = referenceFiles(files, [dir]);
-      locked(main, () => fs.appendFileSync(main, uniqueEntry(main, { summary, history, next, files: refs.files })));
+      locked(main, () =>
+        fs.appendFileSync(main, uniqueEntry(main, { summary, history, next, files: refs.files, conversation })),
+      );
       withGraph(project, (g) => g.recent(bound.session, 'main', 1), [main]);
       return `작업 세션 '${bound.session}' 메인에 기록했습니다.\n요약: ${summary}${next ? `\n다음: ${next}` : ''}${referenceNotice(refs)}`;
     }
@@ -329,7 +332,10 @@ export function sessions(
       if (!header) throw new Error('작업 브랜치 파일을 읽지 못했습니다.');
       const updated = next ? text : withRecap(text, recap);
       if (updated !== text) atomicText(file, updated);
-      fs.appendFileSync(file, uniqueEntry(file, { summary, history: fromBranch(history), next, files: refs.files }));
+      fs.appendFileSync(
+        file,
+        uniqueEntry(file, { summary, history: fromBranch(history), next, files: refs.files, conversation }),
+      );
       locked(main, () =>
         fs.appendFileSync(main, uniqueEntry(main, { summary, index: { label: header.label || bound.stem, record } })),
       );
@@ -680,12 +686,30 @@ export function sessions(
     // replaced, the one it was copied from) — session and branch whole — or the session
     // named for it, on main. Several start hooks may ask at once; the answer is the same.
     locate,
-    compactRecovery: (place) => withGraphRead(project, (g) => compactRecovery(g, place)),
+    recovery({ place, source, starts = [], read }) {
+      const chain = chainOf(connection, starts);
+      const calls = [];
+      if (typeof read === 'function')
+        for (const item of chain) {
+          try {
+            const found = read(item.id, item.transcript);
+            if (Array.isArray(found))
+              calls.push(...found.map(({ summary, at }) => ({ summary, at, conversation: item.id })));
+          } catch {
+            /* an unreadable transcript contributes no calls */
+          }
+        }
+      return withGraphRead(project, (g) => recoveryText(g, { place, source, host, chain, calls }));
+    },
     // Start hook: give the conversation its place (nothing is opened or closed here).
     start({ conversation_id, session_name, origins = [], info = {} }) {
       const place = locate({ conversation_id, session_name, origins });
       if (!place) return null;
-      bind(place.session, place.stem, conversation_id, info);
+      const previous = origins
+        .filter((l) => l.kind === 'continued' || l.kind === 'clear')
+        .map((l) => l.conversation_id)
+        .filter((id) => typeof id === 'string' && /^[A-Za-z0-9_-]+$/.test(id));
+      bind(place.session, place.stem, conversation_id, previous.length ? { ...info, previous } : info);
       return place;
     },
     // The two parts of the work context for a place as the start hook sends them: the

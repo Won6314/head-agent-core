@@ -9,7 +9,7 @@ import { parseHistory, mapSummary } from '../core/history.mjs';
 import opencode from '../hosts/opencode/plugin.mjs';
 import { callTool } from '../core/mcp.mjs';
 import { fittedContext } from '../core/recovery.mjs';
-import { runStart } from './hook-run.mjs';
+import { runStart, runHook } from './hook-run.mjs';
 const root = process.env.HEAD_CONTEXT_TEST_ROOT;
 const fixture = () => {
   const dir = fs.mkdtempSync(path.join(root, 'flow-')),
@@ -87,7 +87,16 @@ test('Claude start hook: each part is its own output; the work context over the 
   const big = start('seed', 'compact').parts;
   assert.match(
     big.session,
-    /^# 작업 세션: demo\n작업 세션 폴더: [^\n]+\/\.head\/sessions\/demo\n\nFLOW DIRECTION\n\n이 대화의 작업 브랜치: big\n\n## 컴팩트 뒤 먼저 할 것\n/,
+    /^# 작업 세션: demo\n작업 세션 폴더: [^\n]+\/\.head\/sessions\/demo\n\nFLOW DIRECTION\n\n이 대화의 작업 브랜치: big$/,
+  );
+  assert.match(
+    JSON.parse(
+      runHook(
+        { hook_event_name: 'SessionStart', session_id: 'seed', source: 'compact', cwd: dir },
+        { env: { CLAUDE_PROJECT_DIR: dir, HEAD_CONTEXT_SESSION: 'demo' }, part: 'recovery' },
+      ),
+    ).hookSpecificOutput.additionalContext,
+    /^## 컴팩트 뒤 먼저 할 것\n/,
   );
   assert.ok(big.context.length <= 9000);
   assert.doesNotMatch(big.context, /load를 불러/);

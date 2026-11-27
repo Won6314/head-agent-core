@@ -8,7 +8,7 @@ import { spawnSync, spawn } from 'node:child_process';
 import { sessions } from '../core/sessions.mjs';
 import { ownerOf, hostInfo, liveConversations, transcriptsOf } from '../hosts/claude/process.mjs';
 import { ancestry, copiedFrom } from '../hosts/claude/recovery.mjs';
-import { runStart } from './hook-run.mjs';
+import { runStart, runHook } from './hook-run.mjs';
 import { SUBAGENT_NOTICE } from '../core/mcp.mjs';
 const root = process.env.HEAD_CONTEXT_TEST_ROOT || os.tmpdir();
 // A fixture of what Claude Code writes down: one registry file per running conversation
@@ -398,7 +398,16 @@ test('the three start parts: the work session always, the work context, and afte
   );
   assert.ok(parts.session.length <= 9000);
   assert.match(parts.session, /^# 작업 세션: demo\n작업 세션 폴더: [^\n]+\n\n# demo\n\nCONTEXT-HEAD/);
-  assert.match(parts.session, /…\(context\.md 뒷부분 생략 — 전문: [^\n]+demo\/context\.md\)\n\n## 컴팩트 뒤 먼저 할 것\n/);
+  assert.match(parts.session, /…\(context\.md 뒷부분 생략 — 전문: [^\n]+demo\/context\.md\)$/);
+  assert.match(
+    JSON.parse(
+      runHook(
+        { hook_event_name: 'SessionStart', session_id: 'c', source: 'compact', cwd: st.dir, transcript_path: file },
+        { env: { CLAUDE_PROJECT_DIR: st.dir }, part: 'recovery' },
+      ),
+    ).hookSpecificOutput.additionalContext,
+    /^## 컴팩트 뒤 먼저 할 것\n/,
+  );
   assert.doesNotMatch(parts.session, /CONTEXT-TAIL/);
   assert.match(
     parts.context,

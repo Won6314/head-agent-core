@@ -203,10 +203,16 @@ export function entry({
   record,
   reason,
   index,
+  conversation,
   files = [],
   timestamp = new Date().toISOString(),
 }) {
   summary = line(summary, 'summary');
+  if (
+    conversation !== undefined &&
+    (typeof conversation !== 'string' || !/^[a-z][a-z0-9]*:[A-Za-z0-9_-]+$/.test(conversation))
+  )
+    throw new Error('대화 ID가 유효하지 않습니다.');
   if (next !== undefined && next !== null && next !== '' && (typeof next !== 'string' || /[\r\n]/.test(next)))
     throw new Error('next는 한 줄이어야 합니다.');
   next = typeof next === 'string' ? next.trim() : '';
@@ -218,5 +224,6 @@ export function entry({
   // The main line keeps one index line per save: the label and the file holding the body.
   const marker = `${status ? `상태: ${status}\n${branch ? `브랜치: ${validName(branch)}\n` : ''}${record ? `기록: ${record}\n` : ''}${reason ? `이유: ${line(reason, 'reason')}\n` : ''}` : ''}${index ? `이름표: ${line(index.label, 'label')} · 본문: ${index.record}\n` : ''}`;
   const refs = files.length ? `참조파일: ${files.map((f) => `\`${f}\``).join(', ')}\n` : '';
-  return `\n\n## ${timestamp}\n\n요약: ${summary}\n${marker}${refs}\n${history.trim()}\n${next ? `\n다음: ${next}\n` : ''}\n`;
+  const conversationLine = conversation ? `대화: ${conversation}\n` : '';
+  return `\n\n## ${timestamp}\n\n요약: ${summary}\n${marker}${conversationLine}${refs}\n${history.trim()}\n${next ? `\n다음: ${next}\n` : ''}\n`;
 }

@@ -7,6 +7,14 @@ function summaryLine(line) {
   if (/^[-*_`~#\s]+$/.test(text)) return '';
   return text;
 }
+function headerRange(lines) {
+  let start = 1;
+  while (start < lines.length && lines[start].trim() === '') start++;
+  if (!lines[start]?.startsWith('요약:')) return [0, 0];
+  let end = start;
+  while (end < lines.length && lines[end].trim() !== '') end++;
+  return [start, end];
+}
 export function parseHistory(text) {
   // Date-only descriptive headings inside a checkpoint are Markdown body, not records.
   const matches = [
@@ -48,7 +56,16 @@ export function parseHistory(text) {
     bytes += Buffer.byteLength(text.slice(position, m.index + body.length));
     position = m.index + body.length;
     const end = bytes;
+    const bodyLines = body.split('\n');
+    const [headerStart, headerEnd] = headerRange(bodyLines);
+    const conversation =
+      bodyLines
+        .slice(headerStart, headerEnd)
+        .find((l) => l.startsWith('대화:'))
+        ?.slice(3)
+        .trim() || '';
     return {
+      conversation,
       timestamp: tokens[0],
       label: index?.[1] || '',
       source: index?.[2] || '',
@@ -91,7 +108,9 @@ export function mapSummary(entry) {
 // The body as a reader needs it: no heading, no summary/marker lines, no trailing cursor.
 // Summary lives in the map line, and only the newest entry's cursor is shown by the load.
 export function contentBody(entry) {
-  const lines = entry.body.split('\n').slice(1);
+  const all = entry.body.split('\n');
+  const [start, end] = headerRange(all);
+  const lines = all.filter((l, i) => !(i >= start && i < end && /^대화:/.test(l))).slice(1);
   if (lines.length && /^다음:/.test(lines.findLast((l) => l.trim())?.trim() || ''))
     lines.splice(
       lines.findLastIndex((l) => l.trim()),

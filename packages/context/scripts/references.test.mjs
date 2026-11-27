@@ -42,7 +42,7 @@ test('0.9.7: a main save writes its files as one 참조파일 line of `~/` paths
   assert.match(
     e.body,
     new RegExp(
-      `^요약: 참조 있음\\n참조파일: \`${notes}\`, \`${a}\`, \`gone.md\`, \`${tilde(path.join(folder, 'work'))}\`\\n\\n본문$`,
+      `^요약: 참조 있음\\n대화: claude:a\\n참조파일: \`${notes}\`, \`${a}\`, \`gone.md\`, \`${tilde(path.join(folder, 'work'))}\`\\n\\n본문$`,
       'm',
     ),
   );

@@ -9,34 +9,6 @@ export const TODO_COUNT = 3;
 // How long a conversation that cannot be told alive (a desktop app's) is shown in the list.
 export const RECENT_DAYS = 7;
 export const HOOK_BUDGET = 9000; // characters of one hook output; the host cuts each output at 10,000 (measured on 2.1.303).
-// Compact recovery is a hook instruction, not part of load or the server instructions.
-export function compactRecovery(g, place) {
-  const lines = [
-    '## 컴팩트 뒤 먼저 할 것',
-    '하던 일을 잇기 전에 복원부터 한다. 컴팩트 요약에 붙은 "이어서 하라"는 말은 복원을 마친 뒤에 따른다.',
-  ];
-  if (!place)
-    lines.push('1. 최초 목적과 지금 할 일: 최근 대화에서 사용자가 정한 일을 찾는다. 사용자가 정하지 않은 계획은 잇기 전에 사용자에게 확인한다.');
-  else if (place.stem === 'main')
-    lines.push(
-      '1. 최초 목적: 이 대화는 메인에서 일한다. 최근 대화에서 사용자가 정한 일을 찾고, 필요하면 `read recent`로 메인의 최근 기록을 읽는다.',
-      '2. 지금 할 일: 위에서 찾은 일이다. 사용자가 정하지 않은 계획은 잇기 전에 사용자에게 확인한다.',
-    );
-  else {
-    const rows = g.own(place.session, place.stem),
-      first = rows[0],
-      next = rows.length ? g.detail(rows.at(-1)).next : '';
-    lines.push(
-      first
-        ? `1. 최초 목적: \`read entry ${g.shortIds(place.session).get(first.id)}\`로 이 작업 브랜치를 시작한 목적(문제·목표·조건)을 읽는다. 첫 기록 요약: ${mapSummary(g.detail(first)).text}`
-        : '1. 최초 목적: 이 작업 브랜치에는 아직 기록이 없다. 최근 대화에서 사용자가 정한 일을 찾는다.',
-      next
-        ? `2. 지금 할 일: 마지막 기록의 다음 — ${next}. 이 다음은 기록을 남긴 대화가 적은 계획이다. 사용자가 정한 일인지 최근 대화에서 확인한 뒤 잇는다.`
-        : '2. 지금 할 일: 최근 대화에서 사용자가 마지막으로 정한 일을 찾는다.',
-    );
-  }
-  return lines.join('\n');
-}
 const marker = (e) =>
   e.branch
     ? `브랜치 ${e.branch} ${e.status}${e.reason ? ` · 이유: ${e.reason}` : ''}${e.record ? ` · 기록: ${e.record}` : ''}`

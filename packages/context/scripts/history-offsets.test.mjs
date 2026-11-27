@@ -46,6 +46,7 @@ function referenceParseHistory(text) {
     // A main-line index entry: one line naming the branch label and the file the body is in.
     const index = lines.map((l) => /^이름표: (.*) · 본문: (\S+)$/.exec(l)).find(Boolean);
     return {
+      conversation: '',
       timestamp: tokens[0],
       label: index?.[1] || '',
       source: index?.[2] || '',

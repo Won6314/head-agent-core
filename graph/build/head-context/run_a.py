@@ -478,10 +478,12 @@ def parent_message(cid, sender, title="Message from Parent Agent", name="m-paren
     (folder / name).write_text(json.dumps({"id": name[:-5], "recipient": cid, "sender": sender, "priority": "MESSAGE_PRIORITY_HIGH",
                                            "timestamp": ts, "renderDetails": {"messageTitle": title}, "content": "Do this task"}))
 TROWS = {}
-def trow(cid, type_, content, source="SYSTEM"):
+def trow(cid, type_, content, source="SYSTEM", extra=None):
     rows = TROWS.setdefault(cid, [])
     rows.append({"step_index": len(rows), "type": type_, "content": content, "source": source, "status": "DONE",
                  "created_at": f"2026-11-23T01:{len(rows):02d}:00Z"})
+    if extra is not None:
+        rows[-1].update(extra)
     f = conv_dir(cid) / ".system_generated" / "logs" / "transcript_full.jsonl"
     f.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n")
 def exchange(cid, user, model):
@@ -1069,6 +1071,78 @@ measure("enabledPlugins 배열에 method_on 뒤 상태", {"프로젝트": "proje
 s.call("setup", {"action": "never_ask", "step": "method"}, "never_ask step=method")
 measure("never_ask step=method 뒤 상태", {"프로젝트": "project-method"}, method_state(PROJ_M))
 s.close()
+
+# A46: 대화 기록 지도 — 컴팩트·/clear 복원에 이 대화가 저장한 기록
+from datetime import datetime, timedelta, timezone
+
+CA = "cccccccc-0000-4000-8000-000000000001"
+CB = "cccccccc-0000-4000-8000-000000000002"
+CN = "cccccccc-0000-4000-8000-000000000003"
+GA, GN, GEMPTY = gid(46), gid(47), gid(48)
+X5 = "019a0000-0000-7000-8000-000000000005"
+STATE["label"] = "대화 기록 지도 — Claude 번갈아 저장과 옛 기록"
+registry46 = HOME / ".claude" / "sessions" / "987654.json"
+registry46.write_text(json.dumps({"pid": 987654, "sessionId": CA}))
+s = Server("mcp.mjs")
+s.rpc("initialize", {"protocolVersion": "2025-06-18"})
+s.call("create", {"name": "mapdemo", "context": "# mapdemo\n\n대화마다 자기 기록만 복원한다.", "conversation_id": CA}, "지도 작업 세션 만들기(CA)")
+claude_start("startup", CA, parts=("session",))
+s.call("load", {"name": "mapdemo", "conversation_id": CB}, "같은 메인에 CB 연결")
+for cid, summary in ((CA, "CA 메인 1"), (CB, "CB 메인 1"), (CA, "CA 메인 2"), (CB, "CB 메인 2"), (CA, "CA 메인 3")):
+    s.call("save", {"summary": summary, "history": summary + " 본문", "conversation_id": cid}, "번갈아 저장 · " + summary)
+map_history = PROJ / ".head" / "sessions" / "mapdemo" / "history.md"
+old_at = datetime.now(timezone.utc)
+with map_history.open("a") as f:
+    f.write(f"\n\n## {old_at.isoformat(timespec='milliseconds').replace('+00:00', 'Z')}\n\n요약: A0 옛 기록\n\n옛 본문\n\n")
+ca_transcript = HOME / ".claude" / "projects" / "demo" / f"{CA}.jsonl"
+call46 = {"sessionId": CA, "timestamp": (old_at - timedelta(seconds=2)).isoformat().replace("+00:00", "Z"),
+          "message": {"content": [{"type": "tool_use", "name": "mcp__plugin_head-context_session__save", "input": {"summary": "A0 옛 기록"}}]}}
+ca_transcript.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in (call46, {**call46, "forkedFrom": CB}, {**call46, "sessionId": CB})) + "\n")
+s.call("branch", {"action": "create", "branch": "map-job", "conversation_id": CA}, "CA 작업 브랜치 열기(map-job)")
+s.call("save", {"summary": "CA 작업 기록", "history": "지도 붙이기", "next": "지도 확인", "conversation_id": CA}, "CA 작업 브랜치 저장")
+s.close()
+STATE["label"] = "대화 기록 지도 — Claude compact와 clear"
+claude_start("compact", CA, parts=("session", "recovery"), transcript=str(ca_transcript))
+claude_start("compact", CB, parts=("recovery",))
+registry46.write_text(json.dumps({"pid": 987654, "sessionId": CN}))
+claude_start("clear", CN, parts=("session", "recovery", "recent"))
+claude_start("compact", CN, parts=("recovery",))
+hook("hook.mjs", ["recovery"], {"hook_event_name": "SessionStart", "session_id": CA, "cwd": str(PROJ), "source": "compact", "transcript_path": str(ca_transcript)},
+     "Claude SessionStart(compact) · recovery (sdk-cli 복사)", env={"CLAUDE_CODE_ENTRYPOINT": "sdk-cli"})
+STATE["label"] = "대화 기록 지도 — Codex compact"
+cx46 = {"hook_event_name": "SessionStart", "session_id": X5, "cwd": str(PROJ), "source": "startup", "transcript_path": str(HOME / ".codex" / "sessions" / f"{X5}.jsonl")}
+hook("codex-hook.mjs", ["session"], cx46, "Codex SessionStart(startup) · session (지도 대화 X5 등록)")
+c = Server("codex-mcp.mjs", cwd=CPKG)
+c.rpc("initialize", {"protocolVersion": "2025-06-18"})
+c.call("load", {"name": "mapdemo"}, "Codex 지도 작업 세션 불러오기", meta={"threadId": X5, "sessionId": X5})
+c.call("save", {"summary": "X5 기록", "history": "Codex 본문"}, "Codex 지도 기록 저장", meta={"threadId": X5, "sessionId": X5})
+c.close()
+hook("codex-hook.mjs", ["recovery"], {**cx46, "source": "compact"}, "Codex SessionStart(compact) · recovery (X5)")
+hook("codex-hook.mjs", ["recovery"], {**cx46, "source": "compact", "agent_id": "a"}, "Codex SessionStart(compact) · recovery (하위 에이전트)")
+hook("codex-hook.mjs", ["recovery"], cx46, "Codex SessionStart(startup) · recovery (없음)")
+STATE["label"] = "대화 기록 지도 — Antigravity restore 옛 기록"
+agy(agy_in(GA, "SessionStart"), "Antigravity SessionStart (지도 대화 GA 등록)")
+a = Server("antigravity-mcp.mjs", cwd=APKG)
+a.rpc("initialize", {"protocolVersion": "2025-06-18"})
+a.call("load", {"name": "mapdemo"}, "Antigravity 지도 작업 세션 불러오기", meta=M(GA))
+for i in (1, 2):
+    a.call("save", {"summary": f"GA 기록 {i}", "history": f"GA 본문 {i}"}, f"Antigravity 지도 기록 {i} 저장", meta=M(GA))
+a.close()
+trow(GA, "PLANNER_RESPONSE", "옛 저장 호출", "MODEL", extra={"tool_calls": [{"name": "call_mcp_tool", "args": {
+    "ServerName": '"head-context_session"', "ToolName": '"save"', "Arguments": json.dumps({"summary": "G0 옛 기록"}, ensure_ascii=False)}}]})
+g_old_at = datetime.fromisoformat(TROWS[GA][-1]["created_at"].replace("Z", "+00:00")) + timedelta(seconds=1)
+with map_history.open("a") as f:
+    f.write(f"\n\n## {g_old_at.isoformat().replace('+00:00', 'Z')}\n\n요약: G0 옛 기록\n\n옛 GA 본문\n\n")
+exchange(GA, "GA에서 하던 일", "GA 답변 원문")
+trow(GA, "CHECKPOINT", "# Resuming from a compaction")
+agy(agy_in(GA, "PreInvocation"), "Antigravity PreInvocation (GA restore 지도)")
+STATE["label"] = "대화 기록 지도 — Antigravity /clear 이어받기"
+agy_history = HOME / ".gemini" / "antigravity-cli" / "history.jsonl"
+agy_history.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in (
+    {"display": "/clear", "type": "slash_command", "workspace": str(PROJ), "conversationId": GA},
+    {"display": "새 일", "workspace": str(PROJ), "conversationId": GN})) + "\n")
+agy(agy_in(GN, "SessionStart", lastUserInput="새 일"), "Antigravity SessionStart (/clear GN 이어받기)")
+agy(agy_in(GEMPTY, "SessionStart"), "Antigravity SessionStart (history 줄 없는 새 대화)")
 
 OUT.write_text(json.dumps(runs, ensure_ascii=False, indent=1))
 print(len(runs), "runs")

@@ -24,6 +24,33 @@ export const checkpointOf = (rows) => {
   const row = rows.findLast((r) => r.type === 'CHECKPOINT' && r.status === 'DONE');
   return row ? `${row.step_index}:${row.created_at}` : null;
 };
+export function agySaves(rows) {
+  const unquote = (value) => (typeof value === 'string' ? value.replace(/^"(.*)"$/, '$1') : value);
+  const result = [];
+  for (const row of rows) {
+    if (row.type !== 'PLANNER_RESPONSE' || !Array.isArray(row.tool_calls)) continue;
+    for (const call of row.tool_calls) {
+      const args = call.args;
+      if (
+        call.name !== 'call_mcp_tool' ||
+        unquote(args?.ServerName) !== 'head-context_session' ||
+        unquote(args?.ToolName) !== 'save'
+      )
+        continue;
+      let input = args.Arguments;
+      if (typeof input === 'string') {
+        try {
+          input = JSON.parse(input);
+        } catch {
+          continue;
+        }
+      }
+      if (input && typeof input === 'object' && typeof input.summary === 'string')
+        result.push({ summary: input.summary, at: Date.parse(row.created_at) });
+    }
+  }
+  return result;
+}
 function exchanges(rows) {
   const spans = [[]];
   for (const row of rows) {

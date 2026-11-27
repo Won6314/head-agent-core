@@ -7,6 +7,7 @@ import { ancestry, copiedFrom } from './recovery.mjs';
 import { isCopy } from '../../core/instruction.mjs';
 import { hostInfo } from './process.mjs';
 import { recentPart } from './recent.mjs';
+import { claudeSaves } from './saves.mjs';
 import { compactInstruction } from './compact.mjs';
 import { SUBAGENT_NOTICE } from '../../core/mcp.mjs';
 import { hookOutput } from '../../core/protocol.mjs';
@@ -100,8 +101,6 @@ try {
         if (parent && parent !== input.session_id) info.parent = parent;
       }
       const place = store.start({ ...where(), info });
-      const recovery = source === 'compact' && !copy ? store.compactRecovery(place) : '';
-      const recoverySpace = recovery ? recovery.length + 2 : 0;
       if (!place && person) store.note(input.session_id, { person: true, entrypoint });
       // First run: refresh the project copy of the core (applies next start, since CLAUDE.md
       // is read before this hook), and on a fresh start add the short setup/survey guide.
@@ -119,11 +118,11 @@ try {
         const tail = `\n…(context.md 뒷부분 생략 — 전문: ${contextFile})`;
         head = fit(
           text,
-          HOOK_BUDGET - first.length - recoverySpace - 2,
-          () => text.slice(0, Math.max(0, HOOK_BUDGET - first.length - recoverySpace - tail.length - 2)) + tail,
+          HOOK_BUDGET - first.length - 2,
+          () => text.slice(0, Math.max(0, HOOK_BUDGET - first.length - tail.length - 2)) + tail,
         );
       }
-      out('SessionStart', [head, first].filter(Boolean).join('\n\n'), recovery);
+      out('SessionStart', [head, first].filter(Boolean).join('\n\n'));
     } else if (part === 'context' && !quiet) {
       const place = store.locate(where());
       if (place) {
@@ -142,6 +141,22 @@ try {
         if (error.code !== 'ENOENT') console.error(`head-context: ${error.message}`);
       }
       if (!claudeImports(project)) out('SessionStart', coreParts(project, count, HOOK_BUDGET)[index - 1] || '');
+    } else if (part === 'recovery' && (source === 'compact' || source === 'clear')) {
+      const entrypoint = process.env.CLAUDE_CODE_ENTRYPOINT;
+      const copy = isCopy(entrypoint) && process.env.HEAD_CONTEXT_PERSON !== '1';
+      if (!copy) {
+        const w = where();
+        const place = store.locate(w);
+        const starts = [
+          { id: input.session_id, transcript: input.transcript_path },
+          ...w.origins
+            .filter((l) => l.kind === 'continued' || l.kind === 'clear')
+            .map((l) => ({ id: l.conversation_id })),
+        ];
+        const dir = input.transcript_path ? path.dirname(input.transcript_path) : null;
+        const read = (id, transcript) => claudeSaves(transcript || (dir ? path.join(dir, `${id}.jsonl`) : null), id);
+        out('SessionStart', store.recovery({ place, source, starts, read }));
+      }
     } else if (part === 'recent' && (source === 'compact' || source === 'clear')) {
       // After /clear the exchanges are in the conversation /clear replaced.
       let transcript = input.transcript_path;

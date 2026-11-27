@@ -21,6 +21,7 @@ import { asMessage } from '../../core/inbox.mjs';
 //     project, which engine runs it (presence: the list of conversations and messages to it
 //     read it); then the work session part (or the not-connected line) and the first-run guide.
 //   context      — the work context.
+//   recovery — after a compaction: what to do first and this conversation's record map.
 // UserPromptSubmit:
 //   inbox        — messages other conversations left for this one while it could not be
 //     woken (its engine is not the shared one), given with the prompt.
@@ -108,15 +109,19 @@ try {
         console.error(`head-context: ${error.message}`);
       }
       if (!quiet) {
-        const recovery = source === 'compact' && !input.agent_id ? store.compactRecovery(place) : '';
         const parts = place ? store.parts(place) : null;
-        let head = parts ? parts.head : UNCONNECTED;
-        if (recovery && head.length + recovery.length + 2 > HOOK_BUDGET) {
-          const tail = `\n…(context.md 뒷부분 생략 — 전문: ${parts.contextFile})`;
-          head = head.slice(0, Math.max(0, HOOK_BUDGET - recovery.length - tail.length - 2)) + tail;
-        }
-        out([head, first].filter(Boolean).join('\n\n'), 'SessionStart', recovery);
+        const head = parts ? parts.head : UNCONNECTED;
+        out([head, first].filter(Boolean).join('\n\n'));
       }
+    } else if (part === 'recovery') {
+      if (source === 'compact' && !input.agent_id)
+        out(
+          store.recovery({
+            place: store.locate(where),
+            source: 'compact',
+            starts: [{ id, transcript: input.transcript_path }],
+          }),
+        );
     } else if (quiet) {
       // nothing
     } else if (part === 'core') out(coreParts(project)[0] || '');
