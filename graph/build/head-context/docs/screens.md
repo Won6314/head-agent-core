@@ -25,7 +25,7 @@ agent는 여기서 이 일의 목적(context.md)과 지금 자리(메인 또는 
 
 ### 화면요소
 1. **작업 세션 이름** — `# 작업 세션: <이름>` 한 줄.
-2. **context.md 전문** — 작업 세션의 목적·방향·범위. 상한(9,000자)을 넘으면 앞부분과 `(context.md 뒷부분 생략 — 전문:` 경로 한 줄. Claude 시작 훅은 시작·/clear·압축 때 첫 실행 안내와 압축 뒤 복원 블록(STA-07) 자리까지 더해 재고(R250·R251), Codex 시작 훅은 압축 뒤 복원 블록이 붙을 때만 자른다(0.9.17, R255 — 시작 때는 자르지 않음 R254).
+2. **context.md 전문** — 작업 세션의 목적·방향·범위. 상한(9,000자)을 넘으면 앞부분과 `(context.md 뒷부분 생략 — 전문:` 경로 한 줄. Claude 시작 훅은 시작·/clear·압축 때 첫 실행 안내 자리까지 더해 잰다(R250·R251). Codex 시작 훅은 자르지 않는다(R254·R255). 0.9.19까지는 압축 뒤 복원 블록(STA-07)이 이 출력 끝에 붙어 그 자리까지 쟀다. 0.9.20부터 복원 블록은 따로 나온다.
 3. **이 대화의 작업 브랜치** — `이 대화의 작업 브랜치: <이름 | 없음(메인)>`. 둘러보기(TOL-08)에는 없다.
 4. **작업 세션 폴더** — 이름(#1) 바로 아래 한 줄 `작업 세션 폴더: <절대 경로>`(0.9.6부터). 작업 파일을 둘 자리(`work/YYYY-MM/…`)를 찾지 않아도 된다. 둘러보기(TOL-08)에도 나온다.
 
@@ -200,29 +200,30 @@ OpenCode에서는 시작 훅 대신 요청마다 서버 안내문 공용 부분�
 1. **서버 안내문 공용 부분** — SRV-01의 #1~#7(앱별 부분 없음). 하위 세션에도 들어간다(R156). 글이 SRV-01과 같아 문구로 잇지 않는다 — 실행 R155가 그 기능을 SRV-01#1~#7에 잇는다. ← `hook:opencode:experimental.chat.system.transform`
 2. **작업 맥락** — 연결됐으면 CMN-01·CMN-02(R155). 하위 세션(부모가 있고 연결이 없는 세션)에는 넣지 않는다(R156). 글이 CMN-01·CMN-02와 같아 문구로 잇지 않는다 — 실행 R155가 그 기능을 CMN-01·CMN-02 화면요소에 잇는다. ← `hook:opencode:experimental.chat.system.transform`
 
-## STA-07 컴팩트 뒤 먼저 할 것
+## STA-07 컴팩트·/clear 뒤 먼저 할 것과 이 대화가 남긴 기록
 
-- 출력 종류: 시작 훅이 넣는 글(session 출력의 끝)
-- 상태: Claude·Codex 사람 대화의 압축 뒤 시작(source compact). 하위 에이전트(Codex agent_id)·Claude 프로그램 실행(sdk-*)·재개에는 없다. Antigravity에는 없다
-- 원문: R53(Claude, 메인에 연결), R234(Claude, 작업 브랜치 ctx-1), R235(Claude, 연결 안 됨), R238(Codex, 작업 브랜치 ctx-1), R239(Codex 하위 에이전트 — 없음), R242(Claude sdk-cli — 없음), R251·R255(작업 세션 머리를 잘라 자리를 낸 Claude·Codex)
+- 출력 종류: 시작 훅이 넣는 글(Claude·Codex는 따로 나오는 recovery 출력, Antigravity는 시스템 메시지 한 덩어리). 0.9.19까지는 session 출력의 끝이었다
+- 상태: Claude·Codex 사람 대화의 압축 뒤 시작(source compact), Claude 사람 대화의 /clear 뒤 시작, Antigravity 사람 대화의 새 CHECKPOINT 뒤 첫 단계와 터미널 /clear 뒤 첫 시작. 하위 에이전트(Codex agent_id)·Claude 프로그램 실행(sdk-*)·재개·처음 시작에는 없다
+- 원문: R326(Claude 작업 브랜치 map-job), R327(Claude 메인), R329(Claude /clear), R331(/clear 뒤 압축 — 사슬), R332(sdk-cli — 없음), R336(Codex 메인), R337(Codex 하위 에이전트 — 없음), R338(Codex startup — 없음), R343(Antigravity 압축), R344(Antigravity /clear)
 - 공통 영역: 없음
-- 내는 기능: `hook:claude:SessionStart:session`, `hook:codex:SessionStart:session`
-- 그리는 코드: `code:core/recovery.mjs#compactRecovery`
+- 내는 기능: `hook:claude:SessionStart:recovery`, `hook:codex:SessionStart:recovery`, `hook:antigravity:PreInvocation`, `hook:antigravity:SessionStart`
+- 그리는 코드: `code:core/conversation-map.mjs#recoveryBlock`, `code:core/conversation-map.mjs#renderConversationMap`
 
 ### 개요
-압축 뒤 하던 일을 잇기 전에, 이 대화가 처음 무엇을 하려 했는지와 지금 할 일을 먼저 되찾게 한다(0.9.17). 압축 요약에 붙은 "이어서 하라"는 말보다 복원을 먼저 하게 한다.
+압축이나 /clear 뒤 하던 일을 잇기 전에, 이 대화가 처음 무엇을 하려 했는지와 지금 할 일을 먼저 되찾게 한다(0.9.17). 0.9.20부터 이 대화(와 이어짐·/clear로 이어진 앞 대화)가 저장한 기록만 모은 지도를 함께 보여, 여러 대화가 함께 쓰는 메인에서도 남의 기록을 자기 일로 잇지 않게 한다. 모델은 도구를 부르지 않고 훅이 넣는다.
 
 ### 화면 흐름
-agent는 이 블록대로 작업 브랜치를 시작한 목적을 `read entry`로 읽고, 마지막 기록의 다음이 사람이 정한 일인지 최근 대화에서 확인한 뒤 잇는다.
+agent는 이 블록대로 작업 브랜치를 시작한 목적을 `read entry`로 읽고, 마지막 기록의 다음이 사람이 정한 일인지 최근 대화에서 확인한 뒤 잇는다. 메인이면 할 일을 지도와 최근 대화에서 찾는다. 지도 줄의 짧은 ID로 `read entry`를 부르면 그 기록의 본문을 읽는다.
 
 ### 화면요소
-1. **머리** — `## 컴팩트 뒤 먼저 할 것`과 복원을 먼저 하라는 한 줄. ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session` 문구: `하던 일을 잇기 전에 복원부터 한다`
-2. **최초 목적** — 작업 브랜치면 read entry와 첫 기록 짧은 ID, 첫 기록 요약. 메인이면 최근 대화와 read recent, 연결이 없으면 최근 대화에서 사람이 정한 일. ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session` → `tool:read` 문구: `로 이 작업 브랜치를 시작한 목적(문제·목표·조건)을 읽는다`
-3. **지금 할 일** — 경우마다 다르다. 작업 브랜치: 마지막 기록의 다음과 '사람이 정한 일인지 최근 대화에서 확인한 뒤 잇는다'(다음이 없으면 최근 대화에서 사람이 마지막으로 정한 일). 메인: '위에서 찾은 일이다. 사람이 정하지 않은 계획은 잇기 전에 확인한다'(R53). 연결 없음: 이 줄이 따로 없고 #2 자리 한 줄('최초 목적과 지금 할 일')에 합쳐 나온다(R235). ← `hook:claude:SessionStart:session` ← `hook:codex:SessionStart:session` 문구: `이 다음은 기록을 남긴 대화가 적은 계획이다`
+1. **머리** — `## 컴팩트 뒤 먼저 할 것`(압축) 또는 `## /clear 뒤 먼저 할 것`(/clear)과 그 아래 한 줄. 압축은 복원을 먼저 하라는 줄, /clear는 '사용자가 하던 일을 이으라고 하면 복원부터, 새 일을 말하면 그 일'이다. ← `hook:claude:SessionStart:recovery` ← `hook:codex:SessionStart:recovery` ← `hook:antigravity:PreInvocation` ← `hook:antigravity:SessionStart` 문구: `하던 일을 잇기 전에 복원부터 한다`
+2. **최초 목적** — 작업 브랜치면 read entry와 첫 기록 짧은 ID, 첫 기록 요약. 메인이면 '메인은 여러 대화가 함께 쓰므로, 메인의 다른 기록은 다른 대화 것일 수 있다'와 할 일을 이 대화가 남긴 기록과 최근 대화에서 찾으라는 말(0.9.20, read recent 권유는 뺌). 연결이 없으면 최근 대화에서 사람이 정한 일. ← `hook:claude:SessionStart:recovery` ← `hook:codex:SessionStart:recovery` → `tool:read` 문구: `로 이 작업 브랜치를 시작한 목적(문제·목표·조건)을 읽는다`
+3. **지금 할 일** — 경우마다 다르다. 작업 브랜치: 마지막 기록의 다음과 '사람이 정한 일인지 최근 대화에서 확인한 뒤 잇는다'(다음이 없으면 최근 대화에서 사람이 마지막으로 정한 일). 메인: '위에서 찾은 일이다. 사람이 정하지 않은 계획은 잇기 전에 확인한다'(R327). 연결 없음: 이 줄이 따로 없고 #2 자리 한 줄('최초 목적과 지금 할 일')에 합쳐 나온다. ← `hook:claude:SessionStart:recovery` ← `hook:codex:SessionStart:recovery` 문구: `이 다음은 기록을 남긴 대화가 적은 계획이다`
+4. **기록 지도 머리** — `## 이 대화가 남긴 기록 (최신이 위)`와 이 대화·앞 대화가 저장한 기록이라는 설명, 본문은 read entry로 읽는다는 줄(0.9.20). 기록이 없으면 `(이 대화가 저장한 기록은 아직 없다)`. ← `hook:claude:SessionStart:recovery` ← `hook:codex:SessionStart:recovery` ← `hook:antigravity:PreInvocation` ← `hook:antigravity:SessionStart` → `tool:read` 문구: `이 대화와 /clear·이어짐으로 이어진 앞 대화가 저장한 기록이다`
+5. **기록 지도 줄** — `- <짧은 ID> <MM-DD HH:MM> [<다른 작업 세션>] <작업 브랜치 또는 메인>( (끝남)·(중단)) · <요약>`. 최신 15줄, 요약 120자, 더 있으면 `(그 앞 n개 — 흐름 지도에 있다)`. 짧은 ID는 흐름 지도와 같다. 대화 줄로 찾은 기록과, 대화 기록 파일의 save 호출로 맞춘 옛 기록(R326의 A0, R343의 G0)이 함께 시각 순으로 나온다. ← `hook:claude:SessionStart:recovery` ← `hook:codex:SessionStart:recovery` ← `hook:antigravity:PreInvocation` ← `hook:antigravity:SessionStart` 문구: `— 흐름 지도에 있다`
 
 ### 화면 정책
 - `pol.compact-recovery`
-- `pol.session-part-fits`
 
 ## SRV-01 서버 안내문
 
@@ -412,7 +413,7 @@ agent는 찾을 것이 정해진 조사면 작업 기록 → 프로젝트 조사
 - 그리는 코드: `code:core/sessions.mjs#sessions.inspect`
 
 ### 화면요소
-1. **기록** — 기록마다 `## <ISO 시각>`, `요약: …`, 본문, `다음: …`. ← `tool:read` 문구: `## YYYY-MM-DDT<시각>`
+1. **기록** — 기록마다 `## <ISO 시각>`, `요약: …`, (0.9.20부터 save가 쓴 기록은 `대화: <앱>:<ID>`), 본문, `다음: …`. 원문이라 대화 줄도 그대로 보인다(R27). ← `tool:read` 문구: `## YYYY-MM-DDT<시각>`
 
 ## TOL-08 둘러보기
 

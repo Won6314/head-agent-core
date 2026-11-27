@@ -1,7 +1,7 @@
 {
  "tool:todo": {
   "실행된 정의": 57,
-  "그래프 도달 범위": 100,
+  "그래프 도달 범위": 101,
   "범위 밖에서 실행됨": [
    "code:hosts/claude/mcp.mjs#serveClaude.live@15"
   ],
@@ -23,6 +23,7 @@
    "code:core/graph.mjs#references",
    "code:core/graph.mjs#resolveRef",
    "code:core/graph.mjs#schema",
+   "code:core/history.mjs#headerRange",
    "code:core/history.mjs#parseHistory",
    "code:core/history.mjs#summaryLine",
    "code:core/liveness.mjs#pidAlive",
@@ -56,8 +57,8 @@
   ]
  },
  "tool:list": {
-  "실행된 정의": 60,
-  "그래프 도달 범위": 93,
+  "실행된 정의": 61,
+  "그래프 도달 범위": 94,
   "범위 밖에서 실행됨": [
    "code:hosts/claude/mcp.mjs#serveClaude.live@15"
   ],
@@ -108,8 +109,8 @@
   "닿는다고 했는데 안 돎": []
  },
  "hook:claude:SessionStart:session": {
-  "실행된 정의": 97,
-  "그래프 도달 범위": 141,
+  "실행된 정의": 98,
+  "그래프 도달 범위": 140,
   "범위 밖에서 실행됨": [],
   "닿는다고 했는데 안 돎": [
    "code:core/graph.mjs#Graph.applyFileDiff",
@@ -137,9 +138,7 @@
    "code:core/project.mjs#pendingQuestions",
    "code:core/project.mjs#surveyQuestion",
    "code:core/project.mjs#surveyReady",
-   "code:core/recovery.mjs#compactRecovery",
    "code:core/recovery.mjs#sessionSaves",
-   "code:core/sessions.mjs#sessions.compactRecovery",
    "code:core/sessions.mjs#sessions.note",
    "code:core/storage.mjs#ownFile",
    "code:core/storage.mjs#readError",
@@ -158,8 +157,8 @@
   ]
  },
  "cli:map": {
-  "실행된 정의": 49,
-  "그래프 도달 범위": 75,
+  "실행된 정의": 50,
+  "그래프 도달 범위": 76,
   "범위 밖에서 실행됨": [
    "code:core/sessions.mjs#sessions"
   ],
@@ -194,8 +193,8 @@
   ]
  },
  "tool:save": {
-  "실행된 정의": 87,
-  "그래프 도달 범위": 110,
+  "실행된 정의": 89,
+  "그래프 도달 범위": 112,
   "범위 밖에서 실행됨": [
    "code:hosts/claude/mcp.mjs#serveClaude.live@15"
   ],
@@ -230,8 +229,8 @@
   ]
  },
  "tool:read": {
-  "실행된 정의": 71,
-  "그래프 도달 범위": 140,
+  "실행된 정의": 72,
+  "그래프 도달 범위": 141,
   "범위 밖에서 실행됨": [
    "code:hosts/claude/mcp.mjs#serveClaude.live@15"
   ],
@@ -323,8 +322,8 @@
   ]
  },
  "hook:claude:SessionStart:context": {
-  "실행된 정의": 75,
-  "그래프 도달 범위": 122,
+  "실행된 정의": 76,
+  "그래프 도달 범위": 123,
   "범위 밖에서 실행됨": [],
   "닿는다고 했는데 안 돎": [
    "code:core/graph.mjs#Graph.applyFileDiff",

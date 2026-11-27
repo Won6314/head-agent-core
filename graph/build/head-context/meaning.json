@@ -4,7 +4,7 @@
     "tool:list": "작업 세션 목록을 최근 기록 순으로 돌려준다",
     "tool:load": "작업 세션을 불러와 이 대화를 메인이나 작업 브랜치에 연결하고 작업 맥락을 돌려준다",
     "tool:create": "목적(context)을 받아 새 작업 세션을 만들고 이 대화를 그 메인에 연결한다",
-    "tool:save": "이 대화의 자리(메인 또는 작업 브랜치)에 기록 하나를 남기고(files는 `참조파일:` 줄로), 다음 없이 저장하면 작업 브랜치를 닫아 메인에 합친다",
+    "tool:save": "이 대화의 자리(메인 또는 작업 브랜치)에 기록 하나를 남기고(files는 `참조파일:` 줄로, 0.9.20부터 남긴 대화는 `대화: <앱>:<ID>` 줄로), 다음 없이 저장하면 작업 브랜치를 닫아 메인에 합친다",
     "tool:branch": "작업 브랜치를 열거나(create) 잇거나(attach) 이유와 함께 중단한다(abandon)",
     "tool:read": "연결을 바꾸지 않고 둘러보기·흐름 지도·최근 본문·기록 하나·찾기·가리킨 파일 나무를 읽는다",
     "tool:todo": "작업 세션의 todo.md에 할 일을 더하고, 보이고, 끝낸다",
@@ -15,17 +15,19 @@
     "mcp:tools/list": "도구 서버의 도구 설명과 인자 목록을 돌려준다",
     "mcp:ping": "도구 서버가 살아 있는지 빈 답으로 알려 준다",
     "hook:claude:SessionStart:core": "시작·/clear·압축 때 코어 지침을 넣는다. 출력 상한(9,000자)을 넘을 때만 두 출력으로 나누고, 0.9.10 코어는 첫 출력 하나에 `(HEAD Core 1/1)`로 들어가 둘째는 빈다(0.7 import 줄은 빼고)",
-    "hook:claude:SessionStart:session": "대화를 등록하고 이어받을 자리를 찾아 작업 세션 머리(또는 연결 안 됨)와 첫 실행 안내를 넣는다. node:sqlite 없는 Node면 그 이유 한 줄만 넣는다. 압축 뒤 사람 대화면 끝에 「컴팩트 뒤 먼저 할 것」을 붙이고(0.9.17), 프로그램 실행(sdk-*, HEAD_CONTEXT_PERSON=1 아님)이 연결되지 않았으면 연결 안 됨과 첫 실행 안내를 넣지 않는다(바로잡은 기록 알림은 나간다, 0.9.17)",
+    "hook:claude:SessionStart:session": "대화를 등록하고 이어받을 자리를 찾아 작업 세션 머리(또는 연결 안 됨)와 첫 실행 안내를 넣는다. node:sqlite 없는 Node면 그 이유 한 줄만 넣는다. 0.9.20부터 압축 뒤 복원 블록은 붙이지 않는다(recovery가 따로 낸다). 프로그램 실행(sdk-*, HEAD_CONTEXT_PERSON=1 아님)이 연결되지 않았으면 연결 안 됨과 첫 실행 안내를 넣지 않는다(바로잡은 기록 알림은 나간다, 0.9.17)",
     "hook:claude:SessionStart:context": "연결된 대화에 작업 맥락을 9,000자 안으로 줄여(자르지 않고) 넣는다",
     "hook:claude:SessionStart:recent": "압축·/clear 직후 직전 주고받기를 원문으로 넣는다",
+    "hook:claude:SessionStart:recovery": "압축·/clear 뒤 사람 대화에 「컴팩트 뒤 먼저 할 것」·「/clear 뒤 먼저 할 것」과 이 대화(와 이어짐·/clear 앞 대화)가 저장한 기록의 지도를 넣는다. 옛 기록은 대화 기록 파일의 save 호출로 맞춘다(0.9.20)",
     "hook:claude:PreCompact": "호스트 요약을 한 줄 포인터로 바꾸라는 지시를 낸다(node:sqlite 없는 Node에서는 내지 않는다)",
     "hook:claude:PreToolUse": "setup을 뺀 이 플러그인 도구 호출에 대화 ID(대화 안 작업이면 agent_id도)를 채운다",
     "hook:claude:SubagentStart": "대화 안 작업이 시작되면 읽기만 된다는 안내를 넣는다",
     "hook:claude:session.send": "Claude SendMessage 중 codex:<ID>·antigravity:<ID> 대상을 가로채 중계 스크립트로 그 앱의 대화에 보낸다",
     "hook:codex:SessionStart:core": "Codex 시작·/clear·압축 때 코어 지침 전체를 한 출력으로 넣는다",
     "hook:codex:SessionStart:instructions": "Codex 시작 때 서버 안내문(공용 + Codex 부분)을 넣는다",
-    "hook:codex:SessionStart:session": "Codex 대화의 폴더와 엔진을 등록하고 작업 세션 머리(또는 연결 안 됨)와 첫 실행 안내를 넣는다. node:sqlite 없는 Node면 그 이유 한 줄만 넣는다. 압축 뒤(하위 에이전트 아님)면 끝에 「컴팩트 뒤 먼저 할 것」을 붙인다(0.9.17)",
+    "hook:codex:SessionStart:session": "Codex 대화의 폴더와 엔진을 등록하고 작업 세션 머리(또는 연결 안 됨)와 첫 실행 안내를 넣는다. node:sqlite 없는 Node면 그 이유 한 줄만 넣는다. 0.9.20부터 압축 뒤에도 작업 세션 머리를 자르지 않고 복원 블록은 recovery가 따로 낸다",
     "hook:codex:SessionStart:context": "Codex 연결된 대화에 작업 맥락을 넣는다",
+    "hook:codex:SessionStart:recovery": "Codex 압축 뒤(하위 에이전트 아님) 「컴팩트 뒤 먼저 할 것」과 이 대화가 저장한 기록의 지도를 넣는다(대화 줄로만 찾는다, 0.9.20)",
     "hook:codex:UserPromptSubmit:inbox": "Codex 입력 때 대화 정보(presence)를 다시 쓰고(없거나 깨졌으면 새로) 편지함에 쌓인 메시지를 넣고 비운다",
     "hook:codex:SubagentStart:subagent": "Codex 하위 에이전트에 읽기만 된다는 안내를 넣는다",
     "hook:opencode:event": "OpenCode 세션 이벤트에서 대화의 부모·제목을 기억한다",
@@ -37,8 +39,8 @@
     "skill:start-job": "일을 시작하기 전 문제·목표·조건, 기존 자료, 작업 세션·작업 브랜치, 진행 방식을 정하는 절차를 agent에게 준다. 연결 안 된 대화는 첫 말을 받을 때도 부른다(0.9.17). 기존 자료를 찾을 때와 판단에 쓸 사실을 읽을 때는 research를 따르게 한다(0.9.19)",
     "skill:research": "판단에 쓸 사실을 모으거나 만드는 법·원인·해결책을 찾기 시작할 때 부르는 조사 절차를 agent에게 준다 — 찾을 것이 정해진 조사는 직접 읽는 것이 기본(양이 많을 때만 에이전트 하나), 무엇이 나올지 모르는 탐색은 서로 모르는 여럿에게 따로, 결과는 항목마다 확인한 위치를 달아 원본과 대조한다(0.9.19)",
     "tool:send@antigravity": "Antigravity 대화에서 다른 Claude·Codex·Antigravity 대화로 메시지를 보낸다(Antigravity 도구 서버에만)",
-    "hook:antigravity:SessionStart": "Antigravity 대화가 처음 시작될 때 대화 정보(presence)와 등록을 쓰고, 코어 지침·서버 안내문·작업 세션 머리(또는 연결 안 됨)·작업 맥락·첫 실행 안내를 시스템 메시지로 넣는다. 클라이언트가 둔 시작 파일이 있으면 그 작업 세션(·작업 브랜치)에 도구 호출 없이 연결한다. 서브에이전트(invoke_subagent)로 판정되면 대화 안 작업 안내 하나만 넣고 대화 정보·작업 세션 연결을 쓰지 않으며 판정을 등록 파일에 남긴다",
-    "hook:antigravity:PreInvocation": "Antigravity 대화의 매 단계 앞에서 대화 정보를 다시 쓰고 편지함 메시지를 넣는다. /compact 입력이면 압축 요약 지시를 넣고, 새 압축 표시(CHECKPOINT)가 보이면 코어·작업 세션·작업 맥락·최근 대화 원문을 한 번 되살린다. 등록 파일에 판정이 없으면 서브에이전트인지 한 번 판정하고, 서브에이전트면 대화 정보를 쓰지 않고 남은 것은 지우며 압축 지시 없이 압축 뒤 대화 안 작업 안내 하나만 넣는다. 터미널 agy(ACP·print·--remote-agent 아님)의 사람 대화이고 그 프로세스에 처음이면 깨우기 열쇠 기록에 요청 표시를 만들고 등록 지시를 넣는다(0.9.18, /compact 단계 제외, 옛 Node도)",
+    "hook:antigravity:SessionStart": "Antigravity 대화가 처음 시작될 때 대화 정보(presence)와 등록을 쓰고, 코어 지침·서버 안내문·작업 세션 머리(또는 연결 안 됨)·작업 맥락·첫 실행 안내를 시스템 메시지로 넣는다. 클라이언트가 둔 시작 파일이 있으면 그 작업 세션(·작업 브랜치)에 도구 호출 없이 연결한다. 시작 파일이 없고 agy 입력 기록의 바로 앞 줄이 같은 agy 프로세스에서 돈 대화의 /clear면 그 대화의 자리를 이어받고 「/clear 뒤 먼저 할 것」·기록 지도·앞 대화 최근 주고받기를 넣는다(0.9.20). 서브에이전트(invoke_subagent)로 판정되면 대화 안 작업 안내 하나만 넣고 대화 정보·작업 세션 연결을 쓰지 않으며 판정을 등록 파일에 남긴다",
+    "hook:antigravity:PreInvocation": "Antigravity 대화의 매 단계 앞에서 대화 정보를 다시 쓰고 편지함 메시지를 넣는다. /compact 입력이면 압축 요약 지시를 넣고, 새 압축 표시(CHECKPOINT)가 보이면 코어·작업 세션·작업 맥락·「컴팩트 뒤 먼저 할 것」과 기록 지도(0.9.20)·최근 대화 원문을 한 번 되살린다. 등록 파일에 판정이 없으면 서브에이전트인지 한 번 판정하고, 서브에이전트면 대화 정보를 쓰지 않고 남은 것은 지우며 압축 지시 없이 압축 뒤 대화 안 작업 안내 하나만 넣는다. 터미널 agy(ACP·print·--remote-agent 아님)의 사람 대화이고 그 프로세스에 처음이면 깨우기 열쇠 기록에 요청 표시를 만들고 등록 지시를 넣는다(0.9.18, /compact 단계 제외, 옛 Node도)",
     "hook:antigravity:PreToolUse": "Antigravity 대화가 셸 명령(run_command)을 부르기 직전, 플러그인 자기 깨우기 등록 명령과 글자까지 같으면 자동 승인(auto_approve)을, 그 밖과 입력 오류에는 허락(allow, agy 기본 정책에 맡김)을 돌려준다. 진입 스크립트가 뜨지 못하면 hooks.json 명령의 셸 대체(|| echo)가 allow를 낸다. 훅이 10초(hooks.json timeout)를 넘기면 셸 대체로도 막지 못해 agy가 그 셸 명령을 거절한다 — 그 agy 프로세스의 모든 셸 명령이 막히는 유일한 실패다",
     "cli:antigravity-wake-register": "터미널 agy 셸에서 모델이 인자 없이 돌리는 깨우기 등록 명령. agy가 그 셸에 넘긴 LS 주소·열쇠와 자기 agy 프로세스(pid·시작 시각)를 깨우기 열쇠 기록에 남기고 '깨우기 등록됨' 한 줄(실패면 이유 한 줄)만 낸다. 열쇠는 내지 않는다"
   },
@@ -329,14 +331,13 @@
     {
       "id": "pol.session-part-fits",
       "kind": "표시",
-      "condition": "시작 훅의 작업 세션 부분이 상한(9,000자)을 넘으면. Claude: 시작·/clear·압축 때, 첫 실행 안내와 압축 뒤 복원 블록(STA-07) 자리까지 더해 잰다. Codex: 압축 뒤 복원 블록이 붙을 때만 머리와 블록을 합쳐 잰다(0.9.17, Codex 시작 때는 자르지 않는다)",
-      "subject": "Claude·Codex 시작 훅(session)은",
-      "action": "context.md 앞부분과 `(context.md 뒷부분 생략 — 전문: <경로>)`만 넣고, 압축 뒤 복원 블록은 자르지 않고 끝에 붙인다",
+      "condition": "시작 훅의 작업 세션 부분이 상한(9,000자)을 넘으면. Claude: 시작·/clear·압축 때, 첫 실행 안내 자리까지 더해 잰다. Codex는 자르지 않는다(0.9.20부터 압축 뒤 복원 블록 STA-07은 따로 나와 이 출력에 자리를 내지 않는다)",
+      "subject": "Claude 시작 훅(session)은",
+      "action": "context.md 앞부분과 `(context.md 뒷부분 생략 — 전문: <경로>)`만 넣는다",
       "features": [
-        "hook:claude:SessionStart:session",
-        "hook:codex:SessionStart:session"
+        "hook:claude:SessionStart:session"
       ],
-      "evidence": "hosts/claude/hook.mjs:118-123(fit, recoverySpace) · hosts/codex/hook.mjs:111-116(0.9.17) · R250(Claude 시작), R251(Claude 압축 뒤), R254(Codex 시작 — 자르지 않음), R255(Codex 압축 뒤)"
+      "evidence": "hosts/claude/hook.mjs session(fit, HOOK_BUDGET − 첫 실행 안내) · R250(Claude 시작), R251(Claude 압축 뒤 — 복원 블록 없이 머리가 더 들어감), R254·R255(Codex 시작·압축 뒤 — 자르지 않음, 0.9.20)"
     },
     {
       "id": "pol.hook-budget",
@@ -919,14 +920,64 @@
     {
       "id": "pol.compact-recovery",
       "kind": "표시",
-      "condition": "Claude·Codex 사람 대화가 압축 뒤 시작할 때(source compact). Claude 프로그램 실행·Codex 하위 에이전트(agent_id)는 제외, Antigravity는 해당 없음",
-      "subject": "Claude·Codex 시작 훅(session)은",
-      "action": "출력 끝에 「컴팩트 뒤 먼저 할 것」을 붙인다: 작업 브랜치면 첫 기록 `read entry` ID·요약과 마지막 다음(사용자가 정한 일인지 확인한 뒤 잇기), 메인이면 최근 대화와 read recent, 연결이 없으면 최근 대화에서 사용자가 정한 일. 시작 훅 상한 안에서 작업 세션 머리를 줄여 자리를 낸다(0.9.17)",
+      "condition": "Claude·Codex·Antigravity 사람 대화가 압축 뒤 시작할 때(Claude·Codex source compact, Antigravity 새 CHECKPOINT), Claude는 /clear 뒤에도. Claude 프로그램 실행(sdk-*)·Codex 하위 에이전트(agent_id)·Antigravity 서브에이전트·재개는 제외",
+      "subject": "Claude·Codex 시작 훅(recovery)과 Antigravity 훅은",
+      "action": "「컴팩트 뒤 먼저 할 것」(/clear면 「/clear 뒤 먼저 할 것」: 사용자가 이으라고 하면 복원, 새 일을 말하면 그 일)을 따로 낸다: 작업 브랜치면 첫 기록 `read entry` ID·요약과 마지막 다음(사용자가 정한 일인지 확인한 뒤 잇기), 메인이면 '메인의 다른 기록은 다른 대화 것일 수 있다, 할 일은 이 대화가 남긴 기록과 최근 대화에서 찾는다', 연결이 없으면 최근 대화에서 사용자가 정한 일. 그 뒤에 「이 대화가 남긴 기록」 지도를 붙인다(0.9.17, 0.9.20에 session 꼬리에서 떼어 따로)",
+      "features": [
+        "hook:claude:SessionStart:recovery",
+        "hook:codex:SessionStart:recovery",
+        "hook:antigravity:PreInvocation",
+        "hook:antigravity:SessionStart"
+      ],
+      "evidence": "core/conversation-map.mjs recoveryBlock·recoveryText · hosts/claude/hook.mjs recovery · hosts/codex/hook.mjs recovery · hosts/antigravity/hook.mjs · R326(작업 브랜치), R327(메인), R329(/clear), R331(/clear 뒤 압축), R332(sdk-cli — 없음), R336(Codex), R337(Codex 하위 에이전트 — 없음), R338(startup — 없음), R343(Antigravity 압축), R344(Antigravity /clear)"
+    },
+    {
+      "id": "pol.save-conversation-line",
+      "kind": "처리",
+      "condition": "save가 메인 기록이나 작업 브랜치 기록을 쓸 때(0.9.20)",
+      "subject": "save는",
+      "action": "기록 머리(표시 줄 뒤, 참조파일 앞)에 `대화: <앱>:<대화 ID>` 한 줄을 쓴다. 메인 색인 줄·닫기 합침·중단 기록에는 쓰지 않는다. 이 줄은 기록 머리에서만 읽고, 본문에 같은 꼴 줄이 있어도 대화로 읽지 않으며 작업 맥락 본문에서는 뺀다",
+      "features": [
+        "tool:save"
+      ],
+      "evidence": "core/storage.mjs entry · core/sessions.mjs save · core/history.mjs headerRange·parseHistory·contentBody · R318~R324, R27(read recent 원문의 대화 줄)"
+    },
+    {
+      "id": "pol.conversation-map-own",
+      "kind": "처리",
+      "condition": "복원 블록 뒤 기록 지도를 만들 때(0.9.20)",
+      "subject": "기록 지도는",
+      "action": "이 대화와 연결 기록 previous로 이어진 앞 대화(이어짐·/clear만, 깊이 32)의 기록만 모은다: 머리의 대화 줄이 그 대화인 기록, 그리고 대화 줄이 없는 옛 기록 가운데 그 대화의 기록 파일 save 호출과 요약이 같고 시각이 호출 −5초~+10분이며 닫기·중단 기록이 아닌 것(Claude는 그 대화 sessionId의 assistant 행만, 포크 복사 줄 제외; Antigravity는 call_mcp_tool save). 최신 15줄을 짧은 ID·시각·[다른 작업 세션]·작업 브랜치(끝남·중단)·요약 120자로 그린다",
+      "features": [
+        "hook:claude:SessionStart:recovery",
+        "hook:codex:SessionStart:recovery",
+        "hook:antigravity:PreInvocation",
+        "hook:antigravity:SessionStart"
+      ],
+      "evidence": "core/conversation-map.mjs chainOf·conversationRecords·renderConversationMap · hosts/claude/saves.mjs claudeSaves · hosts/antigravity/transcript.mjs agySaves · R326(CA: 자기 메인 셋·작업 하나·옛 기록 A0, CB 없음), R327(CB 둘만), R343(GA 둘 + 옛 G0)"
+    },
+    {
+      "id": "pol.clear-previous",
+      "kind": "처리",
+      "condition": "/clear나 이어짐으로 시작한 대화가 자리를 이어받을 때(0.9.20)",
+      "subject": "start는",
+      "action": "연결 기록에 앞 대화 ID(previous, 이어짐·/clear만, 가까운 것 먼저)를 남긴다. 자리가 생긴 대화에만 남긴다. 복사·부모는 넣지 않는다. 그 뒤 압축해도 지도에 앞 대화의 기록이 이어진다",
       "features": [
         "hook:claude:SessionStart:session",
-        "hook:codex:SessionStart:session"
+        "hook:antigravity:SessionStart"
       ],
-      "evidence": "core/recovery.mjs compactRecovery · hosts/claude/hook.mjs · hosts/codex/hook.mjs · R53(메인), R234(작업 브랜치), R235(연결 안 됨), R238(Codex 작업 브랜치), R239(Codex 하위 에이전트 — 없음), R242(sdk-cli — 없음)"
+      "evidence": "core/sessions.mjs start·bind · R328(Claude /clear 이어받기), R331(previous 사슬), R344(Antigravity)"
+    },
+    {
+      "id": "pol.agy-clear-same-process",
+      "kind": "처리",
+      "condition": "Antigravity 사람 대화가 시작 파일 없이 처음 시작할 때(0.9.20)",
+      "subject": "Antigravity 시작 훅은",
+      "action": "agy 입력 기록(~/.gemini/antigravity-cli/history.jsonl) 끝 256KB에서 이 대화의 첫 줄 바로 앞 같은 workspace 줄이 /clear이고, 그 /clear가 떠난 대화의 presence pid·start가 지금 agy 프로세스와 같을 때만 그 대화를 앞 대화로 보고 자리를 이어받는다. 아니면 지금처럼 연결 없이 시작한다. 복원 블록·지도·앞 대화 최근 주고받기가 실패해도 나머지 시작 출력은 그대로 나간다",
+      "features": [
+        "hook:antigravity:SessionStart"
+      ],
+      "evidence": "hosts/antigravity/cleared.mjs clearedFrom · hosts/antigravity/hook.mjs · R344(이어받기), R345(줄 없음 — 연결 안 됨)"
     },
     {
       "id": "pol.said-any-length",

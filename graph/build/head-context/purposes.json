@@ -63,13 +63,13 @@
       ]
     },
     "hosts/claude": {
-      "does": "살아 있는 대화 찾기, 수신함에 메시지 넣기, 압축·복구·최근 대화 훅"
+      "does": "살아 있는 대화 찾기, 수신함에 메시지 넣기, 압축·복구·최근 대화 훅, 지난 save 호출 읽기(기록 지도)"
     },
     "hosts/codex": {
       "does": "대화 등록, 엔진 판별·연결, 대화 목록·수신함·보내기"
     },
     "hosts/antigravity": {
-      "does": "Antigravity CLI·ACP 대화 등록, 시작·매 단계 주입, 시작 파일 연결, 살아 있음 판정, 편지함·깨우기, 보내기, 서브에이전트 판정, 터미널 깨우기 등록(요청·열쇠 기록·잠금 판정)·등록 명령 자동 승인"
+      "does": "Antigravity CLI·ACP 대화 등록, 시작·매 단계 주입, 시작 파일 연결, 살아 있음 판정, 편지함·깨우기, 보내기, 서브에이전트 판정, 터미널 깨우기 등록(요청·열쇠 기록·잠금 판정)·등록 명령 자동 승인, /clear 앞 대화 찾기(입력 기록)"
     },
     "hosts/opencode": {
       "does": "요청마다 작업 맥락 넣기, 도구 호출에 대화 ID 채우기"
@@ -108,7 +108,8 @@
             "recovery",
             "instruction",
             "project",
-            "recent"
+            "recent",
+            "conversation-map"
           ]
         },
         {
@@ -204,7 +205,8 @@
             "hosts/claude/recent.mjs",
             "hosts/claude/recovery.mjs",
             "hosts/claude/hook.mjs",
-            "hosts/claude/deliver.mjs"
+            "hosts/claude/deliver.mjs",
+            "hosts/claude/saves.mjs"
           ]
         }
       },
@@ -258,12 +260,17 @@
       },
       {
         "name": "Antigravity 대화 기록 파일",
-        "desc": "agy가 쓰는 대화 기록(훅 입력의 transcriptPath, transcript_full.jsonl). 통째로 읽어 압축 표시(CHECKPOINT)와 주고받기를 찾는다",
+        "desc": "agy가 쓰는 대화 기록(훅 입력의 transcriptPath, transcript_full.jsonl). 통째로 읽어 압축 표시(CHECKPOINT)와 주고받기를 찾는다. 0.9.20부터 기록 지도를 만들 때 지난 save 호출(call_mcp_tool head-context_session save)도 찾는다",
         "touch": {
           "fs": [
             "hosts/antigravity/transcript.mjs"
           ]
         }
+      },
+      {
+        "name": "Antigravity 입력 기록(history.jsonl)",
+        "desc": "~/.gemini/antigravity-cli/history.jsonl(agy가 쓰는 사용자 전체 공용 입력 기록, 공개되지 않은 꼴). 끝 256KB를 읽어 이 대화 첫 줄 바로 앞의 같은 workspace /clear 줄(slash_command, 떠난 대화의 conversationId)을 찾는다(0.9.20, cleared.mjs clearedFrom → core/storage.mjs readTail). 읽기만 한다",
+        "touch": {}
       },
       {
         "name": "Antigravity ACP 로그",
@@ -336,7 +343,8 @@
       "code:core/storage.mjs#readTail": {
         "code:hosts/claude/process.mjs#recentPrompts": "Claude 등록 파일·대화 기록",
         "code:hosts/claude/recovery.mjs#continuedInto": "Claude 등록 파일·대화 기록",
-        "code:hosts/codex/threads.mjs#lastSaid": "Codex 대화 기록 파일"
+        "code:hosts/codex/threads.mjs#lastSaid": "Codex 대화 기록 파일",
+        "code:hosts/antigravity/cleared.mjs#clearedFrom": "Antigravity 입력 기록(history.jsonl)"
       }
     }
   }
