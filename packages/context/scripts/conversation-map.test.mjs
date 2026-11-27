@@ -207,6 +207,15 @@ test('Claude old records: summary/time matching excludes forks, other sessions, 
   write(huge, '');
   fs.truncateSync(huge, 64 * 1024 * 1024 + 1);
   assert.deepEqual(claudeSaves(huge, 'A'), []);
+  // A save past 64MB, split across a chunk edge inside a multi-byte summary, is still read.
+  fs.appendFileSync(
+    huge,
+    '\n' + 'x'.repeat(1024 * 1024 - 200) + '\n' + JSON.stringify(tool('A', '한글 요약 '.repeat(20), at)) + '\n',
+  );
+  assert.deepEqual(
+    claudeSaves(huge, 'A').map((c) => c.summary),
+    ['한글 요약 '.repeat(20)],
+  );
   assert.equal(s.connection('A').previous, undefined);
 });
 
